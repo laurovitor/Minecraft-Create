@@ -51,6 +51,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
+import net.minecraft.util.Prediction;
 import net.minecraft.world.Clearable;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Inventory;
@@ -465,7 +466,7 @@ public class DeployerBlockEntity extends KineticBlockEntity implements Clearable
 			return;
 		player.getInventory()
 			.dropAll();
-		overflowItems.forEach(itemstack -> player.drop(itemstack, true, false));
+		overflowItems.forEach(itemstack -> player.drop(itemstack, true, Prediction.SERVER_ONLY));
 		player.discard();
 		player = null;
 	}

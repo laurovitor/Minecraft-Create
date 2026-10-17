@@ -25,6 +25,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Prediction;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
@@ -147,7 +148,7 @@ public class BeltDeployerCallbacks {
 					player.setItemInHand(InteractionHand.MAIN_HAND, leftover);
 				} else {
 					if (!player.getInventory().add(leftover)) {
-						player.drop(leftover, false);
+						player.drop(leftover, false, Prediction.SERVER_ONLY);
 					}
 				}
 			}

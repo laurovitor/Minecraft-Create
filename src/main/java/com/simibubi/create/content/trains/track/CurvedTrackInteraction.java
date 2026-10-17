@@ -70,7 +70,7 @@ public class CurvedTrackInteraction {
 
 			int progress = (int) (breakProgress * 10.0F) - 1;
 			level.destroyBlockProgress(player.getId(), breakPos, progress);
-			player.swing(InteractionHand.MAIN_HAND);
+			player.swing(InteractionHand.MAIN_HAND, player.getMainHandItem().getAttackAnimation(), false);
 
 			if (breakProgress >= 1) {
 				ClientNetworkHelper.INSTANCE.sendToServer(new CurvedTrackDestroyPacket(breakPos, result.loc()
@@ -119,11 +119,11 @@ public class CurvedTrackInteraction {
 			if (AllTags.AllBlockTags.TRACKS.matches(heldItem)) {
 				player.sendOverlayMessage(CreateLang.translateDirect("track.turn_start")
 					.withStyle(ChatFormatting.RED));
-				player.swing(InteractionHand.MAIN_HAND);
+				player.swing(InteractionHand.MAIN_HAND, player.getMainHandItem().getInteractAnimation(), false);
 				return true;
 			}
 			if (item instanceof TrackTargetingBlockItem ttbi && ttbi.useOnCurve(result, heldItem)) {
-				player.swing(InteractionHand.MAIN_HAND);
+				player.swing(InteractionHand.MAIN_HAND, player.getMainHandItem().getInteractAnimation(), false);
 				return true;
 			}
 			if (AllItems.WRENCH.isIn(heldItem) && player.isShiftKeyDown()) {
@@ -133,7 +133,7 @@ public class CurvedTrackInteraction {
 							.curveTarget(),
 						BlockPos.containing(result.vec()), true));
 				resetBreakProgress();
-				player.swing(InteractionHand.MAIN_HAND);
+				player.swing(InteractionHand.MAIN_HAND, player.getMainHandItem().getInteractAnimation(), false);
 				return true;
 			}
 		}

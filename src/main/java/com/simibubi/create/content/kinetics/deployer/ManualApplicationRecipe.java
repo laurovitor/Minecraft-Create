@@ -20,6 +20,7 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Prediction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -100,7 +101,7 @@ public class ManualApplicationRecipe extends ItemApplicationRecipe {
 					player.setItemInHand(hand, leftover);
 				} else {
 					if (!player.getInventory().add(leftover)) {
-						player.drop(leftover, false);
+						player.drop(leftover, false, Prediction.SERVER_ONLY);
 					}
 				}
 			}

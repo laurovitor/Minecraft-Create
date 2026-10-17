@@ -15,6 +15,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.item.component.SwingAnimation;
 import net.minecraft.world.phys.AABB;
 
 public record ContraptionInteractionPacket(InteractionHand hand, int target, BlockPos localPos, Direction face) implements SelfHandlingPayload {
@@ -51,6 +52,6 @@ public record ContraptionInteractionPacket(InteractionHand hand, int target, Blo
 		if (sender.distanceToSqr(entityByID) > d)
 			return;
 		if (contraptionEntity.handlePlayerInteraction(sender, localPos, face, hand))
-			sender.swing(hand, true);
+			sender.swing(hand, SwingAnimation.DEFAULT, true);
 	}
 }
