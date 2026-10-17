@@ -4,7 +4,7 @@ plugins {
     id("maven-publish")
     id("net.kyori.blossom") version "2.2.0" // https://github.com/KyoriPowered/blossom
     id("dev.ithundxr.silk") version "1.0.1" // https://github.com/ithundxr/silk
-    id("net.neoforged.moddev") version "2.0.144" // https://projects.neoforged.net/neoforged/ModDevGradle
+    id("net.neoforged.moddev") version "2.0.148" // https://projects.neoforged.net/neoforged/ModDevGradle
     id("me.modmuss50.mod-publish-plugin") version "1.1.0" // https://github.com/modmuss50/mod-publish-plugin
 }
 
@@ -169,8 +169,8 @@ dependencies {
     // suite take all four off the Gradle classpath, where the distinction does not exist.
     jarJar(api("com.tterrag.registrate:Registrate:$registrate_version"))
 
-    compileOnlyApi("dev.engine-room.flywheel:flywheel-neoforge-api-$minecraft_version:$flywheel_version")
-    jarJar(runtimeOnly("dev.engine-room.flywheel:flywheel-neoforge-$minecraft_version:$flywheel_version"))
+    compileOnlyApi("dev.engine-room.flywheel:flywheel-neoforge:$flywheel_version-mc$minecraft_version")
+    jarJar(runtimeOnly("dev.engine-room.flywheel:flywheel-neoforge:$flywheel_version-mc$minecraft_version"))
 
     jarJar(api("net.createmod.ponder:ponder-neoforge:$ponder_version"))
     // Catnip used to come along with Ponder; on the 26.x branches it is published separately.
