@@ -1,5 +1,11 @@
 package com.simibubi.create.content.contraptions.bearing;
 
+import com.simibubi.create.foundation.render.RenderLevels;
+import com.simibubi.create.foundation.render.CachedBufferer;
+import com.simibubi.create.content.contraptions.render.ActorGeometry;
+import java.util.List;
+import net.minecraft.util.LightCoordsUtil;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import org.jetbrains.annotations.Nullable;
 
 import org.joml.Quaternionf;
@@ -18,18 +24,12 @@ import com.simibubi.create.foundation.virtualWorld.VirtualRenderWorld;
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
-import net.createmod.catnip.animation.AnimationTickHolder;
-import net.createmod.catnip.render.CachedBuffers;
-import net.createmod.catnip.render.SuperByteBuffer;
-import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.createmod.catnip.api.client.animation.AnimationTickHolder;
+import net.createmod.catnip.api.client.render.SuperByteBuffer;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 public class StabilizedBearingMovementBehaviour implements MovementBehaviour {
 
@@ -43,47 +43,7 @@ public class StabilizedBearingMovementBehaviour implements MovementBehaviour {
 		return true;
 	}
 
-	@Override
-	@OnlyIn(Dist.CLIENT)
-	public void renderInContraption(MovementContext context, VirtualRenderWorld renderWorld,
-									ContraptionMatrices matrices, MultiBufferSource buffer) {
-		if (VisualizationManager.supportsVisualization(context.world))
-			return;
 
-		Direction facing = context.state.getValue(BlockStateProperties.FACING);
-		PartialModel top = AllPartialModels.BEARING_TOP;
-		SuperByteBuffer superBuffer = CachedBuffers.partial(top, context.state);
-		float renderPartialTicks = AnimationTickHolder.getPartialTicks();
-
-		// rotate to match blockstate
-		Quaternionf orientation = BearingVisual.getBlockStateOrientation(facing);
-
-		// rotate against parent
-		float angle = getCounterRotationAngle(context, facing, renderPartialTicks) * facing.getAxisDirection()
-			.getStep();
-
-		Quaternionf rotation = Axis.of(facing.step())
-			.rotationDegrees(angle);
-
-		rotation.mul(orientation);
-
-		orientation = rotation;
-
-		superBuffer.transform(matrices.getModel());
-		superBuffer.rotateCentered(orientation);
-
-		// render
-		superBuffer.light(LevelRenderer.getLightColor(renderWorld, context.localPos))
-			.useLevelLight(context.world, matrices.getWorld())
-			.renderInto(matrices.getViewProjection(), buffer.getBuffer(RenderType.solid()));
-	}
-
-	@Nullable
-	@Override
-	public ActorVisual createVisual(VisualizationContext visualizationContext, VirtualRenderWorld simulationWorld,
-									MovementContext movementContext) {
-		return new StabilizedBearingVisual(visualizationContext, simulationWorld, movementContext);
-	}
 
 	static float getCounterRotationAngle(MovementContext context, Direction facing, float renderPartialTicks) {
 		if (!context.contraption.canBeStabilized(facing, context.localPos))

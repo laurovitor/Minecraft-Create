@@ -8,7 +8,10 @@
   "type": "create:splashing",
   "ingredients": [
     {
-      "item": "endergetic:overworld_corrock"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "endergetic:overworld_corrock"
+      ]
     }
   ],
   "results": [

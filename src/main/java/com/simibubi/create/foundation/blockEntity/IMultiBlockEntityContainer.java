@@ -1,5 +1,6 @@
 package com.simibubi.create.foundation.blockEntity;
 
+import net.neoforged.neoforge.transfer.fluid.FluidStacksResourceHandler;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
@@ -8,7 +9,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.neoforged.neoforge.fluids.FluidStack;
-import net.neoforged.neoforge.fluids.IFluidTank;
+import com.simibubi.create.foundation.fluid.SmartFluidTank;
 
 public interface IMultiBlockEntityContainer {
 
@@ -22,7 +23,7 @@ public interface IMultiBlockEntityContainer {
 	void preventConnectivityUpdate();
 	void notifyMultiUpdated();
 
-	// only used for FluidTank windows at present. Might be useful for similar properties on other things?
+	// only used for FluidStacksResourceHandler windows at present. Might be useful for similar properties on other things?
 	default void setExtraData(@Nullable Object data) {}
 	@Nullable
 	default Object getExtraData() { return null; }
@@ -69,7 +70,7 @@ public interface IMultiBlockEntityContainer {
 
 		default void setTankSize(int tank, int blocks) {}
 
-		default IFluidTank getTank(int tank) { return null; }
+		default SmartFluidTank getTank(int tank) { return null; }
 
 		default FluidStack getFluid(int tank) {	return FluidStack.EMPTY; }
 	}

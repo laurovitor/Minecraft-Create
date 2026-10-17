@@ -3,7 +3,7 @@ package com.simibubi.create.content.contraptions;
 import com.simibubi.create.foundation.blockEntity.behaviour.scrollValue.INamedIconOptions;
 import com.simibubi.create.foundation.gui.AllIcons;
 
-import net.createmod.catnip.lang.Lang;
+import net.createmod.catnip.api.lang.Lang;
 import net.minecraft.core.BlockPos;
 
 public interface IControlContraption {
@@ -20,23 +20,25 @@ public interface IControlContraption {
 
 	static enum MovementMode implements INamedIconOptions {
 
-		MOVE_PLACE(AllIcons.I_MOVE_PLACE),
-		MOVE_PLACE_RETURNED(AllIcons.I_MOVE_PLACE_RETURNED),
-		MOVE_NEVER_PLACE(AllIcons.I_MOVE_NEVER_PLACE),
+		MOVE_PLACE,
+		MOVE_PLACE_RETURNED,
+		MOVE_NEVER_PLACE,
 
 		;
 
 		private String translationKey;
-		private AllIcons icon;
 
-		private MovementMode(AllIcons icon) {
-			this.icon = icon;
+		private MovementMode() {
 			translationKey = "create.contraptions.movement_mode." + Lang.asId(name());
 		}
 
 		@Override
 		public AllIcons getIcon() {
-			return icon;
+			return switch (this) {
+			case MOVE_PLACE -> AllIcons.I_MOVE_PLACE;
+			case MOVE_PLACE_RETURNED -> AllIcons.I_MOVE_PLACE_RETURNED;
+			case MOVE_NEVER_PLACE -> AllIcons.I_MOVE_NEVER_PLACE;
+			};
 		}
 
 		@Override
@@ -48,23 +50,25 @@ public interface IControlContraption {
 
 	static enum RotationMode implements INamedIconOptions {
 
-		ROTATE_PLACE(AllIcons.I_ROTATE_PLACE),
-		ROTATE_PLACE_RETURNED(AllIcons.I_ROTATE_PLACE_RETURNED),
-		ROTATE_NEVER_PLACE(AllIcons.I_ROTATE_NEVER_PLACE),
+		ROTATE_PLACE,
+		ROTATE_PLACE_RETURNED,
+		ROTATE_NEVER_PLACE,
 
 		;
 
 		private String translationKey;
-		private AllIcons icon;
 
-		private RotationMode(AllIcons icon) {
-			this.icon = icon;
+		private RotationMode() {
 			translationKey = "create.contraptions.movement_mode." + Lang.asId(name());
 		}
 
 		@Override
 		public AllIcons getIcon() {
-			return icon;
+			return switch (this) {
+			case ROTATE_PLACE -> AllIcons.I_ROTATE_PLACE;
+			case ROTATE_PLACE_RETURNED -> AllIcons.I_ROTATE_PLACE_RETURNED;
+			case ROTATE_NEVER_PLACE -> AllIcons.I_ROTATE_NEVER_PLACE;
+			};
 		}
 
 		@Override

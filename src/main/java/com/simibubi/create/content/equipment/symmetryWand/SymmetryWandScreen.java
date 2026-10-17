@@ -1,7 +1,8 @@
 package com.simibubi.create.content.equipment.symmetryWand;
 
-import net.createmod.catnip.platform.CatnipServices;
 
+import org.joml.Matrix3x2fStack;
+import net.createmod.catnip.api.client.network.ClientNetworkHelper;
 import org.joml.Vector3f;
 
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -19,9 +20,9 @@ import com.simibubi.create.foundation.gui.widget.ScrollInput;
 import com.simibubi.create.foundation.gui.widget.SelectionScrollInput;
 import com.simibubi.create.foundation.utility.CreateLang;
 
-import net.createmod.catnip.gui.AbstractSimiScreen;
-import net.createmod.catnip.gui.element.GuiGameElement;
-import net.minecraft.client.gui.GuiGraphics;
+import net.createmod.catnip.api.client.gui.AbstractSimiScreen;
+import net.createmod.catnip.api.client.gui.element.GuiGameElement;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
@@ -121,41 +122,38 @@ public class SymmetryWandScreen extends AbstractSimiScreen {
 	}
 
 	@Override
-	protected void renderWindow(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+	protected void renderWindow(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks) {
 		int x = guiLeft;
 		int y = guiTop;
 
 		background.render(graphics, x, y);
-		graphics.drawString(font, wand.getHoverName(),
-			x + (background.getWidth() - font.width(wand.getHoverName())) / 2, y + 4, 0x592424, false);
+		graphics.text(font, wand.getHoverName(),
+			x + (background.getWidth() - font.width(wand.getHoverName())) / 2, y + 4, 0xFF592424, false);
 
 		renderBlock(graphics, x, y);
 		GuiGameElement.of(wand)
 			.scale(4)
 			.rotate(-70, 20, 20)
 			.at(x + 178, y + 448, -150)
-			.render(graphics);
+			.submit(graphics);
 	}
 
-	protected void renderBlock(GuiGraphics graphics, int x, int y) {
-		PoseStack ms = graphics.pose();
+	protected void renderBlock(GuiGraphicsExtractor graphics, int x, int y) {
+		Matrix3x2fStack ms = graphics.pose();
 
-		ms.pushPose();
-		ms.translate(x + 26, y + 39, 20);
-		ms.scale(16, 16, 16);
-		ms.mulPose(Axis.of(new Vector3f(.3f, 1f, 0f)).rotationDegrees(-22.5f));
-		currentElement.applyModelTransform(ms);
-		// RenderSystem.multMatrix(ms.peek().getModel());
-		GuiGameElement.of(currentElement.getModel())
-			.render(graphics);
-
-		ms.popPose();
+		GuiGameElement.of(currentElement.getModel()
+			.get())
+			.rotateBlock(0, currentElement.getModelYRotation(), 0)
+			.rotate(-22.5f * .3f, -22.5f, 0)
+			.scale(16)
+			.at(x + 26, y + 39)
+			.submit(graphics);
 	}
 
 	@Override
 	public void removed() {
 		SymmetryWandItem.configureSettings(wand, currentElement);
-		CatnipServices.NETWORK.sendToServer(new ConfigureSymmetryWandPacket(hand, currentElement));
+		ClientNetworkHelper.INSTANCE.sendToServer(new ConfigureSymmetryWandPacket(hand, currentElement));
 	}
 
 }

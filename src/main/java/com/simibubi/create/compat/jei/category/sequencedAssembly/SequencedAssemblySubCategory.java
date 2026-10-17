@@ -1,8 +1,7 @@
 package com.simibubi.create.compat.jei.category.sequencedAssembly;
 
-import java.util.Arrays;
+import org.joml.Matrix3x2fStack;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.compat.jei.category.CreateRecipeCategory;
 import com.simibubi.create.compat.jei.category.animations.AnimatedDeployer;
 import com.simibubi.create.compat.jei.category.animations.AnimatedPress;
@@ -17,7 +16,7 @@ import mezz.jei.api.gui.builder.IRecipeSlotBuilder;
 import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.RecipeIngredientRole;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 
@@ -35,7 +34,7 @@ public abstract class SequencedAssemblySubCategory {
 
 	public void setRecipe(IRecipeLayoutBuilder builder, SequencedRecipe<?> recipe, IFocusGroup focuses, int x) {}
 
-	public abstract void draw(SequencedRecipe<?> recipe, GuiGraphics graphics, double mouseX, double mouseY, int index);
+	public abstract void draw(SequencedRecipe<?> recipe, GuiGraphicsExtractor graphics, double mouseX, double mouseY, int index);
 
 	public static class AssemblyPressing extends SequencedAssemblySubCategory {
 
@@ -47,14 +46,14 @@ public abstract class SequencedAssemblySubCategory {
 		}
 
 		@Override
-		public void draw(SequencedRecipe<?> recipe, GuiGraphics graphics, double mouseX, double mouseY, int index) {
-			PoseStack ms = graphics.pose();
+		public void draw(SequencedRecipe<?> recipe, GuiGraphicsExtractor graphics, double mouseX, double mouseY, int index) {
+			Matrix3x2fStack ms = graphics.pose();
 			press.offset = index;
-			ms.pushPose();
-			ms.translate(-5, 50, 0);
-			ms.scale(.6f, .6f, .6f);
+			ms.pushMatrix();
+			ms.translate((float) (-5), (float) (50));
+			ms.scale((float) (.6f), (float) (.6f));
 			press.draw(graphics, getWidth() / 2, 0);
-			ms.popPose();
+			ms.popMatrix();
 		}
 
 	}
@@ -78,18 +77,17 @@ public abstract class SequencedAssemblySubCategory {
 		}
 
 		@Override
-		public void draw(SequencedRecipe<?> recipe, GuiGraphics graphics, double mouseX, double mouseY, int index) {
-			PoseStack ms = graphics.pose();
+		public void draw(SequencedRecipe<?> recipe, GuiGraphicsExtractor graphics, double mouseX, double mouseY, int index) {
+			Matrix3x2fStack ms = graphics.pose();
 			spout.offset = index;
-			ms.pushPose();
-			ms.translate(-7, 50, 0);
-			ms.scale(.75f, .75f, .75f);
-			spout.withFluids(Arrays.asList(recipe.getRecipe()
+			ms.pushMatrix();
+			ms.translate((float) (-7), (float) (50));
+			ms.scale((float) (.75f), (float) (.75f));
+			spout.withFluids(CreateRecipeCategory.fluidsOf(recipe.getRecipe()
 					.getFluidIngredients()
-					.get(0)
-					.getFluids()))
+					.get(0)))
 				.draw(graphics, getWidth() / 2, 0);
-			ms.popPose();
+			ms.popMatrix();
 		}
 
 	}
@@ -111,21 +109,23 @@ public abstract class SequencedAssemblySubCategory {
 					.addIngredients(recipe.getRecipe().getIngredients().get(1));
 
 			if (recipe.getAsAssemblyRecipe() instanceof DeployerApplicationRecipe deployerRecipe && deployerRecipe.shouldKeepHeldItem()) {
-				slot.addTooltipCallback(
-						(recipeSlotView, tooltip) -> tooltip.add(1, CreateLang.translateDirect("recipe.deploying.not_consumed").withStyle(ChatFormatting.GOLD))
+				// The rich tooltip builder only appends, so the note lands at the end of the tooltip
+				// instead of straight after the item name the way the old indexed insert placed it.
+				slot.addRichTooltipCallback(
+						(recipeSlotView, tooltip) -> tooltip.add(CreateLang.translateDirect("recipe.deploying.not_consumed").withStyle(ChatFormatting.GOLD))
 				);
 			}
 		}
 
 		@Override
-		public void draw(SequencedRecipe<?> recipe, GuiGraphics graphics, double mouseX, double mouseY, int index) {
-			PoseStack ms = graphics.pose();
+		public void draw(SequencedRecipe<?> recipe, GuiGraphicsExtractor graphics, double mouseX, double mouseY, int index) {
+			Matrix3x2fStack ms = graphics.pose();
 			deployer.offset = index;
-			ms.pushPose();
-			ms.translate(-7, 50, 0);
-			ms.scale(.75f, .75f, .75f);
+			ms.pushMatrix();
+			ms.translate((float) (-7), (float) (50));
+			ms.scale((float) (.75f), (float) (.75f));
 			deployer.draw(graphics, getWidth() / 2, 0);
-			ms.popPose();
+			ms.popMatrix();
 		}
 
 	}
@@ -140,13 +140,13 @@ public abstract class SequencedAssemblySubCategory {
 		}
 
 		@Override
-		public void draw(SequencedRecipe<?> recipe, GuiGraphics graphics, double mouseX, double mouseY, int index) {
-			PoseStack ms = graphics.pose();
-			ms.pushPose();
-			ms.translate(0, 51.5f, 0);
-			ms.scale(.6f, .6f, .6f);
+		public void draw(SequencedRecipe<?> recipe, GuiGraphicsExtractor graphics, double mouseX, double mouseY, int index) {
+			Matrix3x2fStack ms = graphics.pose();
+			ms.pushMatrix();
+			ms.translate((float) (0), (float) (51.5f));
+			ms.scale((float) (.6f), (float) (.6f));
 			saw.draw(graphics, getWidth() / 2, 30);
-			ms.popPose();
+			ms.popMatrix();
 		}
 
 	}

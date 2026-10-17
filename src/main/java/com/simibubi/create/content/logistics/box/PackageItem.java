@@ -1,5 +1,13 @@
 package com.simibubi.create.content.logistics.box;
 
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.neoforged.neoforge.transfer.ResourceHandlerUtil;
+import net.neoforged.neoforge.transfer.transaction.Transaction;
+import net.neoforged.neoforge.transfer.item.ItemUtil;
+import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
+import net.minecraft.world.item.component.TooltipDisplay;
+import java.util.function.Consumer;
+import net.minecraft.world.item.ItemStackTemplate;
 import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Optional;
@@ -11,14 +19,13 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.simibubi.create.AllDataComponents;
 import com.simibubi.create.AllEntityTypes;
 import com.simibubi.create.AllSoundEvents;
-import com.simibubi.create.Create;
 import com.simibubi.create.content.logistics.box.PackageStyles.PackageStyle;
 import com.simibubi.create.content.logistics.stockTicker.PackageOrderWithCrafts;
 import com.simibubi.create.foundation.item.ItemHelper;
 
-import net.createmod.catnip.codecs.stream.CatnipStreamCodecBuilders;
-import net.createmod.catnip.data.Glob;
-import net.createmod.catnip.math.VecHelper;
+import net.createmod.catnip.api.data.codec.stream.CatnipStreamCodecBuilders;
+import net.createmod.catnip.api.data.Glob;
+import net.createmod.catnip.api.math.VecHelper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -33,25 +40,21 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.item.ItemUseAnimation;
 import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-
-import net.neoforged.neoforge.items.ItemHandlerHelper;
-import net.neoforged.neoforge.items.ItemStackHandler;
 
 public class PackageItem extends Item {
 	public static final int SLOTS = 9;
@@ -63,11 +66,6 @@ public class PackageItem extends Item {
 		this.style = style;
 		PackageStyles.ALL_BOXES.add(this);
 		(style.rare() ? PackageStyles.RARE_BOXES : PackageStyles.STANDARD_BOXES).add(this);
-	}
-
-	@Override
-	public String getDescriptionId() {
-		return "item." + Create.ID + (style.rare() ? ".rare_package" : ".package");
 	}
 
 	public static boolean isPackage(ItemStack stack) {
@@ -90,12 +88,17 @@ public class PackageItem extends Item {
 	}
 
 	public static ItemStack containing(List<ItemStack> stacks) {
-		ItemStackHandler newInv = new ItemStackHandler(9);
-		stacks.forEach(s -> ItemHandlerHelper.insertItemStacked(newInv, s, false));
+		ItemStacksResourceHandler newInv = new ItemStacksResourceHandler(9);
+		try (Transaction transaction = Transaction.openRoot()) {
+			for (ItemStack stack : stacks)
+				if (!stack.isEmpty())
+					ResourceHandlerUtil.insertStacking(newInv, ItemResource.of(stack), stack.getCount(), transaction);
+			transaction.commit();
+		}
 		return containing(newInv);
 	}
 
-	public static ItemStack containing(ItemStackHandler stacks) {
+	public static ItemStack containing(ItemStacksResourceHandler stacks) {
 		ItemStack box = PackageStyles.getRandomBox();
 		box.set(AllDataComponents.PACKAGE_CONTENTS, ItemHelper.containerContentsFromHandler(stacks));
 		return box;
@@ -214,30 +217,30 @@ public class PackageItem extends Item {
 		return 1;
 	}
 
-	public static ItemStackHandler getContents(ItemStack box) {
-		ItemStackHandler newInv = new ItemStackHandler(9);
+	public static ItemStacksResourceHandler getContents(ItemStack box) {
+		ItemStacksResourceHandler newInv = new ItemStacksResourceHandler(9);
 		ItemContainerContents contents = box.getOrDefault(AllDataComponents.PACKAGE_CONTENTS, ItemContainerContents.EMPTY);
 		ItemHelper.fillItemStackHandler(contents, newInv);
 		return newInv;
 	}
 
 	@Override
-	public void appendHoverText(ItemStack stack, TooltipContext tooltipContext, List<Component> tooltipComponents,
-								TooltipFlag tooltipFlag) {
-		super.appendHoverText(stack, tooltipContext, tooltipComponents, tooltipFlag);
+	public void appendHoverText(ItemStack stack, TooltipContext tooltipContext, TooltipDisplay display,
+		Consumer<Component> tooltipComponents, TooltipFlag tooltipFlag) {
+		super.appendHoverText(stack, tooltipContext, display, tooltipComponents, tooltipFlag);
 
 		if (stack.has(AllDataComponents.PACKAGE_ADDRESS))
-			tooltipComponents.add(Component.literal("\u2192 " + stack.get(AllDataComponents.PACKAGE_ADDRESS))
+			tooltipComponents.accept(Component.literal("\u2192 " + stack.get(AllDataComponents.PACKAGE_ADDRESS))
 				.withStyle(ChatFormatting.GOLD));
 
 		/*
 		 * Debug Fragmentation Data if (tag.contains("Fragment")) { CompoundTag
-		 * fragTag = tag.getCompound("Fragment");
+		 * fragTag = tag.getCompoundOrEmpty("Fragment");
 		 * pTooltipComponents.add(Component.literal("Order Information (Temporary)")
 		 * .withStyle(ChatFormatting.GREEN)); pTooltipComponents.add(Components
-		 * .literal(" Link " + fragTag.getInt("LinkIndex") +
-		 * (fragTag.getBoolean("IsFinalLink") ? " Final" : "") + " | Fragment " +
-		 * fragTag.getInt("Index") + (fragTag.getBoolean("IsFinal") ? " Final" : ""))
+		 * .literal(" Link " + fragTag.getIntOr("LinkIndex", 0) +
+		 * (fragTag.getBooleanOr("IsFinalLink", false) ? " Final" : "") + " | Fragment " +
+		 * fragTag.getIntOr("Index", 0) + (fragTag.getBooleanOr("IsFinal", false) ? " Final" : ""))
 		 * .withStyle(ChatFormatting.DARK_GREEN)); if (fragTag.contains("OrderContext"))
 		 * pTooltipComponents.add(Component.literal("Has Context!")
 		 * .withStyle(ChatFormatting.DARK_GREEN)); }
@@ -249,9 +252,9 @@ public class PackageItem extends Item {
 
 		int visibleNames = 0;
 		int skippedNames = 0;
-		ItemStackHandler contents = getContents(stack);
-		for (int i = 0; i < contents.getSlots(); i++) {
-			ItemStack itemstack = contents.getStackInSlot(i);
+		ItemStacksResourceHandler contents = getContents(stack);
+		for (int i = 0; i < contents.size(); i++) {
+			ItemStack itemstack = ItemUtil.getStack(contents, i);
 			if (itemstack.isEmpty())
 				continue;
 			if (itemstack.getItem() instanceof SpawnEggItem)
@@ -262,7 +265,7 @@ public class PackageItem extends Item {
 			}
 
 			visibleNames++;
-			tooltipComponents.add(itemstack.getHoverName()
+			tooltipComponents.accept(itemstack.getHoverName()
 				.copy()
 				.append(" x")
 				.append(String.valueOf(itemstack.getCount()))
@@ -270,7 +273,7 @@ public class PackageItem extends Item {
 		}
 
 		if (skippedNames > 0)
-			tooltipComponents.add(Component.translatable("container.shulkerBox.more", skippedNames)
+			tooltipComponents.accept(Component.translatable("container.shulkerBox.more", skippedNames)
 				.withStyle(ChatFormatting.ITALIC));
 	}
 
@@ -282,20 +285,20 @@ public class PackageItem extends Item {
 	}
 
 	@Override
-	public UseAnim getUseAnimation(ItemStack pStack) {
-		return UseAnim.BOW;
+	public ItemUseAnimation getUseAnimation(ItemStack pStack) {
+		return ItemUseAnimation.BOW;
 	}
 
-	public InteractionResultHolder<ItemStack> open(Level worldIn, Player playerIn, InteractionHand handIn) {
+	public InteractionResult open(Level worldIn, Player playerIn, InteractionHand handIn) {
 		ItemStack box = playerIn.getItemInHand(handIn);
-		ItemStackHandler contents = getContents(box);
+		ItemStacksResourceHandler contents = getContents(box);
 		ItemStack particle = box.copy();
 
 		playerIn.setItemInHand(handIn, box.getCount() <= 1 ? ItemStack.EMPTY : box.copyWithCount(box.getCount() - 1));
 
 		if (!worldIn.isClientSide()) {
-			for (int i = 0; i < contents.getSlots(); i++) {
-				ItemStack itemstack = contents.getStackInSlot(i);
+			for (int i = 0; i < contents.size(); i++) {
+				ItemStack itemstack = ItemUtil.getStack(contents, i);
 				if (itemstack.isEmpty())
 					continue;
 
@@ -305,7 +308,7 @@ public class PackageItem extends Item {
 							.add(playerIn.getLookAngle()
 								.multiply(1, 0, 1)
 								.normalize())),
-						MobSpawnType.SPAWN_EGG, false, false);
+						EntitySpawnReason.SPAWN_ITEM_USE, false, false);
 					if (entity != null)
 						itemstack.shrink(1);
 				}
@@ -325,18 +328,18 @@ public class PackageItem extends Item {
 					.add(playerIn.getLookAngle()
 						.scale(.5))
 					.add(motion.scale(4));
-				worldIn.addParticle(new ItemParticleOption(ParticleTypes.ITEM, particle), pos.x, pos.y, pos.z, motion.x,
+				worldIn.addParticle(new ItemParticleOption(ParticleTypes.ITEM, ItemStackTemplate.fromStack(particle)), pos.x, pos.y, pos.z, motion.x,
 					motion.y, motion.z);
 			}
 		}
 
-		return new InteractionResultHolder<>(InteractionResult.SUCCESS, box);
+		return InteractionResult.SUCCESS.heldItemTransformedTo(box);
 	}
 
 	@Override
 	public InteractionResult useOn(UseOnContext context) {
 		if (context.getPlayer().isShiftKeyDown()) {
-			return open(context.getLevel(), context.getPlayer(), context.getHand()).getResult();
+			return open(context.getLevel(), context.getPlayer(), context.getHand());
 		}
 
 		Vec3 point = context.getClickLocation();
@@ -349,7 +352,7 @@ public class PackageItem extends Item {
 			.getAxis()
 			.isHorizontal())
 			point = point.add(Vec3.atLowerCornerOf(context.getClickedFace()
-					.getNormal())
+					.getUnitVec3i())
 				.scale(r));
 
 		AABB scanBB = new AABB(point, point).inflate(r, 0, r)
@@ -368,27 +371,27 @@ public class PackageItem extends Item {
 	}
 
 	@Override
-	public InteractionResultHolder<ItemStack> use(Level world, Player player, InteractionHand hand) {
+	public InteractionResult use(Level world, Player player, InteractionHand hand) {
 		if (player.isShiftKeyDown())
 			return open(world, player, hand);
 		ItemStack itemstack = player.getItemInHand(hand);
 		player.startUsingItem(hand);
-		return InteractionResultHolder.success(itemstack);
+		return InteractionResult.SUCCESS.heldItemTransformedTo(itemstack);
 	}
 
 	@Override
-	public void releaseUsing(ItemStack stack, Level world, LivingEntity entity, int ticks) {
+	public boolean releaseUsing(ItemStack stack, Level world, LivingEntity entity, int ticks) {
 		if (!(entity instanceof Player player))
-			return;
+			return false;
 		int i = this.getUseDuration(stack, entity) - ticks;
 		if (i < 0)
-			return;
+			return false;
 
 		float f = getPackageVelocity(i);
 		if (f < 0.1D)
-			return;
-		if (world.isClientSide)
-			return;
+			return false;
+		if (world.isClientSide())
+			return true;
 
 		world.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.SNOWBALL_THROW,
 			SoundSource.NEUTRAL, 0.5F, 0.5F);
@@ -408,6 +411,7 @@ public class PackageItem extends Item {
 		packageEntity.setDeltaMovement(motion);
 		packageEntity.tossedBy = new WeakReference<>(player);
 		world.addFreshEntity(packageEntity);
+		return true;
 	}
 
 	public static float getPackageVelocity(int p_185059_0_) {

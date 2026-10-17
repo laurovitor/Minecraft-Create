@@ -8,7 +8,10 @@
   "type": "create:milling",
   "ingredients": [
     {
-      "item": "biomeswevegone:horseweed"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "biomeswevegone:horseweed"
+      ]
     }
   ],
   "processing_time": 50,

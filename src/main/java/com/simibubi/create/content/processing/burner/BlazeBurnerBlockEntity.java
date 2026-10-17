@@ -1,5 +1,9 @@
 package com.simibubi.create.content.processing.burner;
 
+import net.minecraft.world.entity.player.Player;
+
+import com.simibubi.create.foundation.utility.ClientAccess;
+
 import java.util.List;
 
 import org.jetbrains.annotations.Nullable;
@@ -17,13 +21,11 @@ import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
-import net.createmod.catnip.animation.LerpedFloat;
-import net.createmod.catnip.animation.LerpedFloat.Chaser;
-import net.createmod.catnip.data.Iterate;
-import net.createmod.catnip.math.AngleHelper;
-import net.createmod.catnip.math.VecHelper;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
+import net.createmod.catnip.api.animation.LerpedFloat;
+import net.createmod.catnip.api.animation.LerpedFloat.Chaser;
+import net.createmod.catnip.api.data.Iterate;
+import net.createmod.catnip.api.math.AngleHelper;
+import net.createmod.catnip.api.math.VecHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
@@ -42,9 +44,6 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
-
 public class BlazeBurnerBlockEntity extends SmartBlockEntity {
 
 	public static final int MAX_HEAT_CAPACITY = 10000;
@@ -59,7 +58,6 @@ public class BlazeBurnerBlockEntity extends SmartBlockEntity {
 	protected FuelType activeFuel;
 	protected int remainingBurnTime;
 	protected LerpedFloat headAngle;
-
 
 	public BlazeBurnerBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
 		super(type, pos, state);
@@ -91,7 +89,7 @@ public class BlazeBurnerBlockEntity extends SmartBlockEntity {
 	public void tick() {
 		super.tick();
 
-		if (level.isClientSide) {
+		if (level.isClientSide()) {
 			if (shouldTickAnimation())
 				tickAnimation();
 			if (!isVirtual())
@@ -139,19 +137,17 @@ public class BlazeBurnerBlockEntity extends SmartBlockEntity {
 		return null;
 	}
 
-	@OnlyIn(Dist.CLIENT)
 	private boolean shouldTickAnimation() {
 		// Offload the animation tick to the visual when flywheel in enabled
 		return !VisualizationManager.supportsVisualization(level);
 	}
 
-	@OnlyIn(Dist.CLIENT)
 	void tickAnimation() {
 		boolean active = getHeatLevelFromBlock().isAtLeast(HeatLevel.FADING) && isValidBlockAbove();
 
 		if (!active) {
 			float target = 0;
-			LocalPlayer player = Minecraft.getInstance().player;
+			Player player = ClientAccess.player();
 			if (player != null && !player.isInvisible()) {
 				double x;
 				double z;
@@ -198,9 +194,9 @@ public class BlazeBurnerBlockEntity extends SmartBlockEntity {
 
 	@Override
 	protected void read(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
-		activeFuel = FuelType.values()[compound.getInt("fuelLevel")];
-		remainingBurnTime = compound.getInt("burnTimeRemaining");
-		isCreative = compound.getBoolean("isCreative");
+		activeFuel = FuelType.values()[compound.getIntOr("fuelLevel", 0)];
+		remainingBurnTime = compound.getIntOr("burnTimeRemaining", 0);
+		isCreative = compound.getBooleanOr("isCreative", false);
 		goggles = compound.contains("Goggles");
 		hat = compound.contains("TrainHat");
 		super.read(compound, registries, clientPacket);
@@ -255,7 +251,7 @@ public class BlazeBurnerBlockEntity extends SmartBlockEntity {
 			newBurnTime = 3200;
 			newFuel = FuelType.SPECIAL;
 		} else {
-			newBurnTime = itemStack.getBurnTime(null);
+			newBurnTime = itemStack.getBurnTime(null, level.fuelValues());
 			if (newBurnTime > 0) {
 				newFuel = FuelType.NORMAL;
 			} else if (AllItemTags.BLAZE_BURNER_FUEL_REGULAR.matches(itemStack)) {
@@ -289,7 +285,7 @@ public class BlazeBurnerBlockEntity extends SmartBlockEntity {
 		activeFuel = newFuel;
 		remainingBurnTime = newBurnTime;
 
-		if (level.isClientSide) {
+		if (level.isClientSide()) {
 			spawnParticleBurst(activeFuel == FuelType.SPECIAL);
 			return true;
 		}
@@ -300,7 +296,7 @@ public class BlazeBurnerBlockEntity extends SmartBlockEntity {
 
 		if (prev != getHeatLevelFromBlock())
 			level.playSound(null, worldPosition, SoundEvents.BLAZE_AMBIENT, SoundSource.BLOCKS,
-				.125f + level.random.nextFloat() * .125f, 1.15f - level.random.nextFloat() * .25f);
+				.125f + level.getRandom().nextFloat() * .125f, 1.15f - level.getRandom().nextFloat() * .25f);
 
 		return true;
 	}
@@ -312,7 +308,7 @@ public class BlazeBurnerBlockEntity extends SmartBlockEntity {
 
 		HeatLevel next = getHeatLevelFromBlock().nextActiveLevel();
 
-		if (level.isClientSide) {
+		if (level.isClientSide()) {
 			spawnParticleBurst(next.isAtLeast(HeatLevel.SEETHING));
 			return;
 		}
@@ -336,7 +332,7 @@ public class BlazeBurnerBlockEntity extends SmartBlockEntity {
 
 	protected void playSound() {
 		level.playSound(null, worldPosition, SoundEvents.BLAZE_SHOOT, SoundSource.BLOCKS,
-			.125f + level.random.nextFloat() * .125f, .75f - level.random.nextFloat() * .25f);
+			.125f + level.getRandom().nextFloat() * .125f, .75f - level.getRandom().nextFloat() * .25f);
 	}
 
 	protected HeatLevel getHeatLevel() {
@@ -390,7 +386,7 @@ public class BlazeBurnerBlockEntity extends SmartBlockEntity {
 
 	public void spawnParticleBurst(boolean soulFlame) {
 		Vec3 c = VecHelper.getCenterOf(worldPosition);
-		RandomSource r = level.random;
+		RandomSource r = level.getRandom();
 		for (int i = 0; i < 20; i++) {
 			Vec3 offset = VecHelper.offsetRandomly(Vec3.ZERO, r, .5f)
 				.multiply(1, .25f, 1)

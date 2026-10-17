@@ -1,5 +1,6 @@
 package com.simibubi.create.content.schematics;
 
+import com.simibubi.create.foundation.utility.NbtValueIO;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -14,9 +15,9 @@ import com.simibubi.create.content.schematics.requirement.ItemRequirement;
 import com.simibubi.create.foundation.blockEntity.IMergeableBE;
 import com.simibubi.create.foundation.utility.BlockHelper;
 
-import net.createmod.catnip.levelWrappers.SchematicLevel;
-import net.createmod.catnip.math.BBHelper;
-import net.createmod.catnip.nbt.NBTHelper;
+import net.createmod.catnip.api.level.wrapper.SchematicLevel;
+import net.createmod.catnip.api.math.BBHelper;
+import net.createmod.catnip.api.nbt.NBTHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -70,24 +71,24 @@ public class SchematicPrinter {
 			}
 		}
 
-		printingEntityIndex = compound.getInt("EntityProgress");
-		printStage = PrintStage.valueOf(compound.getString("PrintStage"));
-		compound.getList("DeferredBlocks", 10).stream()
+		printingEntityIndex = compound.getIntOr("EntityProgress", 0);
+		printStage = PrintStage.valueOf(compound.getStringOr("PrintStage", ""));
+		compound.getListOrEmpty("DeferredBlocks").stream()
 			.map(p -> NBTHelper.readBlockPos((CompoundTag) p, "Pos"))
 			.collect(Collectors.toCollection(() -> deferredBlocks));
 	}
 
 	public void write(CompoundTag compound) {
 		if (currentPos != null)
-			compound.put("CurrentPos", NbtUtils.writeBlockPos(currentPos));
+			compound.store("CurrentPos", BlockPos.CODEC, currentPos);
 		if (schematicAnchor != null)
-			compound.put("Anchor", NbtUtils.writeBlockPos(schematicAnchor));
+			compound.store("Anchor", BlockPos.CODEC, schematicAnchor);
 		compound.putInt("EntityProgress", printingEntityIndex);
 		compound.putString("PrintStage", printStage.name());
 		ListTag tagDeferredBlocks = new ListTag();
 		for (BlockPos p : deferredBlocks) {
 			CompoundTag tag = new CompoundTag();
-			tag.put("Pos", NbtUtils.writeBlockPos(p));
+			tag.store("Pos", BlockPos.CODEC, p);
 			tagDeferredBlocks.add(tag);
 		}
 		compound.put("DeferredBlocks", tagDeferredBlocks);
@@ -255,7 +256,7 @@ public class SchematicPrinter {
 			blockEntity = ((EntityBlock) blockState.getBlock()).newBlockEntity(target, blockState);
 			CompoundTag data = BlockHelper.prepareBlockEntityData(blockReader, blockState, blockReader.getBlockEntity(target));
 			if (blockEntity != null && data != null)
-				blockEntity.loadWithComponents(data, blockReader.registryAccess());
+				blockEntity.loadWithComponents(NbtValueIO.fromTag(data, blockReader.registryAccess()));
 		}
 		return ItemRequirement.of(blockState, blockEntity);
 	}

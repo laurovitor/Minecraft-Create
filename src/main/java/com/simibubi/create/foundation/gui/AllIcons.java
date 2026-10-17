@@ -1,5 +1,8 @@
 package com.simibubi.create.foundation.gui;
 
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import org.joml.Matrix4f;
 
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -7,21 +10,18 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.simibubi.create.Create;
 
-import net.createmod.catnip.gui.element.DelegatedStencilElement;
-import net.createmod.catnip.gui.element.ScreenElement;
-import net.createmod.catnip.theme.Color;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.resources.ResourceLocation;
+import net.createmod.catnip.api.client.gui.element.DelegatedStencilElement;
+import net.createmod.catnip.api.client.gui.element.ScreenElement;
+import net.createmod.catnip.api.theme.Color;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.util.LightCoordsUtil;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 public class AllIcons implements ScreenElement {
 
-	public static final ResourceLocation ICON_ATLAS = Create.asResource("textures/gui/icons.png");
+	public static final Identifier ICON_ATLAS = Create.asResource("textures/gui/icons.png");
 	public static final int ICON_ATLAS_SIZE = 256;
 
 	private static int x = 0, y = -1;
@@ -183,49 +183,50 @@ public class AllIcons implements ScreenElement {
 		return new AllIcons(x = 0, ++y);
 	}
 
-	@OnlyIn(Dist.CLIENT)
-	public void bind() {
-		RenderSystem.setShaderTexture(0, ICON_ATLAS);
-	}
-
-	@OnlyIn(Dist.CLIENT)
 	@Override
-	public void render(GuiGraphics graphics, int x, int y) {
-		graphics.blit(ICON_ATLAS, x, y, 0, iconX, iconY, 16, 16, 256, 256);
+	public void render(GuiGraphicsExtractor graphics, int x, int y) {
+		graphics.blit(RenderPipelines.GUI_TEXTURED, ICON_ATLAS, x, y, iconX, iconY, 16, 16, 256, 256);
 	}
 
-	@OnlyIn(Dist.CLIENT)
-	public void render(PoseStack ms, MultiBufferSource buffer, int color) {
-		VertexConsumer builder = buffer.getBuffer(RenderType.text(ICON_ATLAS));
-		Matrix4f matrix = ms.last().pose();
-		Color rgb = new Color(color);
-		int light = LightTexture.FULL_BRIGHT;
-
-		Vec3 vec1 = new Vec3(0, 0, 0);
-		Vec3 vec2 = new Vec3(0, 1, 0);
-		Vec3 vec3 = new Vec3(1, 1, 0);
-		Vec3 vec4 = new Vec3(1, 0, 0);
-
-		float u1 = iconX * 1f / ICON_ATLAS_SIZE;
-		float u2 = (iconX + 16) * 1f / ICON_ATLAS_SIZE;
-		float v1 = iconY * 1f / ICON_ATLAS_SIZE;
-		float v2 = (iconY + 16) * 1f / ICON_ATLAS_SIZE;
-
-		vertex(builder, matrix, vec1, rgb, u1, v1, light);
-		vertex(builder, matrix, vec2, rgb, u1, v2, light);
-		vertex(builder, matrix, vec3, rgb, u2, v2, light);
-		vertex(builder, matrix, vec4, rgb, u2, v1, light);
+	/**
+	 * Queue this icon as a quad in the world.
+	 * <p>
+	 * 26.2 hands out a vertex consumer only at draw time, so the quad is written from a custom
+	 * geometry node. The record holds everything it needs, which keeps it safe to draw from whatever
+	 * thread the queue gets to it on.
+	 */
+	public void submit(PoseStack ms, SubmitNodeCollector queue, int color) {
+		queue.submitCustomGeometry(ms, RenderTypes.text(ICON_ATLAS), new IconGeometry(iconX, iconY, color));
 	}
 
-	@OnlyIn(Dist.CLIENT)
-	private void vertex(VertexConsumer builder, Matrix4f matrix, Vec3 vec, Color rgb, float u, float v, int light) {
-		builder.addVertex(matrix, (float) vec.x, (float) vec.y, (float) vec.z)
-			.setColor(rgb.getRed(), rgb.getGreen(), rgb.getBlue(), 255)
-			.setUv(u, v)
-			.setLight(light);
+	private record IconGeometry(int iconX, int iconY, int color)
+		implements SubmitNodeCollector.CustomGeometryRenderer {
+		@Override
+		public void render(PoseStack.Pose pose, VertexConsumer builder) {
+			Matrix4f matrix = pose.pose();
+			int light = LightCoordsUtil.FULL_BRIGHT;
+			Color rgb = new Color(color);
+
+			float u1 = iconX * 1f / ICON_ATLAS_SIZE;
+			float u2 = (iconX + 16) * 1f / ICON_ATLAS_SIZE;
+			float v1 = iconY * 1f / ICON_ATLAS_SIZE;
+			float v2 = (iconY + 16) * 1f / ICON_ATLAS_SIZE;
+
+			vertex(builder, matrix, 0, 0, rgb, u1, v1, light);
+			vertex(builder, matrix, 0, 1, rgb, u1, v2, light);
+			vertex(builder, matrix, 1, 1, rgb, u2, v2, light);
+			vertex(builder, matrix, 1, 0, rgb, u2, v1, light);
+		}
+
+		private static void vertex(VertexConsumer builder, Matrix4f matrix, float x, float y, Color rgb, float u,
+			float v, int light) {
+			builder.addVertex(matrix, x, y, 0)
+				.setColor(rgb.getRed(), rgb.getGreen(), rgb.getBlue(), 255)
+				.setUv(u, v)
+				.setLight(light);
+		}
 	}
 
-	@OnlyIn(Dist.CLIENT)
 	public DelegatedStencilElement asStencil() {
 		return new DelegatedStencilElement().withStencilRenderer((ms, w, h, alpha) -> this.render(ms, 0, 0)).withBounds(16, 16);
 	}

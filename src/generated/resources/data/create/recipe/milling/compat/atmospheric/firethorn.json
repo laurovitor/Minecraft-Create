@@ -8,7 +8,10 @@
   "type": "create:milling",
   "ingredients": [
     {
-      "item": "atmospheric:firethorn"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "atmospheric:firethorn"
+      ]
     }
   ],
   "processing_time": 50,

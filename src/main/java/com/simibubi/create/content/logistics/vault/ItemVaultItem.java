@@ -1,12 +1,13 @@
 package com.simibubi.create.content.logistics.vault;
 
+import com.simibubi.create.foundation.item.BlockEntityDataHelper;
 import com.simibubi.create.AllBlockEntityTypes;
 import com.simibubi.create.api.connectivity.ConnectivityHandler;
 import com.simibubi.create.content.equipment.symmetryWand.SymmetryWandItem;
 
 import com.simibubi.create.foundation.block.IBE;
 
-import net.createmod.catnip.math.VecHelper;
+import net.createmod.catnip.api.math.VecHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -46,15 +47,13 @@ public class ItemVaultItem extends BlockItem {
 		MinecraftServer minecraftserver = level.getServer();
 		if (minecraftserver == null)
 			return false;
-		CustomData blockEntityData = itemStack.get(DataComponents.BLOCK_ENTITY_DATA);
-		if (blockEntityData != null) {
-			CompoundTag nbt = blockEntityData.copyTag();
+		if (itemStack.has(DataComponents.BLOCK_ENTITY_DATA)) {
+			CompoundTag nbt = BlockEntityDataHelper.getTag(itemStack);
 			nbt.remove("Length");
 			nbt.remove("Size");
 			nbt.remove("Controller");
 			nbt.remove("LastKnownPos");
-			BlockEntity.addEntityType(nbt, ((IBE<?>) this.getBlock()).getBlockEntityType());
-			itemStack.set(DataComponents.BLOCK_ENTITY_DATA, CustomData.of(nbt));
+			BlockEntityDataHelper.setTag(itemStack, ((IBE<?>) this.getBlock()).getBlockEntityType(), nbt);
 		}
 		return super.updateCustomBlockEntityTag(blockPos, level, player, itemStack, blockState);
 	}

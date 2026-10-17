@@ -8,7 +8,10 @@
   "type": "create:milling",
   "ingredients": [
     {
-      "item": "biomeswevegone:white_puffball_cap"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "biomeswevegone:white_puffball_cap"
+      ]
     }
   ],
   "processing_time": 150,

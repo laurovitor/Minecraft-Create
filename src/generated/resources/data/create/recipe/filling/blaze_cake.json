@@ -1,13 +1,10 @@
 {
   "type": "create:filling",
   "ingredients": [
+    "create:blaze_cake_base",
     {
-      "item": "create:blaze_cake_base"
-    },
-    {
-      "type": "neoforge:single",
       "amount": 250,
-      "fluid": "minecraft:lava"
+      "ingredient": "minecraft:lava"
     }
   ],
   "results": [

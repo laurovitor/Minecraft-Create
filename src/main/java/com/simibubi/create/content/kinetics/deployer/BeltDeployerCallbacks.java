@@ -1,5 +1,6 @@
 package com.simibubi.create.content.kinetics.deployer;
 
+import com.simibubi.create.foundation.item.ItemHelper;
 import static com.simibubi.create.content.kinetics.base.DirectionalKineticBlock.FACING;
 
 import java.util.List;
@@ -140,7 +141,7 @@ public class BeltDeployerCallbacks {
 				heldItem.hurtAndBreak(1, blockEntity.player, EquipmentSlot.MAINHAND);
 			} else {
 				Player player = blockEntity.player;
-				ItemStack leftover = heldItem.getCraftingRemainingItem();
+				ItemStack leftover = ItemHelper.getCraftingRemainder(heldItem);
 				heldItem.shrink(1);
 				if (heldItem.isEmpty()) {
 					player.setItemInHand(InteractionHand.MAIN_HAND, leftover);
@@ -158,7 +159,7 @@ public class BeltDeployerCallbacks {
 		BlockPos pos = blockEntity.getBlockPos();
 		Level world = blockEntity.getLevel();
 		if (heldItem.isEmpty())
-			world.playSound(null, pos, SoundEvents.ITEM_BREAK, SoundSource.BLOCKS, .25f, 1);
+			world.playSound(null, pos, SoundEvents.ITEM_BREAK.value(), SoundSource.BLOCKS, .25f, 1);
 		world.playSound(null, pos, SoundEvents.ITEM_PICKUP, SoundSource.BLOCKS, .25f, .75f);
 		if (recipe instanceof SandPaperPolishingRecipe)
 			AllSoundEvents.SANDING_SHORT.playOnServer(world, pos, .35f, 1f);

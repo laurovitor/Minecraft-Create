@@ -1,12 +1,13 @@
 package com.simibubi.create.content.kinetics.fan;
 
+import net.minecraft.client.particle.ParticleResources;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.simibubi.create.AllParticleTypes;
 import com.simibubi.create.foundation.particle.ICustomParticleDataWithSprite;
 
-import net.minecraft.client.particle.ParticleEngine.SpriteParticleRegistration;
+import net.minecraft.client.particle.ParticleResources.SpriteParticleRegistration;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;
@@ -14,8 +15,6 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -69,7 +68,6 @@ public class AirFlowParticleData implements ParticleOptions, ICustomParticleData
 	}
 
 	@Override
-	@OnlyIn(Dist.CLIENT)
 	public SpriteParticleRegistration<AirFlowParticleData> getMetaFactory() {
 		return AirFlowParticle.Factory::new;
 	}

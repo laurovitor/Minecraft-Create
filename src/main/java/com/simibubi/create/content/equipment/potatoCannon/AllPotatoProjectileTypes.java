@@ -13,10 +13,12 @@ import com.simibubi.create.content.equipment.potatoCannon.AllPotatoProjectileEnt
 import com.simibubi.create.content.equipment.potatoCannon.AllPotatoProjectileEntityHitActions.SetOnFire;
 import com.simibubi.create.content.equipment.potatoCannon.AllPotatoProjectileEntityHitActions.SuspiciousStew;
 
+import net.minecraft.world.item.component.Consumables;
 import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.food.Foods;
+import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 
@@ -140,7 +142,7 @@ public class AllPotatoProjectileTypes {
 			.knockback(0.1f)
 			.renderTumbling()
 			.soundPitch(1.1f)
-			.onEntityHit(new PotionEffect(MobEffects.MOVEMENT_SLOWDOWN, 2, 160, true))
+			.onEntityHit(new PotionEffect(MobEffects.SLOWNESS, 2, 160, true))
 			.addItems(AllItems.HONEYED_APPLE.get())
 			.build());
 
@@ -162,7 +164,7 @@ public class AllPotatoProjectileTypes {
 			.knockback(0.05f)
 			.renderTumbling()
 			.soundPitch(1.1f)
-			.onEntityHit(new FoodEffects(Foods.ENCHANTED_GOLDEN_APPLE, false))
+			.onEntityHit(new FoodEffects(Consumables.ENCHANTED_GOLDEN_APPLE, false))
 			.addItems(Items.ENCHANTED_GOLDEN_APPLE)
 			.build());
 
@@ -267,7 +269,7 @@ public class AllPotatoProjectileTypes {
 			.velocity(1.1f)
 			.renderTowardMotion(140, 1)
 			.sticky()
-			.onEntityHit(new FoodEffects(Foods.PUFFERFISH, false))
+			.onEntityHit(new FoodEffects(Consumables.PUFFERFISH, false))
 			.soundPitch(1.1f)
 			.addItems(Items.PUFFERFISH)
 			.build());
@@ -278,7 +280,7 @@ public class AllPotatoProjectileTypes {
 			.knockback(0.2f)
 			.velocity(0.8f)
 			.renderTowardMotion(140, 1)
-			.dropStack(Items.BOWL.getDefaultInstance())
+			.dropStack(new ItemStackTemplate(Items.BOWL))
 			.onEntityHit(SuspiciousStew.INSTANCE)
 			.addItems(Items.SUSPICIOUS_STEW)
 			.build());

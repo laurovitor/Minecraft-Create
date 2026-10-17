@@ -1,10 +1,17 @@
 package com.simibubi.create.compat.jei.category;
 
-import java.util.Arrays;
+import net.neoforged.neoforge.transfer.item.ItemUtil;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
+import net.neoforged.neoforge.transfer.transaction.Transaction;
+import net.neoforged.neoforge.transfer.fluid.FluidUtil;
+import net.neoforged.neoforge.transfer.access.ItemAccess;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.fluid.FluidResource;
+import org.jspecify.annotations.NullMarked;
 import java.util.Collection;
 import java.util.function.Consumer;
 
-import javax.annotation.ParametersAreNonnullByDefault;
 
 import com.simibubi.create.Create;
 import com.simibubi.create.compat.jei.category.animations.AnimatedSpout;
@@ -22,22 +29,23 @@ import mezz.jei.api.neoforge.NeoForgeTypes;
 import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.runtime.IIngredientManager;
-import net.createmod.catnip.registry.RegisteredObjectsHelper;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.resources.ResourceLocation;
+import net.createmod.catnip.api.registry.RegisteredObjectsHelper;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 
-import net.neoforged.neoforge.capabilities.Capabilities.FluidHandler;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.fluids.FluidStack;
-import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
-import net.neoforged.neoforge.fluids.capability.IFluidHandlerItem;
 import net.neoforged.neoforge.fluids.crafting.DataComponentFluidIngredient;
 import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 
-@ParametersAreNonnullByDefault
+@NullMarked
 public class SpoutCategory extends CreateRecipeCategory<FillingRecipe> {
 
 	private final AnimatedSpout spout = new AnimatedSpout();
@@ -52,7 +60,7 @@ public class SpoutCategory extends CreateRecipeCategory<FillingRecipe> {
 			if (PotionFluidHandler.isPotionItem(stack)) {
 				FluidStack fluidFromPotionItem = PotionFluidHandler.getFluidFromPotionItem(stack);
 				Ingredient bottle = Ingredient.of(Items.GLASS_BOTTLE);
-				ResourceLocation id = Create.asResource("potions");
+				Identifier id = Create.asResource("potions");
 				SizedFluidIngredient fluidIngredient = new SizedFluidIngredient(
 					DataComponentFluidIngredient.of(false, fluidFromPotionItem), fluidFromPotionItem.getAmount());
 				FillingRecipe recipe = new StandardProcessingRecipe.Builder<>(FillingRecipe::new, id)
@@ -60,16 +68,16 @@ public class SpoutCategory extends CreateRecipeCategory<FillingRecipe> {
 					.withFluidIngredients(fluidIngredient)
 						.withSingleItemOutput(stack)
 						.build();
-				consumer.accept(new RecipeHolder<>(id, recipe));
+				consumer.accept(new RecipeHolder<>(recipeKey(id), recipe));
 				continue;
 			}
 
-			IFluidHandlerItem capability = stack.getCapability(FluidHandler.ITEM);
+			ResourceHandler<FluidResource> capability = Capabilities.Fluid.ITEM.getCapability(stack, ItemAccess.forStack(stack));
 			if (capability == null)
 				continue;
 
-			int numTanks = capability.getTanks();
-			FluidStack existingFluid = numTanks == 1 ? capability.getFluidInTank(0) : FluidStack.EMPTY;
+			int numTanks = capability.size();
+			FluidStack existingFluid = numTanks == 1 ? FluidUtil.getStack(capability, 0) : FluidStack.EMPTY;
 
 			for (FluidStack fluidStack : fluidStacks) {
 				// Hoist the fluid equality check to avoid the work of copying the stack + populating capabilities
@@ -78,23 +86,35 @@ public class SpoutCategory extends CreateRecipeCategory<FillingRecipe> {
 					continue;
 
 				ItemStack copy = stack.copy();
-				IFluidHandlerItem fhi = copy.getCapability(FluidHandler.ITEM);
+				// Filling a bucket swaps the item out from under the handler, which an access over a bare
+				// stack refuses to do; the filled item is read back out of the access afterwards rather
+				// than being handed over as a container.
+				// One slot the fluid handler is allowed to swap the item inside: filling a bucket
+				// changes which item is held, and an access over a bare stack refuses that.
+				ItemStacksResourceHandler carrier = new ItemStacksResourceHandler(1);
+				carrier.set(0, ItemResource.of(copy), copy.getCount());
+				ItemAccess access = ItemAccess.forHandlerIndex(carrier, 0);
+				ResourceHandler<FluidResource> fhi = access.getCapability(Capabilities.Fluid.ITEM);
 				if (fhi != null) {
 					if (!GenericItemFilling.isFluidHandlerValid(copy, fhi))
 						continue;
 					FluidStack fluidCopy = fluidStack.copy();
 					fluidCopy.setAmount(1000);
-					fhi.fill(fluidCopy, FluidAction.EXECUTE);
-					ItemStack container = fhi.getContainer();
+					try (Transaction transaction = Transaction.openRoot()) {
+						int transferred = fluidCopy.isEmpty() ? 0 : fhi.insert(FluidResource.of(fluidCopy), fluidCopy.getAmount(), transaction);
+						transaction.commit();
+					}
+					ItemStack container = ItemUtil.getStack(carrier, 0);
 					if (ItemHelper.sameItem(container, copy))
 						continue;
 					if (container.isEmpty())
 						continue;
 
-					Ingredient bucket = Ingredient.of(stack);
-					ResourceLocation itemName = RegisteredObjectsHelper.getKeyOrThrow(stack.getItem());
-					ResourceLocation fluidName = RegisteredObjectsHelper.getKeyOrThrow(fluidCopy.getFluid());
-					ResourceLocation id = Create.asResource("fill_" + itemName.getNamespace() + "_" + itemName.getPath()
+					// An ingredient is a flat set of items now, so it can only name the container's item.
+					Ingredient bucket = Ingredient.of(stack.getItem());
+					Identifier itemName = RegisteredObjectsHelper.getKeyOrThrow(stack.getItem());
+					Identifier fluidName = RegisteredObjectsHelper.getKeyOrThrow(fluidCopy.getFluid());
+					Identifier id = Create.asResource("fill_" + itemName.getNamespace() + "_" + itemName.getPath()
 							+ "_with_" + fluidName.getNamespace() + "_" + fluidName.getPath());
 					SizedFluidIngredient fluidIngredient = new SizedFluidIngredient(
 						DataComponentFluidIngredient.of(false, fluidCopy), fluidCopy.getAmount());
@@ -103,10 +123,18 @@ public class SpoutCategory extends CreateRecipeCategory<FillingRecipe> {
 						.withFluidIngredients(fluidIngredient)
 							.withSingleItemOutput(container)
 							.build();
-					consumer.accept(new RecipeHolder<>(id, recipe));
+					consumer.accept(new RecipeHolder<>(recipeKey(id), recipe));
 				}
 			}
 		}
+	}
+
+	/**
+	 * A recipe is held under a registry key rather than a bare id in 26.2. These recipes only exist
+	 * in JEI, so the key names something the recipe manager has never heard of.
+	 */
+	private static ResourceKey<Recipe<?>> recipeKey(Identifier id) {
+		return ResourceKey.create(Registries.RECIPE, id);
 	}
 
 	@Override
@@ -125,12 +153,11 @@ public class SpoutCategory extends CreateRecipeCategory<FillingRecipe> {
 	}
 
 	@Override
-	public void draw(FillingRecipe recipe, IRecipeSlotsView iRecipeSlotsView, GuiGraphics graphics, double mouseX, double mouseY) {
+	public void draw(FillingRecipe recipe, IRecipeSlotsView iRecipeSlotsView, GuiGraphicsExtractor graphics, double mouseX, double mouseY) {
 		AllGuiTextures.JEI_SHADOW.render(graphics, 62, 57);
 		AllGuiTextures.JEI_DOWN_ARROW.render(graphics, 126, 29);
-		spout.withFluids(Arrays.asList(recipe.getRequiredFluid()
-				.getFluids()))
-			.draw(graphics, getBackground().getWidth() / 2 - 13, 22);
+		spout.withFluids(fluidsOf(recipe.getRequiredFluid()))
+			.draw(graphics, getWidth() / 2 - 13, 22);
 	}
 
 }

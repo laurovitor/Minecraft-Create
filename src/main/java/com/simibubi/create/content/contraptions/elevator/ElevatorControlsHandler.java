@@ -17,7 +17,7 @@ import com.simibubi.create.content.contraptions.actors.contraptionControls.Contr
 import com.simibubi.create.content.contraptions.actors.contraptionControls.ContraptionControlsMovement.ElevatorFloorSelection;
 import com.simibubi.create.content.contraptions.behaviour.MovementContext;
 
-import net.createmod.catnip.data.Couple;
+import net.createmod.catnip.api.data.Couple;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
@@ -28,9 +28,6 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemp
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 public class ElevatorControlsHandler {
 
@@ -48,7 +45,6 @@ public class ElevatorControlsHandler {
 
 	}
 
-	@OnlyIn(Dist.CLIENT)
 	public static boolean onScroll(double delta) {
 		Minecraft mc = Minecraft.getInstance();
 		LocalPlayer player = mc.player;

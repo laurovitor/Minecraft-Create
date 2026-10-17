@@ -1,5 +1,9 @@
 package com.simibubi.create.compat.tconstruct;
 
+import net.neoforged.neoforge.transfer.transaction.Transaction;
+import net.neoforged.neoforge.transfer.fluid.FluidUtil;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.fluid.FluidResource;
 import com.simibubi.create.api.behaviour.spouting.BlockSpoutingBehaviour;
 import com.simibubi.create.content.fluids.spout.SpoutBlockEntity;
 import com.simibubi.create.foundation.fluid.FluidHelper;
@@ -12,9 +16,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.fluids.FluidStack;
-import net.neoforged.neoforge.fluids.capability.IFluidHandler;
-import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
-
 public enum SpoutCasting implements BlockSpoutingBehaviour {
 	INSTANCE;
 
@@ -27,27 +28,38 @@ public enum SpoutCasting implements BlockSpoutingBehaviour {
 		if (blockEntity == null)
 			return 0;
 
-		IFluidHandler handler = level.getCapability(Capabilities.FluidHandler.BLOCK, blockEntity.getBlockPos(), Direction.UP);
+		ResourceHandler<FluidResource> handler = level.getCapability(Capabilities.Fluid.BLOCK, blockEntity.getBlockPos(), Direction.UP);
 		if (handler == null)
 			return 0;
-		if (handler.getTanks() != 1)
+		if (handler.size() != 1)
 			return 0;
 
-		if (!handler.isFluidValid(0, availableFluid))
+		if (!handler.isValid(0, FluidResource.of(availableFluid)))
 			return 0;
 
-		FluidStack containedFluid = handler.getFluidInTank(0);
+		FluidStack containedFluid = FluidUtil.getStack(handler, 0);
 		if (!(containedFluid.isEmpty() || FluidStack.isSameFluidSameComponents(containedFluid, availableFluid)))
 			return 0;
 
 		// Do not fill if it would only partially fill the table (unless > 1000mb)
 		int amount = availableFluid.getAmount();
-		if (amount < 1000
-			&& handler.fill(FluidHelper.copyStackWithAmount(availableFluid, amount + 1), FluidAction.SIMULATE) > amount)
-			return 0;
+		if (amount < 1000) {
+			FluidStack oneMore = FluidHelper.copyStackWithAmount(availableFluid, amount + 1);
+
+			try (Transaction transaction = Transaction.openRoot()) {
+				// never committed, so this only asks the question
+				if (handler.insert(FluidResource.of(oneMore), oneMore.getAmount(), transaction) > amount)
+					return 0;
+			}
+		}
 
 		// Return amount filled into the table/basin
-		return handler.fill(availableFluid, simulate ? FluidAction.SIMULATE : FluidAction.EXECUTE);
+		try (Transaction transaction = Transaction.openRoot()) {
+			int transferred = availableFluid.isEmpty() ? 0 : handler.insert(FluidResource.of(availableFluid), availableFluid.getAmount(), transaction);
+			if (!simulate)
+				transaction.commit();
+			return transferred;
+		}
 	}
 
 	private boolean enabled() {

@@ -8,7 +8,10 @@
   "type": "create:crushing",
   "ingredients": [
     {
-      "item": "silentgems:deepslate_citrine_ore"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "silentgems:deepslate_citrine_ore"
+      ]
     }
   ],
   "processing_time": 350,

@@ -1,5 +1,7 @@
 package com.simibubi.create.foundation.block;
 
+import net.minecraft.data.recipes.RecipeCategory;
+import net.minecraft.tags.BlockItemTags;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Locale;
@@ -13,22 +15,24 @@ import com.simibubi.create.foundation.data.TagGen;
 import com.tterrag.registrate.AbstractRegistrate;
 import com.tterrag.registrate.builders.BlockBuilder;
 import com.tterrag.registrate.providers.DataGenContext;
-import com.tterrag.registrate.providers.RegistrateBlockstateProvider;
-import com.tterrag.registrate.providers.RegistrateRecipeProvider;
+import com.tterrag.registrate.providers.generators.RegistrateBlockModelGenerator;
+import com.tterrag.registrate.providers.generators.RegistrateRecipeProvider;
 import com.tterrag.registrate.providers.loot.RegistrateBlockLootTables;
 import com.tterrag.registrate.util.DataIngredient;
 import com.tterrag.registrate.util.entry.BlockEntry;
 import com.tterrag.registrate.util.nullness.NonNullBiConsumer;
 import com.tterrag.registrate.util.nullness.NonNullFunction;
 
-import net.createmod.catnip.data.Iterate;
-import net.createmod.catnip.lang.Lang;
-import net.createmod.catnip.registry.RegisteredObjectsHelper;
-import net.minecraft.data.recipes.RecipeCategory;
-import net.minecraft.data.recipes.ShapelessRecipeBuilder;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.tags.BlockTags;
+import net.createmod.catnip.api.data.Iterate;
+import net.createmod.catnip.api.lang.Lang;
+import net.createmod.catnip.api.registry.RegisteredObjectsHelper;
+import net.minecraft.client.data.models.BlockModelGenerators;
+import net.minecraft.client.data.models.model.ModelTemplates;
+import net.minecraft.client.data.models.model.TextureMapping;
+import net.minecraft.client.resources.model.sprite.Material;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Items;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SlabBlock;
@@ -38,19 +42,14 @@ import net.minecraft.world.level.block.WeatheringCopperFullBlock;
 import net.minecraft.world.level.block.WeatheringCopperSlabBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour.Properties;
 
-import net.neoforged.neoforge.client.model.generators.ModelProvider;
 
 public class CopperBlockSet {
 	protected static final WeatherState[] WEATHER_STATES = WeatherState.values();
 	protected static final int WEATHER_STATE_COUNT = WEATHER_STATES.length;
 
-	protected static final Map<WeatherState, Supplier<Block>> BASE_BLOCKS = new EnumMap<>(WeatherState.class);
-
-	static {
-		BASE_BLOCKS.put(WeatherState.UNAFFECTED, () -> Blocks.COPPER_BLOCK);
-		BASE_BLOCKS.put(WeatherState.EXPOSED, () -> Blocks.EXPOSED_COPPER);
-		BASE_BLOCKS.put(WeatherState.WEATHERED, () -> Blocks.WEATHERED_COPPER);
-		BASE_BLOCKS.put(WeatherState.OXIDIZED, () -> Blocks.OXIDIZED_COPPER);
+	protected static Supplier<Block> baseBlock(WeatherState state) {
+		return () -> Blocks.COPPER_BLOCK.weathering()
+			.pick(state);
 	}
 
 	public static final Variant<?>[] DEFAULT_VARIANTS =
@@ -125,11 +124,11 @@ public class CopperBlockSet {
 
 		name += suffix;
 
-		Supplier<Block> baseBlock = BASE_BLOCKS.get(state);
+		Supplier<Block> baseBlock = baseBlock(state);
 		BlockBuilder<T, ?> builder = registrate.block(name, variant.getFactory(this, state, waxed))
 			.initialProperties(() -> baseBlock.get())
 			.loot((lt, block) -> variant.generateLootTable(lt, block, this, state, waxed))
-			.blockstate((ctx, prov) -> variant.generateBlockState(ctx, prov, this, state, waxed))
+			.blockstate(() -> (ctx, prov) -> variant.generateBlockState(ctx, prov, this, state, waxed))
 			.transform(TagGen.pickaxeOnly())
 			.onRegister(block -> onRegister.accept(state, block))
 			.tag(BlockTags.NEEDS_STONE_TOOL)
@@ -141,12 +140,13 @@ public class CopperBlockSet {
 			builder.recipe((ctx, prov) -> {
 				if (waxed) {
 					Block unwaxed = get(variant, state, false).get();
-					ShapelessRecipeBuilder.shapeless(RecipeCategory.BUILDING_BLOCKS, ctx.get())
+					prov.shapeless(RecipeCategory.BUILDING_BLOCKS, ctx.get())
 						.requires(unwaxed)
 						.requires(Items.HONEYCOMB)
-						.unlockedBy("has_unwaxed", RegistrateRecipeProvider.has(unwaxed))
-						.save(prov, ResourceLocation.fromNamespaceAndPath(ctx.getId()
-							.getNamespace(), "crafting/" + generalDirectory + ctx.getName() + "_from_honeycomb"));
+						.unlockedBy("has_unwaxed", prov.has(unwaxed))
+						.save(prov, Identifier.fromNamespaceAndPath(ctx.getId()
+							.getNamespace(), "crafting/" + generalDirectory + ctx.getName() + "_from_honeycomb")
+							.toString());
 				}
 
 				variant.generateRecipes(get(BlockVariant.INSTANCE, state, waxed), ctx, prov);
@@ -154,10 +154,10 @@ public class CopperBlockSet {
 		}
 
 		if (variant == StairVariant.INSTANCE)
-			builder.tag(BlockTags.STAIRS);
+			builder.tag(BlockItemTags.STAIRS.block());
 
 		if (variant == SlabVariant.INSTANCE)
-			builder.tag(BlockTags.SLABS);
+			builder.tag(BlockItemTags.SLABS.block());
 
 		return builder.register();
 	}
@@ -214,8 +214,9 @@ public class CopperBlockSet {
 
 		void generateRecipes(BlockEntry<?> blockVariant, DataGenContext<Block, T> ctx, RegistrateRecipeProvider prov);
 
-		void generateBlockState(DataGenContext<Block, T> ctx, RegistrateBlockstateProvider prov, CopperBlockSet blocks,
-								WeatherState state, boolean waxed);
+		void generateBlockState(DataGenContext<Block, T> ctx, RegistrateBlockModelGenerator prov,
+								CopperBlockSet blocks, WeatherState state, boolean waxed);
+
 	}
 
 	public static class BlockVariant implements Variant<Block> {
@@ -239,24 +240,21 @@ public class CopperBlockSet {
 		}
 
 		@Override
-		public void generateBlockState(DataGenContext<Block, Block> ctx, RegistrateBlockstateProvider prov,
+		public void generateBlockState(DataGenContext<Block, Block> ctx, RegistrateBlockModelGenerator prov,
 									   CopperBlockSet blocks, WeatherState state, boolean waxed) {
 			Block block = ctx.get();
-			String path = RegisteredObjectsHelper.getKeyOrThrow(block)
-				.getPath();
-			String baseLoc = ModelProvider.BLOCK_FOLDER + "/" + blocks.generalDirectory + getWeatherStatePrefix(state);
+			String baseLoc = "block/" + blocks.generalDirectory + getWeatherStatePrefix(state);
 
-			ResourceLocation texture = prov.modLoc(baseLoc + blocks.getName());
+			Material texture = new Material(prov.modLoc(baseLoc + blocks.getName()));
 			if (Objects.equals(blocks.getName(), blocks.getEndTextureName())) {
 				// End texture and base texture are equal, so we should use cube_all.
-				prov.simpleBlock(block, prov.models().cubeAll(path, texture));
+				prov.generateWithTemplate(block, ModelTemplates.CUBE_ALL, TextureMapping.cube(texture));
 			} else {
 				// End texture and base texture aren't equal, so we should use cube_column.
-				ResourceLocation endTexture = prov.modLoc(baseLoc + blocks.getEndTextureName());
-				prov.simpleBlock(block, prov.models()
-					.cubeColumn(path, texture, endTexture));
+				Material endTexture = new Material(prov.modLoc(baseLoc + blocks.getEndTextureName()));
+				prov.generateWithTemplate(block, ModelTemplates.CUBE_COLUMN,
+					TextureMapping.column(texture, endTexture));
 			}
-
 		}
 
 		@Override
@@ -294,16 +292,17 @@ public class CopperBlockSet {
 		}
 
 		@Override
-		public void generateBlockState(DataGenContext<Block, SlabBlock> ctx, RegistrateBlockstateProvider prov,
+		public void generateBlockState(DataGenContext<Block, SlabBlock> ctx, RegistrateBlockModelGenerator prov,
 									   CopperBlockSet blocks, WeatherState state, boolean waxed) {
-			ResourceLocation fullModel =
-				prov.modLoc(ModelProvider.BLOCK_FOLDER + "/" + getWeatherStatePrefix(state) + blocks.getName());
+			// The double slab reuses the full block's model, which lives outside the set's own folder.
+			Identifier fullModel = prov.modLoc("block/" + getWeatherStatePrefix(state) + blocks.getName());
 
-			String baseLoc = ModelProvider.BLOCK_FOLDER + "/" + blocks.generalDirectory + getWeatherStatePrefix(state);
-			ResourceLocation texture = prov.modLoc(baseLoc + blocks.getName());
-			ResourceLocation endTexture = prov.modLoc(baseLoc + blocks.getEndTextureName());
+			String baseLoc = "block/" + blocks.generalDirectory + getWeatherStatePrefix(state);
+			Material texture = new Material(prov.modLoc(baseLoc + blocks.getName()));
+			Material endTexture = new Material(prov.modLoc(baseLoc + blocks.getEndTextureName()));
 
-			prov.slabBlock(ctx.get(), fullModel, texture, endTexture, endTexture);
+			prov.generateSlabBlock(ctx.get(), BlockModelGenerators.plainVariant(fullModel), texture, endTexture,
+				endTexture);
 		}
 
 		@Override
@@ -342,12 +341,12 @@ public class CopperBlockSet {
 		}
 
 		@Override
-		public void generateBlockState(DataGenContext<Block, StairBlock> ctx, RegistrateBlockstateProvider prov,
+		public void generateBlockState(DataGenContext<Block, StairBlock> ctx, RegistrateBlockModelGenerator prov,
 									   CopperBlockSet blocks, WeatherState state, boolean waxed) {
-			String baseLoc = ModelProvider.BLOCK_FOLDER + "/" + blocks.generalDirectory + getWeatherStatePrefix(state);
-			ResourceLocation texture = prov.modLoc(baseLoc + blocks.getName());
-			ResourceLocation endTexture = prov.modLoc(baseLoc + blocks.getEndTextureName());
-			prov.stairsBlock(ctx.get(), texture, endTexture, endTexture);
+			String baseLoc = "block/" + blocks.generalDirectory + getWeatherStatePrefix(state);
+			Material texture = new Material(prov.modLoc(baseLoc + blocks.getName()));
+			Material endTexture = new Material(prov.modLoc(baseLoc + blocks.getEndTextureName()));
+			prov.generateStairsBlock(ctx.get(), texture, endTexture, endTexture);
 		}
 
 		@Override

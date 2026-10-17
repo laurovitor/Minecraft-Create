@@ -8,7 +8,10 @@
   "type": "create:milling",
   "ingredients": [
     {
-      "item": "atmospheric:gilia"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "atmospheric:gilia"
+      ]
     }
   ],
   "processing_time": 50,

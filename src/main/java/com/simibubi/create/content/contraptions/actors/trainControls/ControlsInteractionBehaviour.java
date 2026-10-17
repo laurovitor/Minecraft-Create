@@ -11,8 +11,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 
-import net.neoforged.api.distmarker.Dist;
-
 public class ControlsInteractionBehaviour extends MovingInteractionBehaviour {
 
 	@Override
@@ -34,7 +32,7 @@ public class ControlsInteractionBehaviour extends MovingInteractionBehaviour {
 			return false;
 
 		contraptionEntity.setControllingPlayer(player.getUUID());
-		if (player.level().isClientSide)
+		if (player.level().isClientSide())
 			ControlsHandler.startControlling(contraptionEntity, localPos);
 		return true;
 	}

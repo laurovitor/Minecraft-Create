@@ -9,14 +9,15 @@ import java.util.function.Function;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
 
+import com.simibubi.create.foundation.utility.NbtValueIO;
 import com.simibubi.create.api.behaviour.movement.MovementBehaviour;
 import com.simibubi.create.content.contraptions.Contraption;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.simibubi.create.foundation.virtualWorld.VirtualRenderWorld;
 
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
-import net.createmod.catnip.render.SuperByteBufferCache;
-import net.minecraft.client.renderer.RenderType;
+import net.createmod.catnip.api.client.render.SuperByteBufferCache;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
@@ -92,10 +93,8 @@ public class ClientContraption {
 	}
 
 	public void invalidateStructure() {
-		for (RenderType renderType : RenderType.chunkBufferLayers()) {
-			SuperByteBufferCache.getInstance()
-				.invalidate(ContraptionEntityRenderer.CONTRAPTION, Pair.of(contraption, renderType));
-		}
+		SuperByteBufferCache.getInstance()
+			.invalidate(ContraptionEntityRenderer.CONTRAPTION, contraption);
 
 		structureVersion++;
 	}
@@ -148,7 +147,7 @@ public class ClientContraption {
 		BlockEntity be = entityBlock.newBlockEntity(pos, state);
 		postprocessReadBlockEntity(level, be, state);
 		if (be != null && nbt != null) {
-			be.handleUpdateTag(nbt, level.registryAccess());
+			be.handleUpdateTag(NbtValueIO.fromTag(nbt, level.registryAccess()));
 		}
 
 		return be;

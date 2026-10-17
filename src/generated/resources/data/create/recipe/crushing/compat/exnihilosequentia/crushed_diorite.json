@@ -8,7 +8,10 @@
   "type": "create:crushing",
   "ingredients": [
     {
-      "item": "exnihilosequentia:crushed_diorite"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "exnihilosequentia:crushed_diorite"
+      ]
     }
   ],
   "processing_time": 100,

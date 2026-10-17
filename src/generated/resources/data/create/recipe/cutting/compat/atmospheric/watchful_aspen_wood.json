@@ -8,7 +8,10 @@
   "type": "create:cutting",
   "ingredients": [
     {
-      "item": "atmospheric:watchful_aspen_wood"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "atmospheric:watchful_aspen_wood"
+      ]
     }
   ],
   "processing_time": 50,

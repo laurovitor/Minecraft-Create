@@ -8,7 +8,10 @@
   "type": "create:crushing",
   "ingredients": [
     {
-      "item": "biomeswevegone:red_rock"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "biomeswevegone:red_rock"
+      ]
     }
   ],
   "processing_time": 150,

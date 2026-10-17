@@ -8,7 +8,10 @@
   "type": "create:milling",
   "ingredients": [
     {
-      "item": "biomeswevegone:yellow_daffodil"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "biomeswevegone:yellow_daffodil"
+      ]
     }
   ],
   "processing_time": 50,

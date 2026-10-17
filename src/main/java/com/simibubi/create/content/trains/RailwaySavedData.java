@@ -1,5 +1,8 @@
 package com.simibubi.create.content.trains;
 
+import net.minecraft.world.level.saveddata.SavedDataType;
+import net.minecraft.resources.Identifier;
+import com.mojang.serialization.Codec;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -12,7 +15,7 @@ import com.simibubi.create.content.trains.graph.TrackGraph;
 import com.simibubi.create.content.trains.signal.SignalBoundary;
 import com.simibubi.create.content.trains.signal.SignalEdgeGroup;
 
-import net.createmod.catnip.nbt.NBTHelper;
+import net.createmod.catnip.api.nbt.NBTHelper;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -25,11 +28,15 @@ public class RailwaySavedData extends SavedData {
 	private Map<UUID, SignalEdgeGroup> signalEdgeGroups = new HashMap<>();
 	private Map<UUID, Train> trains = new HashMap<>();
 
-	public static SavedData.Factory<RailwaySavedData> factory() {
-		return new SavedData.Factory<>(RailwaySavedData::new, RailwaySavedData::load);
-	}
+	/**
+	 * The rail network is written by hand into a CompoundTag, so the codec 26.2 wants is that pair
+	 * wrapped up. The factory is level-sensitive, which is where the registries come from.
+	 */
+	public static final SavedDataType<RailwaySavedData> TYPE = new SavedDataType<>(
+		Identifier.parse("create:create_tracks"), level -> new RailwaySavedData(),
+		level -> Codec.of(CompoundTag.CODEC.comap(data -> data.save(new CompoundTag(), level.registryAccess())),
+			CompoundTag.CODEC.map(tag -> load(tag, level.registryAccess()))));
 
-	@Override
 	public CompoundTag save(CompoundTag nbt, HolderLookup.Provider registries) {
 		GlobalRailwayManager railways = Create.RAILWAYS;
 //		Create.LOGGER.info("Saving Railway Information...");
@@ -53,15 +60,15 @@ public class RailwaySavedData extends SavedData {
 //		Create.LOGGER.info("Loading Railway Information...");
 
 		DimensionPalette dimensions = DimensionPalette.read(nbt);
-		NBTHelper.iterateCompoundList(nbt.getList("RailGraphs", Tag.TAG_COMPOUND), c -> {
+		NBTHelper.iterateCompoundList(nbt.getListOrEmpty("RailGraphs"), c -> {
 			TrackGraph graph = TrackGraph.read(c, registries, dimensions);
 			sd.trackNetworks.put(graph.id, graph);
 		});
-		NBTHelper.iterateCompoundList(nbt.getList("SignalBlocks", Tag.TAG_COMPOUND), c -> {
+		NBTHelper.iterateCompoundList(nbt.getListOrEmpty("SignalBlocks"), c -> {
 			SignalEdgeGroup group = SignalEdgeGroup.read(c);
 			sd.signalEdgeGroups.put(group.id, group);
 		});
-		NBTHelper.iterateCompoundList(nbt.getList("Trains", Tag.TAG_COMPOUND), c -> {
+		NBTHelper.iterateCompoundList(nbt.getListOrEmpty("Trains"), c -> {
 			Train train = Train.read(c, registries, sd.trackNetworks, dimensions);
 			sd.trains.put(train.id, train);
 		});
@@ -101,7 +108,7 @@ public class RailwaySavedData extends SavedData {
 	public static RailwaySavedData load(MinecraftServer server) {
 		return server.overworld()
 			.getDataStorage()
-			.computeIfAbsent(factory(), "create_tracks");
+			.computeIfAbsent(TYPE);
 	}
 
 }

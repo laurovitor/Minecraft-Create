@@ -1,5 +1,7 @@
 package com.simibubi.create.content.equipment.blueprint;
 
+import net.minecraft.client.Minecraft;
+import net.createmod.catnip.api.client.network.ClientNetworkHelper;
 import com.google.common.collect.ImmutableList;
 import com.simibubi.create.AllPartialModels;
 import com.simibubi.create.content.logistics.filter.FilterScreenPacket;
@@ -8,11 +10,10 @@ import com.simibubi.create.foundation.gui.AllGuiTextures;
 import com.simibubi.create.foundation.gui.AllIcons;
 import com.simibubi.create.foundation.gui.menu.AbstractSimiContainerScreen;
 import com.simibubi.create.foundation.gui.widget.IconButton;
-import net.createmod.catnip.platform.CatnipServices;
 import com.simibubi.create.foundation.utility.CreateLang;
-import net.createmod.catnip.gui.element.GuiGameElement;
+import net.createmod.catnip.api.client.gui.element.GuiGameElement;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -63,7 +64,7 @@ public class BlueprintScreen extends AbstractSimiContainerScreen<BlueprintMenu> 
 	}
 
 	@Override
-	protected void renderBg(GuiGraphics graphics, float partialTicks, int mouseX, int mouseY) {
+	protected void renderBg(GuiGraphicsExtractor graphics, float partialTicks, int mouseX, int mouseY) {
 		int invX = getLeftOfCentered(PLAYER_INVENTORY.getWidth());
 		int invY = topPos + background.getHeight() + 4;
 		renderPlayerInventory(graphics, invX, invY);
@@ -72,20 +73,20 @@ public class BlueprintScreen extends AbstractSimiContainerScreen<BlueprintMenu> 
 		int y = topPos;
 
 		background.render(graphics, x, y);
-		graphics.drawString(font, title, x + 15, y + 4, 0xFFFFFF, false);
+		graphics.text(font, title, x + 15, y + 4, 0xFFFFFFFF, false);
 
-		GuiGameElement.of(AllPartialModels.CRAFTING_BLUEPRINT_1x1).<GuiGameElement
+		GuiGameElement.of(AllPartialModels.CRAFTING_BLUEPRINT_1x1.get()).<GuiGameElement
 			.GuiRenderBuilder>at(x + background.getWidth() + 20, y + background.getHeight() - 32, 0)
 			.rotate(45, -45, 22.5f)
 			.scale(40)
-			.render(graphics);
+			.submit(graphics);
 	}
 
 	@Override
-	protected void renderTooltip(GuiGraphics graphics, int x, int y) {
+	protected void extractTooltip(GuiGraphicsExtractor graphics, int x, int y) {
 		if (!menu.getCarried()
 			.isEmpty() || this.hoveredSlot == null || hoveredSlot.container == menu.playerInventory) {
-			super.renderTooltip(graphics, x, y);
+			super.extractTooltip(graphics, x, y);
 			return;
 		}
 
@@ -93,7 +94,7 @@ public class BlueprintScreen extends AbstractSimiContainerScreen<BlueprintMenu> 
 		if (hoveredSlot.hasItem())
 			list = getTooltipFromContainerItem(hoveredSlot.getItem());
 
-		graphics.renderComponentTooltip(font, addToTooltip(list, hoveredSlot.getSlotIndex(), true), x, y);
+		graphics.setComponentTooltipForNextFrame(font, addToTooltip(list, hoveredSlot.getSlotIndex(), true), x, y);
 	}
 
 	private List<Component> addToTooltip(List<Component> list, int slot, boolean isEmptySlot) {
@@ -146,11 +147,11 @@ public class BlueprintScreen extends AbstractSimiContainerScreen<BlueprintMenu> 
 //				button.setToolTip(button.getToolTip()
 //					.get(0));
 //				button.getToolTip()
-//					.add(TooltipHelper.holdShift(Palette.Yellow, hasShiftDown()));
+//					.add(TooltipHelper.holdShift(Palette.Yellow, Minecraft.getInstance().hasShiftDown()));
 //			}
 //		}
 //
-//		if (hasShiftDown()) {
+//		if (Minecraft.getInstance().hasShiftDown()) {
 //			List<IFormattableTextComponent> tooltipDescriptions = getTooltipDescriptions();
 //			for (int i = 0; i < tooltipButtons.size(); i++)
 //				fillToolTip(tooltipButtons.get(i), tooltipDescriptions.get(i));
@@ -160,7 +161,7 @@ public class BlueprintScreen extends AbstractSimiContainerScreen<BlueprintMenu> 
 	protected void contentsCleared() {}
 
 	protected void sendOptionUpdate(Option option) {
-		CatnipServices.NETWORK.sendToServer(new FilterScreenPacket(option));
+		ClientNetworkHelper.INSTANCE.sendToServer(new FilterScreenPacket(option));
 	}
 
 	@Override

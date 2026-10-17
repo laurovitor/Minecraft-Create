@@ -1,5 +1,7 @@
 package com.simibubi.create.content.equipment.goggles;
 
+import net.neoforged.neoforge.client.gui.GuiLayer;
+import org.joml.Matrix3x2fStack;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -24,18 +26,17 @@ import com.simibubi.create.foundation.utility.CreateLang;
 import com.simibubi.create.infrastructure.config.AllConfigs;
 import com.simibubi.create.infrastructure.config.CClient;
 
-import net.createmod.catnip.data.Iterate;
-import net.createmod.catnip.gui.element.BoxElement;
-import net.createmod.catnip.gui.element.GuiGameElement;
-import net.createmod.catnip.outliner.Outline;
-import net.createmod.catnip.outliner.Outliner;
-import net.createmod.catnip.outliner.Outliner.OutlineEntry;
-import net.createmod.catnip.theme.Color;
+import net.createmod.catnip.api.data.Iterate;
+import net.createmod.catnip.api.client.gui.element.BoxElement;
+import net.createmod.catnip.api.client.gui.element.GuiGameElement;
+import net.createmod.catnip.api.client.outliner.Outline;
+import net.createmod.catnip.api.client.outliner.Outliner;
+import net.createmod.catnip.api.client.outliner.Outliner.OutlineEntry;
+import net.createmod.catnip.api.theme.Color;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.LayeredDraw;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -53,16 +54,16 @@ import net.minecraft.world.phys.HitResult;
 
 public class GoggleOverlayRenderer {
 
-	public static final LayeredDraw.Layer OVERLAY = GoggleOverlayRenderer::renderOverlay;
+	public static final GuiLayer OVERLAY = GoggleOverlayRenderer::renderOverlay;
 
 	private static final Map<Object, OutlineEntry> outlines = Outliner.getInstance().getOutlines();
 
 	public static int hoverTicks = 0;
 	public static BlockPos lastHovered = null;
 
-	public static void renderOverlay(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
+	public static void renderOverlay(GuiGraphicsExtractor guiGraphics, DeltaTracker deltaTracker) {
 		Minecraft mc = Minecraft.getInstance();
-		if (mc.options.hideGui || mc.gameMode.getPlayerMode() == GameType.SPECTATOR)
+		if (mc.gui.hud.isHidden() || mc.gameMode.getPlayerMode() == GameType.SPECTATOR)
 			return;
 
 		HitResult objectMouseOver = mc.hitResult;
@@ -172,8 +173,8 @@ public class GoggleOverlayRenderer {
 			return;
 		}
 
-		PoseStack poseStack = guiGraphics.pose();
-		poseStack.pushPose();
+		Matrix3x2fStack poseStack = guiGraphics.pose();
+		poseStack.pushMatrix();
 
 		int tooltipTextWidth = 0;
 		for (FormattedText textLine : tooltip) {
@@ -208,7 +209,8 @@ public class GoggleOverlayRenderer {
 			: BoxElement.COLOR_VANILLA_BORDER.getSecond().copy();
 
 		if (fade < 1) {
-			poseStack.translate(Math.pow(1 - fade, 3) * Math.signum(cfg.overlayOffsetX.get() + .5f) * 8, 0, 0);
+			poseStack.translate((float) (Math.pow(1 - fade, 3) * Math.signum(cfg.overlayOffsetX.get() + .5f) * 8),
+				0);
 			colorBackground.scaleAlpha(fade);
 			colorBorderTop.scaleAlpha(fade);
 			colorBorderBot.scaleAlpha(fade);
@@ -216,14 +218,14 @@ public class GoggleOverlayRenderer {
 
 		GuiGameElement.of(item)
 			.at(posX + 10, posY - 16, 450)
-			.render(guiGraphics);
+			.submit(guiGraphics);
 
 		if (!Mods.MODERNUI.isLoaded()) {
 			// default tooltip rendering when modernUI is not loaded
 			RemovedGuiUtils.drawHoveringText(guiGraphics, tooltip, posX, posY, width, height, -1, colorBackground.getRGB(),
 				colorBorderTop.getRGB(), colorBorderBot.getRGB(), mc.font);
 
-			poseStack.popPose();
+			poseStack.popMatrix();
 
 			return;
 		}
@@ -249,7 +251,7 @@ public class GoggleOverlayRenderer {
 
 		((MouseHandlerAccessor) mouseHandler).create$setXPos(cursorX);
 		((MouseHandlerAccessor) mouseHandler).create$setYPos(cursorY);
-		poseStack.popPose();
+		poseStack.popMatrix();
 
 	}
 

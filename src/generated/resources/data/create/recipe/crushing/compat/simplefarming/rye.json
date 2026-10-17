@@ -8,7 +8,10 @@
   "type": "create:crushing",
   "ingredients": [
     {
-      "item": "simplefarming:rye"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "simplefarming:rye"
+      ]
     }
   ],
   "processing_time": 150,

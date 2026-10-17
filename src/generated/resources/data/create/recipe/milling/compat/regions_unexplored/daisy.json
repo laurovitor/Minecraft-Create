@@ -8,7 +8,10 @@
   "type": "create:milling",
   "ingredients": [
     {
-      "item": "regions_unexplored:daisy"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "regions_unexplored:daisy"
+      ]
     }
   ],
   "processing_time": 50,

@@ -1,5 +1,9 @@
 package com.simibubi.create.content.kinetics.saw;
 
+import net.neoforged.neoforge.transfer.transaction.Transaction;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import com.simibubi.create.content.contraptions.render.ActorGeometry;
+import java.util.List;
 import java.util.Optional;
 
 import org.jetbrains.annotations.Nullable;
@@ -13,8 +17,7 @@ import com.simibubi.create.foundation.utility.AbstractBlockBreakQueue;
 import com.simibubi.create.foundation.virtualWorld.VirtualRenderWorld;
 
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;
-import net.createmod.catnip.math.VecHelper;
-import net.minecraft.client.renderer.MultiBufferSource;
+import net.createmod.catnip.api.math.VecHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.tags.BlockTags;
@@ -24,10 +27,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
 
 public class SawMovementBehaviour extends BlockBreakingMovementBehaviour {
 
@@ -41,7 +40,7 @@ public class SawMovementBehaviour extends BlockBreakingMovementBehaviour {
 	@Override
 	public Vec3 getActiveAreaOffset(MovementContext context) {
 		return Vec3.atLowerCornerOf(context.state.getValue(SawBlock.FACING)
-			.getNormal())
+			.getUnitVec3i())
 			.scale(.65f);
 	}
 
@@ -49,10 +48,10 @@ public class SawMovementBehaviour extends BlockBreakingMovementBehaviour {
 	public void visitNewPosition(MovementContext context, BlockPos pos) {
 		super.visitNewPosition(context, pos);
 		Vec3 facingVec = Vec3.atLowerCornerOf(context.state.getValue(SawBlock.FACING)
-			.getNormal());
+			.getUnitVec3i());
 		facingVec = context.rotation.apply(facingVec);
 
-		Direction closestToFacing = Direction.getNearest(facingVec.x, facingVec.y, facingVec.z);
+		Direction closestToFacing = Direction.getApproximateNearest(facingVec.x, facingVec.y, facingVec.z);
 		if (closestToFacing.getAxis()
 			.isVertical() && context.data.contains("BreakingPos")) {
 			context.data.remove("BreakingPos");
@@ -82,7 +81,12 @@ public class SawMovementBehaviour extends BlockBreakingMovementBehaviour {
 	}
 
 	public void dropItemFromCutTree(MovementContext context, BlockPos pos, ItemStack stack) {
-		ItemStack remainder = ItemHandlerHelper.insertItem(context.contraption.getStorage().getAllItems(), stack, false);
+		ItemStack remainder;
+		try (Transaction transaction = Transaction.openRoot()) {
+			int transferred = stack.isEmpty() ? 0 : context.contraption.getStorage().getAllItems().insert(ItemResource.of(stack), stack.getCount(), transaction);
+			remainder = transferred == stack.getCount() ? ItemStack.EMPTY : stack.copyWithCount(stack.getCount() - transferred);
+			transaction.commit();
+		}
 		if (remainder.isEmpty())
 			return;
 
@@ -99,17 +103,7 @@ public class SawMovementBehaviour extends BlockBreakingMovementBehaviour {
 		return true;
 	}
 
-	@Override
-	public @Nullable ActorVisual createVisual(VisualizationContext visualizationContext, VirtualRenderWorld simulationWorld, MovementContext movementContext) {
-		return new SawActorVisual(visualizationContext, simulationWorld, movementContext);
-	}
 
-	@Override
-	@OnlyIn(value = Dist.CLIENT)
-	public void renderInContraption(MovementContext context, VirtualRenderWorld renderWorld,
-		ContraptionMatrices matrices, MultiBufferSource buffer) {
-		SawRenderer.renderInContraption(context, renderWorld, matrices, buffer);
-	}
 
 	@Override
 	protected boolean shouldDestroyStartBlock(BlockState stateToBreak) {

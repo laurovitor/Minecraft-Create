@@ -8,7 +8,10 @@
   "type": "create:milling",
   "ingredients": [
     {
-      "item": "biomesoplenty:wilted_lily"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "biomesoplenty:wilted_lily"
+      ]
     }
   ],
   "processing_time": 50,

@@ -1,5 +1,14 @@
 package com.simibubi.create.content.contraptions;
 
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import com.simibubi.create.foundation.utility.NbtValueIO;
+import com.simibubi.create.foundation.item.CombinedItemHandler;
+import com.simibubi.create.foundation.utility.RegistryNbt;
+import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
+import net.createmod.catnip.api.network.NetworkHelper;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import com.simibubi.create.foundation.item.CombinedItemHandler;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -32,14 +41,12 @@ import com.simibubi.create.content.logistics.depot.storage.DepotMountedStorage;
 import com.simibubi.create.content.logistics.vault.ItemVaultMountedStorage;
 import com.simibubi.create.impl.contraption.storage.FallbackMountedStorage;
 
-import net.createmod.catnip.nbt.NBTHelper;
-import net.createmod.catnip.platform.CatnipServices;
+import net.createmod.catnip.api.nbt.NBTHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtOps;
-import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.server.level.ServerPlayer;
@@ -49,10 +56,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate.StructureBlockInfo;
-
-import net.neoforged.neoforge.items.IItemHandlerModifiable;
-import net.neoforged.neoforge.items.ItemStackHandler;
-import net.neoforged.neoforge.items.wrapper.CombinedInvWrapper;
 
 public class MountedStorageManager {
 	// builders used during assembly, null afterward
@@ -73,8 +76,8 @@ public class MountedStorageManager {
 	private ImmutableMap<BlockPos, SyncedMountedStorage> syncedItems;
 	private ImmutableMap<BlockPos, SyncedMountedStorage> syncedFluids;
 
-	private List<IItemHandlerModifiable> externalHandlers;
-	protected CombinedInvWrapper allItems;
+	private List<ResourceHandler<ItemResource>> externalHandlers;
+	protected CombinedItemHandler allItems;
 
 	// ticks until storage can sync again
 	private int syncCooldown;
@@ -210,7 +213,7 @@ public class MountedStorageManager {
 
 		if (!items.isEmpty() || !fluids.isEmpty()) {
 			MountedStorageSyncPacket packet = new MountedStorageSyncPacket(entity.getId(), items, fluids);
-			CatnipServices.NETWORK.sendToClientsTrackingEntity(entity, packet);
+			NetworkHelper.INSTANCE.sendToClientsTrackingEntity(entity, packet);
 			this.syncCooldown = 8;
 		}
 	}
@@ -255,9 +258,9 @@ public class MountedStorageManager {
 		this.reset();
 
 		try {
-			NBTHelper.iterateCompoundList(nbt.getList("items", Tag.TAG_COMPOUND), tag -> {
+			NBTHelper.iterateCompoundList(nbt.getListOrEmpty("items"), tag -> {
 				BlockPos pos = NBTHelper.readBlockPos(tag, "pos");
-				CompoundTag data = tag.getCompound("storage");
+				CompoundTag data = tag.getCompoundOrEmpty("storage");
 				// TODO - Use CatnipCodecUtils
 				MountedItemStorage.CODEC.decode(registryOps, data)
 					.resultOrPartial(err -> Create.LOGGER.error("Failed to deserialize mounted item storage: {}", err))
@@ -265,9 +268,9 @@ public class MountedStorageManager {
 					.ifPresent(storage -> this.addStorage(storage, pos));
 			});
 
-			NBTHelper.iterateCompoundList(nbt.getList("fluids", Tag.TAG_COMPOUND), tag -> {
+			NBTHelper.iterateCompoundList(nbt.getListOrEmpty("fluids"), tag -> {
 				BlockPos pos = NBTHelper.readBlockPos(tag, "pos");
-				CompoundTag data = tag.getCompound("storage");
+				CompoundTag data = tag.getCompoundOrEmpty("storage");
 				// TODO - Use CatnipCodecUtils
 				MountedFluidStorage.CODEC.decode(registryOps, data)
 					.resultOrPartial(err -> Create.LOGGER.error("Failed to deserialize mounted fluid storage: {}", err))
@@ -279,8 +282,8 @@ public class MountedStorageManager {
 
 			if (nbt.contains("interactable_positions")) {
 				this.interactablePositions = new HashSet<>();
-				NBTHelper.iterateCompoundList(nbt.getList("interactable_positions", Tag.TAG_COMPOUND), tag -> {
-					BlockPos pos = new BlockPos(tag.getInt("X"), tag.getInt("Y"), tag.getInt("Z"));
+				NBTHelper.iterateCompoundList(nbt.getListOrEmpty("interactable_positions"), tag -> {
+					BlockPos pos = new BlockPos(tag.getIntOr("X", 0), tag.getIntOr("Y", 0), tag.getIntOr("Z", 0));
 					this.interactablePositions.add(pos);
 				});
 			}
@@ -317,7 +320,7 @@ public class MountedStorageManager {
 						.resultOrPartial(err -> Create.LOGGER.error("Failed to serialize mounted item storage: {}", err))
 						.ifPresent(encoded -> {
 							CompoundTag tag = new CompoundTag();
-							tag.put("pos", NbtUtils.writeBlockPos(pos));
+							tag.store("pos", BlockPos.CODEC, pos);
 							tag.put("storage", encoded);
 							items.add(tag);
 						});
@@ -336,7 +339,7 @@ public class MountedStorageManager {
 						.resultOrPartial(err -> Create.LOGGER.error("Failed to serialize mounted fluid storage: {}", err))
 						.ifPresent(encoded -> {
 							CompoundTag tag = new CompoundTag();
-							tag.put("pos", NbtUtils.writeBlockPos(pos));
+							tag.store("pos", BlockPos.CODEC, pos);
 							tag.put("storage", encoded);
 							fluids.add(tag);
 						});
@@ -363,22 +366,23 @@ public class MountedStorageManager {
 		}
 	}
 
-	public void attachExternal(IItemHandlerModifiable externalStorage) {
+	public void attachExternal(ResourceHandler<ItemResource> externalStorage) {
 		this.externalHandlers.add(externalStorage);
-		IItemHandlerModifiable[] all = new IItemHandlerModifiable[this.externalHandlers.size() + 1];
+		@SuppressWarnings("unchecked")
+		ResourceHandler<ItemResource>[] all = new ResourceHandler[this.externalHandlers.size() + 1];
 		all[0] = this.items;
 		for (int i = 0; i < this.externalHandlers.size(); i++) {
 			all[i + 1] = this.externalHandlers.get(i);
 		}
 
-		this.allItems = new CombinedInvWrapper(all);
+		this.allItems = new CombinedItemHandler(all);
 	}
 
 	/**
 	 * The primary way to access a contraption's inventory. Includes all
 	 * non-internal mounted storages as well as all external storage.
 	 */
-	public CombinedInvWrapper getAllItems() {
+	public CombinedItemHandler getAllItems() {
 		this.assertInitialized();
 		return this.allItems;
 	}
@@ -439,30 +443,30 @@ public class MountedStorageManager {
 	}
 
 	private void readLegacy(HolderLookup.Provider registries, CompoundTag nbt) {
-		NBTHelper.iterateCompoundList(nbt.getList("Storage", Tag.TAG_COMPOUND), tag -> {
+		NBTHelper.iterateCompoundList(nbt.getListOrEmpty("Storage"), tag -> {
 			BlockPos pos = NBTHelper.readBlockPos(tag, "Pos");
-			CompoundTag data = tag.getCompound("Data");
+			CompoundTag data = tag.getCompoundOrEmpty("Data");
 
 			if (data.contains("Toolbox")) {
 				this.addStorage(ToolboxMountedStorage.fromLegacy(registries, data), pos);
 			} else if (data.contains("NoFuel")) {
 				this.addStorage(ItemVaultMountedStorage.fromLegacy(registries, data), pos);
 			} else if (data.contains("Bottomless")) {
-				ItemStack supplied = ItemStack.parseOptional(registries, data.getCompound("ProvidedStack"));
+				ItemStack supplied = data.read("ProvidedStack", ItemStack.OPTIONAL_CODEC, RegistryNbt.ops(registries)).orElse(ItemStack.EMPTY);
 				this.addStorage(new CreativeCrateMountedStorage(supplied), pos);
 			} else if (data.contains("Synced")) {
 				this.addStorage(DepotMountedStorage.fromLegacy(registries, data), pos);
 			} else {
 				// we can create a fallback storage safely, it will be validated before unmounting
-				ItemStackHandler handler = new ItemStackHandler();
-				handler.deserializeNBT(registries, data);
+				ItemStacksResourceHandler handler = new ItemStacksResourceHandler(0);
+				NbtValueIO.deserialize(handler, data, registries);
 				this.addStorage(new FallbackMountedStorage(handler), pos);
 			}
 		});
 
-		NBTHelper.iterateCompoundList(nbt.getList("FluidStorage", Tag.TAG_COMPOUND), tag -> {
+		NBTHelper.iterateCompoundList(nbt.getListOrEmpty("FluidStorage"), tag -> {
 			BlockPos pos = NBTHelper.readBlockPos(tag, "Pos");
-			CompoundTag data = tag.getCompound("Data");
+			CompoundTag data = tag.getCompoundOrEmpty("Data");
 
 			if (data.contains("Bottomless")) {
 				this.addStorage(CreativeFluidTankMountedStorage.fromLegacy(registries, data), pos);

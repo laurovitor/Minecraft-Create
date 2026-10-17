@@ -1,5 +1,6 @@
 package com.simibubi.create.content.fluids.transfer;
 
+import com.simibubi.create.foundation.fluid.FluidHelper;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -19,8 +20,6 @@ import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.Level;
 
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 
@@ -66,15 +65,15 @@ public class FillingRecipe extends StandardProcessingRecipe<SingleRecipeInput> i
 	}
 
 	@Override
-	@OnlyIn(Dist.CLIENT)
 	public Component getDescriptionForAssembly() {
-		List<FluidStack> matchingFluidStacks = Arrays.asList(fluidIngredients.get(0)
-			.getFluids());
-		if (matchingFluidStacks.size() == 0) {
+		// Whole stacks, so a potion step is named after its potion rather than after the bare fluid.
+		List<FluidStack> matchingFluids = FluidHelper.matchingStacks(fluidIngredients.get(0), null);
+		if (matchingFluids.isEmpty()) {
             return Component.literal("Invalid");
         }
 		return CreateLang.translateDirect("recipe.assembly.spout_filling_fluid",
-			matchingFluidStacks.get(0).getHoverName().getString());
+			matchingFluids.get(0).getHoverName()
+				.getString());
 	}
 
 	@Override

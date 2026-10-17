@@ -1,16 +1,16 @@
 package com.simibubi.create.compat.jei.category;
 
+import com.simibubi.create.foundation.item.ItemHelper;
+import org.joml.Matrix3x2fStack;
+import org.jspecify.annotations.NullMarked;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.annotation.ParametersAreNonnullByDefault;
 
 import org.jetbrains.annotations.NotNull;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.compat.jei.category.sequencedAssembly.SequencedAssemblySubCategory;
 import com.simibubi.create.content.processing.sequenced.SequencedAssemblyRecipe;
 import com.simibubi.create.content.processing.sequenced.SequencedRecipe;
@@ -23,23 +23,23 @@ import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
 import mezz.jei.api.neoforge.NeoForgeTypes;
 import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.RecipeIngredientRole;
-import net.createmod.catnip.registry.RegisteredObjectsHelper;
+import net.createmod.catnip.api.registry.RegisteredObjectsHelper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.crafting.Ingredient;
 
 import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 
-@ParametersAreNonnullByDefault
+@NullMarked
 public class SequencedAssemblyCategory extends CreateRecipeCategory<SequencedAssemblyRecipe> {
 
-	Map<ResourceLocation, SequencedAssemblySubCategory> subCategories = new HashMap<>();
+	Map<Identifier, SequencedAssemblySubCategory> subCategories = new HashMap<>();
 
 	public SequencedAssemblyCategory(Info<SequencedAssemblyRecipe> info) {
 		super(info);
@@ -53,17 +53,19 @@ public class SequencedAssemblyCategory extends CreateRecipeCategory<SequencedAss
 		builder
 				.addSlot(RecipeIngredientRole.INPUT, 27 + xOffset, 91)
 				.setBackground(getRenderedSlot(), -1, -1)
-				.addItemStacks(List.of(recipe.getIngredient().getItems()));
+				.addItemStacks(List.of(ItemHelper.getItems(recipe.getIngredient())));
 		builder
 				.addSlot(RecipeIngredientRole.OUTPUT, 132 + xOffset, 91)
 				.setBackground(getRenderedSlot(recipe.getOutputChance()), -1 , -1)
 				.addItemStack(getResultItem(recipe))
-				.addTooltipCallback((recipeSlotView, tooltip) -> {
+				// The rich tooltip builder only appends, so the chance line lands at the end of the
+				// tooltip instead of straight after the item name.
+				.addRichTooltipCallback((recipeSlotView, tooltip) -> {
 					if (noRandomOutput)
 						return;
 
 					float chance = recipe.getOutputChance();
-					tooltip.add(1, chanceComponent(chance));
+					tooltip.add(chanceComponent(chance));
 				});
 
 		int width = 0;
@@ -71,7 +73,7 @@ public class SequencedAssemblyCategory extends CreateRecipeCategory<SequencedAss
 		for (SequencedRecipe<?> sequencedRecipe : recipe.getSequence())
 			width += getSubCategory(sequencedRecipe).getWidth() + margin;
 		width -= margin;
-		int x = width / -2 + getBackground().getWidth() / 2;
+		int x = width / -2 + getWidth() / 2;
 
 		for (SequencedRecipe<?> sequencedRecipe : recipe.getSequence()) {
 			SequencedAssemblySubCategory subCategory = getSubCategory(sequencedRecipe);
@@ -89,7 +91,7 @@ public class SequencedAssemblyCategory extends CreateRecipeCategory<SequencedAss
 				for (SizedFluidIngredient fluidIngredient : sequencedRecipe.getRecipe()
 					.getFluidIngredients())
 					builder.addInvisibleIngredients(RecipeIngredientRole.INPUT)
-						.addIngredients(NeoForgeTypes.FLUID_STACK, Arrays.asList(fluidIngredient.getFluids()));
+						.addIngredients(NeoForgeTypes.FLUID_STACK, fluidsOf(fluidIngredient));
 			}
 		}
 	}
@@ -107,56 +109,56 @@ public class SequencedAssemblyCategory extends CreateRecipeCategory<SequencedAss
 	final String[] romans = { "I", "II", "III", "IV", "V", "VI", "-" };
 
 	@Override
-	public void draw(SequencedAssemblyRecipe recipe, IRecipeSlotsView iRecipeSlotsView, GuiGraphics graphics, double mouseX, double mouseY) {
+	public void draw(SequencedAssemblyRecipe recipe, IRecipeSlotsView iRecipeSlotsView, GuiGraphicsExtractor graphics, double mouseX, double mouseY) {
 		Font font = Minecraft.getInstance().font;
 
-		PoseStack matrixStack = graphics.pose();
-		matrixStack.pushPose();
+		Matrix3x2fStack matrixStack = graphics.pose();
+		matrixStack.pushMatrix();
 
-		matrixStack.pushPose();
-		matrixStack.translate(0, 15, 0);
+		matrixStack.pushMatrix();
+		matrixStack.translate((float) (0), (float) (15));
 		boolean singleOutput = recipe.getOutputChance() == 1;
 		int xOffset = singleOutput ? 0 : -7;
 		AllGuiTextures.JEI_LONG_ARROW.render(graphics, 52 + xOffset, 79);
 		if (!singleOutput) {
 			AllGuiTextures.JEI_CHANCE_SLOT.render(graphics, 150 + xOffset, 75);
             Component component = Component.literal("?").withStyle(ChatFormatting.BOLD);
-			graphics.drawString(font, component, font.width(component) / -2 + 8 + 150 + xOffset, 2 + 78,
-				0xefefef);
+			graphics.text(font, component, font.width(component) / -2 + 8 + 150 + xOffset, 2 + 78,
+				0xFFefefef);
 		}
 
 		if (recipe.getLoops() > 1) {
-			matrixStack.pushPose();
-			matrixStack.translate(15, 9, 0);
+			matrixStack.pushMatrix();
+			matrixStack.translate((float) (15), (float) (9));
 			AllIcons.I_SEQ_REPEAT.render(graphics, 50 + xOffset, 75);
             Component repeat = Component.literal("x" + recipe.getLoops());
-			graphics.drawString(font, repeat, 66 + xOffset, 80, 0x888888, false);
-			matrixStack.popPose();
+			graphics.text(font, repeat, 66 + xOffset, 80, 0xFF888888, false);
+			matrixStack.popMatrix();
 		}
 
-		matrixStack.popPose();
+		matrixStack.popMatrix();
 
 		int width = 0;
 		int margin = 3;
 		for (SequencedRecipe<?> sequencedRecipe : recipe.getSequence())
 			width += getSubCategory(sequencedRecipe).getWidth() + margin;
 		width -= margin;
-		matrixStack.translate(width / -2 + getBackground().getWidth() / 2, 0, 0);
+		matrixStack.translate(width / -2 + getWidth() / 2, 0);
 
-		matrixStack.pushPose();
+		matrixStack.pushMatrix();
 		List<SequencedRecipe<?>> sequence = recipe.getSequence();
 		for (int i = 0; i < sequence.size(); i++) {
 			SequencedRecipe<?> sequencedRecipe = sequence.get(i);
 			SequencedAssemblySubCategory subCategory = getSubCategory(sequencedRecipe);
 			int subWidth = subCategory.getWidth();
             MutableComponent component = Component.literal("" + romans[Math.min(i, 6)]);
-			graphics.drawString(font, component, font.width(component) / -2 + subWidth / 2, 2, 0x888888, false);
+			graphics.text(font, component, font.width(component) / -2 + subWidth / 2, 2, 0xFF888888, false);
 			subCategory.draw(sequencedRecipe, graphics, mouseX, mouseY, i);
-			matrixStack.translate(subWidth + margin, 0, 0);
+			matrixStack.translate((float) (subWidth + margin), (float) (0));
 		}
-		matrixStack.popPose();
+		matrixStack.popMatrix();
 
-		matrixStack.popPose();
+		matrixStack.popMatrix();
 	}
 
 	@Override
@@ -196,7 +198,7 @@ public class SequencedAssemblyCategory extends CreateRecipeCategory<SequencedAss
 			for (SequencedRecipe<?> sequencedRecipe : recipe.getSequence())
 				width += getSubCategory(sequencedRecipe).getWidth() + margin;
 			width -= margin;
-			xOffset = width / 2 + getBackground().getWidth() / -2;
+			xOffset = width / 2 + getWidth() / -2;
 
 			double relativeX = mouseX + xOffset;
 			List<SequencedRecipe<?>> sequence = recipe.getSequence();

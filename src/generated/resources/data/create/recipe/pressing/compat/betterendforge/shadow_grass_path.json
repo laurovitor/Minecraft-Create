@@ -8,7 +8,10 @@
   "type": "create:pressing",
   "ingredients": [
     {
-      "item": "betterendforge:shadow_grass"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "betterendforge:shadow_grass"
+      ]
     }
   ],
   "results": [

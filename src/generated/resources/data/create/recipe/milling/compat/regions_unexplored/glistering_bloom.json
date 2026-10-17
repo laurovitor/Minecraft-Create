@@ -8,7 +8,10 @@
   "type": "create:milling",
   "ingredients": [
     {
-      "item": "regions_unexplored:glistering_bloom"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "regions_unexplored:glistering_bloom"
+      ]
     }
   ],
   "processing_time": 50,

@@ -1,19 +1,18 @@
 package com.simibubi.create.content.equipment.potatoCannon;
 
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import com.simibubi.create.AllPackets;
 import com.simibubi.create.CreateClient;
 import com.simibubi.create.content.equipment.zapper.ShootGadgetPacket;
 import com.simibubi.create.content.equipment.zapper.ShootableGadgetRenderHandler;
 
-import net.createmod.catnip.codecs.stream.CatnipStreamCodecs;
+import net.createmod.catnip.api.data.codec.stream.CatnipStreamCodecs;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 public class PotatoCannonPacket extends ShootGadgetPacket {
 	public static final StreamCodec<RegistryFriendlyByteBuf, PotatoCannonPacket> STREAM_CODEC = StreamCodec.composite(
@@ -38,19 +37,17 @@ public class PotatoCannonPacket extends ShootGadgetPacket {
 	}
 
 	@Override
-	@OnlyIn(Dist.CLIENT)
 	protected void handleAdditional() {
 		CreateClient.POTATO_CANNON_RENDER_HANDLER.beforeShoot(pitch, location, motion, item);
 	}
 
 	@Override
-	@OnlyIn(Dist.CLIENT)
 	protected ShootableGadgetRenderHandler getHandler() {
 		return CreateClient.POTATO_CANNON_RENDER_HANDLER;
 	}
 
 	@Override
-	public PacketTypeProvider getTypeProvider() {
-		return AllPackets.POTATO_CANNON;
+	public Type<? extends CustomPacketPayload> type() {
+		return AllPackets.POTATO_CANNON.getType();
 	}
 }

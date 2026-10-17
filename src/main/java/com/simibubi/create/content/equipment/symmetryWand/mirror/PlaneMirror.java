@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.common.collect.ImmutableList;
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.AllPartialModels;
 import com.simibubi.create.foundation.utility.CreateLang;
 
@@ -16,8 +15,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 public class PlaneMirror extends SymmetryMirror {
 
@@ -85,19 +82,15 @@ public class PlaneMirror extends SymmetryMirror {
 	}
 
 	@Override
-	@OnlyIn(Dist.CLIENT)
 	public PartialModel getModel() {
 		return AllPartialModels.SYMMETRY_PLANE;
 	}
 
 	@Override
-	public void applyModelTransform(PoseStack ms) {
-		super.applyModelTransform(ms);
-		TransformStack.of(ms)
-			.center()
-			.rotateYDegrees(((Align) orientation) == Align.XY ? 0 : 90)
-			.uncenter();
+	public float getModelYRotation() {
+		return ((Align) orientation) == Align.XY ? 0 : 90;
 	}
+
 
 	@Override
 	public List<Component> getAlignToolTips() {

@@ -1,5 +1,10 @@
 package com.simibubi.create.content.logistics.depot;
 
+import net.createmod.catnip.api.client.network.ClientNetworkHelper;
+import net.minecraft.world.level.ScheduledTickAccess;
+import net.minecraft.util.RandomSource;
+import org.jspecify.annotations.Nullable;
+import net.minecraft.world.level.redstone.Orientation;
 import java.util.Optional;
 
 import com.simibubi.create.AllBlockEntityTypes;
@@ -10,15 +15,14 @@ import com.simibubi.create.content.kinetics.base.HorizontalKineticBlock;
 import com.simibubi.create.content.logistics.depot.EjectorBlockEntity.State;
 import com.simibubi.create.foundation.block.IBE;
 import com.simibubi.create.foundation.block.ProperWaterloggedBlock;
-import net.createmod.catnip.platform.CatnipServices;
 import com.simibubi.create.foundation.item.ItemHelper;
 
-import net.createmod.catnip.math.VecHelper;
+import net.createmod.catnip.api.math.VecHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -56,9 +60,9 @@ public class EjectorBlock extends HorizontalKineticBlock implements IBE<EjectorB
 	}
 
 	@Override
-	public BlockState updateShape(BlockState pState, Direction pDirection, BlockState pNeighborState,
-		LevelAccessor pLevel, BlockPos pCurrentPos, BlockPos pNeighborPos) {
-		updateWater(pLevel, pState, pCurrentPos);
+	public BlockState updateShape(BlockState pState, LevelReader pLevel, ScheduledTickAccess ticks,
+		BlockPos pCurrentPos, Direction pDirection, BlockPos pNeighborPos, BlockState pNeighborState, RandomSource random) {
+		updateWater(pLevel, ticks, pState, pCurrentPos);
 		return pState;
 	}
 
@@ -81,25 +85,31 @@ public class EjectorBlock extends HorizontalKineticBlock implements IBE<EjectorB
 	}
 
 	@Override
-	public void neighborChanged(BlockState state, Level world, BlockPos pos, Block p_220069_4_, BlockPos p_220069_5_,
+	public void neighborChanged(BlockState state, Level world, BlockPos pos, Block p_220069_4_, @Nullable Orientation orientation,
 		boolean p_220069_6_) {
 		withBlockEntityDo(world, pos, EjectorBlockEntity::updateSignal);
 	}
 
 	@Override
 	public void fallOn(Level p_180658_1_, BlockState p_152427_, BlockPos p_180658_2_, Entity p_180658_3_,
-		float p_180658_4_) {
+		double p_180658_4_) {
 		Optional<EjectorBlockEntity> blockEntityOptional = getBlockEntityOptional(p_180658_1_, p_180658_2_);
 		if (blockEntityOptional.isPresent() && !p_180658_3_.isSuppressingBounce()) {
 			p_180658_3_.causeFallDamage(p_180658_4_, 1.0F, p_180658_1_.damageSources().fall());
+			onLanded(p_180658_1_, p_180658_3_);
 			return;
 		}
 		super.fallOn(p_180658_1_, p_152427_, p_180658_2_, p_180658_3_, p_180658_4_);
+		onLanded(p_180658_1_, p_180658_3_);
 	}
 
-	@Override
-	public void updateEntityAfterFallOn(BlockGetter worldIn, Entity entityIn) {
-		super.updateEntityAfterFallOn(worldIn, entityIn);
+	/**
+	 * Launches whatever just landed on the ejector.
+	 * <p>
+	 * 26.2 dropped {@code updateEntityAfterFallOn}, which this used to run from; landing is reported by
+	 * {@link #fallOn}, which is the same moment.
+	 */
+	private void onLanded(Level worldIn, Entity entityIn) {
 		BlockPos position = entityIn.getOnPosLegacy();
 		if (!AllBlocks.WEIGHTED_EJECTOR.has(worldIn.getBlockState(position)))
 			return;
@@ -141,14 +151,14 @@ public class EjectorBlock extends HorizontalKineticBlock implements IBE<EjectorB
 
 		ejectorBlockEntity.activate();
 		ejectorBlockEntity.notifyUpdate();
-		if (entityIn.level().isClientSide)
-			CatnipServices.NETWORK.sendToServer(new EjectorTriggerPacket(ejectorBlockEntity.getBlockPos()));
+		if (entityIn.level().isClientSide())
+			ClientNetworkHelper.INSTANCE.sendToServer(new EjectorTriggerPacket(ejectorBlockEntity.getBlockPos()));
 	}
 
 	@Override
-	protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
+	protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
 		if (AllItems.WRENCH.isIn(stack))
-			return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+			return InteractionResult.TRY_WITH_EMPTY_HAND;
 		return SharedDepotBlockMethods.onUse(stack, state, level, pos, player, hand, hitResult);
 	}
 
@@ -180,7 +190,7 @@ public class EjectorBlock extends HorizontalKineticBlock implements IBE<EjectorB
 	}
 
 	@Override
-	public int getAnalogOutputSignal(BlockState blockState, Level worldIn, BlockPos pos) {
+	public int getAnalogOutputSignal(BlockState blockState, Level worldIn, BlockPos pos, Direction direction) {
 		return SharedDepotBlockMethods.getComparatorInputOverride(blockState, worldIn, pos);
 	}
 

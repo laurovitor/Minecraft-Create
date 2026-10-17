@@ -1,11 +1,12 @@
 package com.simibubi.create.content.kinetics.belt;
 
+import net.neoforged.neoforge.transfer.access.ItemAccess;
 import java.util.Map;
 
 import com.simibubi.create.AllTags.AllItemTags;
 
 import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
-import net.createmod.catnip.math.VecHelper;
+import net.createmod.catnip.api.math.VecHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
@@ -25,10 +26,16 @@ public class BeltHelper {
 	public static final ResourceManagerReloadListener LISTENER = resourceManager -> uprightCache.clear();
 
 	public static boolean isItemUpright(ItemStack stack) {
+		// Nothing stands upright, and asking would throw: the access below refuses an empty stack. A
+		// belt does hold one from time to time, since a stack an extraction emptied is only dropped on
+		// the next tick, and it is written out and read back again in the meantime.
+		if (stack.isEmpty())
+			return false;
+
 		return uprightCache.computeIfAbsent(
 			stack.getItem(),
 			item -> {
-				boolean isFluidHandler = stack.getCapability(Capabilities.FluidHandler.ITEM) != null;
+				boolean isFluidHandler = Capabilities.Fluid.ITEM.getCapability(stack, ItemAccess.forStack(stack)) != null;
 				boolean useUpright = AllItemTags.UPRIGHT_ON_BELT.matches(stack);
 				boolean forceDisableUpright = !AllItemTags.NOT_UPRIGHT_ON_BELT.matches(stack);
 
@@ -72,7 +79,7 @@ public class BeltHelper {
 	public static BlockPos getPositionForOffset(BeltBlockEntity controller, int offset) {
 		BlockPos pos = controller.getBlockPos();
 		Vec3i vec = controller.getBeltFacing()
-			.getNormal();
+			.getUnitVec3i();
 		BeltSlope slope = controller.getBlockState()
 			.getValue(BeltBlock.SLOPE);
 		int verticality = slope == BeltSlope.DOWNWARD ? -1 : slope == BeltSlope.UPWARD ? 1 : 0;
@@ -91,7 +98,7 @@ public class BeltHelper {
 		verticalMovement = verticalMovement * (Math.min(offset, controller.beltLength - .5f) - .5f);
 		Vec3 vec = VecHelper.getCenterOf(controller.getBlockPos());
 		Vec3 horizontalMovement = Vec3.atLowerCornerOf(controller.getBeltFacing()
-			.getNormal())
+			.getUnitVec3i())
 			.scale(offset - .5f);
 
 		if (slope == BeltSlope.VERTICAL)
@@ -106,7 +113,7 @@ public class BeltHelper {
 		BeltSlope slope = state.getValue(BeltBlock.SLOPE);
 		int verticality = slope == BeltSlope.DOWNWARD ? -1 : slope == BeltSlope.UPWARD ? 1 : 0;
 		Vec3 horizontalMovement = Vec3.atLowerCornerOf(state.getValue(BeltBlock.HORIZONTAL_FACING)
-			.getNormal());
+			.getUnitVec3i());
 		if (slope == BeltSlope.VERTICAL)
 			return new Vec3(0, state.getValue(BeltBlock.HORIZONTAL_FACING)
 				.getAxisDirection()

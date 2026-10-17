@@ -1,5 +1,7 @@
 package com.simibubi.create.infrastructure.gametest.tests;
 
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
 import java.util.List;
 
 import com.simibubi.create.AllBlocks;
@@ -12,15 +14,16 @@ import com.simibubi.create.infrastructure.gametest.CreateGameTestHelper;
 import com.simibubi.create.infrastructure.gametest.GameTestGroup;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.network.chat.Component;
+import com.simibubi.create.infrastructure.gametest.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.item.alchemy.Potions;
-import net.neoforged.neoforge.items.IItemHandler;
-
 @GameTestGroup(path = "processing")
 public class TestProcessing {
 	@GameTest(template = "brass_mixing", timeoutTicks = CreateGameTestHelper.TEN_SECONDS)
@@ -80,9 +83,11 @@ public class TestProcessing {
 		BlockPos output = new BlockPos(11, 3, 1);
 		helper.pullLever(lever);
 
-		SequencedAssemblyRecipe recipe = (SequencedAssemblyRecipe) helper.getLevel().getRecipeManager()
-				.byKey(Create.asResource("sequenced_assembly/precision_mechanism"))
-				.orElseThrow(() -> new GameTestAssertException("Precision Mechanism recipe not found")).value();
+		SequencedAssemblyRecipe recipe = (SequencedAssemblyRecipe) helper.getLevel().recipeAccess()
+				.byKey(ResourceKey.create(Registries.RECIPE,
+						Create.asResource("sequenced_assembly/precision_mechanism")))
+				.orElseThrow(() -> new GameTestAssertException(
+						Component.literal("Precision Mechanism recipe not found"), 0)).value();
 		Item result = recipe.getResultItem(helper.getLevel().registryAccess()).getItem();
 		Item[] possibleResults = recipe.resultPool.stream()
 				.map(ProcessingOutput::getStack)
@@ -121,7 +126,7 @@ public class TestProcessing {
 		ItemStack expected = new ItemStack(AllBlocks.TRACK.get(), 6);
 		helper.succeedWhen(() -> {
 			helper.assertContainerContains(output, expected);
-			IItemHandler handler = helper.itemStorageAt(output);
+			ResourceHandler<ItemResource> handler = helper.itemStorageAt(output);
 			ItemHelper.extract(handler, ItemHelper.sameItemPredicate(expected), 6, false);
 			helper.assertContainerEmpty(output);
 		});

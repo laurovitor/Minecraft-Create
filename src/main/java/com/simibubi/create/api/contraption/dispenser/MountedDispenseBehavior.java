@@ -1,10 +1,13 @@
 package com.simibubi.create.api.contraption.dispenser;
 
+import net.neoforged.neoforge.transfer.transaction.Transaction;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import com.simibubi.create.foundation.item.CombinedItemHandler;
 import com.simibubi.create.api.registry.SimpleRegistry;
 import com.simibubi.create.content.contraptions.behaviour.MovementContext;
 import com.simibubi.create.impl.contraption.dispenser.DispenserBehaviorConverter;
 
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.dispenser.DispenseItemBehavior;
@@ -12,9 +15,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.DispenserBlock;
 import net.minecraft.world.phys.Vec3;
-
-import net.neoforged.neoforge.items.ItemHandlerHelper;
-import net.neoforged.neoforge.items.wrapper.CombinedInvWrapper;
 
 /**
  * A parallel to {@link DispenseItemBehavior}, for use by mounted dispensers.
@@ -44,12 +44,12 @@ public interface MountedDispenseBehavior {
 
 	static Vec3 getDispenserNormal(MovementContext ctx) {
 		Direction facing = ctx.state.getValue(DispenserBlock.FACING);
-		Vec3 normal = Vec3.atLowerCornerOf(facing.getNormal());
+		Vec3 normal = Vec3.atLowerCornerOf(facing.getUnitVec3i());
 		return ctx.rotation.apply(normal).normalize();
 	}
 
 	static Direction getClosestFacingDirection(Vec3 facing) {
-		return Direction.getNearest(facing.x, facing.y, facing.z);
+		return Direction.getApproximateNearest(facing.x, facing.y, facing.z);
 	}
 
 	/**
@@ -65,11 +65,21 @@ public interface MountedDispenseBehavior {
 	static void placeItemInInventory(ItemStack stack, MovementContext context, BlockPos pos) {
 		ItemStack toInsert = stack.copy();
 		// try inserting into own inventory first
-		ItemStack remainder = ItemHandlerHelper.insertItem(context.getItemStorage(), toInsert, false);
+		ItemStack remainder;
+		try (Transaction transaction = Transaction.openRoot()) {
+			int transferred = toInsert.isEmpty() ? 0 : context.getItemStorage().insert(ItemResource.of(toInsert), toInsert.getCount(), transaction);
+			remainder = transferred == toInsert.getCount() ? ItemStack.EMPTY : toInsert.copyWithCount(toInsert.getCount() - transferred);
+			transaction.commit();
+		}
 		if (!remainder.isEmpty()) {
 			// next, try the whole contraption inventory
-			CombinedInvWrapper contraption = context.contraption.getStorage().getAllItems();
-			ItemStack newRemainder = ItemHandlerHelper.insertItem(contraption, remainder, false);
+			CombinedItemHandler contraption = context.contraption.getStorage().getAllItems();
+			ItemStack newRemainder;
+			try (Transaction transaction = Transaction.openRoot()) {
+				int transferred2 = remainder.isEmpty() ? 0 : contraption.insert(ItemResource.of(remainder), remainder.getCount(), transaction);
+				newRemainder = transferred2 == remainder.getCount() ? ItemStack.EMPTY : remainder.copyWithCount(remainder.getCount() - transferred2);
+				transaction.commit();
+			}
 			if (!newRemainder.isEmpty()) {
 				// if there's *still* something left, dispense into world
 				DefaultMountedDispenseBehavior.INSTANCE.dispense(remainder, context, pos);

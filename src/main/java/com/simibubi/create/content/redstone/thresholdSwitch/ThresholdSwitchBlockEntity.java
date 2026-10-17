@@ -1,5 +1,10 @@
 package com.simibubi.create.content.redstone.thresholdSwitch;
 
+import net.neoforged.neoforge.transfer.item.ItemUtil;
+import net.neoforged.neoforge.transfer.fluid.FluidUtil;
+import net.neoforged.neoforge.transfer.fluid.FluidResource;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
 import java.util.List;
 
 import com.simibubi.create.compat.thresholdSwitch.FunctionalStorage;
@@ -20,7 +25,7 @@ import com.simibubi.create.foundation.blockEntity.behaviour.inventory.TankManipu
 import com.simibubi.create.foundation.blockEntity.behaviour.inventory.VersionedInventoryTrackerBehaviour;
 import com.simibubi.create.foundation.utility.CreateLang;
 
-import net.createmod.catnip.math.BlockFace;
+import net.createmod.catnip.api.math.BlockFace;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponents;
@@ -37,9 +42,6 @@ import net.minecraft.world.ticks.TickPriority;
 
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.fluids.FluidStack;
-import net.neoforged.neoforge.fluids.capability.IFluidHandler;
-import net.neoforged.neoforge.items.IItemHandler;
-
 public class ThresholdSwitchBlockEntity extends SmartBlockEntity implements Clearable {
 	public int onWhenAbove;
 	public int offWhenBelow;
@@ -77,21 +79,31 @@ public class ThresholdSwitchBlockEntity extends SmartBlockEntity implements Clea
 
 	@Override
 	protected void read(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
-		onWhenAbove = compound.getInt("OnAboveAmount");
-		offWhenBelow = compound.getInt("OffBelowAmount");
-		currentLevel = compound.getInt("CurrentAmount");
-		currentMinLevel = compound.getInt("CurrentMinAmount");
-		currentMaxLevel = compound.getInt("CurrentMaxAmount");
-		inStacks = compound.getBoolean("InStacks");
-		redstoneState = compound.getBoolean("Powered");
-		inverted = compound.getBoolean("Inverted");
-		poweredAfterDelay = compound.getBoolean("PoweredAfterDelay");
+		// Falling back to what the switch already has, not to zero. Zero is the one threshold that
+		// makes `currentLevel >= onWhenAbove` true for an empty container, so a tag that has lost
+		// these keys -- an older structure, a hand-written one, anything saved before they were
+		// renamed from OnAbove/OffBelow -- turns the switch into one that is on until something
+		// fills the chest, which is backwards and looks like the block being broken rather than the
+		// data being old. A fresh block entity carries the real defaults, and a saved one that
+		// genuinely holds zero still reads zero, because the key is there.
+		onWhenAbove = compound.getIntOr("OnAboveAmount", onWhenAbove);
+		offWhenBelow = compound.getIntOr("OffBelowAmount", offWhenBelow);
+		currentLevel = compound.getIntOr("CurrentAmount", 0);
+		currentMinLevel = compound.getIntOr("CurrentMinAmount", 0);
+		currentMaxLevel = compound.getIntOr("CurrentMaxAmount", 0);
+		inStacks = compound.getBooleanOr("InStacks", false);
+		redstoneState = compound.getBooleanOr("Powered", false);
+		inverted = compound.getBooleanOr("Inverted", false);
+		poweredAfterDelay = compound.getBooleanOr("PoweredAfterDelay", false);
 		super.read(compound, registries, clientPacket);
 	}
 
 	protected void writeCommon(CompoundTag compound) {
-		compound.putFloat("OnAboveAmount", onWhenAbove);
-		compound.putFloat("OffBelowAmount", offWhenBelow);
+		// Written as ints, which is what they are and what `read` asks for. They were floats, left
+		// over from when the thresholds were fractions; `getIntOr` takes any numeric tag so it did
+		// no harm, but a field that reads int and writes float is an invitation to a real mismatch.
+		compound.putInt("OnAboveAmount", onWhenAbove);
+		compound.putInt("OffBelowAmount", offWhenBelow);
 		compound.putBoolean("Inverted", inverted);
 	}
 
@@ -155,15 +167,15 @@ public class ThresholdSwitchBlockEntity extends SmartBlockEntity implements Clea
 			if (observedInventory.hasInventory()) {
 
 				// Item inventory
-				IItemHandler inv = observedInventory.getInventory();
+				ResourceHandler<ItemResource> inv = observedInventory.getInventory();
 				if (invVersionTracker.stillWaiting(inv)) {
 					currentLevel = prevLevel;
 					currentMaxLevel = prevMaxLevel;
 
 				} else {
 					invVersionTracker.awaitNewVersion(inv);
-					for (int slot = 0; slot < inv.getSlots(); slot++) {
-						ItemStack stackInSlot = inv.getStackInSlot(slot);
+					for (int slot = 0; slot < inv.size(); slot++) {
+						ItemStack stackInSlot = ItemUtil.getStack(inv, slot);
 
 						int finalSlot = slot;
 						long space = COMPAT
@@ -171,7 +183,7 @@ public class ThresholdSwitchBlockEntity extends SmartBlockEntity implements Clea
 							.filter(compat -> compat.isFromThisMod(targetBlockEntity))
 							.map(compat -> compat.getSpaceInSlot(inv, finalSlot))
 							.findFirst()
-							.orElseGet(() -> (long) Math.min(stackInSlot.getOrDefault(DataComponents.MAX_STACK_SIZE, 64), inv.getSlotLimit(finalSlot)));
+							.orElseGet(() -> (long) Math.min(stackInSlot.getOrDefault(DataComponents.MAX_STACK_SIZE, 64), inv.getCapacityAsInt(finalSlot, ItemResource.EMPTY)));
 
 						int count = stackInSlot.getCount();
 						if (space == 0)
@@ -186,10 +198,10 @@ public class ThresholdSwitchBlockEntity extends SmartBlockEntity implements Clea
 
 			if (observedTank.hasInventory()) {
 				// Fluid inventory
-				IFluidHandler tank = observedTank.getInventory();
-				for (int slot = 0; slot < tank.getTanks(); slot++) {
-					FluidStack stackInSlot = tank.getFluidInTank(slot);
-					int space = tank.getTankCapacity(slot);
+				ResourceHandler<FluidResource> tank = observedTank.getInventory();
+				for (int slot = 0; slot < tank.size(); slot++) {
+					FluidStack stackInSlot = FluidUtil.getStack(tank, slot);
+					int space = tank.getCapacityAsInt(slot, FluidResource.EMPTY);
 					int count = stackInSlot.getAmount();
 					if (space == 0)
 						continue;
@@ -242,7 +254,7 @@ public class ThresholdSwitchBlockEntity extends SmartBlockEntity implements Clea
 	}
 
 	private boolean isSuitableInventory(BlockEntity be) {
-		return be != null && !(be instanceof StockTickerBlockEntity || level.getCapability(Capabilities.ItemHandler.BLOCK, be.getBlockPos(), null, be, null) instanceof ProcessingInventory);
+		return be != null && !(be instanceof StockTickerBlockEntity || level.getCapability(Capabilities.Item.BLOCK, be.getBlockPos(), null, be, null) instanceof ProcessingInventory);
 	}
 
 	private BlockPos getTargetPos() {
@@ -293,7 +305,7 @@ public class ThresholdSwitchBlockEntity extends SmartBlockEntity implements Clea
 	@Override
 	public void lazyTick() {
 		super.lazyTick();
-		if (level.isClientSide)
+		if (level.isClientSide())
 			return;
 		updateCurrentLevel();
 	}
@@ -335,7 +347,7 @@ public class ThresholdSwitchBlockEntity extends SmartBlockEntity implements Clea
 
 	public void updatePowerAfterDelay() {
 		poweredAfterDelay = shouldBePowered();
-		level.blockUpdated(worldPosition, getBlockState().getBlock());
+		level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
 		sendData();
 	}
 

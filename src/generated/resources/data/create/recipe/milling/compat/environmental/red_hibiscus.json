@@ -8,7 +8,10 @@
   "type": "create:milling",
   "ingredients": [
     {
-      "item": "environmental:red_hibiscus"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "environmental:red_hibiscus"
+      ]
     }
   ],
   "processing_time": 50,

@@ -1,5 +1,10 @@
 package com.simibubi.create.content.logistics.redstoneRequester;
 
+import java.util.function.Consumer;
+import com.simibubi.create.foundation.item.BlockEntityDataHelper;
+import org.jspecify.annotations.Nullable;
+import net.minecraft.world.level.redstone.Orientation;
+import net.minecraft.core.UUIDUtil;
 import java.util.List;
 
 import com.simibubi.create.AllBlockEntityTypes;
@@ -80,7 +85,7 @@ public class RedstoneRequesterBlock extends Block implements IBE<RedstoneRequest
 	}
 
 	@Override
-	public int getAnalogOutputSignal(BlockState pBlockState, Level pLevel, BlockPos pPos) {
+	public int getAnalogOutputSignal(BlockState pBlockState, Level pLevel, BlockPos pPos, Direction direction) {
 		RedstoneRequesterBlockEntity req = getBlockEntity(pLevel, pPos);
 		return req != null && req.lastRequestSucceeded ? 15 : 0;
 	}
@@ -99,23 +104,22 @@ public class RedstoneRequesterBlock extends Block implements IBE<RedstoneRequest
 
 		String targetDim = player.level()
 			.dimension()
-			.location()
+			.identifier()
 			.toString();
 		AutoRequestData autoRequestData = new AutoRequestData(order, address, be.getBlockPos(), targetDim, false);
 
 		autoRequestData.writeToItem(BlockPos.ZERO, stack);
 
 		if (isRequester) {
-			CompoundTag beTag = stack.getOrDefault(DataComponents.BLOCK_ENTITY_DATA, CustomData.EMPTY).copyTag();
-			beTag.putUUID("Freq", be.behaviour.freqId);
-			BlockEntity.addEntityType(beTag, AllBlockEntityTypes.REDSTONE_REQUESTER.get());
-			stack.set(DataComponents.BLOCK_ENTITY_DATA, CustomData.of(beTag));
+			CompoundTag beTag = BlockEntityDataHelper.getTag(stack);
+			beTag.store("Freq", UUIDUtil.CODEC, be.behaviour.freqId);
+			BlockEntityDataHelper.setTag(stack, AllBlockEntityTypes.REDSTONE_REQUESTER.get(), beTag);
 		}
 
 		player.setItemInHand(InteractionHand.MAIN_HAND, stack);
 	}
 
-	public static void appendRequesterTooltip(ItemStack pStack, List<Component> pTooltip) {
+	public static void appendRequesterTooltip(ItemStack pStack, Consumer<Component> pTooltip) {
 		if (!pStack.has(AllDataComponents.AUTO_REQUEST_DATA))
 			return;
 
@@ -123,7 +127,7 @@ public class RedstoneRequesterBlock extends Block implements IBE<RedstoneRequest
 
 		//noinspection DataFlowIssue
 		for (BigItemStack entry : data.encodedRequest().stacks()) {
-			pTooltip.add(entry.stack.getHoverName()
+			pTooltip.accept(entry.stack.getHoverName()
 				.copy()
 				.append(" x")
 				.append(String.valueOf(entry.count))
@@ -149,7 +153,7 @@ public class RedstoneRequesterBlock extends Block implements IBE<RedstoneRequest
 
 	@Override
 	public void neighborChanged(BlockState pState, Level pLevel, BlockPos pPos, Block pNeighborBlock,
-		BlockPos pNeighborPos, boolean pMovedByPiston) {
+		@Nullable Orientation orientation, boolean pMovedByPiston) {
 		if (pLevel.isClientSide())
 			return;
 		pLevel.setBlockAndUpdate(pPos, pState.setValue(POWERED, pLevel.hasNeighborSignal(pPos)));

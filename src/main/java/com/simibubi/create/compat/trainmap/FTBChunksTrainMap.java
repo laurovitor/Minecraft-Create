@@ -1,5 +1,6 @@
 package com.simibubi.create.compat.trainmap;
 
+import org.joml.Matrix3x2fStack;
 import java.util.List;
 
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -13,7 +14,7 @@ import dev.ftb.mods.ftblibrary.ui.BaseScreen;
 import dev.ftb.mods.ftblibrary.ui.ScreenWrapper;
 import dev.ftb.mods.ftblibrary.ui.Widget;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.FormattedText;
@@ -34,7 +35,7 @@ public class FTBChunksTrainMap {
 		if (cancelTooltips > 0)
 			cancelTooltips--;
 
-		LargeMapScreen mapScreen = getAsLargeMapScreen(Minecraft.getInstance().screen);
+		LargeMapScreen mapScreen = getAsLargeMapScreen(Minecraft.getInstance().gui.screen());
 
 		if (!AllConfigs.client().showTrainMapOverlay.get() || mapScreen == null) {
 			if (requesting)
@@ -49,7 +50,7 @@ public class FTBChunksTrainMap {
 	}
 
 	public static void cancelTooltips(RenderTooltipEvent.Pre event) {
-		if (getAsLargeMapScreen(Minecraft.getInstance().screen) == null)
+		if (getAsLargeMapScreen(Minecraft.getInstance().gui.screen()) == null)
 			return;
 		if (renderingTooltip || cancelTooltips == 0)
 			return;
@@ -57,7 +58,7 @@ public class FTBChunksTrainMap {
 	}
 
 	public static void mouseClick(InputEvent.MouseButton.Pre event) {
-		LargeMapScreen screen = getAsLargeMapScreen(Minecraft.getInstance().screen);
+		LargeMapScreen screen = getAsLargeMapScreen(Minecraft.getInstance().gui.screen());
 		if (screen == null)
 			return;
 		if (TrainMapManager.handleToggleWidgetClick(screen.getMouseX(), screen.getMouseY(), 20, 2))
@@ -71,7 +72,7 @@ public class FTBChunksTrainMap {
 		Object panel = ObfuscationReflectionHelper.getPrivateValue(LargeMapScreen.class, largeMapScreen, "regionPanel");
 		if (!(panel instanceof RegionMapPanel regionMapPanel))
 			return;
-		GuiGraphics graphics = event.getGuiGraphics();
+		GuiGraphicsExtractor graphics = event.getGuiGraphics();
 		if (!AllConfigs.client().showTrainMapOverlay.get()) {
 			renderToggleWidgetAndTooltip(event, largeMapScreen, graphics);
 			return;
@@ -92,12 +93,12 @@ public class FTBChunksTrainMap {
 			.getWindow()
 			.getGuiScale() < 512D;
 
-		PoseStack pose = graphics.pose();
-		pose.pushPose();
+		Matrix3x2fStack pose = graphics.pose();
+		pose.pushMatrix();
 
-		pose.translate(-minX, -minY, 0);
-		pose.scale(regionTileSize, regionTileSize, 1);
-		pose.translate(-regionMinX * blocksPerRegion, -regionMinZ * blocksPerRegion, 0);
+		pose.translate((float) (-minX), (float) (-minY));
+		pose.scale((float) (regionTileSize), (float) (regionTileSize));
+		pose.translate((float) (-regionMinX * blocksPerRegion), (float) (-regionMinZ * blocksPerRegion));
 
 		mouseX += minX;
 		mouseY += minY;
@@ -113,7 +114,7 @@ public class FTBChunksTrainMap {
 		List<FormattedText> tooltip = TrainMapManager.renderAndPick(graphics, Mth.floor(mouseX), Mth.floor(mouseY),
 			linearFiltering, bounds);
 
-		pose.popPose();
+		pose.popMatrix();
 
 		if (!renderToggleWidgetAndTooltip(event, largeMapScreen, graphics) && tooltip != null) {
 			renderingTooltip = true;
@@ -123,8 +124,8 @@ public class FTBChunksTrainMap {
 			cancelTooltips = 5;
 		}
 
-		pose.pushPose();
-		pose.translate(0, 0, 300);
+		pose.pushMatrix();
+		pose.translate((float) (0), (float) (0));
 		for (Widget widget : largeMapScreen.getWidgets()) {
 			if (!widget.isEnabled())
 				continue;
@@ -133,11 +134,11 @@ public class FTBChunksTrainMap {
 			widget.draw(graphics, largeMapScreen.getTheme(), widget.getPosX(), widget.getPosY(), widget.getWidth(),
 				widget.getHeight());
 		}
-		pose.popPose();
+		pose.popMatrix();
 	}
 
 	private static boolean renderToggleWidgetAndTooltip(ScreenEvent.Render.Post event, LargeMapScreen largeMapScreen,
-		GuiGraphics graphics) {
+		GuiGraphicsExtractor graphics) {
 		TrainMapManager.renderToggleWidget(graphics, 20, 2);
 		if (!TrainMapManager.isToggleWidgetHovered(event.getMouseX(), event.getMouseY(), 20, 2))
 			return false;

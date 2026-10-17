@@ -8,7 +8,10 @@
   "type": "create:pressing",
   "ingredients": [
     {
-      "item": "aether:aether_grass_block"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "aether:aether_grass_block"
+      ]
     }
   ],
   "results": [

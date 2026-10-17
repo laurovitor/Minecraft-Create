@@ -1,5 +1,6 @@
 package com.simibubi.create.content.contraptions.render;
 
+import com.simibubi.create.api.behaviour.movement.MovementBehaviourClient;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,7 +42,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.util.Mth;
-import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
@@ -181,7 +182,9 @@ public class ContraptionVisual<E extends AbstractContraptionEntity> extends Abst
 		if (movementBehaviour == null) {
 			return;
 		}
-		var visual = movementBehaviour.createVisual(this.embedding, renderLevel, context);
+		MovementBehaviourClient client = ActorClients.of(movementBehaviour);
+		var visual = client == null ? null
+			: client.createVisual(movementBehaviour, this.embedding, renderLevel, context);
 
 		if (visual == null) {
 			return;

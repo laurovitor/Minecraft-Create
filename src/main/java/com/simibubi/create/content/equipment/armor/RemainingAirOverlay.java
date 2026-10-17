@@ -1,16 +1,18 @@
 package com.simibubi.create.content.equipment.armor;
 
+import net.neoforged.neoforge.client.gui.GuiLayer;
+import org.joml.Matrix3x2fStack;
 import java.util.List;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.AllItems;
 
-import net.createmod.catnip.gui.element.GuiGameElement;
-import net.createmod.catnip.theme.Color;
+import net.createmod.catnip.api.client.gui.element.GuiGameElement;
+import net.createmod.catnip.api.theme.Color;
+import net.minecraft.world.entity.EntityFluidInteraction;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.LayeredDraw;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
@@ -21,13 +23,13 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 
-public class RemainingAirOverlay implements LayeredDraw.Layer {
+public class RemainingAirOverlay implements GuiLayer {
 	public static final RemainingAirOverlay INSTANCE = new RemainingAirOverlay();
 
 	@Override
-	public void render(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
+	public void render(GuiGraphicsExtractor guiGraphics, DeltaTracker deltaTracker) {
 		Minecraft mc = Minecraft.getInstance();
-		if (mc.options.hideGui || mc.gameMode.getPlayerMode() == GameType.SPECTATOR)
+		if (mc.gui.hud.isHidden() || mc.gameMode.getPlayerMode() == GameType.SPECTATOR)
 			return;
 
 		LocalPlayer player = mc.player;
@@ -38,32 +40,39 @@ public class RemainingAirOverlay implements LayeredDraw.Layer {
 		if (!player.getPersistentData()
 			.contains("VisualBacktankAir"))
 			return;
-		boolean isAir = player.getEyeInFluidType().isAir() || player.level().getBlockState(BlockPos.containing(player.getX(), player.getEyeY(), player.getZ())).is(Blocks.BUBBLE_COLUMN);
-		boolean canBreathe = !player.canDrownInFluidType(player.getEyeInFluidType()) || MobEffectUtil.hasWaterBreathing(player) || player.getAbilities().invulnerable;
+		// 26.2 asks the entity's fluid interaction about the fluid at eye level rather than handing out
+		// the fluid type itself.
+		EntityFluidInteraction fluidInteraction = player.getFluidInteraction();
+		boolean isAir = !fluidInteraction.isEyeInFluidMatching(player, (e, type, s) -> !type.isAir())
+			|| player.level()
+				.getBlockState(BlockPos.containing(player.getX(), player.getEyeY(), player.getZ()))
+				.is(Blocks.BUBBLE_COLUMN);
+		boolean canBreathe = !fluidInteraction.isEyeInFluidMatching(player, (e, type, s) -> e.canDrownInFluidType(type))
+			|| MobEffectUtil.hasWaterBreathing(player) || player.getAbilities().invulnerable;
 		if ((isAir || canBreathe) && !player.isInLava())
 			return;
 
 		int timeLeft = player.getPersistentData()
-			.getInt("VisualBacktankAir");
+			.getIntOr("VisualBacktankAir", 0);
 
-		PoseStack poseStack = guiGraphics.pose();
-		poseStack.pushPose();
+		Matrix3x2fStack poseStack = guiGraphics.pose();
+		poseStack.pushMatrix();
 
 		ItemStack backtank = getDisplayedBacktank(player);
-		poseStack.translate(guiGraphics.guiWidth() / 2 + 90, guiGraphics.guiHeight() - 53 + (backtank
-				.has(DataComponents.FIRE_RESISTANT) ? 9 : 0), 0);
+		poseStack.translate(guiGraphics.guiWidth() / 2 + 90,
+			guiGraphics.guiHeight() - 53 + (backtank.has(DataComponents.DAMAGE_RESISTANT) ? 9 : 0));
 
 		Component text = Component.literal(StringUtil.formatTickDuration(Math.max(0, timeLeft - 1) * 20, mc.level.tickRateManager().tickrate()));
 		GuiGameElement.of(backtank)
 			.at(0, 0)
-			.render(guiGraphics);
+			.submit(guiGraphics);
 		int color = 0xFF_FFFFFF;
 		if (timeLeft < 60 && timeLeft % 2 == 0) {
 			color = Color.mixColors(0xFF_FF0000, color, Math.max(timeLeft / 60f, .25f));
 		}
-		guiGraphics.drawString(mc.font, text, 16, 5, color);
+		guiGraphics.text(mc.font, text, 16, 5, color);
 
-		poseStack.popPose();
+		poseStack.popMatrix();
 	}
 
 	public static ItemStack getDisplayedBacktank(LocalPlayer player) {

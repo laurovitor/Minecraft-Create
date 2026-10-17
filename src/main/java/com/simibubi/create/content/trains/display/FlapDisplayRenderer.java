@@ -1,67 +1,122 @@
 package com.simibubi.create.content.trains.display;
 
+import com.simibubi.create.foundation.render.CachedBufferer;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import org.jspecify.annotations.Nullable;
+import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 
-import net.createmod.catnip.animation.AnimationTickHolder;
+import net.createmod.catnip.api.client.animation.AnimationTickHolder;
 import org.joml.Matrix4f;
 
-import com.mojang.blaze3d.font.GlyphInfo;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.PoseStack.Pose;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.simibubi.create.AllPartialModels;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntityRenderer;
 
 import dev.engine_room.flywheel.lib.transform.TransformStack;
-import net.createmod.catnip.render.CachedBuffers;
-import net.createmod.catnip.render.SuperByteBuffer;
-import net.createmod.catnip.math.AngleHelper;
+import net.createmod.catnip.api.client.render.SuperByteBuffer;
+import net.createmod.catnip.api.math.AngleHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.font.FontSet;
+import net.minecraft.client.gui.GlyphSource;
+import net.minecraft.client.gui.font.TextRenderable;
 import net.minecraft.client.gui.font.glyphs.BakedGlyph;
-import net.minecraft.client.gui.font.glyphs.EmptyGlyph;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.MultiBufferSource.BufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Vec3i;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.util.FormattedCharSink;
+import net.minecraft.util.Mth;
 import net.minecraft.util.StringDecomposer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
-public class FlapDisplayRenderer extends KineticBlockEntityRenderer<FlapDisplayBlockEntity> {
+public class FlapDisplayRenderer
+	extends KineticBlockEntityRenderer<FlapDisplayBlockEntity, FlapDisplayRenderer.FlapDisplayRenderState> {
+
+	public static class FlapDisplayRenderState extends KineticRenderState {
+		public final List<LineSnapshot> lines = new ArrayList<>();
+		public int xSize = 1;
+		public float yRot;
+		public boolean paused;
+		public @Nullable Level level;
+	}
+
+	public record LineSnapshot(List<SectionSnapshot> sections, int color, boolean glowing) {
+	}
+
+	public record SectionSnapshot(FlapDisplaySection section, String text) {
+	}
+
+	private final Font font;
 
 	public FlapDisplayRenderer(BlockEntityRendererProvider.Context context) {
 		super(context);
+		this.font = context.font();
 	}
 
 	@Override
-	protected void renderSafe(FlapDisplayBlockEntity be, float partialTicks, PoseStack ms, MultiBufferSource buffer,
-		int light, int overlay) {
-		super.renderSafe(be, partialTicks, ms, buffer, light, overlay);
+	public FlapDisplayRenderState createRenderState() {
+		return new FlapDisplayRenderState();
+	}
 
-		Font fontRenderer = Minecraft.getInstance().font;
-		FontSet fontSet = fontRenderer.getFontSet(Style.DEFAULT_FONT);
-
-		float scale = 1 / 32f;
+	@Override
+	protected void extractSafe(FlapDisplayBlockEntity be, FlapDisplayRenderState state, float partialTicks,
+		Vec3 cameraPosition) {
+		super.extractSafe(be, state, partialTicks, cameraPosition);
+		state.lines.clear();
 
 		if (!be.isController)
 			return;
 
+		state.xSize = be.xSize;
+		state.yRot = AngleHelper.horizontalAngle(be.getBlockState()
+			.getValue(FlapDisplayBlock.HORIZONTAL_FACING));
+		state.paused = !be.isSpeedRequirementFulfilled();
+		state.level = be.getLevel();
+
+		int ticks = AnimationTickHolder.getTicks();
 		List<FlapDisplayLayout> lines = be.getLines();
+
+		for (int j = 0; j < lines.size(); j++) {
+			List<FlapDisplaySection> line = lines.get(j)
+				.getSections();
+			List<SectionSnapshot> sections = new ArrayList<>(line.size());
+
+			for (int i = 0; i < line.size(); i++) {
+				FlapDisplaySection section = line.get(i);
+				// The section keeps mutating on the block entity, so the few values the glyph pass
+				// reads are copied out here.
+				String text = section.renderCharsIndividually() || !section.spinning[0] ? section.text
+					: section.cyclingOptions[((ticks / 3) + i * 13) % section.cyclingOptions.length];
+				sections.add(new SectionSnapshot(section, text));
+			}
+
+			state.lines.add(new LineSnapshot(sections, be.getLineColor(j), be.isLineGlowing(j)));
+		}
+	}
+
+	@Override
+	protected void submitSafe(FlapDisplayRenderState state, PoseStack ms, SubmitNodeCollector queue,
+		CameraRenderState camera) {
+		super.submitSafe(state, ms, queue, camera);
+
+		if (state.lines.isEmpty())
+			return;
+
+		float scale = 1 / 32f;
 
 		ms.pushPose();
 		TransformStack.of(ms)
 			.center()
-			.rotateYDegrees(AngleHelper.horizontalAngle(be.getBlockState()
-				.getValue(FlapDisplayBlock.HORIZONTAL_FACING)))
+			.rotateYDegrees(state.yRot)
 			.uncenter()
 			.translate(0, 0, -3 / 16f);
 
@@ -70,35 +125,33 @@ public class FlapDisplayRenderer extends KineticBlockEntityRenderer<FlapDisplayB
 		ms.scale(1, -1, 1);
 		ms.translate(0, 0, 1 / 2f);
 
-		for (int j = 0; j < lines.size(); j++) {
-			List<FlapDisplaySection> line = lines.get(j)
-				.getSections();
-			int color = be.getLineColor(j);
+		for (int j = 0; j < state.lines.size(); j++) {
+			LineSnapshot line = state.lines.get(j);
 			ms.pushPose();
 
 			float w = 0;
-			for (FlapDisplaySection section : line)
-				w += section.getSize() + (section.hasGap ? 8 : 1);
-			ms.translate(be.xSize * 16 - w / 2 + 1, 4.5f, 0);
+			for (SectionSnapshot section : line.sections())
+				w += section.section()
+					.getSize() + (section.section().hasGap ? 8 : 1);
+			ms.translate(state.xSize * 16 - w / 2 + 1, 4.5f, 0);
 
-			Pose transform = ms.last();
-			FlapDisplayRenderOutput renderOutput = new FlapDisplayRenderOutput(buffer, color, transform.pose(), light,
-				j, !be.isSpeedRequirementFulfilled(), be.getLevel(), be.isLineGlowing(j));
+			// A glyph is a drawable of its own in 26.2, and which one it belongs to decides its render
+			// type, so the line's glyphs are gathered per type and each group submitted as one node.
+			FlapDisplayRenderOutput renderOutput =
+				new FlapDisplayRenderOutput(font, line.color(), j, state.paused, line.glowing());
 
-			for (int i = 0; i < line.size(); i++) {
-				FlapDisplaySection section = line.get(i);
-				renderOutput.nextSection(section);
-				int ticks = AnimationTickHolder.getTicks(be.getLevel());
-				String text = section.renderCharsIndividually() || !section.spinning[0] ? section.text
-					: section.cyclingOptions[((ticks / 3) + i * 13) % section.cyclingOptions.length];
-				StringDecomposer.iterateFormatted(text, Style.EMPTY, renderOutput);
-				ms.translate(section.size + (section.hasGap ? 8 : 1), 0, 0);
+			float offset = 0;
+			for (SectionSnapshot section : line.sections()) {
+				renderOutput.nextSection(section.section(), offset);
+				StringDecomposer.iterateFormatted(section.text(), Style.EMPTY, renderOutput);
+				offset += section.section().size + (section.section().hasGap ? 8 : 1);
 			}
 
-			if (buffer instanceof BufferSource bs) {
-				BakedGlyph texturedglyph = fontSet.whiteGlyph();
-				bs.endBatch(texturedglyph.renderType(Font.DisplayMode.NORMAL));
-			}
+			int light = state.lightCoords;
+			renderOutput.glyphs.forEach((type, glyphs) -> queue.submitCustomGeometry(ms, type, (pose, consumer) -> {
+				for (TextRenderable glyph : glyphs)
+					glyph.render(pose.pose(), consumer, light, true);
+			}));
 
 			ms.popPose();
 			ms.translate(0, 16, 0);
@@ -107,44 +160,39 @@ public class FlapDisplayRenderer extends KineticBlockEntityRenderer<FlapDisplayB
 		ms.popPose();
 	}
 
-	@OnlyIn(Dist.CLIENT)
+	/**
+	 * Turns a line's characters into glyph drawables, grouped by the render type each one needs.
+	 */
 	static class FlapDisplayRenderOutput implements FormattedCharSink {
 
-		final MultiBufferSource bufferSource;
-		final float r, g, b, a;
-		final Matrix4f pose;
-		final int light;
+		final Map<RenderType, List<TextRenderable>> glyphs = new IdentityHashMap<>();
+		final Font font;
+		final int color;
+		final int alpha;
 		final boolean paused;
 
 		FlapDisplaySection section;
 		float x;
-		private int lineIndex;
-		private Level level;
+		private final int lineIndex;
 
-		public FlapDisplayRenderOutput(MultiBufferSource buffer, int color, Matrix4f pose, int light, int lineIndex,
-			boolean paused, Level level, boolean glowing) {
-			this.bufferSource = buffer;
+		public FlapDisplayRenderOutput(Font font, int color, int lineIndex, boolean paused, boolean glowing) {
+			this.font = font;
 			this.lineIndex = lineIndex;
-			this.level = level;
-			this.a = glowing ? .975f : .85f;
-			this.r = (color >> 16 & 255) / 255f;
-			this.g = (color >> 8 & 255) / 255f;
-			this.b = (color & 255) / 255f;
-			this.pose = pose;
-			this.light = glowing ? 0xf000f0 : light;
+			this.color = color & 0x00_FFFFFF;
+			this.alpha = (glowing ? 249 : 217) << 24;
 			this.paused = paused;
 		}
 
-		public void nextSection(FlapDisplaySection section) {
+		public void nextSection(FlapDisplaySection section, float offset) {
 			this.section = section;
-			x = 0;
+			x = offset;
 		}
 
 		public boolean accept(int charIndex, Style style, int glyph) {
-			FontSet fontset = getFontSet();
-			int ticks = paused ? 0 : AnimationTickHolder.getTicks(level);
-			float time = paused ? 0 : AnimationTickHolder.getRenderTime(level);
-			float dim = 1;
+			GlyphSource glyphSource = font.getGlyphSource(style.getFont());
+			int ticks = paused ? 0 : AnimationTickHolder.getTicks();
+			float time = paused ? 0 : AnimationTickHolder.getRenderTime();
+			boolean dim = false;
 
 			if (section.renderCharsIndividually() && section.spinning[Math.min(charIndex, section.spinning.length)]) {
 				float speed = section.spinningTicks > 5 && section.spinningTicks < 20 ? 1.75f : 2.5f;
@@ -152,43 +200,46 @@ public class FlapDisplayRenderer extends KineticBlockEntityRenderer<FlapDisplayB
 				float partial = cycle % 1;
 				char cyclingGlyph = section.cyclingOptions[((int) cycle) % section.cyclingOptions.length].charAt(0);
 				glyph = paused ? cyclingGlyph : partial > 1 / 2f ? partial > 3 / 4f ? '_' : '-' : cyclingGlyph;
-				dim = 0.75f;
+				dim = true;
 			}
 
-			GlyphInfo glyphinfo = fontset.getGlyphInfo(glyph, false);
-			float glyphWidth = glyphinfo.getAdvance(false);
+			BakedGlyph bakedglyph = glyphSource.getGlyph(glyph);
+			float glyphWidth = bakedglyph.info()
+				.getAdvance(false);
 
 			if (!section.renderCharsIndividually() && section.spinning[0]) {
-				glyph = ticks % 3 == 0 ? glyphWidth == 6 ? '-' : glyphWidth == 1 ? '\'' : glyph : glyph;
-				glyph = ticks % 3 == 2 ? glyphWidth == 6 ? '_' : glyphWidth == 1 ? '.' : glyph : glyph;
+				int replacement = glyph;
+				replacement = ticks % 3 == 0 ? glyphWidth == 6 ? '-' : glyphWidth == 1 ? '\'' : replacement : replacement;
+				replacement = ticks % 3 == 2 ? glyphWidth == 6 ? '_' : glyphWidth == 1 ? '.' : replacement : replacement;
+				if (replacement != glyph) {
+					glyph = replacement;
+					bakedglyph = glyphSource.getGlyph(glyph);
+				}
 				if (ticks % 3 != 1)
-					dim = 0.75f;
+					dim = true;
 			}
 
-			BakedGlyph bakedglyph =
-				style.isObfuscated() && glyph != 32 ? fontset.getRandomGlyph(glyphinfo) : fontset.getGlyph(glyph);
+			if (style.isObfuscated() && glyph != 32)
+				bakedglyph = glyphSource.getRandomGlyph(font.random, Mth.ceil(glyphWidth));
+
 			TextColor textcolor = style.getColor();
-
-			float red = this.r * dim;
-			float green = this.g * dim;
-			float blue = this.b * dim;
-
-			if (textcolor != null) {
-				int i = textcolor.getValue();
-				red = (i >> 16 & 255) / 255f;
-				green = (i >> 8 & 255) / 255f;
-				blue = (i & 255) / 255f;
-			}
+			int drawColor;
+			if (textcolor != null)
+				drawColor = alpha | textcolor.getValue();
+			else if (dim)
+				drawColor = alpha | dim(color);
+			else
+				drawColor = alpha | color;
 
 			float standardWidth = section.wideFlaps ? FlapDisplaySection.WIDE_MONOSPACE : FlapDisplaySection.MONOSPACE;
 
 			if (section.renderCharsIndividually())
 				x += (standardWidth - glyphWidth) / 2f;
 
-			if (isNotEmpty(bakedglyph)) {
-				VertexConsumer vertexconsumer = bufferSource.getBuffer(renderTypeOf(bakedglyph));
-				bakedglyph.render(style.isItalic(), x, 0, pose, vertexconsumer, red, green, blue, a, light);
-			}
+			TextRenderable drawable = bakedglyph.createGlyph(x, 0, drawColor, 0, style, 0, 0);
+			if (drawable != null)
+				glyphs.computeIfAbsent(drawable.renderType(Font.DisplayMode.NORMAL), t -> new ArrayList<>())
+					.add(drawable);
 
 			if (section.renderCharsIndividually())
 				x += standardWidth - (standardWidth - glyphWidth) / 2f;
@@ -198,46 +249,26 @@ public class FlapDisplayRenderer extends KineticBlockEntityRenderer<FlapDisplayB
 			return true;
 		}
 
-		public float finish(int bgColor) {
-			if (bgColor == 0)
-				return x;
-
-			float a = (bgColor >> 24 & 255) / 255f;
-			float r = (bgColor >> 16 & 255) / 255f;
-			float g = (bgColor >> 8 & 255) / 255f;
-			float b = (bgColor & 255) / 255f;
-
-			BakedGlyph bakedglyph = getFontSet().whiteGlyph();
-			VertexConsumer vertexconsumer = bufferSource.getBuffer(renderTypeOf(bakedglyph));
-			bakedglyph.renderEffect(new BakedGlyph.Effect(-1f, 9f, section.size, -2f, 0.01f, r, g, b, a), this.pose,
-				vertexconsumer, light);
-
-			return x;
-		}
-
-		private FontSet getFontSet() {
-			return Minecraft.getInstance().font.getFontSet(Style.DEFAULT_FONT);
-		}
-
-		private RenderType renderTypeOf(BakedGlyph bakedglyph) {
-			return bakedglyph.renderType(Font.DisplayMode.NORMAL);
-		}
-
-		private boolean isNotEmpty(BakedGlyph bakedglyph) {
-			return !(bakedglyph instanceof EmptyGlyph);
+		/** Three quarters of each channel, the way the old float channels were scaled. */
+		private static int dim(int rgb) {
+			return (rgb >> 16 & 255) * 192 / 256 << 16 | (rgb >> 8 & 255) * 192 / 256 << 8 | (rgb & 255) * 192 / 256;
 		}
 
 	}
 
 	@Override
 	protected SuperByteBuffer getRotatedModel(FlapDisplayBlockEntity be, BlockState state) {
-		return CachedBuffers.partialFacingVertical(AllPartialModels.SHAFTLESS_COGWHEEL, state,
+		return CachedBufferer.partialFacingVertical(AllPartialModels.SHAFTLESS_COGWHEEL, state,
 			state.getValue(FlapDisplayBlock.HORIZONTAL_FACING));
 	}
 
+	/**
+	 * 26.2 dropped the block entity argument. Only controllers extract anything, so a non-controller
+	 * costs a visibility check rather than geometry.
+	 */
 	@Override
-	public boolean shouldRenderOffScreen(FlapDisplayBlockEntity be) {
-		return be.isController;
+	public boolean shouldRenderOffScreen() {
+		return true;
 	}
 
 }

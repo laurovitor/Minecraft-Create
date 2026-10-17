@@ -8,7 +8,10 @@
   "type": "create:crushing",
   "ingredients": [
     {
-      "item": "silentgems:garnet_ore"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "silentgems:garnet_ore"
+      ]
     }
   ],
   "processing_time": 350,

@@ -5,37 +5,53 @@ import com.tterrag.registrate.builders.ItemBuilder;
 import com.tterrag.registrate.providers.DataGenContext;
 import com.tterrag.registrate.util.nullness.NonNullFunction;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.block.Block;
-import net.neoforged.neoforge.client.model.generators.BlockStateProvider;
-import net.neoforged.neoforge.client.model.generators.ModelFile;
+import com.tterrag.registrate.providers.generators.RegistrateBlockModelGenerator;
+
+import net.minecraft.client.data.models.model.TextureSlot;
+import net.minecraft.client.resources.model.sprite.Material;
 
 public class ModelGen {
 
-	public static ModelFile createOvergrown(DataGenContext<Block, ? extends Block> ctx, BlockStateProvider prov,
-		ResourceLocation block, ResourceLocation overlay) {
+	/**
+	 * The client-only constants this class builds its models from.
+	 *
+	 * A nested class is initialised on first use rather than with its owner, which is the whole
+	 * point of the indirection: these are client types, this class is reached from common
+	 * registration code, and a static field here would be initialised on a dedicated server that
+	 * has no such class. Only the datagen methods below touch them, and a server runs none.
+	 */
+	private static final class Client {
+		static final TextureSlot OVERLAY = TextureSlot.create("overlay");
+	}
+
+
+	public static Identifier createOvergrown(DataGenContext<Block, ? extends Block> ctx,
+		RegistrateBlockModelGenerator prov, Identifier block, Identifier overlay) {
 		return createOvergrown(ctx, prov, block, block, block, overlay);
 	}
 
-	public static ModelFile createOvergrown(DataGenContext<Block, ? extends Block> ctx, BlockStateProvider prov,
-		ResourceLocation side, ResourceLocation top, ResourceLocation bottom, ResourceLocation overlay) {
-		return prov.models()
-			.withExistingParent(ctx.getName(), Create.asResource("block/overgrown"))
-			.texture("particle", side)
-			.texture("side", side)
-			.texture("top", top)
-			.texture("bottom", bottom)
-			.texture("overlay", overlay);
+	public static Identifier createOvergrown(DataGenContext<Block, ? extends Block> ctx,
+		RegistrateBlockModelGenerator prov, Identifier side, Identifier top, Identifier bottom, Identifier overlay) {
+		return prov.getBuilder()
+			.parent(Create.asResource("block/overgrown"))
+			.texture(TextureSlot.PARTICLE, new Material(side))
+			.texture(TextureSlot.SIDE, new Material(side))
+			.texture(TextureSlot.TOP, new Material(top))
+			.texture(TextureSlot.BOTTOM, new Material(bottom))
+			.texture(Client.OVERLAY, new Material(overlay))
+			.build(prov.modLoc("block/" + ctx.getName()));
 	}
 
 	public static <I extends BlockItem, P> NonNullFunction<ItemBuilder<I, P>, P> customItemModel() {
-		return b -> b.model(AssetLookup::customItemModel)
+		return b -> b.model(() -> AssetLookup::customItemModel)
 			.build();
 	}
 
 	public static <I extends BlockItem, P> NonNullFunction<ItemBuilder<I, P>, P> customItemModel(String... path) {
-		return b -> b.model(AssetLookup.customBlockItemModel(path))
+		return b -> b.model(() -> AssetLookup.customBlockItemModel(path))
 			.build();
 	}
 

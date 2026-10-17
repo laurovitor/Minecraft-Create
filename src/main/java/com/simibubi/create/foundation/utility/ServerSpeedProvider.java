@@ -1,18 +1,16 @@
 package com.simibubi.create.foundation.utility;
 
+import net.createmod.catnip.api.network.NetworkHelper;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import com.simibubi.create.AllPackets;
-import net.createmod.catnip.net.base.ClientboundPacketPayload;
-import net.createmod.catnip.platform.CatnipServices;
 import com.simibubi.create.infrastructure.config.AllConfigs;
 
-import net.createmod.catnip.animation.LerpedFloat;
-import net.createmod.catnip.animation.LerpedFloat.Chaser;
+import net.createmod.catnip.api.animation.LerpedFloat;
+import net.createmod.catnip.api.animation.LerpedFloat.Chaser;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.network.codec.StreamCodec;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 public class ServerSpeedProvider {
 	private static final LerpedFloat modifier = LerpedFloat.linear();
@@ -24,12 +22,11 @@ public class ServerSpeedProvider {
 	public static void serverTick() {
 		serverTimer++;
 		if (serverTimer > getSyncInterval()) {
-			CatnipServices.NETWORK.sendToAllClients(Packet.INSTANCE);
+			NetworkHelper.INSTANCE.sendToAllClients(Packet.INSTANCE);
 			serverTimer = 0;
 		}
 	}
 
-	@OnlyIn(Dist.CLIENT)
 	public static void clientTick() {
 		if (Minecraft.getInstance()
 			.hasSingleplayerServer()
@@ -48,14 +45,12 @@ public class ServerSpeedProvider {
 		return modifier.getValue();
 	}
 
-	public enum Packet implements ClientboundPacketPayload {
+	public enum Packet implements CustomPacketPayload {
 		INSTANCE;
 
 		public static final StreamCodec<ByteBuf, Packet> STREAM_CODEC = StreamCodec.unit(INSTANCE);
 
-		@Override
-		@OnlyIn(Dist.CLIENT)
-		public void handle(LocalPlayer player) {
+		public void handle(Player player) {
 			if (!initialized) {
 				initialized = true;
 				clientTimer = 0;
@@ -70,8 +65,8 @@ public class ServerSpeedProvider {
 		}
 
 		@Override
-		public PacketTypeProvider getTypeProvider() {
-			return AllPackets.SERVER_SPEED;
+		public Type<? extends CustomPacketPayload> type() {
+			return AllPackets.SERVER_SPEED.getType();
 		}
 	}
 

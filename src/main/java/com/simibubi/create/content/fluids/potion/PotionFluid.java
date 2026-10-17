@@ -9,16 +9,16 @@ import com.simibubi.create.AllFluids.TintedFluidType;
 import com.simibubi.create.content.fluids.VirtualFluid;
 
 import io.netty.buffer.ByteBuf;
-import net.createmod.catnip.codecs.stream.CatnipStreamCodecBuilders;
-import net.createmod.catnip.lang.Lang;
+import net.createmod.catnip.api.data.codec.stream.CatnipStreamCodecBuilders;
+import net.createmod.catnip.api.lang.Lang;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.item.alchemy.Potion;
 import net.minecraft.world.item.alchemy.PotionContents;
-import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.material.FluidState;
 
@@ -69,8 +69,8 @@ public class PotionFluid extends VirtualFluid {
 
 	public static class PotionFluidType extends TintedFluidType {
 
-		public PotionFluidType(net.neoforged.neoforge.fluids.FluidType.Properties properties, ResourceLocation stillTexture, ResourceLocation flowingTexture) {
-			super(properties, stillTexture, flowingTexture);
+		public PotionFluidType(net.neoforged.neoforge.fluids.FluidType.Properties properties) {
+			super(properties);
 		}
 
 		@Override
@@ -83,7 +83,9 @@ public class PotionFluid extends VirtualFluid {
 			PotionContents contents = stack.getOrDefault(DataComponents.POTION_CONTENTS, PotionContents.EMPTY);
 			ItemLike itemFromBottleType =
 				PotionFluidHandler.itemFromBottleType(stack.getOrDefault(AllDataComponents.POTION_FLUID_BOTTLE_TYPE, BottleType.REGULAR));
-			return Potion.getName(contents.potion(), itemFromBottleType.asItem().getDescriptionId() + ".effect.");
+			return contents.getName(itemFromBottleType.asItem()
+				.getDescriptionId() + ".effect.")
+				.getString();
 		}
 
 		@Override

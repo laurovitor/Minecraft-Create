@@ -8,7 +8,10 @@
   "type": "create:splashing",
   "ingredients": [
     {
-      "item": "endergetic:nether_corrock_crown"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "endergetic:nether_corrock_crown"
+      ]
     }
   ],
   "results": [

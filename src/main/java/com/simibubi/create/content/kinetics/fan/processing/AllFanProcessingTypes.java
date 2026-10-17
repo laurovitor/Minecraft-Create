@@ -1,5 +1,13 @@
 package com.simibubi.create.content.kinetics.fan.processing;
 
+import com.simibubi.create.foundation.recipe.RecipeAccessors;
+import net.minecraft.world.level.storage.TagValueOutput;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.util.ProblemReporter;
+import com.simibubi.create.foundation.recipe.RecipeFinder;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.EntityTypes;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -20,8 +28,8 @@ import com.simibubi.create.foundation.damageTypes.CreateDamageSources;
 import com.simibubi.create.foundation.recipe.RecipeApplier;
 
 import it.unimi.dsi.fastutil.objects.Object2ReferenceOpenHashMap;
-import net.createmod.catnip.math.VecHelper;
-import net.createmod.catnip.theme.Color;
+import net.createmod.catnip.api.math.VecHelper;
+import net.createmod.catnip.api.theme.Color;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
@@ -39,8 +47,8 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.animal.horse.Horse;
-import net.minecraft.world.entity.animal.horse.SkeletonHorse;
+import net.minecraft.world.entity.animal.equine.Horse;
+import net.minecraft.world.entity.animal.equine.SkeletonHorse;
 import net.minecraft.world.entity.monster.EnderMan;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.AbstractCookingRecipe;
@@ -119,46 +127,41 @@ public class AllFanProcessingTypes {
 
 		@Override
 		public boolean canProcess(ItemStack stack, Level level) {
-			Optional<RecipeHolder<SmeltingRecipe>> smeltingRecipe = level.getRecipeManager()
-				.getRecipeFor(RecipeType.SMELTING, new SingleRecipeInput(stack), level)
+			Optional<RecipeHolder<SmeltingRecipe>> smeltingRecipe = RecipeFinder.find(RecipeType.SMELTING, new SingleRecipeInput(stack), level)
 				.filter(AllRecipeTypes.CAN_BE_AUTOMATED);
 
 			if (smeltingRecipe.isPresent())
 				return true;
 
-			Optional<RecipeHolder<BlastingRecipe>> blastingRecipe = level.getRecipeManager()
-				.getRecipeFor(RecipeType.BLASTING, new SingleRecipeInput(stack), level)
+			Optional<RecipeHolder<BlastingRecipe>> blastingRecipe = RecipeFinder.find(RecipeType.BLASTING, new SingleRecipeInput(stack), level)
 				.filter(AllRecipeTypes.CAN_BE_AUTOMATED);
 
 			if (blastingRecipe.isPresent())
 				return true;
 
-			return !stack.has(DataComponents.FIRE_RESISTANT);
+			return !stack.has(DataComponents.DAMAGE_RESISTANT);
 		}
 
 		@Override
 		@Nullable
 		public List<ItemStack> process(ItemStack stack, Level level) {
-			Optional<RecipeHolder<SmokingRecipe>> smokingRecipe = level.getRecipeManager()
-				.getRecipeFor(RecipeType.SMOKING, new SingleRecipeInput(stack), level)
+			Optional<RecipeHolder<SmokingRecipe>> smokingRecipe = RecipeFinder.find(RecipeType.SMOKING, new SingleRecipeInput(stack), level)
 				.filter(AllRecipeTypes.CAN_BE_AUTOMATED);
 
-			Optional<? extends RecipeHolder<? extends AbstractCookingRecipe>> smeltingRecipe = level.getRecipeManager()
-				.getRecipeFor(RecipeType.SMELTING, new SingleRecipeInput(stack), level)
+			Optional<? extends RecipeHolder<? extends AbstractCookingRecipe>> smeltingRecipe = RecipeFinder.find(RecipeType.SMELTING, new SingleRecipeInput(stack), level)
 				.filter(AllRecipeTypes.CAN_BE_AUTOMATED);
 
 			if (smeltingRecipe.isEmpty()) {
-				smeltingRecipe = level.getRecipeManager()
-					.getRecipeFor(RecipeType.BLASTING, new SingleRecipeInput(stack), level)
+				smeltingRecipe = RecipeFinder.find(RecipeType.BLASTING, new SingleRecipeInput(stack), level)
 					.filter(AllRecipeTypes.CAN_BE_AUTOMATED);
 			}
 
 			if (smeltingRecipe.isPresent()) {
-				RegistryAccess registryAccess = level.registryAccess();
-				if (smokingRecipe.isEmpty() || !ItemStack.isSameItem(smokingRecipe.get().value()
-						.getResultItem(registryAccess),
-					smeltingRecipe.get().value()
-						.getResultItem(registryAccess))) {
+				if (smokingRecipe.isEmpty()
+					|| !ItemStack.isSameItem(RecipeAccessors.result(smokingRecipe.get()
+						.value(), level),
+						RecipeAccessors.result(smeltingRecipe.get()
+							.value(), level))) {
 					return RecipeApplier.applyRecipeOn(level, stack, smeltingRecipe.get().value(), false);
 				}
 			}
@@ -168,7 +171,7 @@ public class AllFanProcessingTypes {
 
 		@Override
 		public void spawnProcessingParticles(Level level, Vec3 pos) {
-			if (level.random.nextInt(8) != 0)
+			if (level.getRandom().nextInt(8) != 0)
 				return;
 			level.addParticle(ParticleTypes.LARGE_SMOKE, pos.x, pos.y + .25f, pos.z, 0, 1 / 16f, 0);
 		}
@@ -185,7 +188,7 @@ public class AllFanProcessingTypes {
 
 		@Override
 		public void affectEntity(Entity entity, Level level) {
-			if (level.isClientSide)
+			if (level.isClientSide())
 				return;
 
 			if (!entity.fireImmune()) {
@@ -234,14 +237,14 @@ public class AllFanProcessingTypes {
 
 		@Override
 		public void spawnProcessingParticles(Level level, Vec3 pos) {
-			if (level.random.nextInt(8) != 0)
+			if (level.getRandom().nextInt(8) != 0)
 				return;
-			pos = pos.add(VecHelper.offsetRandomly(Vec3.ZERO, level.random, 1)
+			pos = pos.add(VecHelper.offsetRandomly(Vec3.ZERO, level.getRandom(), 1)
 				.multiply(1, 0.05f, 1)
 				.normalize()
 				.scale(0.15f));
 			level.addParticle(ParticleTypes.SOUL_FIRE_FLAME, pos.x, pos.y + .45f, pos.z, 0, 0, 0);
-			if (level.random.nextInt(2) == 0)
+			if (level.getRandom().nextInt(2) == 0)
 				level.addParticle(ParticleTypes.SMOKE, pos.x, pos.y + .25f, pos.z, 0, 0, 0);
 		}
 
@@ -257,29 +260,29 @@ public class AllFanProcessingTypes {
 
 		@Override
 		public void affectEntity(Entity entity, Level level) {
-			if (level.isClientSide) {
+			if (level.isClientSide()) {
 				if (entity instanceof Horse) {
 					Vec3 p = entity.getPosition(0);
 					Vec3 v = p.add(0, 0.5f, 0)
-						.add(VecHelper.offsetRandomly(Vec3.ZERO, level.random, 1)
+						.add(VecHelper.offsetRandomly(Vec3.ZERO, level.getRandom(), 1)
 							.multiply(1, 0.2f, 1)
 							.normalize()
 							.scale(1f));
 					level.addParticle(ParticleTypes.SOUL_FIRE_FLAME, v.x, v.y, v.z, 0, 0.1f, 0);
-					if (level.random.nextInt(3) == 0)
+					if (level.getRandom().nextInt(3) == 0)
 						level.addParticle(ParticleTypes.LARGE_SMOKE, p.x, p.y + .5f, p.z,
-							(level.random.nextFloat() - .5f) * .5f, 0.1f, (level.random.nextFloat() - .5f) * .5f);
+							(level.getRandom().nextFloat() - .5f) * .5f, 0.1f, (level.getRandom().nextFloat() - .5f) * .5f);
 				}
 				return;
 			}
 
 			if (entity instanceof LivingEntity livingEntity) {
 				livingEntity.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 30, 0, false, false));
-				livingEntity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 20, 1, false, false));
+				livingEntity.addEffect(new MobEffectInstance(MobEffects.SLOWNESS, 20, 1, false, false));
 			}
 			if (entity instanceof Horse horse) {
 				int progress = horse.getPersistentData()
-					.getInt("CreateHaunting");
+					.getIntOr("CreateHaunting", 0);
 				if (progress < 100) {
 					if (progress % 10 == 0) {
 						level.playSound(null, entity.blockPosition(), SoundEvents.SOUL_ESCAPE.value(), SoundSource.NEUTRAL,
@@ -293,15 +296,25 @@ public class AllFanProcessingTypes {
 				level.playSound(null, entity.blockPosition(), SoundEvents.GENERIC_EXTINGUISH_FIRE,
 					SoundSource.NEUTRAL, 1.25f, 0.65f);
 
-				SkeletonHorse skeletonHorse = EntityType.SKELETON_HORSE.create(level);
-				CompoundTag serializeNBT = horse.saveWithoutId(new CompoundTag());
+				SkeletonHorse skeletonHorse =
+					EntityTypes.SKELETON_HORSE.create(level, EntitySpawnReason.CONVERSION);
+				if (skeletonHorse == null)
+					return;
+
+				TagValueOutput output =
+					TagValueOutput.createWithContext(ProblemReporter.DISCARDING, entity.registryAccess());
+				horse.saveWithoutId(output);
+				CompoundTag serializeNBT = output.buildResult();
 				serializeNBT.remove("UUID");
+
 				if (!horse.getBodyArmorItem()
 					.isEmpty())
-					horse.spawnAtLocation(horse.getBodyArmorItem());
+					if (horse.level() instanceof ServerLevel horseLevel)
+						horse.spawnAtLocation(horseLevel, horse.getBodyArmorItem());
 
-				skeletonHorse.deserializeNBT(entity.registryAccess(), serializeNBT);
-				skeletonHorse.setPos(horse.getPosition(0));
+				skeletonHorse.load(
+					TagValueInput.create(ProblemReporter.DISCARDING, entity.registryAccess(), serializeNBT));
+				skeletonHorse.setPos(horse.position());
 				level.addFreshEntity(skeletonHorse);
 				horse.discard();
 			}
@@ -335,8 +348,7 @@ public class AllFanProcessingTypes {
 
 		@Override
 		public boolean canProcess(ItemStack stack, Level level) {
-			return level.getRecipeManager()
-				.getRecipeFor(RecipeType.SMOKING, new SingleRecipeInput(stack), level)
+			return RecipeFinder.find(RecipeType.SMOKING, new SingleRecipeInput(stack), level)
 				.filter(AllRecipeTypes.CAN_BE_AUTOMATED)
 				.isPresent();
 		}
@@ -344,8 +356,7 @@ public class AllFanProcessingTypes {
 		@Override
 		@Nullable
 		public List<ItemStack> process(ItemStack stack, Level level) {
-			return level.getRecipeManager()
-				.getRecipeFor(RecipeType.SMOKING, new SingleRecipeInput(stack), level)
+			return RecipeFinder.find(RecipeType.SMOKING, new SingleRecipeInput(stack), level)
 				.filter(AllRecipeTypes.CAN_BE_AUTOMATED)
 				.map(RecipeHolder::value)
 				.map(r -> RecipeApplier.applyRecipeOn(level, stack, r, false))
@@ -354,7 +365,7 @@ public class AllFanProcessingTypes {
 
 		@Override
 		public void spawnProcessingParticles(Level level, Vec3 pos) {
-			if (level.random.nextInt(8) != 0)
+			if (level.getRandom().nextInt(8) != 0)
 				return;
 			level.addParticle(ParticleTypes.POOF, pos.x, pos.y + .25f, pos.z, 0, 1 / 16f, 0);
 		}
@@ -371,7 +382,7 @@ public class AllFanProcessingTypes {
 
 		@Override
 		public void affectEntity(Entity entity, Level level) {
-			if (level.isClientSide)
+			if (level.isClientSide())
 				return;
 
 			if (!entity.fireImmune()) {
@@ -415,13 +426,12 @@ public class AllFanProcessingTypes {
 
 		@Override
 		public void spawnProcessingParticles(Level level, Vec3 pos) {
-			if (level.random.nextInt(8) != 0)
+			if (level.getRandom().nextInt(8) != 0)
 				return;
-			Vector3f color = new Color(0x0055FF).asVectorF();
-			level.addParticle(new DustParticleOptions(color, 1), pos.x + (level.random.nextFloat() - .5f) * .5f,
-				pos.y + .5f, pos.z + (level.random.nextFloat() - .5f) * .5f, 0, 1 / 8f, 0);
-			level.addParticle(ParticleTypes.SPIT, pos.x + (level.random.nextFloat() - .5f) * .5f, pos.y + .5f,
-				pos.z + (level.random.nextFloat() - .5f) * .5f, 0, 1 / 8f, 0);
+			level.addParticle(new DustParticleOptions(0x0055FF, 1), pos.x + (level.getRandom().nextFloat() - .5f) * .5f,
+				pos.y + .5f, pos.z + (level.getRandom().nextFloat() - .5f) * .5f, 0, 1 / 8f, 0);
+			level.addParticle(ParticleTypes.SPIT, pos.x + (level.getRandom().nextFloat() - .5f) * .5f, pos.y + .5f,
+				pos.z + (level.getRandom().nextFloat() - .5f) * .5f, 0, 1 / 8f, 0);
 		}
 
 		@Override
@@ -436,17 +446,17 @@ public class AllFanProcessingTypes {
 
 		@Override
 		public void affectEntity(Entity entity, Level level) {
-			if (level.isClientSide)
+			if (level.isClientSide())
 				return;
 
-			if (entity instanceof EnderMan || entity.getType() == EntityType.SNOW_GOLEM
-				|| entity.getType() == EntityType.BLAZE) {
+			if (entity instanceof EnderMan || entity.getType() == EntityTypes.SNOW_GOLEM
+				|| entity.getType() == EntityTypes.BLAZE) {
 				entity.hurt(entity.damageSources().drown(), 2);
 			}
 			if (entity.isOnFire()) {
 				entity.clearFire();
 				level.playSound(null, entity.blockPosition(), SoundEvents.GENERIC_EXTINGUISH_FIRE,
-					SoundSource.NEUTRAL, 0.7F, 1.6F + (level.random.nextFloat() - level.random.nextFloat()) * 0.4F);
+					SoundSource.NEUTRAL, 0.7F, 1.6F + (level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.4F);
 			}
 		}
 	}

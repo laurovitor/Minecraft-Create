@@ -1,5 +1,7 @@
 package com.simibubi.create.content.kinetics.mechanicalArm;
 
+import com.simibubi.create.foundation.utility.RegistryNbt;
+import net.createmod.catnip.api.platform.services.PlatformHelper;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,12 +26,11 @@ import com.simibubi.create.foundation.utility.CreateLang;
 import com.simibubi.create.infrastructure.config.AllConfigs;
 
 import dev.engine_room.flywheel.lib.visualization.VisualizationHelper;
-import net.createmod.catnip.animation.LerpedFloat;
-import net.createmod.catnip.lang.Lang;
-import net.createmod.catnip.math.AngleHelper;
-import net.createmod.catnip.math.VecHelper;
-import net.createmod.catnip.nbt.NBTHelper;
-import net.createmod.catnip.platform.CatnipServices;
+import net.createmod.catnip.api.animation.LerpedFloat;
+import net.createmod.catnip.api.lang.Lang;
+import net.createmod.catnip.api.math.AngleHelper;
+import net.createmod.catnip.api.math.VecHelper;
+import net.createmod.catnip.api.nbt.NBTHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -140,7 +141,7 @@ public class ArmBlockEntity extends KineticBlockEntity implements TransformableB
 			}
 			return;
 		}
-		if (level.isClientSide)
+		if (level.isClientSide())
 			return;
 
 		if (phase == Phase.MOVE_TO_INPUT)
@@ -158,7 +159,7 @@ public class ArmBlockEntity extends KineticBlockEntity implements TransformableB
 	public void lazyTick() {
 		super.lazyTick();
 
-		if (level.isClientSide)
+		if (level.isClientSide())
 			return;
 		if (chasedPointProgress < .5f)
 			return;
@@ -199,7 +200,7 @@ public class ArmBlockEntity extends KineticBlockEntity implements TransformableB
 		chasedPointProgress += Math.min(256, Math.abs(getSpeed())) / 1024f;
 		if (chasedPointProgress > 1)
 			chasedPointProgress = 1;
-		if (!level.isClientSide)
+		if (!level.isClientSide())
 			return !targetReachedPreviously && chasedPointProgress >= 1;
 
 		ArmInteractionPoint targetedInteractionPoint = getTargetedInteractionPoint();
@@ -377,7 +378,7 @@ public class ArmBlockEntity extends KineticBlockEntity implements TransformableB
 		sendData();
 		setChanged();
 
-		if (!level.isClientSide)
+		if (!level.isClientSide())
 			award(AllAdvancements.MECHANICAL_ARM);
 	}
 
@@ -411,7 +412,7 @@ public class ArmBlockEntity extends KineticBlockEntity implements TransformableB
 	}
 
 	public void redstoneUpdate() {
-		if (level.isClientSide)
+		if (level.isClientSide())
 			return;
 		boolean blockPowered = level.hasNeighborSignal(worldPosition);
 		if (blockPowered == redstoneLocked)
@@ -440,10 +441,10 @@ public class ArmBlockEntity extends KineticBlockEntity implements TransformableB
 		if (!level.isAreaLoaded(center, range)) {
 			return false;
 		}
-		if (level.isClientSide) {
+		if (level.isClientSide()) {
 			int minY = center.getY() - range;
 			int maxY = center.getY() + range;
-			if (maxY < level.getMinBuildHeight() || minY >= level.getMaxBuildHeight()) {
+			if (maxY < level.getMinY() || minY >= level.getMaxY()) {
 				return false;
 			}
 
@@ -489,7 +490,7 @@ public class ArmBlockEntity extends KineticBlockEntity implements TransformableB
 			hasBlazeBurner |= point instanceof AllArmInteractionPointTypes.BlazeBurnerPoint;
 		}
 
-		if (!level.isClientSide) {
+		if (!level.isClientSide()) {
 			if (outputs.size() >= 10)
 				award(AllAdvancements.ARM_MANY_TARGETS);
 			if (hasBlazeBurner)
@@ -525,7 +526,7 @@ public class ArmBlockEntity extends KineticBlockEntity implements TransformableB
 		NBTHelper.writeEnum(compound, "Phase", phase);
 		compound.putBoolean("Powered", redstoneLocked);
 		compound.putBoolean("Goggles", goggles);
-		compound.put("HeldItem", heldItem.saveOptional(registries));
+		compound.store("HeldItem", ItemStack.OPTIONAL_CODEC, RegistryNbt.ops(registries), heldItem);
 		compound.putInt("TargetPointIndex", chasedPointIndex);
 		compound.putFloat("MovementProgress", chasedPointProgress);
 	}
@@ -544,20 +545,20 @@ public class ArmBlockEntity extends KineticBlockEntity implements TransformableB
 		ListTag interactionPointTagBefore = interactionPointTag;
 
 		super.read(tag, registries, clientPacket);
-		heldItem = ItemStack.parseOptional(registries, tag.getCompound("HeldItem"));
+		heldItem = tag.read("HeldItem", ItemStack.OPTIONAL_CODEC, RegistryNbt.ops(registries)).orElse(ItemStack.EMPTY);
 		phase = NBTHelper.readEnum(tag, "Phase", Phase.class);
-		chasedPointIndex = tag.getInt("TargetPointIndex");
-		chasedPointProgress = tag.getFloat("MovementProgress");
-		interactionPointTag = tag.getList("InteractionPoints", Tag.TAG_COMPOUND);
-		redstoneLocked = tag.getBoolean("Powered");
+		chasedPointIndex = tag.getIntOr("TargetPointIndex", 0);
+		chasedPointProgress = tag.getFloatOr("MovementProgress", 0);
+		interactionPointTag = tag.getListOrEmpty("InteractionPoints");
+		redstoneLocked = tag.getBooleanOr("Powered", false);
 
 		boolean hadGoggles = goggles;
-		goggles = tag.getBoolean("Goggles");
+		goggles = tag.getBooleanOr("Goggles", false);
 
 		if (!clientPacket)
 			return;
 
-		if (hadGoggles != goggles && CatnipServices.PLATFORM.getEnv().isClient())
+		if (hadGoggles != goggles && PlatformHelper.INSTANCE.getEnv().isClient())
 			Client.queueUpdate(this);
 
 		boolean ceiling = isOnCeiling();
@@ -634,23 +635,25 @@ public class ArmBlockEntity extends KineticBlockEntity implements TransformableB
 	}
 
 	public enum SelectionMode implements INamedIconOptions {
-		ROUND_ROBIN(AllIcons.I_ARM_ROUND_ROBIN),
-		FORCED_ROUND_ROBIN(AllIcons.I_ARM_FORCED_ROUND_ROBIN),
-		PREFER_FIRST(AllIcons.I_ARM_PREFER_FIRST),
+		ROUND_ROBIN,
+		FORCED_ROUND_ROBIN,
+		PREFER_FIRST,
 
 		;
 
 		private final String translationKey;
-		private final AllIcons icon;
 
-		SelectionMode(AllIcons icon) {
-			this.icon = icon;
+		SelectionMode() {
 			this.translationKey = "create.mechanical_arm.selection_mode." + Lang.asId(name());
 		}
 
 		@Override
 		public AllIcons getIcon() {
-			return icon;
+			return switch (this) {
+			case ROUND_ROBIN -> AllIcons.I_ARM_ROUND_ROBIN;
+			case FORCED_ROUND_ROBIN -> AllIcons.I_ARM_FORCED_ROUND_ROBIN;
+			case PREFER_FIRST -> AllIcons.I_ARM_PREFER_FIRST;
+			};
 		}
 
 		@Override

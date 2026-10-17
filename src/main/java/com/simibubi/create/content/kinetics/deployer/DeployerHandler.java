@@ -1,5 +1,7 @@
 package com.simibubi.create.content.kinetics.deployer;
 
+import net.minecraft.world.DifficultyInstance;
+import net.minecraft.util.TriState;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -22,7 +24,7 @@ import com.simibubi.create.content.trains.track.ITrackBlock;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.foundation.utility.BlockHelper;
 
-import net.createmod.catnip.levelWrappers.WrappedLevel;
+import net.createmod.catnip.api.level.wrapper.WrappedLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
@@ -34,14 +36,13 @@ import net.minecraft.server.level.ServerPlayerGameMode;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.entity.npc.AbstractVillager;
+import net.minecraft.world.entity.npc.villager.AbstractVillager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.BlockItem;
@@ -72,7 +73,6 @@ import net.minecraft.world.phys.Vec3;
 
 import net.neoforged.neoforge.common.CommonHooks;
 import net.neoforged.neoforge.common.extensions.IBaseRailBlockExtension;
-import net.neoforged.neoforge.common.util.TriState;
 import net.neoforged.neoforge.event.EventHooks;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.LeftClickBlock;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickBlock;
@@ -85,6 +85,11 @@ public class DeployerHandler {
 		private final Direction face;
 		private final BlockPos pos;
 		boolean rayMode = false;
+
+		@Override
+		public DifficultyInstance getCurrentDifficultyAt(BlockPos at) {
+			return getLevel().getCurrentDifficultyAt(at);
+		}
 
 		private ItemUseWorld(ServerLevel level, Direction face, BlockPos pos) {
 			super(level);
@@ -163,27 +168,29 @@ public class DeployerHandler {
 		Item item = stack.getItem();
 
 		// Check for entities
-		final ServerLevel level = player.serverLevel();
+		final ServerLevel level = player.level();
 		List<Entity> entities = level.getEntitiesOfClass(Entity.class, new AABB(clickedPos))
 			.stream()
 			.filter(e -> !(e instanceof AbstractContraptionEntity))
 			.toList();
 		InteractionHand hand = InteractionHand.MAIN_HAND;
 		if (!entities.isEmpty()) {
-			Entity entity = entities.get(level.random.nextInt(entities.size()));
+			Entity entity = entities.get(level.getRandom().nextInt(entities.size()));
 			List<ItemEntity> capturedDrops = new ArrayList<>();
 			boolean success = false;
 			entity.captureDrops(capturedDrops);
 
 			// Use on entity
 			if (mode == Mode.USE) {
-				InteractionResult cancelResult = CommonHooks.onInteractEntity(player, entity, hand);
+				Vec3 interactionLocation = entity.position();
+				InteractionResult cancelResult =
+					CommonHooks.onInteractEntity(player, entity, hand, interactionLocation);
 				if (cancelResult == InteractionResult.FAIL) {
 					entity.captureDrops(null);
 					return;
 				}
 				if (cancelResult == null) {
-					if (entity.interact(player, hand)
+					if (entity.interact(player, hand, interactionLocation)
 						.consumesAction()) {
 						if (entity instanceof AbstractVillager villager) {
 							if (villager.getTradingPlayer() instanceof DeployerFakePlayer)
@@ -196,7 +203,7 @@ public class DeployerHandler {
 				}
 				if (!success && entity instanceof Player playerEntity) {
 					if (stack.has(DataComponents.FOOD)) {
-						FoodProperties foodProperties = item.getFoodProperties(stack, player);
+						FoodProperties foodProperties = stack.get(DataComponents.FOOD);
 						if (foodProperties != null && playerEntity.canEat(foodProperties.canAlwaysEat())) {
 							ItemStack copy = stack.copy();
 							player.setItemInHand(hand, stack.finishUsingItem(level, playerEntity));
@@ -235,7 +242,7 @@ public class DeployerHandler {
 		BlockState clickedState = level.getBlockState(clickedPos);
 		Direction face = result.getDirection();
 		if (face == null)
-			face = Direction.getNearest(extensionVector.x, extensionVector.y, extensionVector.z)
+			face = Direction.getApproximateNearest(extensionVector.x, extensionVector.y, extensionVector.z)
 				.getOpposite();
 
 		// Left click
@@ -349,15 +356,19 @@ public class DeployerHandler {
 		if (item instanceof BucketItem || item instanceof SandPaperItem)
 			itemUseWorld = new ItemUseWorld(level, face, pos);
 
-		InteractionResultHolder<ItemStack> onItemRightClick = item.use(itemUseWorld, player, hand);
+		InteractionResult onItemRightClick = item.use(itemUseWorld, player, hand);
 
-		if (onItemRightClick.getResult().consumesAction() && item instanceof MobBucketItem bucketItem)
+		if (onItemRightClick.consumesAction() && item instanceof MobBucketItem bucketItem)
 			bucketItem.checkExtraContent(player, level, stack, clickedPos);
 
-		ItemStack resultStack = onItemRightClick.getObject();
-		if (resultStack != stack || resultStack.getCount() != stack.getCount() || resultStack.getUseDuration(player) > 0
-			|| resultStack.getDamageValue() != stack.getDamageValue()) {
-			player.setItemInHand(hand, onItemRightClick.getObject());
+		// The replacement stack the old InteractionResultHolder carried now rides on Success, and is
+		// null whenever the item did not transform anything.
+		if (onItemRightClick instanceof InteractionResult.Success success) {
+			ItemStack resultStack = success.heldItemTransformedTo();
+			if (resultStack != null && (resultStack != stack || resultStack.getCount() != stack.getCount()
+				|| resultStack.getUseDuration(player) > 0 || resultStack.getDamageValue() != stack.getDamageValue())) {
+				player.setItemInHand(hand, resultStack);
+			}
 		}
 
 		if (stack.getItem() instanceof SandPaperItem && stack.has(AllDataComponents.SAND_PAPER_POLISHING)) {
@@ -375,7 +386,7 @@ public class DeployerHandler {
 	public static boolean tryHarvestBlock(ServerPlayer player, ServerPlayerGameMode interactionManager, BlockPos pos) {
 		// <> PlayerInteractionManager#tryHarvestBlock
 
-		ServerLevel world = player.serverLevel();
+		ServerLevel world = player.level();
 		BlockState blockstate = world.getBlockState(pos);
 		GameType gameType = interactionManager.getGameModeForPlayer();
 
@@ -404,7 +415,8 @@ public class DeployerHandler {
 			world.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL | Block.UPDATE_SUPPRESS_DROPS);
 			world.setBlock(posUp, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL | Block.UPDATE_SUPPRESS_DROPS);
 		} else {
-			if (!blockstate.onDestroyedByPlayer(world, pos, player, canHarvest, world.getFluidState(pos)))
+			if (!blockstate.onDestroyedByPlayer(world, pos, player, player.getMainHandItem(), canHarvest,
+				world.getFluidState(pos)))
 				return true;
 		}
 

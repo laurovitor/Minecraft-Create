@@ -8,7 +8,10 @@
   "type": "create:milling",
   "ingredients": [
     {
-      "item": "regions_unexplored:purple_lupine"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "regions_unexplored:purple_lupine"
+      ]
     }
   ],
   "processing_time": 50,

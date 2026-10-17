@@ -8,7 +8,10 @@
   "type": "create:splashing",
   "ingredients": [
     {
-      "item": "the_vault:ornate_chain"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "the_vault:ornate_chain"
+      ]
     }
   ],
   "results": [

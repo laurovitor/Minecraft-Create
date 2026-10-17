@@ -1,5 +1,12 @@
 package com.simibubi.create.foundation.recipe.trie;
 
+import net.neoforged.neoforge.transfer.item.ItemUtil;
+import net.neoforged.neoforge.transfer.fluid.FluidUtil;
+import com.simibubi.create.foundation.item.ItemHelper;
+import com.simibubi.create.foundation.recipe.RecipeAccessors;
+import net.neoforged.neoforge.transfer.fluid.FluidResource;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -22,6 +29,7 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import net.minecraft.core.Holder;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -29,10 +37,7 @@ import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.level.material.Fluid;
 
 import net.neoforged.neoforge.fluids.FluidStack;
-import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
-import net.neoforged.neoforge.items.IItemHandler;
-
 public class RecipeTrie<R extends Recipe<?>> {
 	private static final int MAX_CACHE_SIZE = Integer.getInteger("create.recipe_trie.max_cache_size", 512);
 
@@ -52,12 +57,12 @@ public class RecipeTrie<R extends Recipe<?>> {
 		this.universalIngredientId = universalIngredientId;
 	}
 
-	public static @NotNull Set<AbstractVariant> getVariants(@Nullable IItemHandler itemStorage, @Nullable IFluidHandler fluidStorage) {
+	public static @NotNull Set<AbstractVariant> getVariants(@Nullable ResourceHandler<ItemResource> itemStorage, @Nullable ResourceHandler<FluidResource> fluidStorage) {
 		Set<AbstractVariant> variants = new HashSet<>();
 
 		if (itemStorage != null) {
-			for (int slot = 0; slot < itemStorage.getSlots(); slot++) {
-				ItemStack item = itemStorage.getStackInSlot(slot);
+			for (int slot = 0; slot < itemStorage.size(); slot++) {
+				ItemStack item = ItemUtil.getStack(itemStorage, slot);
 				if (item.isEmpty()) continue;
 
 				variants.add(new AbstractVariant.AbstractItem(item.getItem()));
@@ -65,8 +70,8 @@ public class RecipeTrie<R extends Recipe<?>> {
 		}
 
 		if (fluidStorage != null) {
-			for (int tank = 0; tank < fluidStorage.getTanks(); tank++) {
-				FluidStack fluid = fluidStorage.getFluidInTank(tank);
+			for (int tank = 0; tank < fluidStorage.size(); tank++) {
+				FluidStack fluid = FluidUtil.getStack(fluidStorage, tank);
 				if (fluid.isEmpty()) continue;
 
 				variants.add(new AbstractVariant.AbstractFluid(fluid.getFluid()));
@@ -85,7 +90,7 @@ public class RecipeTrie<R extends Recipe<?>> {
 				ingredients.add(universalIngredientId);
 
 				for (AbstractVariant variant : pool) {
-					int id = variantToId.getInt(variant);
+					int id = variantToId.getOrDefault(variant, -1);
 					if (id >= 0) {
 						var ingredientIds = variantToIngredients.get(id);
 						if (ingredientIds != null) {
@@ -183,7 +188,7 @@ public class RecipeTrie<R extends Recipe<?>> {
 		private <R1 extends R> AbstractRecipe<R1> createRecipe(R1 recipe) {
 			Set<AbstractIngredient> ingredients = new HashSet<>();
 
-			for (Ingredient ingredient : recipe.getIngredients()) {
+			for (Ingredient ingredient : RecipeAccessors.ingredients(recipe)) {
 				if (ingredient.isEmpty()) {
 					ingredients.add(AbstractIngredient.Universal.INSTANCE);
 					continue;
@@ -194,7 +199,7 @@ public class RecipeTrie<R extends Recipe<?>> {
 				}
 
 				Set<AbstractVariant> variants = new HashSet<>();
-				for (ItemStack stack : ingredient.getItems()) {
+				for (ItemStack stack : ItemHelper.getItems(ingredient)) {
 					variants.add(getOrAssignVariant(stack.getItem()));
 				}
 
@@ -209,8 +214,9 @@ public class RecipeTrie<R extends Recipe<?>> {
 					}
 
 					Set<AbstractVariant> variants = new HashSet<>();
-					for (FluidStack stack : ingredient.getFluids()) {
-						variants.add(getOrAssignVariant(stack.getFluid()));
+					for (Holder<Fluid> fluid : ingredient.ingredient()
+						.fluids()) {
+						variants.add(getOrAssignVariant(fluid.value()));
 					}
 
 					ingredients.add(new AbstractIngredient(variants));

@@ -1,11 +1,12 @@
 package com.simibubi.create.content.kinetics.base;
 
-import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.renderer.state.level.QuadParticleRenderState;
+import net.minecraft.util.RandomSource;
 import com.simibubi.create.content.equipment.goggles.GogglesItem;
 
-import net.createmod.catnip.animation.AnimationTickHolder;
-import net.createmod.catnip.math.VecHelper;
-import net.createmod.catnip.theme.Color;
+import net.createmod.catnip.api.client.animation.AnimationTickHolder;
+import net.createmod.catnip.api.math.VecHelper;
+import net.createmod.catnip.api.theme.Color;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -59,11 +60,13 @@ public class RotationIndicatorParticle extends SimpleAnimatedParticle {
 		radius += (radius2 - radius) * .1f;
 	}
 
+	// A particle is collected into a render state instead of drawing itself in 26.2; one that is not
+	// visible simply contributes nothing.
 	@Override
-	public void render(VertexConsumer buffer, Camera renderInfo, float partialTicks) {
+	public void extract(QuadParticleRenderState particleTypeRenderState, Camera camera, float partialTickTime) {
 		if (!isVisible)
 			return;
-		super.render(buffer, renderInfo, partialTicks);
+		super.extract(particleTypeRenderState, camera, partialTickTime);
 	}
 
 	public void move(double x, double y, double z) {
@@ -85,7 +88,7 @@ public class RotationIndicatorParticle extends SimpleAnimatedParticle {
 		}
 
 		public Particle createParticle(RotationIndicatorParticleData data, ClientLevel worldIn, double x, double y, double z,
-				double xSpeed, double ySpeed, double zSpeed) {
+				double xSpeed, double ySpeed, double zSpeed, RandomSource random) {
 			Minecraft mc = Minecraft.getInstance();
 			LocalPlayer player = mc.player;
 			boolean visible = worldIn != mc.level || player != null && GogglesItem.isWearingGoggles(player);

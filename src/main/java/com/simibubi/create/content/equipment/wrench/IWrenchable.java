@@ -1,5 +1,6 @@
 package com.simibubi.create.content.equipment.wrench;
 
+import net.neoforged.neoforge.event.level.block.BreakBlockEvent;
 import com.simibubi.create.AllSoundEvents;
 import com.simibubi.create.Create;
 import com.simibubi.create.content.kinetics.base.DirectionalAxisKineticBlock;
@@ -9,7 +10,7 @@ import com.simibubi.create.content.kinetics.base.HorizontalKineticBlock;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.simibubi.create.content.kinetics.base.RotatedPillarKineticBlock;
 
-import net.createmod.catnip.math.VoxelShaper;
+import net.createmod.catnip.api.math.VoxelShaper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -53,7 +54,7 @@ public interface IWrenchable {
 		if (!(world instanceof ServerLevel serverLevel))
 			return InteractionResult.SUCCESS;
 
-		BlockEvent.BreakEvent event = new BlockEvent.BreakEvent(world, pos, world.getBlockState(pos), player);
+		BreakBlockEvent event = new BreakBlockEvent(world, pos, world.getBlockState(pos), player);
 		NeoForge.EVENT_BUS.post(event);
 		if (event.isCanceled())
 			return InteractionResult.SUCCESS;

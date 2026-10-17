@@ -1,5 +1,7 @@
 package com.simibubi.create.content.logistics.filter;
 
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,14 +15,13 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
-import net.neoforged.neoforge.items.ItemStackHandler;
-import net.neoforged.neoforge.items.SlotItemHandler;
+import net.neoforged.neoforge.transfer.item.ResourceHandlerSlot;
 
 public class AttributeFilterMenu extends AbstractFilterMenu {
 
@@ -48,7 +49,7 @@ public class AttributeFilterMenu extends AbstractFilterMenu {
 		super.init(inv, contentHolder);
 		ItemStack stack = new ItemStack(Items.NAME_TAG);
 		stack.set(DataComponents.CUSTOM_NAME, Component.literal("Selected Tags").withStyle(ChatFormatting.RESET, ChatFormatting.BLUE));
-		ghostInventory.setStackInSlot(1, stack);
+		ghostInventory.set(1, ItemResource.of(stack), stack.getCount());
 	}
 
 	@Override
@@ -63,8 +64,8 @@ public class AttributeFilterMenu extends AbstractFilterMenu {
 
 	@Override
 	protected void addFilterSlots() {
-		this.addSlot(new SlotItemHandler(ghostInventory, 0, 16, 27));
-		this.addSlot(new SlotItemHandler(ghostInventory, 1, 16, 62) {
+		this.addSlot(new ResourceHandlerSlot(ghostInventory, ghostInventory::set, 0, 16, 27));
+		this.addSlot(new ResourceHandlerSlot(ghostInventory, ghostInventory::set, 1, 16, 62) {
 			@Override
 			public boolean mayPickup(Player playerIn) {
 				return false;
@@ -73,8 +74,8 @@ public class AttributeFilterMenu extends AbstractFilterMenu {
 	}
 
 	@Override
-	protected ItemStackHandler createGhostInventory() {
-		return new ItemStackHandler(2);
+	protected ItemStacksResourceHandler createGhostInventory() {
+		return new ItemStacksResourceHandler(2);
 	}
 
 	@Override
@@ -83,7 +84,7 @@ public class AttributeFilterMenu extends AbstractFilterMenu {
 	}
 
 	@Override
-	public void clicked(int slotId, int dragType, ClickType clickTypeIn, Player player) {
+	public void clicked(int slotId, int dragType, ContainerInput clickTypeIn, Player player) {
 		if (slotId == 37)
 			return;
 		super.clicked(slotId, dragType, clickTypeIn, player);
@@ -108,7 +109,7 @@ public class AttributeFilterMenu extends AbstractFilterMenu {
 		if (index == 37)
 			return ItemStack.EMPTY;
 		if (index == 36) {
-			ghostInventory.setStackInSlot(37, ItemStack.EMPTY);
+			ghostInventory.set(37, ItemResource.EMPTY, 0);
 			return ItemStack.EMPTY;
 		}
 		if (index < 36) {
@@ -116,7 +117,7 @@ public class AttributeFilterMenu extends AbstractFilterMenu {
 			ItemStack stackToInsert = slot.getItem();
 			ItemStack copy = stackToInsert.copy();
 			copy.setCount(1);
-			ghostInventory.setStackInSlot(0, copy);
+			ghostInventory.set(0, ItemResource.of(copy), copy.getCount());
 		}
 		return ItemStack.EMPTY;
 	}

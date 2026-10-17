@@ -1,5 +1,6 @@
 package com.simibubi.create.content.fluids.potion;
 
+import com.simibubi.create.foundation.item.ItemHelper;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -14,9 +15,10 @@ import com.simibubi.create.content.processing.recipe.HeatCondition;
 import com.simibubi.create.content.processing.recipe.StandardProcessingRecipe.Builder;
 import com.simibubi.create.foundation.mixin.accessor.PotionBrewingAccessor;
 
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.core.Holder.Reference;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -127,7 +129,7 @@ public class PotionMixingRecipes {
 				FluidStack outputFluid = null;
 				for (ItemStack stack : supportedContainerStacks) {
 					if (input.test(stack)) {
-						ItemStack[] stacks = input.getItems();
+						ItemStack[] stacks = ItemHelper.getItems(input);
 						if (stacks.length == 0){
 							continue;
 						}
@@ -147,7 +149,7 @@ public class PotionMixingRecipes {
 	}
 
 	private static RecipeHolder<MixingRecipe> createRecipe(String id, Ingredient ingredient, FluidStack fromFluid, FluidStack toFluid) {
-		ResourceLocation recipeId = Create.asResource(id);
+		Identifier recipeId = Create.asResource(id);
 		MixingRecipe recipe = new Builder<>(MixingRecipe::new, recipeId)
 				.require(ingredient)
 			.require(new SizedFluidIngredient(DataComponentFluidIngredient.of(false, fromFluid), fromFluid.getAmount()))
@@ -155,7 +157,7 @@ public class PotionMixingRecipes {
 				.requiresHeat(HeatCondition.HEATED)
 				.build();
 
-		return new RecipeHolder<>(recipeId, recipe);
+		return new RecipeHolder<>(ResourceKey.create(Registries.RECIPE, recipeId), recipe);
 	}
 
 	private static Map<Item, List<MixingRecipe>> sortRecipesByItem(List<RecipeHolder<MixingRecipe>> all) {
@@ -163,7 +165,7 @@ public class PotionMixingRecipes {
 		Set<Item> processedItems = new HashSet<>();
 		for (RecipeHolder<MixingRecipe> recipe : all) {
 			for (Ingredient ingredient : recipe.value().getIngredients()) {
-				for (ItemStack itemStack : ingredient.getItems()) {
+				for (ItemStack itemStack : ItemHelper.getItems(ingredient)) {
 					Item item = itemStack.getItem();
 					if (processedItems.add(item)) {
 						byItem.computeIfAbsent(item, i -> new ArrayList<>())

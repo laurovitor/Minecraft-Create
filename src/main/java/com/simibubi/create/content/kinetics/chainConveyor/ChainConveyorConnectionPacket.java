@@ -1,5 +1,6 @@
 package com.simibubi.create.content.kinetics.chainConveyor;
 
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import com.simibubi.create.AllPackets;
 import com.simibubi.create.foundation.networking.BlockEntityConfigurationPacket;
 import com.simibubi.create.infrastructure.config.AllConfigs;
@@ -35,8 +36,8 @@ public class ChainConveyorConnectionPacket extends BlockEntityConfigurationPacke
 	}
 
 	@Override
-	public PacketTypeProvider getTypeProvider() {
-		return AllPackets.CHAIN_CONVEYOR_CONNECT;
+	public Type<? extends CustomPacketPayload> type() {
+		return AllPackets.CHAIN_CONVEYOR_CONNECT.getType();
 	}
 
 	@Override
@@ -66,7 +67,7 @@ public class ChainConveyorConnectionPacket extends BlockEntityConfigurationPacke
 				int chainCost = ChainConveyorBlockEntity.getChainCost(targetPos.subtract(pos));
 				while (chainCost > 0) {
 					player.getInventory()
-						.placeItemBackInInventory(new ItemStack(Items.CHAIN, Math.min(chainCost, 64)));
+						.placeItemBackInInventory(new ItemStack(Items.IRON_CHAIN, Math.min(chainCost, 64)));
 					chainCost -= 64;
 				}
 			}

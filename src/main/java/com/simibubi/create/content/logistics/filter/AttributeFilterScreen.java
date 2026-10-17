@@ -1,12 +1,13 @@
 package com.simibubi.create.content.logistics.filter;
 
+import net.neoforged.neoforge.transfer.item.ItemUtil;
+import org.joml.Matrix3x2fStack;
+import net.createmod.catnip.api.client.network.ClientNetworkHelper;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.api.registry.CreateBuiltInRegistries;
 import com.simibubi.create.content.logistics.filter.FilterScreenPacket.Option;
 import com.simibubi.create.content.logistics.item.filter.attribute.ItemAttribute;
@@ -19,16 +20,14 @@ import com.simibubi.create.foundation.gui.widget.ScrollInput;
 import com.simibubi.create.foundation.gui.widget.SelectionScrollInput;
 import com.simibubi.create.foundation.utility.CreateLang;
 
-import net.createmod.catnip.platform.CatnipServices;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
@@ -111,7 +110,7 @@ public class AttributeFilterScreen extends AbstractFilterScreen<AttributeFilterM
 		attributeSelector = new SelectionScrollInput(x + 39, y + 26, 137, 18);
 		attributeSelector.forOptions(Arrays.asList(CommonComponents.EMPTY));
 		attributeSelector.removeCallback();
-		referenceItemChanged(menu.ghostInventory.getStackInSlot(0));
+		referenceItemChanged(ItemUtil.getStack(menu.ghostInventory, 0));
 
 		addRenderableWidget(attributeSelector);
 		addRenderableWidget(attributeSelectorLabel);
@@ -179,14 +178,14 @@ public class AttributeFilterScreen extends AbstractFilterScreen<AttributeFilterM
 	}
 
 	@Override
-	public void renderForeground(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
-		ItemStack stack = menu.ghostInventory.getStackInSlot(1);
-		PoseStack matrixStack = graphics.pose();
-		matrixStack.pushPose();
-		matrixStack.translate(0, 0, 150);
-		graphics.renderItemDecorations(font, stack, leftPos + 16, topPos + 62,
+	public void renderForeground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks) {
+		ItemStack stack = ItemUtil.getStack(menu.ghostInventory, 1);
+		Matrix3x2fStack matrixStack = graphics.pose();
+		matrixStack.pushMatrix();
+		matrixStack.translate((float) (0), (float) (0));
+		graphics.itemDecorations(font, stack, leftPos + 16, topPos + 62,
 			String.valueOf(selectedAttributes.size() - 1));
-		matrixStack.popPose();
+		matrixStack.popMatrix();
 
 		super.renderForeground(graphics, mouseX, mouseY, partialTicks);
 	}
@@ -194,21 +193,21 @@ public class AttributeFilterScreen extends AbstractFilterScreen<AttributeFilterM
 	@Override
 	protected void containerTick() {
 		super.containerTick();
-		ItemStack stackInSlot = menu.ghostInventory.getStackInSlot(0);
+		ItemStack stackInSlot = ItemUtil.getStack(menu.ghostInventory, 0);
 		if (!ItemStack.matches(stackInSlot, lastItemScanned))
 			referenceItemChanged(stackInSlot);
 	}
 
 	@Override
-	protected void renderTooltip(GuiGraphics graphics, int mouseX, int mouseY) {
+	protected void extractTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
 		if (this.menu.getCarried().isEmpty() && this.hoveredSlot != null && this.hoveredSlot.hasItem()) {
 			if (this.hoveredSlot.index == 37) {
-				graphics.renderComponentTooltip(font, selectedAttributes, mouseX, mouseY);
+				graphics.setComponentTooltipForNextFrame(font, selectedAttributes, mouseX, mouseY);
 				return;
 			}
-			graphics.renderTooltip(font, this.hoveredSlot.getItem(), mouseX, mouseY);
+			graphics.setTooltipForNextFrame(font, this.hoveredSlot.getItem(), mouseX, mouseY);
 		}
-		super.renderTooltip(graphics, mouseX, mouseY);
+		super.extractTooltip(graphics, mouseX, mouseY);
 	}
 
 	@Override
@@ -229,7 +228,7 @@ public class AttributeFilterScreen extends AbstractFilterScreen<AttributeFilterM
 		addInverted.active = false;
 		ItemAttribute itemAttribute = attributesOfItem.get(index);
 		CompoundTag tag = ItemAttribute.saveStatic(itemAttribute, Minecraft.getInstance().level.registryAccess());
-		CatnipServices.NETWORK.sendToServer(new FilterScreenPacket(inverted ? Option.ADD_INVERTED_TAG : Option.ADD_TAG, tag));
+		ClientNetworkHelper.INSTANCE.sendToServer(new FilterScreenPacket(inverted ? Option.ADD_INVERTED_TAG : Option.ADD_TAG, tag));
 		menu.appendSelectedAttribute(itemAttribute, inverted);
 		if (menu.selectedAttributes.size() == 1)
 			selectedAttributes.set(0, selectedT.plainCopy()

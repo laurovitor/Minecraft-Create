@@ -1,5 +1,7 @@
 package com.simibubi.create.content.kinetics.crafter;
 
+import com.simibubi.create.foundation.utility.RegistryNbt;
+import com.simibubi.create.foundation.recipe.RecipeFinder;
 import static com.simibubi.create.content.kinetics.base.HorizontalKineticBlock.HORIZONTAL_FACING;
 
 import java.util.ArrayList;
@@ -17,8 +19,8 @@ import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllRecipeTypes;
 import com.simibubi.create.infrastructure.config.AllConfigs;
 
-import net.createmod.catnip.data.Iterate;
-import net.createmod.catnip.math.Pointing;
+import net.createmod.catnip.api.data.Iterate;
+import net.createmod.catnip.api.math.Pointing;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -145,14 +147,13 @@ public class RecipeGridHandler {
 		ItemStack result = null;
 		RegistryAccess registryAccess = world.registryAccess();
 		if (AllConfigs.server().recipes.allowRegularCraftingInCrafter.get())
-			result = world.getRecipeManager()
-				.getRecipeFor(RecipeType.CRAFTING, craftingInput, world)
+			result = RecipeFinder.find(RecipeType.CRAFTING, craftingInput, world)
 				.filter(r -> isRecipeAllowed(r, craftingInput))
-				.map(r -> r.value().assemble(craftingInput, registryAccess))
+				.map(r -> r.value().assemble(craftingInput))
 				.orElse(null);
 		if (result == null)
 			result = AllRecipeTypes.MECHANICAL_CRAFTING.find(craftingInput, world)
-				.map(r -> r.value().assemble(craftingInput, registryAccess))
+				.map(r -> r.value().assemble(craftingInput))
 				.orElse(null);
 		return result;
 	}
@@ -199,7 +200,7 @@ public class RecipeGridHandler {
 				CompoundTag entry = new CompoundTag();
 				entry.putInt("x", pair.getKey());
 				entry.putInt("y", pair.getValue());
-				entry.put("item", stack.saveOptional(registries));
+				entry.store("item", ItemStack.OPTIONAL_CODEC, RegistryNbt.ops(registries), stack);
 				gridNBT.add(entry);
 			});
 			nbt.put("Grid", gridNBT);
@@ -207,12 +208,12 @@ public class RecipeGridHandler {
 
 		public static GroupedItems read(CompoundTag nbt, HolderLookup.Provider registries) {
 			GroupedItems items = new GroupedItems();
-			ListTag gridNBT = nbt.getList("Grid", Tag.TAG_COMPOUND);
+			ListTag gridNBT = nbt.getListOrEmpty("Grid");
 			gridNBT.forEach(inbt -> {
 				CompoundTag entry = (CompoundTag) inbt;
-				int x = entry.getInt("x");
-				int y = entry.getInt("y");
-				ItemStack stack = ItemStack.parseOptional(registries, entry.getCompound("item"));
+				int x = entry.getIntOr("x", 0);
+				int y = entry.getIntOr("y", 0);
+				ItemStack stack = entry.read("item", ItemStack.OPTIONAL_CODEC, RegistryNbt.ops(registries)).orElse(ItemStack.EMPTY);
 				items.grid.put(Pair.of(x, y), stack);
 			});
 			return items;

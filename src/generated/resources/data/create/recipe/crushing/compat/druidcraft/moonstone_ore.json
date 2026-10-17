@@ -8,7 +8,10 @@
   "type": "create:crushing",
   "ingredients": [
     {
-      "item": "druidcraft:moonstone_ore"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "druidcraft:moonstone_ore"
+      ]
     }
   ],
   "processing_time": 300,

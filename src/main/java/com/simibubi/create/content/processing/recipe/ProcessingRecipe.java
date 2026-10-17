@@ -1,18 +1,19 @@
 package com.simibubi.create.content.processing.recipe;
 
+import org.jspecify.annotations.NullMarked;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-
-import javax.annotation.ParametersAreNonnullByDefault;
 
 import com.google.common.base.Joiner;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
 import com.simibubi.create.foundation.recipe.IRecipeTypeInfo;
 
-import net.minecraft.MethodsReturnNonnullByDefault;
+import net.minecraft.world.item.crafting.RecipeBookCategory;
+import net.minecraft.world.item.crafting.RecipeBookCategories;
+import net.minecraft.world.item.crafting.PlacementInfo;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -25,18 +26,22 @@ import net.minecraft.world.item.crafting.RecipeInput;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 
+import org.jspecify.annotations.Nullable;
+
 import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidStackTemplate;
 import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 
-@MethodsReturnNonnullByDefault
-@ParametersAreNonnullByDefault
+@NullMarked
 public abstract class ProcessingRecipe<I extends RecipeInput, P extends ProcessingRecipeParams> implements Recipe<I> {
 
 	protected P params;
 	protected NonNullList<Ingredient> ingredients;
 	protected NonNullList<ProcessingOutput> results;
 	protected NonNullList<SizedFluidIngredient> fluidIngredients;
-	protected NonNullList<FluidStack> fluidResults;
+	protected NonNullList<FluidStackTemplate> fluidResults;
+	@Nullable
+	private NonNullList<FluidStack> fluidResultStacks;
 	protected int processingDuration;
 	protected HeatCondition requiredHeat;
 
@@ -118,7 +123,6 @@ public abstract class ProcessingRecipe<I extends RecipeInput, P extends Processi
 		return params;
 	}
 
-	@Override
 	public NonNullList<Ingredient> getIngredients() {
 		return ingredients;
 	}
@@ -131,8 +135,16 @@ public abstract class ProcessingRecipe<I extends RecipeInput, P extends Processi
 		return results;
 	}
 
+	/**
+	 * The stacks this recipe produces. 26.2 binds a fluid's components when world data loads, which is
+	 * after recipes are read, so the stacks are built the first time something asks for them.
+	 */
 	public NonNullList<FluidStack> getFluidResults() {
-		return fluidResults;
+		if (fluidResultStacks == null) {
+			fluidResultStacks = NonNullList.create();
+			fluidResults.forEach(template -> fluidResultStacks.add(template.create()));
+		}
+		return fluidResultStacks;
 	}
 
 	public List<ItemStack> getRollableResultsAsItemStacks() {
@@ -171,17 +183,11 @@ public abstract class ProcessingRecipe<I extends RecipeInput, P extends Processi
 	// IRecipe<> paperwork
 
 	@Override
-	public ItemStack assemble(I t, HolderLookup.Provider provider) {
-		return getResultItem(provider);
+	public ItemStack assemble(I t) {
+		return getResultItem(null);
 	}
 
-	@Override
-	public boolean canCraftInDimensions(int width, int height) {
-		return true;
-	}
-
-	@Override
-	public ItemStack getResultItem(HolderLookup.Provider provider) {
+	public ItemStack getResultItem(HolderLookup.@org.jspecify.annotations.Nullable Provider provider) {
 		return getRollableResults().isEmpty() ? ItemStack.EMPTY
 				: getRollableResults().getFirst()
 				.getStack();
@@ -192,20 +198,37 @@ public abstract class ProcessingRecipe<I extends RecipeInput, P extends Processi
 		return true;
 	}
 
+	@Override
+	public boolean showNotification() {
+		return false;
+	}
+
 	// Processing recipes do not show up in the recipe book
 	@Override
-	public String getGroup() {
+	public String group() {
 		return "processing";
 	}
 
 	@Override
-	public RecipeSerializer<?> getSerializer() {
-		return serializer;
+	public PlacementInfo placementInfo() {
+		return PlacementInfo.NOT_PLACEABLE;
 	}
 
 	@Override
-	public RecipeType<?> getType() {
-		return type;
+	public RecipeBookCategory recipeBookCategory() {
+		return RecipeBookCategories.CRAFTING_MISC;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public RecipeSerializer<? extends Recipe<I>> getSerializer() {
+		return (RecipeSerializer<? extends Recipe<I>>) serializer;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public RecipeType<? extends Recipe<I>> getType() {
+		return (RecipeType<? extends Recipe<I>>) type;
 	}
 
 	public IRecipeTypeInfo getTypeInfo() {

@@ -1,5 +1,7 @@
 package com.simibubi.create.foundation.block;
 
+import net.minecraft.world.level.ScheduledTickAccess;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.LevelAccessor;
@@ -26,16 +28,24 @@ public interface ProperWaterloggedBlock extends SimpleWaterloggedBlock {
 		return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : Fluids.EMPTY.defaultFluidState();
 	}
 
-	default void updateWater(LevelAccessor level, BlockState state, BlockPos pos) {
+	/**
+	 * 26.2 moved tick scheduling off the level and onto the ScheduledTickAccess handed to
+	 * updateShape, so the two are passed separately here.
+	 */
+	default void updateWater(LevelReader level, ScheduledTickAccess ticks, BlockState state, BlockPos pos) {
 		if (state.getValue(BlockStateProperties.WATERLOGGED))
-			level.scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
+			ticks.scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
 	}
 
 	default BlockState withWater(BlockState placementState, BlockPlaceContext ctx) {
 		return withWater(ctx.getLevel(), placementState, ctx.getClickedPos());
 	}
 
-	static BlockState withWater(LevelAccessor level, BlockState placementState, BlockPos pos) {
+	/**
+	 * Only reads the fluid at the position, so a LevelReader is enough - which is all updateShape
+	 * hands out in 26.2.
+	 */
+	static BlockState withWater(LevelReader level, BlockState placementState, BlockPos pos) {
 		if (placementState == null)
 			return null;
 		FluidState ifluidstate = level.getFluidState(pos);

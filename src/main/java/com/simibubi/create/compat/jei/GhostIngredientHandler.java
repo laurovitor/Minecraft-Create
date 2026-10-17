@@ -1,9 +1,9 @@
 package com.simibubi.create.compat.jei;
 
+import net.createmod.catnip.api.client.network.ClientNetworkHelper;
+import org.jspecify.annotations.NullMarked;
 import java.util.LinkedList;
 import java.util.List;
-
-import javax.annotation.ParametersAreNonnullByDefault;
 
 import com.simibubi.create.content.logistics.filter.AttributeFilterScreen;
 import com.simibubi.create.foundation.gui.menu.AbstractSimiContainerScreen;
@@ -13,14 +13,11 @@ import com.simibubi.create.foundation.gui.menu.GhostItemSubmitPacket;
 import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.gui.handlers.IGhostIngredientHandler;
 import mezz.jei.api.ingredients.ITypedIngredient;
-import net.createmod.catnip.platform.CatnipServices;
-import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
-@MethodsReturnNonnullByDefault
-@ParametersAreNonnullByDefault
+@NullMarked
 public class GhostIngredientHandler<T extends GhostItemMenu<?>>
 	implements IGhostIngredientHandler<AbstractSimiContainerScreen<T>> {
 
@@ -79,13 +76,14 @@ public class GhostIngredientHandler<T extends GhostItemMenu<?>>
 		public void accept(I ingredient) {
 			ItemStack stack = ((ItemStack) ingredient).copy();
 			stack.setCount(1);
-			gui.getMenu().ghostInventory.setStackInSlot(slotIndex, stack);
+			// through the slot, as GhostItemMenu#setGhost does: a direct write is undone by the slot
+			gui.getMenu().getSlot(slotIndex + 36).set(stack);
 
 			if (isAttributeFilter)
 				return;
 
 			// sync new filter contents with server
-			CatnipServices.NETWORK.sendToServer(new GhostItemSubmitPacket(stack, slotIndex));
+			ClientNetworkHelper.INSTANCE.sendToServer(new GhostItemSubmitPacket(stack, slotIndex));
 		}
 	}
 }

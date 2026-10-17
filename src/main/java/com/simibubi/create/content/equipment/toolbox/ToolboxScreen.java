@@ -1,10 +1,11 @@
 package com.simibubi.create.content.equipment.toolbox;
 
+import org.joml.Matrix3x2fStack;
+import net.createmod.catnip.api.client.network.ClientNetworkHelper;
 import java.util.Collections;
 import java.util.List;
 
 import com.google.common.collect.ImmutableList;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllPartialModels;
@@ -12,13 +13,17 @@ import com.simibubi.create.foundation.gui.AllGuiTextures;
 import com.simibubi.create.foundation.gui.AllIcons;
 import com.simibubi.create.foundation.gui.menu.AbstractSimiContainerScreen;
 import com.simibubi.create.foundation.gui.widget.IconButton;
-import net.createmod.catnip.platform.CatnipServices;
 import com.simibubi.create.foundation.utility.CreateLang;
 
 import dev.engine_room.flywheel.lib.transform.TransformStack;
-import net.createmod.catnip.gui.element.GuiGameElement;
-import net.createmod.catnip.data.Iterate;
-import net.minecraft.client.gui.GuiGraphics;
+import net.createmod.catnip.api.client.gui.element.GuiGameElement;
+import net.createmod.catnip.api.data.Iterate;
+import com.mojang.math.Axis;
+import com.simibubi.create.foundation.gui.render.GuiScene;
+import net.createmod.catnip.api.client.gui.ILightingSettings;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -27,6 +32,9 @@ import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 
 public class ToolboxScreen extends AbstractSimiContainerScreen<ToolboxMenu> {
+
+	/** The colour vanilla's masked fill used to paint over a hovered slot. */
+	private static final int SLOT_HIGHLIGHT_COLOR = 0x80_FFFFFF;
 
 	protected static final AllGuiTextures BG = AllGuiTextures.TOOLBOX;
 	protected static final AllGuiTextures PLAYER = AllGuiTextures.PLAYER_INVENTORY;
@@ -60,7 +68,7 @@ public class ToolboxScreen extends AbstractSimiContainerScreen<ToolboxMenu> {
 
 		disposeButton = new IconButton(leftPos + 30 + 81, topPos + 69, AllIcons.I_TOOLBOX);
 		disposeButton.withCallback(() -> {
-			CatnipServices.NETWORK.sendToServer(new ToolboxDisposeAllPacket(menu.contentHolder.getBlockPos()));
+			ClientNetworkHelper.INSTANCE.sendToServer(new ToolboxDisposeAllPacket(menu.contentHolder.getBlockPos()));
 		});
 		disposeButton.setToolTip(CreateLang.translateDirect("toolbox.depositBox"));
 		addRenderableWidget(disposeButton);
@@ -71,19 +79,19 @@ public class ToolboxScreen extends AbstractSimiContainerScreen<ToolboxMenu> {
 	}
 
 	@Override
-	public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks) {
 		menu.renderPass = true;
-		super.render(graphics, mouseX, mouseY, partialTicks);
+		super.extractRenderState(graphics, mouseX, mouseY, partialTicks);
 		menu.renderPass = false;
 	}
 
 	@Override
-	protected void renderBg(GuiGraphics graphics, float partialTicks, int mouseX, int mouseY) {
+	protected void renderBg(GuiGraphicsExtractor graphics, float partialTicks, int mouseX, int mouseY) {
 		int x = leftPos + imageWidth - BG.getWidth();
 		int y = topPos;
 
 		BG.render(graphics, x, y);
-		graphics.drawString(font, title, x + 15, y + 4, 0x592424, false);
+		graphics.text(font, title, x + 15, y + 4, 0xFF592424, false);
 
 		int invX = leftPos;
 		int invY = topPos + imageHeight - PLAYER.getHeight();
@@ -91,7 +99,7 @@ public class ToolboxScreen extends AbstractSimiContainerScreen<ToolboxMenu> {
 
 		renderToolbox(graphics, x + BG.getWidth() + 50, y + BG.getHeight() + 12, partialTicks);
 
-		PoseStack ms = graphics.pose();
+		Matrix3x2fStack ms = graphics.pose();
 
 		hoveredToolboxSlot = null;
 		for (int compartment = 0; compartment < 8; compartment++) {
@@ -107,61 +115,58 @@ public class ToolboxScreen extends AbstractSimiContainerScreen<ToolboxMenu> {
 			if (!itemstack.isEmpty()) {
 				int count = menu.totalCountInCompartment(compartment);
 				String s = String.valueOf(count);
-				ms.pushPose();
-				ms.translate(0, 0, 100);
-				RenderSystem.enableDepthTest();
-				graphics.renderItem(minecraft.player, itemstack, i, j, 0);
-				graphics.renderItemDecorations(font, itemstack, i, j, s);
-				ms.popPose();
+				ms.pushMatrix();
+				ms.translate((float) (0), (float) (0));
+				graphics.item(minecraft.player, itemstack, i, j, 0);
+				graphics.itemDecorations(font, itemstack, i, j, s);
+				ms.popMatrix();
 			}
 
 			if (isHovering(slot.x, slot.y, 16, 16, mouseX, mouseY)) {
 				hoveredToolboxSlot = slot;
-				RenderSystem.disableDepthTest();
-				RenderSystem.colorMask(true, true, true, false);
-				int slotColor = this.getSlotColor(baseIndex);
-				graphics.fillGradient(i, j, i + 16, j + 16, slotColor, slotColor);
-				RenderSystem.colorMask(true, true, true, true);
-				RenderSystem.enableDepthTest();
+				graphics.fillGradient(i, j, i + 16, j + 16, SLOT_HIGHLIGHT_COLOR, SLOT_HIGHLIGHT_COLOR);
 			}
 		}
 	}
 
-	private void renderToolbox(GuiGraphics graphics, int x, int y, float partialTicks) {
-        PoseStack ms = graphics.pose();
-		TransformStack.of(ms)
-			.pushPose()
-			.translate(x, y, 100)
-			.scale(50)
-			.rotateXDegrees(-22)
-			.rotateYDegrees(-202);
+	private void renderToolbox(GuiGraphicsExtractor graphics, int x, int y, float partialTicks) {
+		Matrix3x2fStack ms = graphics.pose();
+		ms.pushMatrix();
+		ms.translate(x, y);
 
-		GuiGameElement.of(AllBlocks.TOOLBOXES.get(color)
-			.getDefaultState())
-			.render(graphics);
+		BlockState box = AllBlocks.TOOLBOXES.get(color)
+			.getDefaultState();
+		BlockStateModel lidModel = AllPartialModels.TOOLBOX_LIDS.get(color)
+			.get();
+		BlockStateModel drawerModel = AllPartialModels.TOOLBOX_DRAWER.get();
+		float lid = menu.contentHolder.lid.getValue(partialTicks);
+		float drawers = menu.contentHolder.drawers.getValue(partialTicks);
 
-        TransformStack.of(ms)
-			.pushPose()
-			.translate(0, -6 / 16f, 12 / 16f)
-			.rotateXDegrees(-105 * menu.contentHolder.lid.getValue(partialTicks))
-			.translate(0, 6 / 16f, -12 / 16f);
-		GuiGameElement.of(AllPartialModels.TOOLBOX_LIDS.get(color))
-			.render(graphics);
-		ms.popPose();
+		// Body, lid and both drawers in one pass. Drawn as four elements they became four separate
+		// pictures composited over each other, which is why the lid came away from the box.
+		GuiScene.submit(graphics, 50, -22, -202, ILightingSettings.ITEMS_3D, (ps, col) -> {
+			GuiScene.part(ps, col, GuiScene.modelOf(box), box, 0, 0, 0, 0, 0, 0);
 
-		for (int offset : Iterate.zeroAndOne) {
-			ms.pushPose();
-			ms.translate(0, -offset * 1 / 8f,
-				menu.contentHolder.drawers.getValue(partialTicks) * -.175f * (2 - offset));
-			GuiGameElement.of(AllPartialModels.TOOLBOX_DRAWER)
-				.render(graphics);
-			ms.popPose();
-		}
-		ms.popPose();
+			ps.pushPose();
+			ps.translate(0, -6 / 16f, 12 / 16f);
+			ps.mulPose(Axis.XP.rotationDegrees(-105 * lid));
+			ps.translate(0, 6 / 16f, -12 / 16f);
+			GuiScene.part(ps, col, lidModel, null, 0, 0, 0, 0, 0, 0);
+			ps.popPose();
+
+			for (int offset : Iterate.zeroAndOne) {
+				ps.pushPose();
+				ps.translate(0, -offset * 1 / 8f, drawers * -.175f * (2 - offset));
+				GuiScene.part(ps, col, drawerModel, null, 0, 0, 0, 0, 0, 0);
+				ps.popPose();
+			}
+		});
+
+		ms.popMatrix();
 	}
 
 	@Override
-	protected void renderForeground(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+	protected void renderForeground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks) {
 		if (hoveredToolboxSlot != null)
 			hoveredSlot = hoveredToolboxSlot;
 		super.renderForeground(graphics, mouseX, mouseY, partialTicks);

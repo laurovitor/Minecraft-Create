@@ -1,5 +1,8 @@
 package com.simibubi.create.compat.trainmap;
 
+import java.util.Comparator;
+import net.minecraft.client.renderer.RenderPipelines;
+import org.joml.Matrix3x2fStack;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -7,11 +10,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import com.simibubi.create.CreateClient;
-import com.simibubi.create.compat.Mods;
 import com.simibubi.create.compat.trainmap.TrainMapSync.SignalState;
 import com.simibubi.create.compat.trainmap.TrainMapSync.TrainMapSyncEntry;
 import com.simibubi.create.compat.trainmap.TrainMapSync.TrainState;
@@ -30,18 +29,18 @@ import com.simibubi.create.infrastructure.config.AllConfigs;
 import com.simibubi.create.infrastructure.config.CClient;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import net.createmod.catnip.animation.AnimationTickHolder;
-import net.createmod.catnip.data.Couple;
-import net.createmod.catnip.data.Iterate;
-import net.createmod.catnip.data.Pair;
+import net.createmod.catnip.api.client.animation.AnimationTickHolder;
+import net.createmod.catnip.api.data.Couple;
+import net.createmod.catnip.api.data.Iterate;
+import net.createmod.catnip.api.data.Pair;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.util.FastColor;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -49,14 +48,10 @@ import net.minecraft.world.phys.Vec3;
 public class TrainMapManager {
 
 	public static void tick() {
-		ResourceKey<Level> playerDimension = Minecraft.getInstance().level.dimension();
-
-		if (Mods.XAEROWORLDMAP.isLoaded() && XaeroTrainMap.isMapOpen(Minecraft.getInstance().screen)) {
-			ResourceKey<Level> renderedDimension = XaeroTrainMap.getRenderedDimension();
-			tick(renderedDimension != null ? renderedDimension : playerDimension);
-		} else {
-			tick(playerDimension);
-		}
+		// TODO 26.2: this used to ask XaeroTrainMap which dimension its open map was showing and follow
+		// that instead of the player's. The Xaero adapter has no 26.2 build and is compiled out, so the
+		// player's dimension is all that is left to go on; restore the override with the adapter.
+		tick(Minecraft.getInstance().level.dimension());
 	}
 
 	public static void tick(ResourceKey<Level> dimension) {
@@ -67,7 +62,7 @@ public class TrainMapManager {
 		}
 	}
 
-	public static List<FormattedText> renderAndPick(GuiGraphics graphics, int mouseX, int mouseY,
+	public static List<FormattedText> renderAndPick(GuiGraphicsExtractor graphics, int mouseX, int mouseY,
 		boolean linearFiltering, Rect2i bounds) {
 		Object hoveredElement = null;
 
@@ -81,9 +76,6 @@ public class TrainMapManager {
 		hoveredElement = drawTrains(graphics, mouseX, mouseY, hoveredElement, bounds);
 		hoveredElement = drawPoints(graphics, mouseX, mouseY, hoveredElement, bounds);
 
-		graphics.bufferSource()
-			.endBatch();
-
 		if (hoveredElement instanceof GlobalStation station) {
             return List.of(Component.literal(station.name));
         }
@@ -94,18 +86,17 @@ public class TrainMapManager {
 		return null;
 	}
 
-	public static void renderToggleWidget(GuiGraphics graphics, int x, int y) {
+	public static void renderToggleWidget(GuiGraphicsExtractor graphics, int x, int y) {
 		boolean enabled = AllConfigs.client().showTrainMapOverlay.get();
 		if (CreateClient.RAILWAYS.trackNetworks.isEmpty())
 			return;
-		RenderSystem.enableBlend();
-		PoseStack pose = graphics.pose();
-		pose.pushPose();
-		pose.translate(0, 0, 300);
+		Matrix3x2fStack pose = graphics.pose();
+		pose.pushMatrix();
+		pose.translate((float) (0), (float) (0));
 		AllGuiTextures.TRAINMAP_TOGGLE_PANEL.render(graphics, x, y);
 		(enabled ? AllGuiTextures.TRAINMAP_TOGGLE_ON : AllGuiTextures.TRAINMAP_TOGGLE_OFF).render(graphics, x + 18,
 			y + 3);
-		pose.popPose();
+		pose.popMatrix();
 	}
 
 	public static boolean handleToggleWidgetClick(int mouseX, int mouseY, int x, int y) {
@@ -241,10 +232,9 @@ public class TrainMapManager {
 		return output;
 	}
 
-	private static Object drawPoints(GuiGraphics graphics, int mouseX, int mouseY, Object hoveredElement,
+	private static Object drawPoints(GuiGraphicsExtractor graphics, int mouseX, int mouseY, Object hoveredElement,
 		Rect2i bounds) {
-		PoseStack pose = graphics.pose();
-		RenderSystem.enableDepthTest();
+		Matrix3x2fStack pose = graphics.pose();
 
 		for (TrackGraph graph : CreateClient.RAILWAYS.trackNetworks.values()) {
 			for (GlobalStation station : graph.getPoints(EdgePointType.STATION)) {
@@ -286,34 +276,31 @@ public class TrainMapManager {
 
 				boolean highlight = hoveredElement == null && Math.max(Math.abs(mouseX - x), Math.abs(mouseY - y)) < 3;
 
-				pose.pushPose();
-				pose.translate(x - 2, y - 2, 5);
+				pose.pushMatrix();
+				pose.translate((float) (x - 2), (float) (y - 2));
 
-				pose.translate(sprite.getWidth() / 2.0, sprite.getHeight() / 2.0, 0);
-				pose.mulPose(Axis.ZP.rotationDegrees(90 * (rotation / 2)));
-				pose.translate(-sprite.getWidth() / 2.0, -sprite.getHeight() / 2.0, 0);
+				pose.translate(sprite.getWidth() / 2.0F, sprite.getHeight() / 2.0F);
+				pose.rotate(Mth.DEG_TO_RAD * 90 * (rotation / 2));
+				pose.translate(-sprite.getWidth() / 2.0F, -sprite.getHeight() / 2.0F);
 
 				sprite.render(graphics, 0, 0);
 				sprite.render(graphics, 0, 0);
 
 				if (highlight) {
-					pose.translate(0, 0, 5);
 					highlightSprite.render(graphics, -1, -1);
 					hoveredElement = station;
 				}
 
-				pose.popPose();
+				pose.popMatrix();
 			}
 		}
 
 		return hoveredElement;
 	}
 
-	private static Object drawTrains(GuiGraphics graphics, int mouseX, int mouseY, Object hoveredElement,
+	private static Object drawTrains(GuiGraphicsExtractor graphics, int mouseX, int mouseY, Object hoveredElement,
 		Rect2i bounds) {
-		PoseStack pose = graphics.pose();
-		RenderSystem.enableDepthTest();
-		RenderSystem.enableBlend();
+		Matrix3x2fStack pose = graphics.pose();
 
 		int spriteYOffset = -3;
 
@@ -326,6 +313,12 @@ public class TrainMapManager {
 		int[] sliceXShiftByRotationIndex = new int[] { 0, 1, 2, 2, 3, -2, -2, -1 };
 		int[] sliceYShiftByRotationIndex = new int[] { 3, 2, 2, 1, 0, 1, 2, 2 };
 
+		// The GUI pose is two-dimensional in 26.2, so what used to be a depth offset per carriage
+		// cannot be given to the pose any more. Elements layer by the order they are submitted in
+		// instead, so the draws are collected with the depth they had and replayed back to front -
+		// which lands them in the same order on screen.
+		List<DepthSortedDraw> draws = new ArrayList<>();
+
 		for (Train train : CreateClient.RAILWAYS.trains.values()) {
 			TrainMapSyncEntry trainEntry = TrainMapSyncClient.currentData.get(train.id);
 			if (trainEntry == null)
@@ -336,11 +329,10 @@ public class TrainMapManager {
 			boolean otherDim = true;
 			double avgY = 0;
 
-			for (int i = 0; i < carriages.size(); i++) {
+			for (int i = 0; i < carriages.size(); i++)
 				for (boolean firstBogey : Iterate.trueAndFalse)
 					avgY += trainEntry.getPosition(i, firstBogey, time)
 						.y();
-			}
 
 			avgY /= carriages.size() * 2;
 
@@ -399,33 +391,37 @@ public class TrainMapManager {
 
 				slices = Math.max(2, slices);
 
-				sprite.bind();
-				pose.pushPose();
-
 				float pivotX = 7.5f + (slices - 3) * sliceXShiftByRotationIndex[rotation] / 2.0f;
 				float pivotY = 6.5f + (slices - 3) * sliceYShiftByRotationIndex[rotation] / 2.0f;
-				// Ysort at home
-				pose.translate(pX - pivotX, pY - pivotY, 10 + (avgY / 512.0) + (1024.0 + center.z() % 8192.0) / 1024.0);
 
 				int trainColorIndex = train.mapColorIndex;
 				int colorRow = trainColorIndex / 4;
 				int colorCol = trainColorIndex % 4;
+				int sliceCount = slices;
+				int rotationIndex = rotation;
 
-				for (int slice = 0; slice < slices; slice++) {
-					int row = slice == 0 ? 1 : slice == slices - 1 ? 2 : 3;
-					int sliceShifts = slice == 0 ? 0 : slice == slices - 1 ? slice - 2 : slice - 1;
-					int col = rotation;
+				double depth = 10 + (avgY / 512.0) + (1024.0 + center.z() % 8192.0) / 1024.0;
+				draws.add(new DepthSortedDraw(depth, () -> {
+					sprite.bind();
+					pose.pushMatrix();
+					pose.translate((float) (pX - pivotX), (float) (pY - pivotY));
 
-					int positionX = sliceShifts * sliceXShiftByRotationIndex[rotation];
-					int positionY = sliceShifts * sliceYShiftByRotationIndex[rotation] + spriteYOffset;
-					int sheetX = col * 16 + colorCol * 128;
-					int sheetY = row * 16 + colorRow * 64;
+					for (int slice = 0; slice < sliceCount; slice++) {
+						int row = slice == 0 ? 1 : slice == sliceCount - 1 ? 2 : 3;
+						int sliceShifts = slice == 0 ? 0 : slice == sliceCount - 1 ? slice - 2 : slice - 1;
+						int col = rotationIndex;
 
-					graphics.blit(sprite.location, positionX, positionY, sheetX, sheetY, 16, 16, sprite.getWidth(),
-						sprite.getHeight());
-				}
+						int positionX = sliceShifts * sliceXShiftByRotationIndex[rotationIndex];
+						int positionY = sliceShifts * sliceYShiftByRotationIndex[rotationIndex] + spriteYOffset;
+						int sheetX = col * 16 + colorCol * 128;
+						int sheetY = row * 16 + colorRow * 64;
 
-				pose.popPose();
+						graphics.blit(RenderPipelines.GUI_TEXTURED, sprite.location, positionX, positionY, sheetX,
+							sheetY, 16, 16, sprite.getWidth(), sprite.getHeight());
+					}
+
+					pose.popMatrix();
+				}));
 
 				int margin = 1;
 				int sizeX = 8 + (slices - 3) * sliceXShiftByRotationIndex[rotation];
@@ -441,14 +437,29 @@ public class TrainMapManager {
 				continue;
 
 			if (trainEntry.signalState != SignalState.NOT_WAITING) {
-				pose.pushPose();
-				pose.translate(frontPos.x - 0.5, frontPos.z - 0.5, 20 + (1024.0 + frontPos.z() % 8192.0) / 1024.0);
-				AllGuiTextures.TRAINMAP_SIGNAL.render(graphics, 0, -3);
-				pose.popPose();
+				Vec3 signalPos = frontPos;
+				double depth = 20 + (1024.0 + signalPos.z() % 8192.0) / 1024.0;
+				draws.add(new DepthSortedDraw(depth, () -> {
+					pose.pushMatrix();
+					pose.translate((float) (signalPos.x - 0.5), (float) (signalPos.z - 0.5));
+					AllGuiTextures.TRAINMAP_SIGNAL.render(graphics, 0, -3);
+					pose.popMatrix();
+				}));
 			}
 		}
 
+		draws.sort(Comparator.comparingDouble(DepthSortedDraw::depth));
+		for (DepthSortedDraw draw : draws)
+			draw.draw()
+				.run();
+
 		return hoveredElement;
+	}
+
+	/**
+	 * One thing to draw on the map, and how far back it used to sit.
+	 */
+	private record DepthSortedDraw(double depth, Runnable draw) {
 	}
 
 	// Background first so we can mindlessly paint over it
@@ -723,21 +734,21 @@ public class TrainMapManager {
 					if (map.alphaAt(xi, zi) >= a)
 						continue;
 					if (map.is(xi, zi, mainColor))
-						map.setPixel(xi, zi, FastColor.ABGR32.color(a, mainColorShadow));
+						map.setPixel(xi, zi, ARGB.color(a, mainColorShadow));
 					else if (map.is(xi, zi, darkerColor))
-						map.setPixel(xi, zi, FastColor.ABGR32.color(a, darkerColorShadow));
+						map.setPixel(xi, zi, ARGB.color(a, darkerColorShadow));
 				}
 			}
 		}
 	}
 
 	private static int mapYtoAlpha(double y) {
-		int minY = Minecraft.getInstance().level.getMinBuildHeight();
+		int minY = Minecraft.getInstance().level.getMinY();
 		return Mth.clamp(32 + Mth.floor((y - minY) / 4.0), 0, 255);
 	}
 
 	private static int markY(int color, double y) {
-		return FastColor.ABGR32.color(mapYtoAlpha(y), color);
+		return ARGB.color(mapYtoAlpha(y), color);
 	}
 
 }

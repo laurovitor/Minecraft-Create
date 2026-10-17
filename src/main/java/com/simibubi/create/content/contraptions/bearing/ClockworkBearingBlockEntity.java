@@ -1,5 +1,6 @@
 package com.simibubi.create.content.contraptions.bearing;
 
+import com.simibubi.create.foundation.utility.WorldClocks;
 import java.util.List;
 
 import net.minecraft.core.HolderLookup;
@@ -20,8 +21,8 @@ import com.simibubi.create.foundation.gui.AllIcons;
 import com.simibubi.create.foundation.utility.CreateLang;
 import com.simibubi.create.foundation.utility.ServerSpeedProvider;
 
-import net.createmod.catnip.lang.Lang;
-import net.createmod.catnip.math.AngleHelper;
+import net.createmod.catnip.api.lang.Lang;
+import net.createmod.catnip.api.math.AngleHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -71,13 +72,13 @@ public class ClockworkBearingBlockEntity extends KineticBlockEntity
 	public void tick() {
 		super.tick();
 
-		if (level.isClientSide) {
+		if (level.isClientSide()) {
 			prevForcedAngle = hourAngle;
 			clientMinuteAngleDiff /= 2;
 			clientHourAngleDiff /= 2;
 		}
 
-		if (!level.isClientSide && assembleNextTick) {
+		if (!level.isClientSide() && assembleNextTick) {
 			assembleNextTick = false;
 			if (running) {
 				boolean canDisassemble = true;
@@ -140,7 +141,7 @@ public class ClockworkBearingBlockEntity extends KineticBlockEntity
 	@Override
 	public void lazyTick() {
 		super.lazyTick();
-		if (hourHand != null && !level.isClientSide)
+		if (hourHand != null && !level.isClientSide())
 			sendData();
 	}
 
@@ -180,9 +181,7 @@ public class ClockworkBearingBlockEntity extends KineticBlockEntity
 	}
 
 	protected float getHourTarget(boolean cycle24) {
-		boolean isNatural = level.dimensionType()
-			.natural();
-		int dayTime = (int) ((level.getDayTime() * (isNatural ? 1 : 24)) % 24000);
+		int dayTime = WorldClocks.getDayTime(level);
 		int hours = (dayTime / 1000 + 6) % 24;
 		int offset = getBlockState().getValue(ClockworkBearingBlock.FACING)
 			.getAxisDirection()
@@ -192,9 +191,7 @@ public class ClockworkBearingBlockEntity extends KineticBlockEntity
 	}
 
 	protected float getMinuteTarget() {
-		boolean isNatural = level.dimensionType()
-			.natural();
-		int dayTime = (int) ((level.getDayTime() * (isNatural ? 1 : 24)) % 24000);
+		int dayTime = WorldClocks.getDayTime(level);
 		int minutes = (dayTime % 1000) * 60 / 1000;
 		int offset = getBlockState().getValue(ClockworkBearingBlock.FACING)
 			.getAxisDirection()
@@ -205,7 +202,7 @@ public class ClockworkBearingBlockEntity extends KineticBlockEntity
 
 	public float getAngularSpeed() {
 		float speed = -Math.abs(getSpeed() * 3 / 10f);
-		if (level.isClientSide)
+		if (level.isClientSide())
 			speed *= ServerSpeedProvider.get();
 		return speed;
 	}
@@ -306,7 +303,7 @@ public class ClockworkBearingBlockEntity extends KineticBlockEntity
 			this.minuteHand = contraption;
 			minuteHand.setPos(anchor.getX(), anchor.getY(), anchor.getZ());
 		}
-		if (!level.isClientSide) {
+		if (!level.isClientSide()) {
 			this.running = true;
 			sendData();
 		}
@@ -326,9 +323,9 @@ public class ClockworkBearingBlockEntity extends KineticBlockEntity
 		float hourAngleBefore = hourAngle;
 		float minuteAngleBefore = minuteAngle;
 
-		running = compound.getBoolean("Running");
-		hourAngle = compound.getFloat("HourAngle");
-		minuteAngle = compound.getFloat("MinuteAngle");
+		running = compound.getBooleanOr("Running", false);
+		hourAngle = compound.getFloatOr("HourAngle", 0);
+		minuteAngle = compound.getFloatOr("MinuteAngle", 0);
 		lastException = AssemblyException.read(compound, registries);
 		super.read(compound, registries, clientPacket);
 
@@ -368,13 +365,13 @@ public class ClockworkBearingBlockEntity extends KineticBlockEntity
 
 	@Override
 	public void onStall() {
-		if (!level.isClientSide)
+		if (!level.isClientSide())
 			sendData();
 	}
 
 	@Override
 	public void remove() {
-		if (!level.isClientSide)
+		if (!level.isClientSide())
 			disassemble();
 		super.remove();
 	}
@@ -395,23 +392,25 @@ public class ClockworkBearingBlockEntity extends KineticBlockEntity
 
 	static enum ClockHands implements INamedIconOptions {
 
-		HOUR_FIRST(AllIcons.I_HOUR_HAND_FIRST),
-		MINUTE_FIRST(AllIcons.I_MINUTE_HAND_FIRST),
-		HOUR_FIRST_24(AllIcons.I_HOUR_HAND_FIRST_24),
+		HOUR_FIRST,
+		MINUTE_FIRST,
+		HOUR_FIRST_24,
 
 		;
 
 		private String translationKey;
-		private AllIcons icon;
 
-		private ClockHands(AllIcons icon) {
-			this.icon = icon;
+		private ClockHands() {
 			translationKey = "create.contraptions.clockwork." + Lang.asId(name());
 		}
 
 		@Override
 		public AllIcons getIcon() {
-			return icon;
+			return switch (this) {
+			case HOUR_FIRST -> AllIcons.I_HOUR_HAND_FIRST;
+			case MINUTE_FIRST -> AllIcons.I_MINUTE_HAND_FIRST;
+			case HOUR_FIRST_24 -> AllIcons.I_HOUR_HAND_FIRST_24;
+			};
 		}
 
 		@Override

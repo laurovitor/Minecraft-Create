@@ -1,14 +1,14 @@
 package com.simibubi.create.content.contraptions.actors.trainControls;
 
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.createmod.catnip.api.network.SelfHandlingPayload;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
 import com.simibubi.create.AllPackets;
 import com.simibubi.create.content.contraptions.AbstractContraptionEntity;
-import net.createmod.catnip.net.base.ServerboundPacketPayload;
-
-import net.createmod.catnip.codecs.stream.CatnipStreamCodecBuilders;
+import net.createmod.catnip.api.data.codec.stream.CatnipStreamCodecBuilders;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -18,7 +18,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 
 public record ControlsInputPacket(List<Integer> activatedButtons, boolean press, int contraptionEntityId,
-								  BlockPos controlsPos, boolean stopControlling) implements ServerboundPacketPayload {
+								  BlockPos controlsPos, boolean stopControlling) implements SelfHandlingPayload {
 	public static final StreamCodec<ByteBuf, ControlsInputPacket> STREAM_CODEC = StreamCodec.composite(
 			CatnipStreamCodecBuilders.list(ByteBufCodecs.VAR_INT), ControlsInputPacket::activatedButtons,
 			ByteBufCodecs.BOOL, ControlsInputPacket::press,
@@ -35,7 +35,7 @@ public record ControlsInputPacket(List<Integer> activatedButtons, boolean press,
 
 	@Override
 	public void handle(ServerPlayer player) {
-		Level world = player.getCommandSenderWorld();
+		Level world = player.level();
 		UUID uniqueID = player.getUUID();
 
 		if (player.isSpectator() && press)
@@ -49,12 +49,14 @@ public record ControlsInputPacket(List<Integer> activatedButtons, boolean press,
 			return;
 		}
 
+		// controlsPos is where the controls sit inside the contraption, not a position in the world, so
+		// the reach check has to go through the entity that knows where the contraption is.
 		if (ace.canInteractWithBlock(player, controlsPos, 16))
 			ControlsServerHandler.receivePressed(world, ace, controlsPos, uniqueID, activatedButtons, press);
 	}
 
 	@Override
-	public PacketTypeProvider getTypeProvider() {
-		return AllPackets.CONTROLS_INPUT;
+	public Type<? extends CustomPacketPayload> type() {
+		return AllPackets.CONTROLS_INPUT.getType();
 	}
 }

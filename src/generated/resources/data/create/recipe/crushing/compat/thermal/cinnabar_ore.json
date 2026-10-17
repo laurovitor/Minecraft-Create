@@ -8,7 +8,10 @@
   "type": "create:crushing",
   "ingredients": [
     {
-      "item": "thermal:cinnabar_ore"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "thermal:cinnabar_ore"
+      ]
     }
   ],
   "processing_time": 350,

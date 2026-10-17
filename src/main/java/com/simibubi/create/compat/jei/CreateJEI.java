@@ -1,5 +1,8 @@
 package com.simibubi.create.compat.jei;
 
+import com.simibubi.create.foundation.recipe.ClientRecipes;
+import com.simibubi.create.foundation.recipe.RecipeAccessors;
+import org.jspecify.annotations.NullMarked;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -8,7 +11,6 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import javax.annotation.ParametersAreNonnullByDefault;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -86,11 +88,12 @@ import mezz.jei.api.registration.ISubtypeRegistration;
 import mezz.jei.api.runtime.IIngredientManager;
 import mezz.jei.api.runtime.IJeiRuntime;
 import net.minecraft.client.Minecraft;
+import net.minecraft.world.level.Level;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Holder.Reference;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -108,12 +111,12 @@ import net.minecraft.world.level.block.Blocks;
 
 import net.neoforged.neoforge.fluids.FluidStack;
 
+@NullMarked
 @JeiPlugin
 @SuppressWarnings("unused")
-@ParametersAreNonnullByDefault
 public class CreateJEI implements IModPlugin {
 
-	private static final ResourceLocation ID = Create.asResource("jei_plugin");
+	private static final Identifier ID = Create.asResource("jei_plugin");
 
 	private final List<CreateRecipeCategory<?>> allCategories = new ArrayList<>();
 	private IIngredientManager ingredientManager;
@@ -190,7 +193,7 @@ public class CreateJEI implements IModPlugin {
 			autoShapeless = builder(BasinRecipe.class)
 				.enableWhen(AllConfigs.server().recipes.allowShapelessInMixer)
 				.addAllRecipesIf(r -> r.value() instanceof CraftingRecipe && !(r.value() instanceof ShapedRecipe)
-						&& r.value().getIngredients()
+						&& RecipeAccessors.ingredients(r.value())
 						.size() > 1
 						&& !MechanicalPressBlockEntity.canCompress(r.value()) && !AllRecipeTypes.shouldIgnoreInAutomation(r),
 					BasinRecipe::convertShapeless)
@@ -290,7 +293,7 @@ public class CreateJEI implements IModPlugin {
 			autoShaped = builder(CraftingRecipe.class)
 				.enableWhen(AllConfigs.server().recipes.allowRegularCraftingInCrafter)
 				.addAllRecipesIf(r -> r.value() instanceof CraftingRecipe && !(r.value() instanceof ShapedRecipe)
-					&& r.value().getIngredients()
+					&& RecipeAccessors.ingredients(r.value())
 					.size() == 1
 					&& !AllRecipeTypes.shouldIgnoreInAutomation(r))
 				.addTypedRecipesIf(() -> RecipeType.CRAFTING,
@@ -327,7 +330,7 @@ public class CreateJEI implements IModPlugin {
 
 	@Override
 	@NotNull
-	public ResourceLocation getPluginUid() {
+	public Identifier getPluginUid() {
 		return ID;
 	}
 
@@ -387,7 +390,7 @@ public class CreateJEI implements IModPlugin {
 
 			if (potionContents.hasEffects()) {
 				Set<Holder<MobEffect>> effectSet = new HashSet<>();
-				potionContents.forEachEffect(mei -> effectSet.add(mei.getEffect()));
+				potionContents.forEachEffect(mei -> effectSet.add(mei.getEffect()), 1);
 				if (!visitedEffects.add(effectSet))
 					continue;
 }
@@ -418,28 +421,28 @@ public class CreateJEI implements IModPlugin {
 		}
 
 		@Override
-		public CreateRecipeCategory<T> build(ResourceLocation id, Factory<T> factory) {
+		public CreateRecipeCategory<T> build(Identifier id, Factory<T> factory) {
 			CreateRecipeCategory<T> category = super.build(id, factory);
 			allCategories.add(category);
 			return category;
 		}
 	}
 
+	/**
+	 * 26.2 stopped handing the client the loaded recipes; the connection only carries the recipe
+	 * book's displays. What Create asks the server to send back arrives in {@link ClientRecipes},
+	 * which is what every lookup here reads.
+	 */
 	public static void consumeAllRecipes(Consumer<? super RecipeHolder<?>> consumer) {
-		Minecraft.getInstance()
-			.getConnection()
-			.getRecipeManager()
-			.getRecipes()
+		ClientRecipes.values()
 			.forEach(consumer);
 	}
 
 	@SuppressWarnings({"unchecked", "rawtypes"})
 	public static <T extends Recipe<?>> void consumeTypedRecipes(Consumer<RecipeHolder<?>> consumer, RecipeType<?> type) {
-		List<? extends RecipeHolder<?>> map = Minecraft.getInstance()
-			.getConnection()
-			.getRecipeManager().getAllRecipesFor((RecipeType) type);
-		if (!map.isEmpty())
-			map.forEach(consumer);
+		Collection<? extends RecipeHolder<?>> recipes = ClientRecipes.all((RecipeType) type);
+		if (!recipes.isEmpty())
+			recipes.forEach(consumer);
 	}
 
 	public static List<RecipeHolder<?>> getTypedRecipes(RecipeType<?> type) {
@@ -455,26 +458,26 @@ public class CreateJEI implements IModPlugin {
 	}
 
 	public static boolean doInputsMatch(Recipe<?> recipe1, Recipe<?> recipe2) {
-		if (recipe1.getIngredients()
+		if (RecipeAccessors.ingredients(recipe1)
 			.isEmpty()
-			|| recipe2.getIngredients()
+			|| RecipeAccessors.ingredients(recipe2)
 			.isEmpty()) {
 			return false;
 		}
-		ItemStack[] matchingStacks = recipe1.getIngredients()
-			.getFirst()
-			.getItems();
+		ItemStack[] matchingStacks = ItemHelper.getItems(RecipeAccessors.ingredients(recipe1)
+			.getFirst());
 		if (matchingStacks.length == 0) {
 			return false;
 		}
-		return recipe2.getIngredients()
+		return RecipeAccessors.ingredients(recipe2)
 			.getFirst()
 			.test(matchingStacks[0]);
 	}
 
 	public static boolean doOutputsMatch(Recipe<?> recipe1, Recipe<?> recipe2) {
-		RegistryAccess registryAccess = Minecraft.getInstance().level.registryAccess();
-		return ItemHelper.sameItem(recipe1.getResultItem(registryAccess), recipe2.getResultItem(registryAccess));
+		// Recipes that describe their result as a display need a level to resolve it against.
+		Level level = Minecraft.getInstance().level;
+		return ItemHelper.sameItem(RecipeAccessors.result(recipe1, level), RecipeAccessors.result(recipe2, level));
 	}
 
 	@Override

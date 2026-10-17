@@ -1,7 +1,16 @@
 package com.simibubi.create.content.contraptions.actors.contraptionControls;
 
+import com.simibubi.create.content.contraptions.render.ActorGeometry;
+import java.util.List;
+import com.simibubi.create.foundation.render.RenderLevels;
+import com.simibubi.create.foundation.render.CachedBufferer;
+import net.minecraft.util.LightCoordsUtil;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
+import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
+import org.jspecify.annotations.Nullable;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllPartialModels;
 import com.simibubi.create.content.contraptions.actors.contraptionControls.ContraptionControlsMovement.ElevatorFloorSelection;
@@ -13,17 +22,14 @@ import com.simibubi.create.foundation.utility.DyeHelper;
 import com.simibubi.create.foundation.virtualWorld.VirtualRenderWorld;
 
 import dev.engine_room.flywheel.lib.transform.TransformStack;
-import net.createmod.catnip.animation.AnimationTickHolder;
-import net.createmod.catnip.data.Couple;
-import net.createmod.catnip.math.AngleHelper;
-import net.createmod.catnip.math.VecHelper;
-import net.createmod.catnip.render.CachedBuffers;
-import net.createmod.catnip.theme.Color;
+import net.createmod.catnip.api.client.animation.AnimationTickHolder;
+import net.createmod.catnip.api.data.Couple;
+import net.createmod.catnip.api.math.AngleHelper;
+import net.createmod.catnip.api.math.VecHelper;
+import net.createmod.catnip.api.theme.Color;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider.Context;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -32,41 +38,78 @@ import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
-public class ContraptionControlsRenderer extends SmartBlockEntityRenderer<ContraptionControlsBlockEntity> {
+public class ContraptionControlsRenderer
+	extends SmartBlockEntityRenderer<ContraptionControlsBlockEntity, ContraptionControlsRenderer.ControlsRenderState> {
+
+	public static class ControlsRenderState extends SmartRenderState {
+		public @Nullable SuperByteBufferRenderState button;
+		public @Nullable SuperByteBufferRenderState indicator;
+		public Vec3 buttonMovement = Vec3.ZERO;
+		public Vec3 buttonOffset = Vec3.ZERO;
+	}
+
 	public ContraptionControlsRenderer(Context context) {
 		super(context);
 	}
 
 	@Override
-	protected void renderSafe(ContraptionControlsBlockEntity blockEntity, float pt, PoseStack ms,
-							  MultiBufferSource buffer, int light, int overlay) {
-		BlockState blockState = blockEntity.getBlockState();
+	public ControlsRenderState createRenderState() {
+		return new ControlsRenderState();
+	}
+
+	@Override
+	protected void extractSafe(ContraptionControlsBlockEntity be, ControlsRenderState state, float pt,
+		Vec3 cameraPosition) {
+		super.extractSafe(be, state, pt, cameraPosition);
+
+		BlockState blockState = be.getBlockState();
 		Direction facing = blockState.getValue(ContraptionControlsBlock.FACING)
 			.getOpposite();
 		Vec3 buttonMovementAxis = VecHelper.rotate(new Vec3(0, 1, -.325), AngleHelper.horizontalAngle(facing), Axis.Y);
-		Vec3 buttonMovement = buttonMovementAxis.scale(-0.07f + -1 / 24f * blockEntity.button.getValue(pt));
-		Vec3 buttonOffset = buttonMovementAxis.scale(0.07f);
 
-		ms.pushPose();
-		ms.translate(buttonMovement.x, buttonMovement.y, buttonMovement.z);
-		super.renderSafe(blockEntity, pt, ms, buffer, light, overlay);
-		ms.translate(buttonOffset.x, buttonOffset.y, buttonOffset.z);
+		state.buttonMovement = buttonMovementAxis.scale(-0.07f + -1 / 24f * be.button.getValue(pt));
+		state.buttonOffset = buttonMovementAxis.scale(0.07f);
 
-		VertexConsumer vc = buffer.getBuffer(RenderType.solid());
-		CachedBuffers.partialFacing(AllPartialModels.CONTRAPTION_CONTROLS_BUTTON, blockState, facing)
-			.light(light)
-			.renderInto(ms, vc);
+		state.button = CachedBufferer.partialFacing(AllPartialModels.CONTRAPTION_CONTROLS_BUTTON, blockState, facing)
+			.light(state.lightCoords)
+			.extractRenderState();
 
-		ms.popPose();
-
-		int i = (((int) blockEntity.indicator.getValue(pt) / 45) % 8) + 8;
-		CachedBuffers.partialFacing(AllPartialModels.CONTRAPTION_CONTROLS_INDICATOR.get(i % 8), blockState, facing)
-			.light(light)
-			.renderInto(ms, vc);
+		int i = (((int) be.indicator.getValue(pt) / 45) % 8) + 8;
+		state.indicator = CachedBufferer
+			.partialFacing(AllPartialModels.CONTRAPTION_CONTROLS_INDICATOR.get(i % 8), blockState, facing)
+			.light(state.lightCoords)
+			.extractRenderState();
 	}
 
-	public static void renderInContraption(MovementContext ctx, VirtualRenderWorld renderWorld,
-										   ContraptionMatrices matrices, MultiBufferSource buffer) {
+	/**
+	 * The button, and the filter and link drawn by the smart renderer above it, sink together as the
+	 * button is pressed; the indicator stays put.
+	 */
+	@Override
+	protected void submitSafe(ControlsRenderState state, PoseStack ms, SubmitNodeCollector queue,
+		CameraRenderState camera) {
+		ms.pushPose();
+		ms.translate(state.buttonMovement.x, state.buttonMovement.y, state.buttonMovement.z);
+		super.submitSafe(state, ms, queue, camera);
+		ms.translate(state.buttonOffset.x, state.buttonOffset.y, state.buttonOffset.z);
+
+		if (state.button != null)
+			state.button.submit(ms, RenderTypes.solidMovingBlock(), queue);
+		ms.popPose();
+
+		if (state.indicator != null)
+			state.indicator.submit(ms, RenderTypes.solidMovingBlock(), queue);
+	}
+
+	/**
+	 * Everything the controls contribute to a moving contraption.
+	 * <p>
+	 * 26.2 splits rendering in two: what reads the contraption happens here, and what draws happens
+	 * later with no access to it. The button's buffer is extracted at once, and the floor's name is
+	 * captured as plain values and drawn from those.
+	 */
+	public static void extractInContraption(MovementContext ctx, VirtualRenderWorld renderWorld,
+		ContraptionMatrices matrices, List<ActorGeometry> out) {
 
 		if (!(ctx.temporaryData instanceof ElevatorFloorSelection efs))
 			return;
@@ -78,7 +121,8 @@ public class ContraptionControlsRenderer extends SmartBlockEntityRenderer<Contra
 		float playerDistance = (float) (ctx.position == null || cameraEntity == null ? 0
 			: ctx.position.distanceToSqr(cameraEntity.getEyePosition()));
 
-		float flicker = renderWorld.random.nextFloat();
+		float flicker = renderWorld.getRandom()
+			.nextFloat();
 		Couple<Integer> couple = DyeHelper.getDyeColors(efs.targetYEqualsSelection ? DyeColor.WHITE : DyeColor.ORANGE);
 		int brightColor = couple.getFirst();
 		int darkColor = couple.getSecond();
@@ -98,11 +142,14 @@ public class ContraptionControlsRenderer extends SmartBlockEntityRenderer<Contra
 		ms.pushPose();
 		msr.translate(ctx.localPos);
 		ms.translate(0, buttondepth, 0);
-		VertexConsumer vc = buffer.getBuffer(RenderType.solid());
-		CachedBuffers.partialFacing(AllPartialModels.CONTRAPTION_CONTROLS_BUTTON, ctx.state, ctx.state.getValue(ContraptionControlsBlock.FACING).getOpposite())
-			.light(LevelRenderer.getLightColor(renderWorld, ctx.localPos))
-			.useLevelLight(ctx.world, matrices.getWorld())
-			.renderInto(ms, vc);
+		out.add(ActorGeometry.of(ms,
+			CachedBufferer
+				.partialFacing(AllPartialModels.CONTRAPTION_CONTROLS_BUTTON, ctx.state,
+					ctx.state.getValue(ContraptionControlsBlock.FACING)
+						.getOpposite())
+				.light(LightCoordsUtil.getLightCoords(renderWorld, ctx.localPos))
+				.useLevelLight(RenderLevels.lightSource(ctx.world, renderWorld), matrices.getWorld()),
+			RenderTypes.solidMovingBlock()));
 		ms.popPose();
 
 		ms.pushPose();
@@ -117,15 +164,18 @@ public class ContraptionControlsRenderer extends SmartBlockEntityRenderer<Contra
 			int width = Math.max(actualWidth, 12);
 			float scale = 1 / (5f * (width - .5f));
 			float heightCentering = (width - 8f) / 2;
+			float depth = buttondepth;
 
-			ms.pushPose();
-			ms.translate(0, .15f, buttondepth - .25f);
-			ms.scale(scale, -scale, scale);
-			ms.translate((float) Math.max(0, width - actualWidth) / 2, heightCentering, 0);
-			NixieTubeRenderer.drawInWorldString(ms, buffer, text, flickeringBrightColor);
-			ms.translate(shadowOffset, shadowOffset, -1 / 16f);
-			NixieTubeRenderer.drawInWorldString(ms, buffer, text, Color.mixColors(darkColor, 0, .35f));
-			ms.popPose();
+			out.add(ActorGeometry.at(ms, (poseStack, queue) -> {
+				poseStack.pushPose();
+				poseStack.translate(0, .15f, depth - .25f);
+				poseStack.scale(scale, -scale, scale);
+				poseStack.translate((float) Math.max(0, width - actualWidth) / 2, heightCentering, 0);
+				NixieTubeRenderer.submitInWorldString(poseStack, queue, text, flickeringBrightColor);
+				poseStack.translate(shadowOffset, shadowOffset, -1 / 16f);
+				NixieTubeRenderer.submitInWorldString(poseStack, queue, text, Color.mixColors(darkColor, 0, .35f));
+				poseStack.popPose();
+			}));
 		}
 
 		if (!description.isBlank() && playerDistance < 20) {
@@ -133,16 +183,18 @@ public class ContraptionControlsRenderer extends SmartBlockEntityRenderer<Contra
 			int width = Math.max(actualWidth, 55);
 			float scale = 1 / (3f * (width - .5f));
 			float heightCentering = (width - 8f) / 2;
+			float depth = buttondepth;
 
-			ms.pushPose();
-			ms.translate(-.0635f, 0.06f, buttondepth - .25f);
-			ms.scale(scale, -scale, scale);
-			ms.translate((float) Math.max(0, width - actualWidth) / 2, heightCentering, 0);
-			NixieTubeRenderer.drawInWorldString(ms, buffer, description, flickeringBrightColor);
-			ms.popPose();
+			out.add(ActorGeometry.at(ms, (poseStack, queue) -> {
+				poseStack.pushPose();
+				poseStack.translate(-.0635f, 0.06f, depth - .25f);
+				poseStack.scale(scale, -scale, scale);
+				poseStack.translate((float) Math.max(0, width - actualWidth) / 2, heightCentering, 0);
+				NixieTubeRenderer.submitInWorldString(poseStack, queue, description, flickeringBrightColor);
+				poseStack.popPose();
+			}));
 		}
 
 		ms.popPose();
-
 	}
 }

@@ -8,7 +8,10 @@
   "type": "create:milling",
   "ingredients": [
     {
-      "item": "biomesoplenty:burning_blossom"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "biomesoplenty:burning_blossom"
+      ]
     }
   ],
   "processing_time": 50,

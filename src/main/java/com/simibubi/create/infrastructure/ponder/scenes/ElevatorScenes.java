@@ -1,5 +1,6 @@
 package com.simibubi.create.infrastructure.ponder.scenes;
 
+import com.simibubi.create.foundation.utility.ComponentJson;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllItems;
 import com.simibubi.create.content.contraptions.elevator.ElevatorContactBlock;
@@ -8,13 +9,13 @@ import com.simibubi.create.content.redstone.nixieTube.NixieTubeBlock;
 import com.simibubi.create.content.redstone.nixieTube.NixieTubeBlockEntity;
 import com.simibubi.create.foundation.ponder.CreateSceneBuilder;
 
-import net.createmod.catnip.math.Pointing;
-import net.createmod.ponder.api.PonderPalette;
-import net.createmod.ponder.api.element.ElementLink;
-import net.createmod.ponder.api.element.WorldSectionElement;
-import net.createmod.ponder.api.scene.SceneBuilder;
-import net.createmod.ponder.api.scene.SceneBuildingUtil;
-import net.createmod.ponder.api.scene.Selection;
+import net.createmod.catnip.api.math.Pointing;
+import net.createmod.ponder.api.client.PonderPalette;
+import net.createmod.ponder.api.client.element.ElementLink;
+import net.createmod.ponder.api.client.element.WorldSectionElement;
+import net.createmod.ponder.api.client.scene.SceneBuilder;
+import net.createmod.ponder.api.client.scene.SceneBuildingUtil;
+import net.createmod.ponder.api.client.scene.Selection;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.RegistryAccess;
@@ -370,7 +371,7 @@ public class ElevatorScenes {
 		scene.world().modifyBlockEntityNBT(util.select().position(nixiePos), NixieTubeBlockEntity.class, nbt -> {
 			Component component = Component.literal("0F");
 			nbt.putString("RawCustomText", component.getString());
-			nbt.putString("CustomText", Component.Serializer.toJson(component, scene.world().getHolderLookupProvider()));
+			nbt.putString("CustomText", ComponentJson.toJson(component, scene.world().getHolderLookupProvider()));
 		});
 
 		scene.overlay().showText(90)
@@ -401,7 +402,7 @@ public class ElevatorScenes {
 		scene.world().modifyBlockEntityNBT(util.select().position(nixiePos), NixieTubeBlockEntity.class, nbt -> {
 			Component component = Component.literal("1F");
 			nbt.putString("RawCustomText", component.getString());
-			nbt.putString("CustomText", Component.Serializer.toJson(component, scene.world().getHolderLookupProvider()));
+			nbt.putString("CustomText", ComponentJson.toJson(component, scene.world().getHolderLookupProvider()));
 		});
 
 		scene.idle(40);
@@ -417,7 +418,7 @@ public class ElevatorScenes {
 		scene.world().modifyBlockEntityNBT(util.select().position(nixiePos), NixieTubeBlockEntity.class, nbt -> {
 			Component component = Component.literal("2F");
 			nbt.putString("RawCustomText", component.getString());
-			nbt.putString("CustomText", Component.Serializer.toJson(component, scene.world().getHolderLookupProvider()));
+			nbt.putString("CustomText", ComponentJson.toJson(component, scene.world().getHolderLookupProvider()));
 		});
 	}
 

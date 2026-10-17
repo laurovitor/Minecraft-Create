@@ -1,8 +1,9 @@
 package com.simibubi.create.content.equipment.sandPaper;
 
+import com.simibubi.create.foundation.recipe.RecipeFinder;
+import org.jspecify.annotations.NullMarked;
 import java.util.List;
 
-import javax.annotation.ParametersAreNonnullByDefault;
 
 import com.simibubi.create.AllRecipeTypes;
 import com.simibubi.create.content.processing.recipe.ProcessingRecipeParams;
@@ -15,7 +16,7 @@ import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
-@ParametersAreNonnullByDefault
+@NullMarked
 public class SandPaperPolishingRecipe extends StandardProcessingRecipe<SingleRecipeInput> {
 
 	public SandPaperPolishingRecipe(ProcessingRecipeParams params) {
@@ -46,13 +47,12 @@ public class SandPaperPolishingRecipe extends StandardProcessingRecipe<SingleRec
 		List<RecipeHolder<Recipe<SingleRecipeInput>>> matchingRecipes = getMatchingRecipes(world, stack);
 		if (!matchingRecipes.isEmpty())
 			return matchingRecipes.get(0).value()
-				.assemble(new SingleRecipeInput(stack), world.registryAccess())
+				.assemble(new SingleRecipeInput(stack))
 				.copy();
 		return stack;
 	}
 
 	public static List<RecipeHolder<Recipe<SingleRecipeInput>>> getMatchingRecipes(Level world, ItemStack stack) {
-		return world.getRecipeManager()
-			.getRecipesFor(AllRecipeTypes.SANDPAPER_POLISHING.getType(), new SingleRecipeInput(stack), world);
+		return RecipeFinder.matching(AllRecipeTypes.SANDPAPER_POLISHING.getType(), new SingleRecipeInput(stack), world);
 	}
 }

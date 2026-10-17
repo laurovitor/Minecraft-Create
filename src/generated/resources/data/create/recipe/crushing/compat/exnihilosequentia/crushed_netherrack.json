@@ -8,7 +8,10 @@
   "type": "create:crushing",
   "ingredients": [
     {
-      "item": "exnihilosequentia:crushed_netherrack"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "exnihilosequentia:crushed_netherrack"
+      ]
     }
   ],
   "processing_time": 100,

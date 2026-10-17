@@ -13,10 +13,10 @@ import com.simibubi.create.foundation.gui.AllIcons;
 import com.simibubi.create.foundation.utility.CreateLang;
 
 import dev.engine_room.flywheel.lib.transform.TransformStack;
-import net.createmod.catnip.data.Iterate;
-import net.createmod.catnip.lang.Lang;
-import net.createmod.catnip.math.AngleHelper;
-import net.createmod.catnip.math.VecHelper;
+import net.createmod.catnip.api.data.Iterate;
+import net.createmod.catnip.api.lang.Lang;
+import net.createmod.catnip.api.math.AngleHelper;
+import net.createmod.catnip.api.math.VecHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -146,23 +146,25 @@ public class RollerBlockEntity extends SmartBlockEntity {
 
 	static enum RollingMode implements INamedIconOptions {
 
-		TUNNEL_PAVE(AllIcons.I_ROLLER_PAVE),
-		STRAIGHT_FILL(AllIcons.I_ROLLER_FILL),
-		WIDE_FILL(AllIcons.I_ROLLER_WIDE_FILL),
+		TUNNEL_PAVE,
+		STRAIGHT_FILL,
+		WIDE_FILL,
 
 		;
 
 		private String translationKey;
-		private AllIcons icon;
 
-		private RollingMode(AllIcons icon) {
-			this.icon = icon;
+		private RollingMode() {
 			translationKey = "create.contraptions.roller_mode." + Lang.asId(name());
 		}
 
 		@Override
 		public AllIcons getIcon() {
-			return icon;
+			return switch (this) {
+			case TUNNEL_PAVE -> AllIcons.I_ROLLER_PAVE;
+			case STRAIGHT_FILL -> AllIcons.I_ROLLER_FILL;
+			case WIDE_FILL -> AllIcons.I_ROLLER_WIDE_FILL;
+			};
 		}
 
 		@Override

@@ -1,15 +1,19 @@
 package com.simibubi.create.infrastructure.ponder.scenes.fluid;
 
+import net.neoforged.neoforge.transfer.transaction.Transaction;
+import net.neoforged.neoforge.transfer.ResourceHandlerUtil;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.fluid.FluidResource;
 import com.simibubi.create.content.fluids.drain.ItemDrainBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.fluid.SmartFluidTankBehaviour;
 import com.simibubi.create.foundation.ponder.CreateSceneBuilder;
 
-import net.createmod.catnip.math.Pointing;
-import net.createmod.ponder.api.element.ElementLink;
-import net.createmod.ponder.api.element.WorldSectionElement;
-import net.createmod.ponder.api.scene.SceneBuilder;
-import net.createmod.ponder.api.scene.SceneBuildingUtil;
-import net.createmod.ponder.api.scene.Selection;
+import net.createmod.catnip.api.math.Pointing;
+import net.createmod.ponder.api.client.element.ElementLink;
+import net.createmod.ponder.api.client.element.WorldSectionElement;
+import net.createmod.ponder.api.client.scene.SceneBuilder;
+import net.createmod.ponder.api.client.scene.SceneBuildingUtil;
+import net.createmod.ponder.api.client.scene.Selection;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
@@ -17,9 +21,6 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.fluids.FluidStack;
-import net.neoforged.neoforge.fluids.capability.IFluidHandler;
-import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
-
 public class DrainScenes {
 
 	public static void emptying(SceneBuilder builder, SceneBuildingUtil util) {
@@ -57,9 +58,12 @@ public class DrainScenes {
 		scene.world().modifyBlockEntity(drainPos, ItemDrainBlockEntity.class, be -> {
 			be.getBehaviour(SmartFluidTankBehaviour.TYPE)
 				.allowInsertion();
-			IFluidHandler fh = be.getLevel().getCapability(Capabilities.FluidHandler.BLOCK, be.getBlockPos(), null);
+			ResourceHandler<FluidResource> fh = be.getLevel().getCapability(Capabilities.Fluid.BLOCK, be.getBlockPos(), null);
 			if (fh != null)
-				fh.fill(new FluidStack(Fluids.LAVA, 1000), FluidAction.EXECUTE);
+				try (Transaction transaction = Transaction.openRoot()) {
+					fh.insert(FluidResource.of(new FluidStack(Fluids.LAVA, 1000)), new FluidStack(Fluids.LAVA, 1000).getAmount(), transaction);
+					transaction.commit();
+				}
 		});
 		scene.idle(10);
 
@@ -72,9 +76,12 @@ public class DrainScenes {
 
 		scene.world().modifyBlockEntity(drainPos, ItemDrainBlockEntity.class,
 			be -> {
-				IFluidHandler fh = be.getLevel().getCapability(Capabilities.FluidHandler.BLOCK, be.getBlockPos(), null);
+				ResourceHandler<FluidResource> fh = be.getLevel().getCapability(Capabilities.Fluid.BLOCK, be.getBlockPos(), null);
 				if (fh != null)
-					fh.drain(500, FluidAction.EXECUTE);
+					try (Transaction transaction = Transaction.openRoot()) {
+						ResourceHandlerUtil.extractFirst(fh, resource -> true, 500, transaction);
+						transaction.commit();
+					}
 			});
 
 		scene.world().moveSection(drainLink, util.vector().of(1, 0, 0), 7);

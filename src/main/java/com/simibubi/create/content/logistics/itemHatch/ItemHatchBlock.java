@@ -1,5 +1,11 @@
 package com.simibubi.create.content.logistics.itemHatch;
 
+import net.neoforged.neoforge.transfer.transaction.Transaction;
+import net.neoforged.neoforge.transfer.ResourceHandlerUtil;
+import net.minecraft.world.level.ScheduledTickAccess;
+import net.minecraft.world.level.LevelReader;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,14 +26,13 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -41,12 +46,9 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-import net.neoforged.neoforge.capabilities.Capabilities.ItemHandler;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.common.Tags.Items;
 import net.neoforged.neoforge.common.util.FakePlayer;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
-
 public class ItemHatchBlock extends HorizontalDirectionalBlock
 	implements IBE<ItemHatchBlockEntity>, IWrenchable, ProperWaterloggedBlock {
 	public static final MapCodec<ItemHatchBlock> CODEC = simpleCodec(ItemHatchBlock::new);
@@ -85,29 +87,29 @@ public class ItemHatchBlock extends HorizontalDirectionalBlock
 	}
 
 	@Override
-	public BlockState updateShape(BlockState pState, Direction pDirection, BlockState pNeighborState,
-		LevelAccessor pLevel, BlockPos pPos, BlockPos pNeighborPos) {
-		updateWater(pLevel, pState, pPos);
+	public BlockState updateShape(BlockState pState, LevelReader pLevel, ScheduledTickAccess ticks,
+		BlockPos pPos, Direction pDirection, BlockPos pNeighborPos, BlockState pNeighborState, RandomSource random) {
+		updateWater(pLevel, ticks, pState, pPos);
 		return pState;
 	}
 
 	@Override
-	protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
+	protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
 		if (level.isClientSide())
-			return ItemInteractionResult.SUCCESS;
+			return InteractionResult.SUCCESS;
 		if (player instanceof FakePlayer)
-			return ItemInteractionResult.SUCCESS;
+			return InteractionResult.SUCCESS;
 
 		BlockEntity blockEntity = level.getBlockEntity(pos.relative(state.getValue(FACING)));
 		if (blockEntity == null)
-			return ItemInteractionResult.FAIL;
-		IItemHandler targetInv = level.getCapability(ItemHandler.BLOCK, blockEntity.getBlockPos(), null);
+			return InteractionResult.FAIL;
+		ResourceHandler<ItemResource> targetInv = level.getCapability(Capabilities.Item.BLOCK, blockEntity.getBlockPos(), null);
 		if (targetInv == null)
-			return ItemInteractionResult.FAIL;
+			return InteractionResult.FAIL;
 
 		FilteringBehaviour filter = BlockEntityBehaviour.get(level, pos, FilteringBehaviour.TYPE);
 		if (filter == null)
-			return ItemInteractionResult.FAIL;
+			return InteractionResult.FAIL;
 
 		Inventory inventory = player.getInventory();
 		List<ItemStack> failedInsertions = new ArrayList<>();
@@ -115,12 +117,12 @@ public class ItemHatchBlock extends HorizontalDirectionalBlock
 		boolean depositItemInHand = !player.isShiftKeyDown();
 
 		if (!depositItemInHand && stack.is(Items.TOOLS_WRENCH))
-			return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+			return InteractionResult.TRY_WITH_EMPTY_HAND;
 
-		for (int i = 0; i < inventory.items.size(); i++) {
+		for (int i = 0; i < inventory.getNonEquipmentItems().size(); i++) {
 			if (Inventory.isHotbarSlot(i) != depositItemInHand)
 				continue;
-			if (depositItemInHand && i != inventory.selected)
+			if (depositItemInHand && i != inventory.getSelectedSlot())
 				continue;
 			ItemStack item = inventory.getItem(i);
 			if (item.isEmpty())
@@ -132,12 +134,20 @@ public class ItemHatchBlock extends HorizontalDirectionalBlock
 				.isEmpty() && !filter.test(item))
 				continue;
 
-			ItemStack remainder = ItemHandlerHelper.insertItemStacked(targetInv, item, true);
+			ItemStack remainder;
+			try (Transaction transaction = Transaction.openRoot()) {
+				int transferred = item.isEmpty() ? 0 : ResourceHandlerUtil.insertStacking(targetInv, ItemResource.of(item), item.getCount(), transaction);
+				remainder = transferred == item.getCount() ? ItemStack.EMPTY : item.copyWithCount(item.getCount() - transferred);
+			}
 			if (remainder.getCount() == item.getCount())
 				continue;
 
 			ItemStack extracted = inventory.removeItem(i, item.getCount() - remainder.getCount());
-			remainder = ItemHandlerHelper.insertItemStacked(targetInv, extracted, false);
+			try (Transaction transaction = Transaction.openRoot()) {
+				int transferred2 = extracted.isEmpty() ? 0 : ResourceHandlerUtil.insertStacking(targetInv, ItemResource.of(extracted), extracted.getCount(), transaction);
+				remainder = transferred2 == extracted.getCount() ? ItemStack.EMPTY : extracted.copyWithCount(extracted.getCount() - transferred2);
+				transaction.commit();
+			}
 			anyInserted = true;
 
 			// remainder might not be empty in itemhandler edge cases
@@ -148,7 +158,7 @@ public class ItemHatchBlock extends HorizontalDirectionalBlock
 		failedInsertions.forEach(inventory::placeItemBackInInventory);
 
 		if (!anyInserted)
-			return ItemInteractionResult.SUCCESS;
+			return InteractionResult.SUCCESS;
 
 		AllSoundEvents.ITEM_HATCH.playOnServer(level, pos);
 		level.setBlockAndUpdate(pos, state.setValue(OPEN, true));
@@ -156,7 +166,7 @@ public class ItemHatchBlock extends HorizontalDirectionalBlock
 
 		CreateLang.translate(depositItemInHand ? "item_hatch.deposit_item" : "item_hatch.deposit_inventory")
 			.sendStatus(player);
-		return ItemInteractionResult.SUCCESS;
+		return InteractionResult.SUCCESS;
 	}
 
 	@Override
@@ -169,11 +179,6 @@ public class ItemHatchBlock extends HorizontalDirectionalBlock
 	public void tick(BlockState pState, ServerLevel pLevel, BlockPos pPos, RandomSource pRandom) {
 		if (pState.getValue(OPEN))
 			pLevel.setBlockAndUpdate(pPos, pState.setValue(OPEN, false));
-	}
-
-	@Override
-	public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
-		IBE.onRemove(state, level, pos, newState);
 	}
 
 	@Override

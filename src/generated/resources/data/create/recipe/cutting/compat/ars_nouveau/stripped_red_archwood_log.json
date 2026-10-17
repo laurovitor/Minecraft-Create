@@ -8,7 +8,10 @@
   "type": "create:cutting",
   "ingredients": [
     {
-      "item": "ars_nouveau:stripped_red_archwood_log"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "ars_nouveau:stripped_red_archwood_log"
+      ]
     }
   ],
   "processing_time": 50,

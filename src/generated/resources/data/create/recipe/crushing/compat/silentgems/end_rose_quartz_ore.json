@@ -8,7 +8,10 @@
   "type": "create:crushing",
   "ingredients": [
     {
-      "item": "silentgems:end_rose_quartz_ore"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "silentgems:end_rose_quartz_ore"
+      ]
     }
   ],
   "processing_time": 350,

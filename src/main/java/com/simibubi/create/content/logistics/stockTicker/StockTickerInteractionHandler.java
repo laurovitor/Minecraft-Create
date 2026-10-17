@@ -1,5 +1,9 @@
 package com.simibubi.create.content.logistics.stockTicker;
 
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.neoforged.neoforge.transfer.ResourceHandlerUtil;
+import net.neoforged.neoforge.transfer.transaction.Transaction;
+import net.neoforged.neoforge.transfer.item.ItemUtil;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,8 +19,8 @@ import com.simibubi.create.content.logistics.tableCloth.ShoppingListItem;
 import com.simibubi.create.content.logistics.tableCloth.ShoppingListItem.ShoppingList;
 import com.simibubi.create.foundation.utility.CreateLang;
 
-import net.createmod.catnip.data.Couple;
-import net.createmod.catnip.data.Iterate;
+import net.createmod.catnip.api.data.Couple;
+import net.createmod.catnip.api.data.Iterate;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -32,13 +36,11 @@ import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
-
 @EventBusSubscriber
 public class StockTickerInteractionHandler {
 
 	@SubscribeEvent
-	public static void interactWithLogisticsManager(PlayerInteractEvent.EntityInteractSpecific event) {
+	public static void interactWithLogisticsManager(PlayerInteractEvent.EntityInteract event) {
 		Entity entity = event.getTarget();
 		Player player = event.getEntity();
 		if (player == null || entity == null)
@@ -71,9 +73,9 @@ public class StockTickerInteractionHandler {
 			return false;
 
 		if (!stbe.behaviour.mayInteract(player)) {
-			player.displayClientMessage(CreateLang.translate("stock_keeper.locked")
+			player.sendOverlayMessage(CreateLang.translate("stock_keeper.locked")
 				.style(ChatFormatting.RED)
-				.component(), true);
+				.component());
 			return true;
 		}
 
@@ -137,8 +139,8 @@ public class StockTickerInteractionHandler {
 		int occupiedSlots = 0;
 		for (BigItemStack entry : paymentEntries.getStacksByCount())
 			occupiedSlots += Mth.ceil(entry.count / (float) entry.stack.getMaxStackSize());
-		for (int i = 0; i < tickerBE.receivedPayments.getSlots(); i++)
-			if (tickerBE.receivedPayments.getStackInSlot(i)
+		for (int i = 0; i < tickerBE.receivedPayments.size(); i++)
+			if (ItemUtil.getStack(tickerBE.receivedPayments, i)
 				.isEmpty())
 				occupiedSlots--;
 
@@ -155,7 +157,7 @@ public class StockTickerInteractionHandler {
 			InventorySummary tally = paymentEntries.copy();
 			List<ItemStack> toTransfer = new ArrayList<>();
 
-			for (int i = 0; i < player.getInventory().items.size(); i++) {
+			for (int i = 0; i < player.getInventory().getNonEquipmentItems().size(); i++) {
 				ItemStack item = player.getInventory()
 					.getItem(i);
 				if (item.isEmpty())
@@ -186,7 +188,12 @@ public class StockTickerInteractionHandler {
 			if (simulate)
 				continue;
 
-			toTransfer.forEach(s -> ItemHandlerHelper.insertItemStacked(tickerBE.receivedPayments, s, false));
+			try (Transaction transaction = Transaction.openRoot()) {
+				for (ItemStack payment : toTransfer)
+					ResourceHandlerUtil.insertStacking(tickerBE.receivedPayments, ItemResource.of(payment),
+						payment.getCount(), transaction);
+				transaction.commit();
+			}
 		}
 
 		tickerBE.broadcastPackageRequest(RequestType.PLAYER, order, null, ShoppingListItem.getAddress(mainHandItem));

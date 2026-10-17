@@ -1,5 +1,8 @@
 package com.simibubi.create.content.fluids.tank.storage.creative;
 
+import com.simibubi.create.foundation.fluid.SmartFluidTank;
+import com.simibubi.create.foundation.fluid.FluidHelper;
+import net.neoforged.neoforge.transfer.fluid.FluidStacksResourceHandler;
 import org.jetbrains.annotations.Nullable;
 
 import com.mojang.serialization.MapCodec;
@@ -17,8 +20,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 import net.neoforged.neoforge.fluids.FluidStack;
-import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
-
 public class CreativeFluidTankMountedStorage extends WrapperMountedFluidStorage<CreativeSmartFluidTank> {
 	public static final MapCodec<CreativeFluidTankMountedStorage> CODEC = CreativeSmartFluidTank.CODEC.xmap(
 		CreativeFluidTankMountedStorage::new, storage -> storage.wrapped
@@ -39,15 +40,15 @@ public class CreativeFluidTankMountedStorage extends WrapperMountedFluidStorage<
 
 	public static CreativeFluidTankMountedStorage fromTank(CreativeFluidTankBlockEntity tank) {
 		// make an isolated copy
-		FluidTank inv = tank.getTankInventory();
+		SmartFluidTank inv = tank.getTankInventory();
 		CreativeSmartFluidTank copy = new CreativeSmartFluidTank(inv.getCapacity(), $ -> {});
 		copy.setContainedFluid(inv.getFluid());
 		return new CreativeFluidTankMountedStorage(copy);
 	}
 
 	public static CreativeFluidTankMountedStorage fromLegacy(HolderLookup.Provider registries, CompoundTag nbt) {
-		int capacity = nbt.getInt("Capacity");
-		FluidStack fluid = FluidStack.parseOptional(registries, nbt.getCompound("ProvidedStack"));
+		int capacity = nbt.getIntOr("Capacity", 0);
+		FluidStack fluid = FluidHelper.parseOptional(registries, nbt.getCompoundOrEmpty("ProvidedStack"));
 		CreativeSmartFluidTank tank = new CreativeSmartFluidTank(capacity, $ -> {});
 		tank.setContainedFluid(fluid);
 		return new CreativeFluidTankMountedStorage(tank);

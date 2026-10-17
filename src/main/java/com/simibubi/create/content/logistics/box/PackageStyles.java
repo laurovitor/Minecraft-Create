@@ -10,18 +10,29 @@ import org.jetbrains.annotations.Unmodifiable;
 import com.google.common.collect.ImmutableList;
 import com.simibubi.create.Create;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 
 public class PackageStyles {
 	public record PackageStyle(String type, int width, int height, float riggingOffset, boolean rare) {
-		public ResourceLocation getItemId() {
+		public Identifier getItemId() {
 			String size = "_" + width + "x" + height;
 			String id = type + "_package" + (rare ? "" : size);
 			return Create.asResource(id);
 		}
 
-		public ResourceLocation getRiggingModel() {
+		/**
+		 * Where this package's item model lives. 26.2 resolves an item through its own definition under
+		 * assets/create/items, so the plain styles point straight at the shared model for their size
+		 * rather than through a per-item model that only forwarded to it.
+		 */
+		public Identifier getItemModel() {
+			if (rare)
+				return Create.asResource("item/" + getItemId().getPath());
+			return Create.asResource("item/package/" + type + "_" + width + "x" + height);
+		}
+
+		public Identifier getRiggingModel() {
 			String size = width + "x" + height;
 			return Create.asResource("item/package/rigging_" + size);
 		}
@@ -65,7 +76,15 @@ public class PackageStyles {
 	}
 
 	public static ItemStack getDefaultBox() {
-		return new ItemStack(ALL_BOXES.get(0));
+		return new ItemStack(getDefaultBoxItem());
+	}
+
+	/**
+	 * The item on its own, for callers that must not build a stack. Datagen is one: a stack reads its
+	 * item's default components, and those are not bound while data is being generated.
+	 */
+	public static PackageItem getDefaultBoxItem() {
+		return ALL_BOXES.get(0);
 	}
 
 	private static PackageStyle rare(String name) {

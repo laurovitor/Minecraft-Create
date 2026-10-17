@@ -1,6 +1,7 @@
 package com.simibubi.create.content.redstone.analogLever;
 
-
+import net.minecraft.util.ARGB;
+import net.minecraft.server.level.ServerLevel;
 import com.mojang.serialization.MapCodec;
 
 import com.simibubi.create.foundation.mixin.accessor.BlockBehaviourAccessor;
@@ -33,8 +34,6 @@ import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 public class AnalogLeverBlock extends FaceAttachedHorizontalDirectionalBlock implements IBE<AnalogLeverBlockEntity> {
 
@@ -46,7 +45,7 @@ public class AnalogLeverBlock extends FaceAttachedHorizontalDirectionalBlock imp
 
 	@Override
 	public InteractionResult useWithoutItem(BlockState state, Level worldIn, BlockPos pos, Player player, BlockHitResult hit) {
-		if (worldIn.isClientSide) {
+		if (worldIn.isClientSide()) {
 			addParticles(state, worldIn, pos, 1.0F);
 			return InteractionResult.SUCCESS;
 		}
@@ -77,7 +76,6 @@ public class AnalogLeverBlock extends FaceAttachedHorizontalDirectionalBlock imp
 	}
 
 	@Override
-	@OnlyIn(Dist.CLIENT)
 	public void animateTick(BlockState stateIn, Level worldIn, BlockPos pos, RandomSource rand) {
 		withBlockEntityDo(worldIn, pos, be -> {
 			if (be.state != 0 && rand.nextFloat() < 0.25F)
@@ -86,14 +84,13 @@ public class AnalogLeverBlock extends FaceAttachedHorizontalDirectionalBlock imp
 	}
 
 	@Override
-	public void onRemove(BlockState state, Level worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
-		if (isMoving || state.getBlock() == newState.getBlock())
+	public void affectNeighborsAfterRemoval(BlockState state, ServerLevel worldIn, BlockPos pos,
+		boolean isMoving) {
+		if (isMoving)
 			return;
-		withBlockEntityDo(worldIn, pos, be -> {
-			if (be.state != 0)
-				updateNeighbors(state, worldIn, pos);
-			worldIn.removeBlockEntity(pos);
-		});
+		// The block entity is gone by now, so its former output level is no longer readable; the
+		// neighbours are updated either way, which is what a lever going away always warrants.
+		updateNeighbors(state, worldIn, pos);
 	}
 
 	private static void addParticles(BlockState state, LevelAccessor worldIn, BlockPos pos, float alpha) {
@@ -106,7 +103,7 @@ public class AnalogLeverBlock extends FaceAttachedHorizontalDirectionalBlock imp
 			(double) pos.getY() + 0.5D + 0.1D * (double) direction.getStepY() + 0.2D * (double) direction1.getStepY();
 		double d2 =
 			(double) pos.getZ() + 0.5D + 0.1D * (double) direction.getStepZ() + 0.2D * (double) direction1.getStepZ();
-		worldIn.addParticle(new DustParticleOptions(new Vector3f(1.0F, 0.0F, 0.0F), alpha), d0, d1, d2, 0.0D, 0.0D,
+		worldIn.addParticle(new DustParticleOptions(ARGB.colorFromFloat(1, 1.0F, 0.0F, 0.0F), alpha), d0, d1, d2, 0.0D, 0.0D,
 			0.0D);
 	}
 
@@ -117,7 +114,12 @@ public class AnalogLeverBlock extends FaceAttachedHorizontalDirectionalBlock imp
 
 	@Override
 	public @NotNull VoxelShape getShape(@NotNull BlockState state, @NotNull BlockGetter worldIn, @NotNull BlockPos pos, @NotNull CollisionContext context) {
-		return ((BlockBehaviourAccessor) Blocks.LEVER).create$getShape(state, worldIn, pos, context);
+		// 26.2 resolves a lever's shape through a map built over the lever's own states, so the vanilla
+		// block has to be asked about one of its own states rather than about this one.
+		BlockState leverState = Blocks.LEVER.defaultBlockState()
+			.setValue(FACE, state.getValue(FACE))
+			.setValue(FACING, state.getValue(FACING));
+		return ((BlockBehaviourAccessor) Blocks.LEVER).create$getShape(leverState, worldIn, pos, context);
 	}
 
 	@Override

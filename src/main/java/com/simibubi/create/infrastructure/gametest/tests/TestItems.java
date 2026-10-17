@@ -1,5 +1,8 @@
 package com.simibubi.create.infrastructure.gametest.tests;
 
+import net.neoforged.neoforge.transfer.transaction.Transaction;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -21,26 +24,21 @@ import com.simibubi.create.infrastructure.gametest.CreateGameTestHelper;
 import com.simibubi.create.infrastructure.gametest.GameTestGroup;
 
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.gametest.framework.GameTest;
+import com.simibubi.create.infrastructure.gametest.GameTest;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.world.item.EnchantedBookItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantment;
-import net.minecraft.world.item.enchantment.EnchantmentInstance;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.RedstoneLampBlock;
-
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
 
 @GameTestGroup(path = "items")
 public class TestItems {
@@ -70,7 +68,7 @@ public class TestItems {
 				helper.assertBlockState(
 					pos,
 					state -> state.getValue(BlazeBurnerBlock.HEAT_LEVEL) == HeatLevel.KINDLED,
-					() -> "Blaze burner isn't lit!"
+					state -> Component.literal("Blaze burner isn't lit!")
 				);
 		});
 	}
@@ -105,14 +103,15 @@ public class TestItems {
 		BlockPos lever = new BlockPos(2, 3, 1);
 		BlockPos end = new BlockPos(11, 2, 2);
 		Holder<Enchantment> PROTECTION_ENCHANT = helper.getLevel().registryAccess()
-				.registryOrThrow(Registries.ENCHANTMENT)
-				.getHolderOrThrow(Enchantments.PROTECTION);
+				.lookupOrThrow(Registries.ENCHANTMENT)
+				.getOrThrow(Enchantments.PROTECTION);
 		Map<BlockPos, ItemStack> outputs = Map.of(
 				new BlockPos(3, 2, 1), new ItemStack(AllBlocks.BRASS_BLOCK.get()),
 				new BlockPos(4, 2, 1), new ItemStack(Items.APPLE),
 				new BlockPos(5, 2, 1), new ItemStack(Items.WATER_BUCKET),
-				new BlockPos(6, 2, 1), EnchantedBookItem.createForEnchantment(
-						new EnchantmentInstance(PROTECTION_ENCHANT, 1)
+				new BlockPos(6, 2, 1), Util.make(
+						new ItemStack(Items.ENCHANTED_BOOK),
+						book -> book.enchant(PROTECTION_ENCHANT, 1)
 				),
 				new BlockPos(7, 2, 1), Util.make(
 						new ItemStack(Items.NETHERITE_SWORD),
@@ -364,14 +363,24 @@ public class TestItems {
 		BlockPos chest = new BlockPos(1, 2, 1);
 		BlockPos lamp = new BlockPos(2, 3, 1);
 		helper.assertBlockProperty(lamp, RedstoneLampBlock.LIT, false);
-		IItemHandler chestStorage = helper.itemStorageAt(chest);
+		ResourceHandler<ItemResource> chestStorage = helper.itemStorageAt(chest);
 		for (int i = 0; i < 18; i++) { // insert 18 stacks
-			ItemHandlerHelper.insertItem(chestStorage, new ItemStack(Items.DIAMOND, 64), false);
+			try (Transaction transaction = Transaction.openRoot()) {
+				chestStorage.insert(ItemResource.of(new ItemStack(Items.DIAMOND, 64)), new ItemStack(Items.DIAMOND, 64).getCount(), transaction);
+				transaction.commit();
+			}
 		}
 		helper.succeedWhen(() -> helper.assertBlockProperty(lamp, RedstoneLampBlock.LIT, true));
 	}
 
-	@GameTest(template = "storages", timeoutTicks = CreateGameTestHelper.TEN_SECONDS)
+	/**
+	 * The chain this walks a chest's contents along takes most of the time it was given: the last stack
+	 * of the fourteen arrives somewhere around tick 170 to 215, and where in that range depends on the
+	 * order blocks happen to be ticked in, which is not the same from one run to the next. Upstream
+	 * finishes with as little as twenty ticks to spare. Ten seconds is not enough room for that; fifteen
+	 * is.
+	 */
+	@GameTest(template = "storages", timeoutTicks = CreateGameTestHelper.FIFTEEN_SECONDS)
 	public static void storages(CreateGameTestHelper helper) {
 		BlockPos lever = new BlockPos(12, 3, 2);
 		BlockPos startChest = new BlockPos(13, 3, 1);

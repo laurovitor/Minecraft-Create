@@ -8,7 +8,10 @@
   "type": "create:crushing",
   "ingredients": [
     {
-      "item": "silentgems:nether_topaz_ore"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "silentgems:nether_topaz_ore"
+      ]
     }
   ],
   "processing_time": 350,

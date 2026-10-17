@@ -1,5 +1,9 @@
 package com.simibubi.create.content.schematics.client;
 
+import net.neoforged.neoforge.client.gui.GuiLayer;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.createmod.catnip.api.client.network.ClientNetworkHelper;
 import java.util.List;
 
 import com.google.common.collect.ImmutableList;
@@ -19,15 +23,12 @@ import com.simibubi.create.foundation.blockEntity.IMultiBlockEntityContainer;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.utility.CreateLang;
 
-import net.createmod.catnip.animation.AnimationTickHolder;
-import net.createmod.catnip.levelWrappers.SchematicLevel;
-import net.createmod.catnip.outliner.AABBOutline;
-import net.createmod.catnip.platform.CatnipServices;
-import net.createmod.catnip.render.SuperRenderTypeBuffer;
+import net.createmod.catnip.api.client.animation.AnimationTickHolder;
+import net.createmod.catnip.api.level.wrapper.SchematicLevel;
+import net.createmod.catnip.api.client.outliner.AABBOutline;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.LayeredDraw;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction.Axis;
@@ -48,7 +49,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
-public class SchematicHandler implements LayeredDraw.Layer {
+public class SchematicHandler implements GuiLayer {
 
 	private String displayedSchematic;
 	private SchematicTransformation transformation;
@@ -70,8 +71,19 @@ public class SchematicHandler implements LayeredDraw.Layer {
 	public SchematicHandler() {
 		overlay = new SchematicHotbarSlotOverlay();
 		currentTool = ToolType.DEPLOY;
-		selectionScreen = new ToolSelectionScreen(ImmutableList.of(ToolType.DEPLOY), this::equip);
 		transformation = new SchematicTransformation();
+	}
+
+	/**
+	 * 26.2's {@code Screen} constructor takes its font from {@code Minecraft.getInstance()}, which does
+	 * not exist yet while mods are being constructed - and this handler is a static field of
+	 * {@link com.simibubi.create.CreateClient CreateClient}. So the default screen is built on first
+	 * use rather than in the constructor.
+	 */
+	private ToolSelectionScreen selectionScreen() {
+		if (selectionScreen == null)
+			selectionScreen = new ToolSelectionScreen(ImmutableList.of(ToolType.DEPLOY), this::equip);
+		return selectionScreen;
 	}
 
 	public void tick() {
@@ -113,7 +125,7 @@ public class SchematicHandler implements LayeredDraw.Layer {
 		if (syncCooldown == 1)
 			sync();
 
-		selectionScreen.update();
+		selectionScreen().update();
 		currentTool.getTool()
 			.updateSelection();
 	}
@@ -127,7 +139,7 @@ public class SchematicHandler implements LayeredDraw.Layer {
 			ToolType toolBefore = currentTool;
 			selectionScreen = new ToolSelectionScreen(ToolType.getTools(player.isCreative()), this::equip);
 			if (toolBefore != null) {
-				selectionScreen.setSelectedElement(toolBefore);
+				selectionScreen().setSelectedElement(toolBefore);
 				equip(toolBefore);
 			}
 		} else
@@ -157,8 +169,8 @@ public class SchematicHandler implements LayeredDraw.Layer {
 				blockEntity.setLevel(w);
 			fixControllerBlockEntities(w);
 		} catch (Exception e) {
-			Minecraft.getInstance().player.displayClientMessage(CreateLang.translate("schematic.error")
-				.component(), false);
+			Minecraft.getInstance().player.sendSystemMessage(CreateLang.translate("schematic.error")
+				.component());
 			Create.LOGGER.error("Failed to load Schematic for Previewing", e);
 			return;
 		}
@@ -206,7 +218,7 @@ public class SchematicHandler implements LayeredDraw.Layer {
 		}
 	}
 
-	public void render(PoseStack ms, SuperRenderTypeBuffer buffer, Vec3 camera) {
+	public void submit(PoseStack ms, SubmitNodeCollector queue, Vec3 camera, CameraRenderState camera3d) {
 		if (!active) {
 			return;
 		}
@@ -217,7 +229,7 @@ public class SchematicHandler implements LayeredDraw.Layer {
 
 		ms.pushPose();
 		currentTool.getTool()
-			.renderTool(ms, buffer, camera);
+			.submitTool(ms, queue, camera);
 		ms.popPose();
 
 		ms.pushPose();
@@ -230,16 +242,16 @@ public class SchematicHandler implements LayeredDraw.Layer {
 			boolean fb = transformation.getScaleFB()
 				.getValue(pt) < 0;
 			if (lr && !fb && renderers[2] != null) {
-				renderers[2].render(ms, buffer);
+				renderers[2].submit(ms, queue, camera3d);
 			} else if (fb && !lr && renderers[1] != null) {
-				renderers[1].render(ms, buffer);
+				renderers[1].submit(ms, queue, camera3d);
 			} else if (renderers[0] != null) {
-				renderers[0].render(ms, buffer);
+				renderers[0].submit(ms, queue, camera3d);
 			}
 		}
 
 		currentTool.getTool()
-			.renderOnSchematic(ms, buffer);
+			.submitOnSchematic(ms, queue);
 
 		ms.popPose();
 	}
@@ -253,15 +265,15 @@ public class SchematicHandler implements LayeredDraw.Layer {
 	}
 
 	@Override
-	public void render(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
+	public void render(GuiGraphicsExtractor guiGraphics, DeltaTracker deltaTracker) {
 		Minecraft mc = Minecraft.getInstance();
-		if (mc.options.hideGui || !active)
+		if (mc.gui.hud.isHidden() || !active)
 			return;
 		if (activeSchematicItem != null)
 			this.overlay.renderOn(guiGraphics, activeHotbarSlot);
 		currentTool.getTool()
 			.renderOverlay(mc.gui, guiGraphics, deltaTracker.getGameTimeDeltaPartialTick(false), guiGraphics.guiWidth(), guiGraphics.guiHeight());
-		selectionScreen.renderPassive(guiGraphics, deltaTracker.getGameTimeDeltaPartialTick(false));
+		selectionScreen().renderPassive(guiGraphics, deltaTracker.getGameTimeDeltaPartialTick(false));
 	}
 
 	public boolean onMouseInput(int button, boolean pressed) {
@@ -289,11 +301,11 @@ public class SchematicHandler implements LayeredDraw.Layer {
 		if (!AllKeys.TOOL_MENU.doesModifierAndCodeMatch(key))
 			return;
 
-		if (pressed && !selectionScreen.focused)
-			selectionScreen.focused = true;
-		if (!pressed && selectionScreen.focused) {
-			selectionScreen.focused = false;
-			selectionScreen.onClose();
+		if (pressed && !selectionScreen().focused)
+			selectionScreen().focused = true;
+		if (!pressed && selectionScreen().focused) {
+			selectionScreen().focused = false;
+			selectionScreen().onClose();
 		}
 	}
 
@@ -301,8 +313,8 @@ public class SchematicHandler implements LayeredDraw.Layer {
 		if (!active)
 			return false;
 
-		if (selectionScreen.focused) {
-			selectionScreen.cycle((int) Math.signum(delta));
+		if (selectionScreen().focused) {
+			selectionScreen().cycle((int) Math.signum(delta));
 			return true;
 		}
 		if (AllKeys.ctrlDown())
@@ -319,7 +331,7 @@ public class SchematicHandler implements LayeredDraw.Layer {
 			return null;
 
 		activeSchematicItem = stack;
-		activeHotbarSlot = player.getInventory().selected;
+		activeHotbarSlot = player.getInventory().getSelectedSlot();
 		return stack;
 	}
 
@@ -344,7 +356,7 @@ public class SchematicHandler implements LayeredDraw.Layer {
 	public void sync() {
 		if (activeSchematicItem == null)
 			return;
-		CatnipServices.NETWORK.sendToServer(new SchematicSyncPacket(activeHotbarSlot, transformation.toSettings(),
+		ClientNetworkHelper.INSTANCE.sendToServer(new SchematicSyncPacket(activeHotbarSlot, transformation.toSettings(),
 			transformation.getAnchor(), deployed));
 	}
 
@@ -386,7 +398,7 @@ public class SchematicHandler implements LayeredDraw.Layer {
 	}
 
 	public void printInstantly() {
-		CatnipServices.NETWORK.sendToServer(new SchematicPlacePacket(activeSchematicItem.copy()));
+		ClientNetworkHelper.INSTANCE.sendToServer(new SchematicPlacePacket(activeSchematicItem.copy()));
 		activeSchematicItem.set(AllDataComponents.SCHEMATIC_DEPLOYED, false);
 		SchematicInstances.clearHash(activeSchematicItem);
 		active = false;

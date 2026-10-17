@@ -1,6 +1,5 @@
 package com.simibubi.create.api.data.recipe;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
@@ -11,14 +10,14 @@ import com.simibubi.create.content.kinetics.crusher.CrushingRecipe;
 import com.simibubi.create.content.processing.recipe.StandardProcessingRecipe;
 import com.simibubi.create.foundation.data.recipe.CommonMetal;
 
-import net.createmod.catnip.lang.Lang;
+import net.createmod.catnip.api.lang.Lang;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.data.PackOutput;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.data.recipes.RecipeOutput;
 
 import net.neoforged.neoforge.common.conditions.NotCondition;
 import net.neoforged.neoforge.common.conditions.TagEmptyCondition;
@@ -75,7 +74,7 @@ public abstract class CrushingRecipeGen extends StandardProcessingRecipeGen<Crus
 		TagKey<Item> tag = metal.ores.items();
 		return create(metal + "_ore", b -> {
 			return b.duration(400)
-				.withCondition(new NotCondition(new TagEmptyCondition(tag.location())))
+				.withCondition(new NotCondition(new TagEmptyCondition<>(tag)))
 				.require(tag)
 				.output(result.get(), 1)
 				.output(.75f, result.get(), 1)
@@ -114,15 +113,15 @@ public abstract class CrushingRecipeGen extends StandardProcessingRecipeGen<Crus
 			int amount = block ? 9 : 1;
 			TagKey<Item> material = block ? metal.rawStorageBlocks.items() : metal.rawOres;
 			return b.duration(400)
-				.withCondition(new NotCondition(new TagEmptyCondition(material.location())))
+				.withCondition(new NotCondition(new TagEmptyCondition<>(material)))
 				.require(material)
 				.output(result.get(), amount)
 				.output(.75f, AllItems.EXP_NUGGET.get(), amount);
 		});
 	}
 
-	public CrushingRecipeGen(PackOutput output, CompletableFuture<HolderLookup.Provider> registries, String defaultNamespace) {
-		super(output, registries, defaultNamespace);
+	public CrushingRecipeGen(HolderLookup.Provider registries, RecipeOutput output, String defaultNamespace) {
+		super(registries, output, defaultNamespace);
 	}
 
 	@Override

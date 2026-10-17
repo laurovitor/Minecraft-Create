@@ -1,5 +1,7 @@
 package com.simibubi.create.content.trains.track;
 
+import net.minecraft.world.level.ScheduledTickAccess;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.pathfinder.PathType;
 
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +35,7 @@ public class FakeTrackBlock extends Block implements EntityBlock, ProperWaterlog
 
 	public FakeTrackBlock(Properties p_49795_) {
 		super(p_49795_.randomTicks()
-			.noCollission()
+			.noCollision()
 			.noOcclusion());
 		registerDefaultState(defaultBlockState().setValue(WATERLOGGED, false));
 	}
@@ -45,13 +47,20 @@ public class FakeTrackBlock extends Block implements EntityBlock, ProperWaterlog
 
 	@Override
 	public RenderShape getRenderShape(BlockState pState) {
-		return RenderShape.ENTITYBLOCK_ANIMATED;
+		// MODEL, for a block that draws nothing at all. Its model is parented to `block/air`, so the
+		// world renders no geometry either way -- but map mods take INVISIBLE as "there is nothing
+		// here" and skip the block before they ever build metadata for it. JourneyMap does exactly
+		// that: with INVISIBLE there is no `BlockMD` for `create:fake_track` at all, so its own
+		// Create handler -- which exists, and which would force the marker to be drawn in the
+		// track's grey -- is never called. The straights are ordinary blocks and come out fine,
+		// which is why a railway shows on a minimap with its corners missing.
+		return RenderShape.MODEL;
 	}
 
 	@Override
 	public @Nullable PathType getBlockPathType(BlockState state, BlockGetter level, BlockPos pos,
 											   @Nullable Mob mob) {
-		return PathType.DAMAGE_OTHER;
+		return PathType.DAMAGING;
 	}
 
 	@Override
@@ -65,9 +74,9 @@ public class FakeTrackBlock extends Block implements EntityBlock, ProperWaterlog
 	}
 
 	@Override
-	public BlockState updateShape(BlockState pState, Direction pDirection, BlockState pNeighborState,
-		LevelAccessor pLevel, BlockPos pCurrentPos, BlockPos pNeighborPos) {
-		updateWater(pLevel, pState, pCurrentPos);
+	public BlockState updateShape(BlockState pState, LevelReader pLevel, ScheduledTickAccess ticks,
+		BlockPos pCurrentPos, Direction pDirection, BlockPos pNeighborPos, BlockState pNeighborState, RandomSource random) {
+		updateWater(pLevel, ticks, pState, pCurrentPos);
 		return pState;
 	}
 

@@ -1,5 +1,6 @@
 package com.simibubi.create.infrastructure.command;
 
+import java.util.Set;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -25,7 +26,7 @@ public class TrainCommand {
 
 	static ArgumentBuilder<CommandSourceStack, ?> register() {
 		return Commands.literal("train")
-			.requires(cs -> cs.hasPermission(2))
+			.requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
 			.then(Commands.literal("remove")
 				.then(Commands.argument("train", UuidArgument.uuid())
 					.executes(ctx -> runDelete(ctx.getSource(), UuidArgument.getUuid(ctx, "train")))
@@ -77,7 +78,7 @@ public class TrainCommand {
 		}
 
 		ResourceKey<Level> levelKey = presentDimensions.get(0);
-		ServerLevel serverLevel = serverPlayer.getServer().getLevel(levelKey);
+		ServerLevel serverLevel = serverPlayer.level().getServer().getLevel(levelKey);
 		Optional<BlockPos> positionInDimension = train.getPositionInDimension(levelKey);
 
 		if (positionInDimension.isEmpty() || serverLevel == null) {
@@ -92,8 +93,10 @@ public class TrainCommand {
 			pos.getX(),
 			pos.getY() + 5,
 			pos.getZ(),
+			Set.of(),
 			serverPlayer.getViewYRot(0),
-			serverPlayer.getViewXRot(0)
+			serverPlayer.getViewXRot(0),
+			true
 		);
 
 		source.sendSuccess(() -> {

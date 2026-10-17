@@ -4,7 +4,7 @@ plugins {
     id("maven-publish")
     id("net.kyori.blossom") version "2.2.0" // https://github.com/KyoriPowered/blossom
     id("dev.ithundxr.silk") version "1.0.1" // https://github.com/ithundxr/silk
-    id("net.neoforged.moddev") version "2.0.141" // https://projects.neoforged.net/neoforged/ModDevGradle
+    id("net.neoforged.moddev") version "2.0.144" // https://projects.neoforged.net/neoforged/ModDevGradle
     id("me.modmuss50.mod-publish-plugin") version "1.1.0" // https://github.com/modmuss50/mod-publish-plugin
 }
 
@@ -16,7 +16,7 @@ group = "com.simibubi.create"
 version = mod_version + (dev && buildNumber != null ? "-${buildNumber}" : "")
 
 java {
-    toolchain.languageVersion = JavaLanguageVersion.of(21)
+    toolchain.languageVersion = JavaLanguageVersion.of(25)
     withSourcesJar()
 }
 
@@ -54,6 +54,7 @@ neoForge {
             systemProperty("forge.logging.markers", "REGISTRIES")
             jvmArgument("-XX:+IgnoreUnrecognizedVMOptions")
             jvmArgument("-XX:+AllowEnhancedClassRedefinition")
+
             //jvmArgument("-XX:-OmitStackTraceInFastThrow") // uncomment when you get exceptions with null messages etc
             //jvmArgument("-XX:+UnlockCommercialFeatures") // uncomment for profiling
 
@@ -77,13 +78,30 @@ neoForge {
             programArgument("--nogui")
         }
 
-        data {
-            data()
+        // 26.2 splits datagen by side, so there are two runs rather than one.
+        clientData {
+            clientData()
+
+            // -PdataOut=<dir> writes elsewhere than the committed tree. Datagen prunes output it no
+            // longer produces, so while the providers are only partly ported, generating in place
+            // would delete the files the unported ones used to write.
+            programArguments.addAll(
+                "--mod", mod_id as String,
+                "--all",
+                "--output", (project.hasProperty("dataOut") ? file(project.property("dataOut") as String)
+                    : file("src/generated/resources/")).getAbsolutePath(),
+                "--existing", file("src/main/resources/").getAbsolutePath()
+            )
+        }
+
+        serverData {
+            serverData()
 
             programArguments.addAll(
                 "--mod", mod_id as String,
                 "--all",
-                "--output", file("src/generated/resources/").getAbsolutePath(),
+                "--output", (project.hasProperty("dataOut") ? file(project.property("dataOut") as String)
+                    : file("src/generated/resources/")).getAbsolutePath(),
                 "--existing", file("src/main/resources/").getAbsolutePath()
             )
         }
@@ -95,6 +113,7 @@ neoForge {
 }
 
 repositories {
+    mavenLocal() // Registrate, Flywheel, Ponder and Catnip, all built from source for 26.2
     maven { url = "https://maven.createmod.net" } // Ponder, Flywheel
     maven { url = "https://maven.ithundxr.dev/snapshots" } // Registrate
     maven { url = "https://maven.blamejared.com" } // JEI, Vazkii's Mods
@@ -119,40 +138,62 @@ repositories {
 configurations {
     localImplementation
 
+    // The Sodium artifact on Modrinth is a bootstrap: the mod itself, API included, is a nested jar.
+    sodiumBundle
+
     runtimeClasspath.extendsFrom(localImplementation)
     compileClasspath.extendsFrom(localImplementation)
 
     runtimeClasspath.extendsFrom(localRuntimeOnly)
 }
 
+// Sodium ships its API inside META-INF/jarjar rather than in the artifact Gradle resolves, so the
+// nested jar is unpacked and compiled against directly.
+var extractSodiumApi = tasks.register("extractSodiumApi", Copy) {
+    from({ configurations.sodiumBundle.collect { zipTree(it) } }) {
+        include("META-INF/jarjar/*mod.jar")
+        eachFile { it.relativePath = new RelativePath(true, "sodium-api.jar") }
+        includeEmptyDirs = false
+    }
+    into(layout.buildDirectory.dir("sodium"))
+}
+
 dependencies {
-    // Required dependencies
+    // Required dependencies. These are all built from source for 26.2 and published to mavenLocal,
+    // and all four are nested into the built jar the way 1.21.1 nested its three.
+    //
+    // Nesting is not a nicety here. Registrate carries no `neoforge.mods.toml` -- it is a library
+    // rather than a mod -- so a loader ignores it in the mods folder entirely, and a Create installed
+    // beside it dies on `NoClassDefFoundError: com/tterrag/registrate/AbstractRegistrate` before it
+    // reaches anything of its own. Nothing in development notices, because the dev runs and the e2e
+    // suite take all four off the Gradle classpath, where the distinction does not exist.
     jarJar(api("com.tterrag.registrate:Registrate:$registrate_version"))
 
     compileOnlyApi("dev.engine-room.flywheel:flywheel-neoforge-api-$minecraft_version:$flywheel_version")
-    jarJar(runtimeOnly("dev.engine-room.flywheel:flywheel-neoforge-$minecraft_version:$flywheel_version") {
-        version {
-            strictly "[${flywheel_version},2.0)"
-            prefer flywheel_version
-        }
-    })
+    jarJar(runtimeOnly("dev.engine-room.flywheel:flywheel-neoforge-$minecraft_version:$flywheel_version"))
 
-    jarJar(api("net.createmod.ponder:ponder-neoforge:$ponder_version+mc$minecraft_version") {
-        version {
-            strictly "[$ponder_version+mc$minecraft_version,)"
-            prefer "$ponder_version+mc$minecraft_version"
-        }
-    })
+    jarJar(api("net.createmod.ponder:ponder-neoforge:$ponder_version"))
+    // Catnip used to come along with Ponder; on the 26.x branches it is published separately.
+    jarJar(api("net.createmod.catnip:catnip-neoforge:$ponder_version"))
 
     // Local dependencies - not published to consumers
-    localRuntimeOnly("dev.engine-room.vanillin:vanillin-neoforge-$minecraft_version:$vanillin_version")
-
-    localImplementation("mezz.jei:jei-$minecraft_version-neoforge:$jei_version")
+    if (project.hasProperty("emi")) {
+        // -Pemi runs the client with EMI and TooManyRecipeViewers instead of JEI, as players with EMI
+        // have it: TMRV is JEI's API for EMI, so Create's JEI plugin still loads, through it.
+        compileOnly("mezz.jei:jei-$minecraft_version-neoforge:$jei_version")
+        localRuntimeOnly("dev.emi:emi-neoforge:$emi_version")
+        localRuntimeOnly(files("../TooManyRecipeViewers/build/libs/toomanyrecipeviewers-0.9.jar"))
+    } else {
+        localImplementation("mezz.jei:jei-$minecraft_version-neoforge:$jei_version")
+    }
 
     compileOnly("top.theillusivec4.curios:curios-neoforge:$curios_version+$minecraft_version:api")
     localRuntimeOnly("top.theillusivec4.curios:curios-neoforge:$curios_version+$minecraft_version")
 
-    compileOnly("maven.modrinth:sodium:mc$minecraft_version-$sodium_version-neoforge")
+    sodiumBundle("maven.modrinth:sodium:mc$minecraft_version-$sodium_version-neoforge")
+    compileOnly(files(layout.buildDirectory.file("sodium/sodium-api.jar")) {
+        builtBy(extractSodiumApi)
+    })
 
     if (cc_tweaked_enable.toBoolean()) {
         compileOnly("cc.tweaked:cc-tweaked-$minecraft_version-core-api:$cc_tweaked_version")
@@ -160,23 +201,20 @@ dependencies {
         localRuntimeOnly("cc.tweaked:cc-tweaked-$minecraft_version-forge:$cc_tweaked_version")
     }
 
-    compileOnly("maven.modrinth:farmers-delight:${farmers_delight_version}")
-    if (farmers_delight_enable.toBoolean()) {
-        localImplementation("maven.modrinth:farmers-delight:${farmers_delight_version}")
+    localImplementation("maven.modrinth:journeymap:$journeymap_version")
+    localImplementation("info.journeymap:journeymap-api-neoforge:$journeymap_api_version") {
+        exclude(group: "curse.maven") // Pulls in an old version of JourneyMap which is for Forge
     }
 
-    localRuntimeOnly("dev.architectury:architectury-neoforge:13d.0.8")
-    localImplementation("dev.ftb.mods:ftb-chunks-neoforge:2101.1.1")
-    localImplementation("dev.ftb.mods:ftb-teams-neoforge:2101.1.0")
-    localImplementation("dev.ftb.mods:ftb-library-neoforge:2101.1.3")
+    // Farmer's Delight, FTB, Xaero and Architectury have no 26.2 builds, so their integrations are
+    // compiled out for now (see sourceSets below and farmers_delight_enable).
+}
 
-    localImplementation("maven.modrinth:journeymap:1.21.1-6.0.0-beta.54+neoforge")
-    localImplementation("info.journeymap:journeymap-api-neoforge:2.0.0-1.21.1-20260205.200232-15") {
-        exclude(group: "curse.maven") // Pulls in a old version of journey map which is for forge
-    }
-
-    compileOnly("xaero.lib:xaerolib-neoforge-1.21:1.0.42")
-    compileOnly("curse.maven:xaeros-world-map-317780:7401095")
+// ModDevGradle 2.0.144 does not know Minecraft 26.2, so its version capability table falls back to
+// requesting Java 21 for the NeoFormRuntime tasks. Gradle 9 cannot auto-provision one either: the
+// foojay resolver still references JvmVendorSpec.IBM_SEMERU, which Gradle 9 removed.
+tasks.withType(net.neoforged.nfrtgradle.NeoFormRuntimeTask).configureEach {
+    javaExecutable.set(javaToolchains.launcherFor(java.toolchain).map { it.executablePath.asFile.absolutePath })
 }
 
 sourceSets.main {
@@ -184,6 +222,20 @@ sourceSets.main {
         if (!cc_tweaked_enable.toBoolean()) {
             exclude("com/simibubi/create/compat/computercraft/implementation/**")
         }
+
+        if (!farmers_delight_enable.toBoolean()) {
+            exclude("com/simibubi/create/compat/farmersdelight/**")
+        }
+
+        // FTB Chunks and Xaero have no 26.2 builds, so their APIs are not on the
+        // classpath and these adapters cannot compile. Create's own train map - the sync, the
+        // manager and the renderer - is unaffected.
+        // TODO: restore these once the minimap mods update.
+        exclude("com/simibubi/create/compat/trainmap/FTBChunksTrainMap.java")
+        exclude("com/simibubi/create/compat/trainmap/XaeroTrainMap.java")
+        exclude("com/simibubi/create/foundation/mixin/compat/xaeros/**")
+
+
     }
 
     resources {
@@ -212,6 +264,8 @@ tasks.withType(Jar).configureEach {
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = "UTF-8"
+    // javac stops at 100 errors by default, which hides the real scale during a port.
+    options.compilerArgs.addAll(["-Xmaxerrs", "100000"])
 }
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
@@ -308,5 +362,13 @@ boolean hasUnstaged() {
         return !result.isEmpty()
     } catch (Throwable ignored) {
         return false
+    }
+}
+
+// A single-file javac check, since the full compile under-reports while the port is mid-flight.
+tasks.register("printCompileClasspath") {
+    doLast {
+        var cp = sourceSets.main.compileClasspath.files.collect { it.absolutePath }.join(File.pathSeparator)
+        new File(project.layout.buildDirectory.get().asFile, "compile-classpath.txt").text = cp
     }
 }

@@ -1,21 +1,21 @@
 package com.simibubi.create.content.logistics.factoryBoard;
 
+import com.simibubi.create.foundation.utility.ClientAccess;
+
+import net.neoforged.neoforge.transfer.item.ItemUtil;
+import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
 import com.simibubi.create.AllMenuTypes;
 import com.simibubi.create.AllSoundEvents;
 import com.simibubi.create.foundation.gui.menu.GhostItemMenu;
 import com.simibubi.create.foundation.utility.CreateLang;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.MenuType;
 
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.neoforge.items.ItemStackHandler;
-import net.neoforged.neoforge.items.SlotItemHandler;
+import net.neoforged.neoforge.transfer.item.ResourceHandlerSlot;
 
 public class FactoryPanelSetItemMenu extends GhostItemMenu<FactoryPanelBehaviour> {
 
@@ -32,8 +32,8 @@ public class FactoryPanelSetItemMenu extends GhostItemMenu<FactoryPanelBehaviour
 	}
 
 	@Override
-	protected ItemStackHandler createGhostInventory() {
-		return new ItemStackHandler(1);
+	protected ItemStacksResourceHandler createGhostInventory() {
+		return new ItemStacksResourceHandler(1);
 	}
 
 	@Override
@@ -42,10 +42,9 @@ public class FactoryPanelSetItemMenu extends GhostItemMenu<FactoryPanelBehaviour
 	}
 
 	@Override
-	@OnlyIn(Dist.CLIENT)
 	protected FactoryPanelBehaviour createOnClient(RegistryFriendlyByteBuf extraData) {
 		FactoryPanelPosition pos = FactoryPanelPosition.STREAM_CODEC.decode(extraData);
-		return FactoryPanelBehaviour.at(Minecraft.getInstance().level, pos);
+		return FactoryPanelBehaviour.at(ClientAccess.level(), pos);
 	}
 
 	@Override
@@ -56,13 +55,13 @@ public class FactoryPanelSetItemMenu extends GhostItemMenu<FactoryPanelBehaviour
 		int slotY = 28;
 
 		addPlayerSlots(playerX, playerY);
-		addSlot(new SlotItemHandler(ghostInventory, 0, slotX, slotY));
+		addSlot(new ResourceHandlerSlot(ghostInventory, ghostInventory::set, 0, slotX, slotY));
 	}
 
 	@Override
 	protected void saveData(FactoryPanelBehaviour contentHolder) {
-		if (!contentHolder.setFilter(ghostInventory.getStackInSlot(0))) {
-			player.displayClientMessage(CreateLang.translateDirect("logistics.filter.invalid_item"), true);
+		if (!contentHolder.setFilter(ItemUtil.getStack(ghostInventory, 0))) {
+			player.sendOverlayMessage(CreateLang.translateDirect("logistics.filter.invalid_item"));
 			AllSoundEvents.DENY.playOnServer(player.level(), player.blockPosition(), 1, 1);
 			return;
 		}

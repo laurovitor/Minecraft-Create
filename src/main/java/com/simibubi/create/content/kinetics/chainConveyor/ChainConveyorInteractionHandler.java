@@ -1,5 +1,9 @@
 package com.simibubi.create.content.kinetics.chainConveyor;
 
+import net.neoforged.neoforge.client.event.ExtractBlockOutlineRenderStateEvent;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.createmod.catnip.api.client.network.ClientNetworkHelper;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -14,13 +18,11 @@ import com.simibubi.create.content.logistics.packagePort.PackagePortTargetSelect
 import com.simibubi.create.foundation.utility.RaycastHelper;
 import com.simibubi.create.foundation.utility.TickBasedCache;
 
-import net.createmod.catnip.data.WorldAttached;
-import net.createmod.catnip.outliner.Outliner;
-import net.createmod.catnip.platform.CatnipServices;
-import net.createmod.catnip.theme.Color;
+import net.createmod.catnip.api.data.WorldAttached;
+import net.createmod.catnip.api.client.outliner.Outliner;
+import net.createmod.catnip.api.theme.Color;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
@@ -31,7 +33,6 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.RenderHighlightEvent;
 import net.neoforged.neoforge.common.Tags;
 
 @EventBusSubscriber(Dist.CLIENT)
@@ -134,7 +135,7 @@ public class ChainConveyorInteractionHandler {
 				return true;
 			}
 
-			CatnipServices.NETWORK.sendToServer(new ChainConveyorConnectionPacket(selectedLift, selectedLift.offset(selectedConnection),
+			ClientNetworkHelper.INSTANCE.sendToServer(new ChainConveyorConnectionPacket(selectedLift, selectedLift.offset(selectedConnection),
 				usedItem, false));
 			return true;
 		}
@@ -147,7 +148,7 @@ public class ChainConveyorInteractionHandler {
 		}
 
 		if (PackageItem.isPackage(mainHandItem)) {
-			CatnipServices.NETWORK.sendToServer(new ChainPackageInteractionPacket(selectedLift, selectedConnection, selectedChainPosition,
+			ClientNetworkHelper.INSTANCE.sendToServer(new ChainPackageInteractionPacket(selectedLift, selectedConnection, selectedChainPosition,
 				false));
 			return true;
 		}
@@ -155,19 +156,20 @@ public class ChainConveyorInteractionHandler {
 		return true;
 	}
 
-	public static void drawCustomBlockSelection(PoseStack ms, MultiBufferSource buffer, Vec3 camera) {
+	public static void submitCustomBlockSelection(PoseStack ms, SubmitNodeCollector queue, Vec3 camera) {
 		if (selectedLift == null || selectedShape == null)
 			return;
 
-		VertexConsumer vb = buffer.getBuffer(RenderType.lines());
 		ms.pushPose();
 		ms.translate(selectedLift.getX() - camera.x, selectedLift.getY() - camera.y, selectedLift.getZ() - camera.z);
-		selectedShape.drawOutline(selectedLift, ms, vb);
+		selectedShape.applyOutlineTransform(ms);
+		queue.submitCustomGeometry(ms, RenderTypes.lines(),
+			(pose, vb) -> selectedShape.drawOutline(selectedLift, pose, vb));
 		ms.popPose();
 	}
 
 	@SubscribeEvent
-	public static void hideVanillaBlockSelection(RenderHighlightEvent.Block event) {
+	public static void hideVanillaBlockSelection(ExtractBlockOutlineRenderStateEvent event) {
 		if (selectedLift == null || selectedShape == null)
 			return;
 

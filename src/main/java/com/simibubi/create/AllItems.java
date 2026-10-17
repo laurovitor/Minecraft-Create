@@ -1,5 +1,11 @@
 package com.simibubi.create;
 
+import com.simibubi.create.foundation.data.AllItemModels;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.equipment.ArmorType;
+import net.minecraft.world.item.consume_effects.ApplyStatusEffectsConsumeEffect;
+import net.minecraft.world.item.component.Consumables;
+import net.minecraft.core.component.DataComponents;
 import static com.simibubi.create.AllTags.AllItemTags.CREATE_INGOTS;
 import static com.simibubi.create.AllTags.AllItemTags.CRUSHED_RAW_MATERIALS;
 import static com.simibubi.create.AllTags.AllItemTags.PLATES;
@@ -13,6 +19,7 @@ import static com.simibubi.create.foundation.data.recipe.CommonMetal.SILVER;
 import static com.simibubi.create.foundation.data.recipe.CommonMetal.TIN;
 import static com.simibubi.create.foundation.data.recipe.CommonMetal.URANIUM;
 
+import com.simibubi.create.foundation.item.CustomArmPoseClientExtension;
 import com.simibubi.create.AllTags.AllItemTags;
 import com.simibubi.create.api.data.datamaps.BlazeBurnerFuel;
 import com.simibubi.create.api.registry.CreateDataMaps;
@@ -26,14 +33,11 @@ import com.simibubi.create.content.equipment.armor.BacktankItem;
 import com.simibubi.create.content.equipment.armor.BacktankItem.BacktankBlockItem;
 import com.simibubi.create.content.equipment.armor.BaseArmorItem;
 import com.simibubi.create.content.equipment.armor.CardboardArmorItem;
-import com.simibubi.create.content.equipment.armor.CardboardArmorStealthOverlay;
 import com.simibubi.create.content.equipment.armor.DivingBootsItem;
 import com.simibubi.create.content.equipment.armor.DivingHelmetItem;
-import com.simibubi.create.content.equipment.armor.TrimmableArmorModelGenerator;
 import com.simibubi.create.content.equipment.blueprint.BlueprintItem;
 import com.simibubi.create.content.equipment.extendoGrip.ExtendoGripItem;
 import com.simibubi.create.content.equipment.goggles.GogglesItem;
-import com.simibubi.create.content.equipment.goggles.GogglesModel;
 import com.simibubi.create.content.equipment.potatoCannon.PotatoCannonItem;
 import com.simibubi.create.content.equipment.sandPaper.SandPaperItem;
 import com.simibubi.create.content.equipment.symmetryWand.SymmetryWandItem;
@@ -43,7 +47,6 @@ import com.simibubi.create.content.equipment.wrench.WrenchItem;
 import com.simibubi.create.content.equipment.zapper.terrainzapper.WorldshaperItem;
 import com.simibubi.create.content.kinetics.belt.item.BeltConnectorItem;
 import com.simibubi.create.content.kinetics.gearbox.VerticalGearboxItem;
-import com.simibubi.create.content.legacy.ChromaticCompoundColor;
 import com.simibubi.create.content.legacy.ChromaticCompoundItem;
 import com.simibubi.create.content.legacy.RefinedRadianceItem;
 import com.simibubi.create.content.legacy.ShadowSteelItem;
@@ -62,8 +65,16 @@ import com.simibubi.create.content.redstone.link.controller.LinkedControllerItem
 import com.simibubi.create.content.schematics.SchematicAndQuillItem;
 import com.simibubi.create.content.schematics.SchematicItem;
 import com.simibubi.create.content.trains.schedule.ScheduleItem;
-import com.simibubi.create.foundation.data.AssetLookup;
 import com.simibubi.create.foundation.data.BuilderTransformers;
+import net.minecraft.client.data.models.model.ItemModelUtils;
+import net.minecraft.client.data.models.model.ModelTemplates;
+import net.minecraft.client.data.models.model.TextureMapping;
+import net.minecraft.client.renderer.item.properties.select.DisplayContext;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.ItemDisplayContext;
+import com.simibubi.create.content.legacy.ChromaticCompoundColor;
+import com.simibubi.create.foundation.data.AssetLookup;
+import com.simibubi.create.content.equipment.armor.TrimmableArmorModelGenerator;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.simibubi.create.foundation.data.recipe.CommonMetal;
 import com.simibubi.create.foundation.item.ItemDescription;
@@ -79,12 +90,8 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.food.FoodProperties;
-import net.minecraft.world.item.ArmorItem;
-import net.minecraft.world.item.ArmorItem.Type;
-import net.minecraft.world.item.ArmorMaterials;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Rarity;
-import net.minecraft.world.item.SwordItem;
 
 import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.common.Tags.Items;
@@ -172,9 +179,13 @@ public class AllItems {
 				.nutrition(1)
 				.saturationModifier(.6F)
 				.alwaysEdible()
-				.effect(() -> new MobEffectInstance(MobEffects.DIG_SPEED, 3 * 60 * 20, 0, false, false, false), 1F)
-				.build()
-			)
+				.build())
+			// 26.2 moved a food's status effects out of FoodProperties and onto the Consumable
+			// component, which is also what decides that this is drunk rather than eaten.
+			.component(DataComponents.CONSUMABLE, Consumables.defaultDrink()
+				.onConsume(new ApplyStatusEffectsConsumeEffect(
+					new MobEffectInstance(MobEffects.HASTE, 3 * 60 * 20, 0, false, false, false), 1F))
+				.build())
 		)
 		.lang("Builder's Tea")
 		.register();
@@ -183,8 +194,7 @@ public class AllItems {
 		REGISTRATE.item("cardboard_sword", CardboardSwordItem::new)
 			.burnTime(1000)
 			.properties(p -> p.stacksTo(1))
-			.properties(p -> p.attributes(SwordItem.createAttributes(AllToolMaterials.CARDBOARD, 3, 1)))
-			.model(AssetLookup.itemModelWithPartials())
+			.model(() -> AssetLookup.itemModelWithPartials())
 			.register();
 
 	public static final ItemEntry<Item> RAW_ZINC =
@@ -197,8 +207,9 @@ public class AllItems {
 	public static final ItemEntry<ChromaticCompoundItem> CHROMATIC_COMPOUND =
 		REGISTRATE.item("chromatic_compound", ChromaticCompoundItem::new)
 			.properties(p -> p.rarity(Rarity.UNCOMMON))
-			.model(AssetLookup.existingItemModel())
-			.color(() -> ChromaticCompoundColor::new)
+			// The shifting colour is a tint source per layer now, named by the model itself, rather
+			// than a colour handler bound to the item.
+			.model(() -> AllItemModels::chromaticCompound)
 			.register();
 
 	public static final ItemEntry<ShadowSteelItem> SHADOW_STEEL = REGISTRATE.item("shadow_steel", ShadowSteelItem::new)
@@ -248,17 +259,21 @@ public class AllItems {
 
 	public static final ItemEntry<VerticalGearboxItem> VERTICAL_GEARBOX =
 		REGISTRATE.item("vertical_gearbox", VerticalGearboxItem::new)
-			.model(AssetLookup.customBlockItemModel("gearbox", "item_vertical"))
+			.model(() -> AssetLookup.customBlockItemModel("gearbox", "item_vertical"))
 			.register();
 
 	public static final ItemEntry<BlazeBurnerBlockItem> EMPTY_BLAZE_BURNER =
 		REGISTRATE.item("empty_blaze_burner", BlazeBurnerBlockItem::empty)
-			.model(AssetLookup.customBlockItemModel("blaze_burner", "block"))
+			.model(() -> AssetLookup.customBlockItemModel("blaze_burner", "block"))
 			.register();
 
 	public static final ItemEntry<GogglesItem> GOGGLES = REGISTRATE.item("goggles", GogglesItem::new)
-		.properties(p -> p.stacksTo(1))
-		.onRegister(CreateRegistrate.itemModel(() -> GogglesModel::new))
+		// Wearing is a component in 26.2 rather than something the item class declares.
+		.properties(p -> p.stacksTo(1)
+			.equippable(EquipmentSlot.HEAD))
+		// Worn on the head the goggles are a block model rather than the flat item sprite. A model
+		// cannot choose per display context in code any more, so this is a select on display_context.
+		.model(() -> AllItemModels::goggles)
 		.lang("Engineer's Goggles")
 		.register();
 
@@ -281,7 +296,7 @@ public class AllItems {
 	public static final ItemEntry<BacktankBlockItem> COPPER_BACKTANK_PLACEABLE = REGISTRATE
 		.item("copper_backtank_placeable",
 			p -> new BacktankBlockItem(AllBlocks.COPPER_BACKTANK.get(), AllItems.COPPER_BACKTANK::get, p))
-		.model((c, p) -> p.withExistingParent(c.getName(), p.mcLoc("item/barrier")))
+		.model(() -> (c, p) -> p.createWithExistingModel(c.getEntry(), p.mcLoc("item/barrier")))
 		.register();
 
 	// wrapped by NETHERITE_BACKTANK for block placement uses.
@@ -289,7 +304,7 @@ public class AllItems {
 	public static final ItemEntry<BacktankBlockItem> NETHERITE_BACKTANK_PLACEABLE = REGISTRATE
 		.item("netherite_backtank_placeable",
 			p -> new BacktankBlockItem(AllBlocks.NETHERITE_BACKTANK.get(), AllItems.NETHERITE_BACKTANK::get, p))
-		.model((c, p) -> p.withExistingParent(c.getName(), p.mcLoc("item/barrier")))
+		.model(() -> (c, p) -> p.createWithExistingModel(c.getEntry(), p.mcLoc("item/barrier")))
 		.register();
 
 	public static final ItemEntry<? extends BacktankItem>
@@ -299,16 +314,16 @@ public class AllItems {
 			.item("copper_backtank",
 				p -> new BacktankItem(AllArmorMaterials.COPPER, p, Create.asResource("copper_diving"),
 					COPPER_BACKTANK_PLACEABLE))
-			.model(AssetLookup.customGenericItemModel("_", "item"))
+			.model(() -> AssetLookup.customGenericItemModel("_", "item"))
 			.tag(AllItemTags.PRESSURIZED_AIR_SOURCES.tag)
 			.tag(ItemTags.CHEST_ARMOR)
 			.register(),
 
 	NETHERITE_BACKTANK = REGISTRATE
 		.item("netherite_backtank",
-			p -> new BacktankItem.Layered(ArmorMaterials.NETHERITE, p, Create.asResource("netherite_diving"),
+			p -> new BacktankItem.Layered(AllArmorMaterials.NETHERITE_DIVING, p, Create.asResource("netherite_diving"),
 				NETHERITE_BACKTANK_PLACEABLE))
-		.model(AssetLookup.customGenericItemModel("_", "item"))
+		.model(() -> AssetLookup.customGenericItemModel("_", "item"))
 		.properties(p -> p.fireResistant())
 		.tag(AllItemTags.PRESSURIZED_AIR_SOURCES.tag)
 		.tag(ItemTags.CHEST_ARMOR)
@@ -318,14 +333,14 @@ public class AllItems {
 		COPPER_DIVING_HELMET = REGISTRATE
 		.item("copper_diving_helmet",
 			p -> new DivingHelmetItem(AllArmorMaterials.COPPER, p, Create.asResource("copper_diving")))
-		.properties(p -> p.durability(Type.HELMET.getDurability(7)))
+		.properties(p -> p.durability(ArmorType.HELMET.getDurability(7)))
 		.tag(ItemTags.HEAD_ARMOR)
 		.register(),
 
 	NETHERITE_DIVING_HELMET = REGISTRATE
 		.item("netherite_diving_helmet",
-			p -> new DivingHelmetItem(ArmorMaterials.NETHERITE, p, Create.asResource("netherite_diving")))
-		.properties(p -> p.fireResistant().durability(Type.HELMET.getDurability(37)))
+			p -> new DivingHelmetItem(AllArmorMaterials.NETHERITE_DIVING, p, Create.asResource("netherite_diving")))
+		.properties(p -> p.fireResistant().durability(ArmorType.HELMET.getDurability(37)))
 		.tag(ItemTags.HEAD_ARMOR)
 		.register();
 
@@ -333,52 +348,51 @@ public class AllItems {
 		COPPER_DIVING_BOOTS = REGISTRATE
 		.item("copper_diving_boots",
 			p -> new DivingBootsItem(AllArmorMaterials.COPPER, p, Create.asResource("copper_diving")))
-		.properties(p -> p.durability(Type.BOOTS.getDurability(7)))
+		.properties(p -> p.durability(ArmorType.BOOTS.getDurability(7)))
 		.tag(ItemTags.FOOT_ARMOR)
 		.register(),
 
 	NETHERITE_DIVING_BOOTS = REGISTRATE
 		.item("netherite_diving_boots",
-			p -> new DivingBootsItem(ArmorMaterials.NETHERITE, p, Create.asResource("netherite_diving")))
-		.properties(p -> p.fireResistant().durability(Type.BOOTS.getDurability(37)))
+			p -> new DivingBootsItem(AllArmorMaterials.NETHERITE_DIVING, p, Create.asResource("netherite_diving")))
+		.properties(p -> p.fireResistant().durability(ArmorType.BOOTS.getDurability(37)))
 		.tag(ItemTags.FOOT_ARMOR)
 		.register();
 
 	public static final ItemEntry<? extends BaseArmorItem>
 
-		CARDBOARD_HELMET = REGISTRATE.item("cardboard_helmet", p -> new CardboardArmorItem(ArmorItem.Type.HELMET, p))
-		.properties(p -> p.durability(Type.HELMET.getDurability(4)))
+		CARDBOARD_HELMET = REGISTRATE.item("cardboard_helmet", p -> new CardboardArmorItem(ArmorType.HELMET, p))
+		.properties(p -> p.durability(ArmorType.HELMET.getDurability(4)))
 		.tag(ItemTags.HEAD_ARMOR)
 		.burnTime(1000)
 		.onRegisterAfter(Registries.ITEM, v -> ItemDescription.useKey(v, "item.create.cardboard_armor"))
-		.model(TrimmableArmorModelGenerator::generate)
-		.clientExtension(() -> () -> new CardboardArmorStealthOverlay())
+		.model(() -> TrimmableArmorModelGenerator::generate)
 		.register(),
 
 	CARDBOARD_CHESTPLATE =
-		REGISTRATE.item("cardboard_chestplate", p -> new CardboardArmorItem(ArmorItem.Type.CHESTPLATE, p))
-			.properties(p -> p.durability(Type.CHESTPLATE.getDurability(4)))
+		REGISTRATE.item("cardboard_chestplate", p -> new CardboardArmorItem(ArmorType.CHESTPLATE, p))
+			.properties(p -> p.durability(ArmorType.CHESTPLATE.getDurability(4)))
 			.tag(ItemTags.CHEST_ARMOR)
 			.burnTime(1000)
 			.onRegisterAfter(Registries.ITEM, v -> ItemDescription.useKey(v, "item.create.cardboard_armor"))
-			.model(TrimmableArmorModelGenerator::generate)
+			.model(() -> TrimmableArmorModelGenerator::generate)
 			.register(),
 
 	CARDBOARD_LEGGINGS =
-		REGISTRATE.item("cardboard_leggings", p -> new CardboardArmorItem(ArmorItem.Type.LEGGINGS, p))
-			.properties(p -> p.durability(Type.LEGGINGS.getDurability(4)))
+		REGISTRATE.item("cardboard_leggings", p -> new CardboardArmorItem(ArmorType.LEGGINGS, p))
+			.properties(p -> p.durability(ArmorType.LEGGINGS.getDurability(4)))
 			.tag(ItemTags.LEG_ARMOR)
 			.burnTime(1000)
 			.onRegisterAfter(Registries.ITEM, v -> ItemDescription.useKey(v, "item.create.cardboard_armor"))
-			.model(TrimmableArmorModelGenerator::generate)
+			.model(() -> TrimmableArmorModelGenerator::generate)
 			.register(),
 
-	CARDBOARD_BOOTS = REGISTRATE.item("cardboard_boots", p -> new CardboardArmorItem(ArmorItem.Type.BOOTS, p))
-		.properties(p -> p.durability(Type.BOOTS.getDurability(4)))
+	CARDBOARD_BOOTS = REGISTRATE.item("cardboard_boots", p -> new CardboardArmorItem(ArmorType.BOOTS, p))
+		.properties(p -> p.durability(ArmorType.BOOTS.getDurability(4)))
 		.tag(ItemTags.FOOT_ARMOR)
 		.burnTime(1000)
 		.onRegisterAfter(Registries.ITEM, v -> ItemDescription.useKey(v, "item.create.cardboard_armor"))
-		.model(TrimmableArmorModelGenerator::generate)
+		.model(() -> TrimmableArmorModelGenerator::generate)
 		.register();
 
 	public static final ItemEntry<SandPaperItem> SAND_PAPER = REGISTRATE.item("sand_paper", SandPaperItem::new)
@@ -392,7 +406,7 @@ public class AllItems {
 
 	public static final ItemEntry<WrenchItem> WRENCH = REGISTRATE.item("wrench", WrenchItem::new)
 		.properties(p -> p.stacksTo(1))
-		.model(AssetLookup.itemModelWithPartials())
+		.model(() -> AssetLookup.itemModelWithPartials())
 		.tag(Items.TOOLS_WRENCH)
 		.register();
 
@@ -413,34 +427,36 @@ public class AllItems {
 	public static final ItemEntry<LinkedControllerItem> LINKED_CONTROLLER =
 		REGISTRATE.item("linked_controller", LinkedControllerItem::new)
 			.properties(p -> p.stacksTo(1))
-			.model(AssetLookup.itemModelWithPartials())
+			.model(() -> AssetLookup.itemModelWithPartials())
 			.register();
 
 	public static final ItemEntry<PotatoCannonItem> POTATO_CANNON =
 		REGISTRATE.item("potato_cannon", PotatoCannonItem::new)
 			.properties(p -> p.durability(100))
-			.model(AssetLookup.itemModelWithPartials())
+			.clientExtension(() -> () -> CustomArmPoseClientExtension.INSTANCE)
+			.model(() -> AssetLookup.itemModelWithPartials())
 			.tag(Tags.Items.ENCHANTABLES, ItemTags.DURABILITY_ENCHANTABLE, ItemTags.BOW_ENCHANTABLE)
 			.register();
 
 	public static final ItemEntry<ExtendoGripItem> EXTENDO_GRIP = REGISTRATE.item("extendo_grip", ExtendoGripItem::new)
 		.properties(p -> p.rarity(Rarity.UNCOMMON))
 		.tag(ItemTags.DURABILITY_ENCHANTABLE)
-		.model(AssetLookup.itemModelWithPartials())
+		.model(() -> AssetLookup.itemModelWithPartials())
 		.register();
 
 	public static final ItemEntry<SymmetryWandItem> WAND_OF_SYMMETRY =
 		REGISTRATE.item("wand_of_symmetry", SymmetryWandItem::new)
 			.properties(p -> p.stacksTo(1)
 				.rarity(Rarity.UNCOMMON))
-			.model(AssetLookup.itemModelWithPartials())
+			.model(() -> AssetLookup.itemModelWithPartials())
 			.register();
 
 	public static final ItemEntry<WorldshaperItem> WORLDSHAPER =
 		REGISTRATE.item("handheld_worldshaper", WorldshaperItem::new)
+			.clientExtension(() -> () -> CustomArmPoseClientExtension.INSTANCE)
 			.properties(p -> p.rarity(Rarity.EPIC))
 			.lang("Creative Worldshaper")
-			.model(AssetLookup.itemModelWithPartials())
+			.model(() -> AssetLookup.itemModelWithPartials())
 			.register();
 
 	public static final ItemEntry<TreeFertilizerItem> TREE_FERTILIZER =

@@ -1,5 +1,6 @@
 package com.simibubi.create.content.trains.signal;
 
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -8,18 +9,14 @@ import com.google.common.collect.ImmutableList;
 import com.simibubi.create.AllPackets;
 import com.simibubi.create.CreateClient;
 
-import net.createmod.catnip.codecs.stream.CatnipStreamCodecBuilders;
-import net.createmod.catnip.net.base.ClientboundPacketPayload;
-import net.minecraft.client.player.LocalPlayer;
+import net.createmod.catnip.api.data.codec.stream.CatnipStreamCodecBuilders;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
-
-public record SignalEdgeGroupPacket(List<UUID> ids, List<EdgeGroupColor> colors, boolean add) implements ClientboundPacketPayload {
+public record SignalEdgeGroupPacket(List<UUID> ids, List<EdgeGroupColor> colors, boolean add) implements CustomPacketPayload {
 	public static final StreamCodec<FriendlyByteBuf, SignalEdgeGroupPacket> STREAM_CODEC = StreamCodec.composite(
 			CatnipStreamCodecBuilders.list(UUIDUtil.STREAM_CODEC), p -> p.ids,
 			CatnipStreamCodecBuilders.list(EdgeGroupColor.STREAM_CODEC), p -> p.colors,
@@ -31,9 +28,7 @@ public record SignalEdgeGroupPacket(List<UUID> ids, List<EdgeGroupColor> colors,
 		this(ImmutableList.of(id), ImmutableList.of(color), true);
 	}
 
-	@Override
-	@OnlyIn(Dist.CLIENT)
-	public void handle(LocalPlayer player) {
+	public void handle(Player player) {
 		Map<UUID, SignalEdgeGroup> signalEdgeGroups = CreateClient.RAILWAYS.signalEdgeGroups;
 		for (int i = 0; i < ids.size(); i++) {
 			UUID id = ids.get(i);
@@ -50,7 +45,7 @@ public record SignalEdgeGroupPacket(List<UUID> ids, List<EdgeGroupColor> colors,
 	}
 
 	@Override
-	public PacketTypeProvider getTypeProvider() {
-		return AllPackets.SYNC_EDGE_GROUP;
+	public Type<? extends CustomPacketPayload> type() {
+		return AllPackets.SYNC_EDGE_GROUP.getType();
 	}
 }

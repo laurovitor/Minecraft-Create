@@ -7,14 +7,14 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
-import net.createmod.catnip.data.Pair;
+import net.createmod.catnip.api.data.Pair;
 import net.minecraft.core.component.DataComponentPatch;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.ExtraCodecs;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.Item;
@@ -38,7 +38,7 @@ public class ProcessingOutput {
 	private final DataComponentPatch patch;
 	private final float chance;
 
-	private ResourceLocation datagenOutput;
+	private Identifier datagenOutput;
 
 	public ProcessingOutput(ItemStack stack, float chance) {
 		this(stack.getItem(), stack.getCount(), stack.getComponentsPatch(), chance);
@@ -55,11 +55,11 @@ public class ProcessingOutput {
 		this.chance = chance;
 	}
 
-	public ProcessingOutput(ResourceLocation item, int count, float chance) {
+	public ProcessingOutput(Identifier item, int count, float chance) {
 		this(item, count, DataComponentPatch.EMPTY, chance);
 	}
 
-	public ProcessingOutput(ResourceLocation item, int count, DataComponentPatch patch, float chance) {
+	public ProcessingOutput(Identifier item, int count, DataComponentPatch patch, float chance) {
 		this.item = Items.AIR;
 		this.datagenOutput = item;
 		this.count = count;
@@ -80,6 +80,14 @@ public class ProcessingOutput {
 		return getStack(count);
 	}
 
+	/**
+	 * The item this output names, without building a stack from it - 26.2 binds an item's components
+	 * when world data loads, which is after recipes are read.
+	 */
+	public Item getItem() {
+		return item;
+	}
+
 	public float getChance() {
 		return chance;
 	}
@@ -98,30 +106,12 @@ public class ProcessingOutput {
 		}
 	}
 
-	@ScheduledForRemoval(inVersion = "1.21.1+ Port")
-	@Deprecated(since = "6.0.3", forRemoval = true)
-	private static final Codec<Either<ItemStack, Pair<ResourceLocation, Integer>>> ITEM_CODEC_OLD = Codec.either(
-		ItemStack.SINGLE_ITEM_CODEC,
-		ResourceLocation.CODEC.comapFlatMap(
-			loc -> DataResult.error(() -> "Compat cannot be deserialized"),
-			Pair::getFirst
-		)
-	);
+	// The pre-1.21.1 "item" spelling was scheduled for removal in this port, and the single-item codec
+	// it read through is gone in 26.2, so only the current form is read.
 
-	@ScheduledForRemoval(inVersion = "1.21.1+ Port")
-	@Deprecated(since = "6.0.3", forRemoval = true)
-	public static final Codec<ProcessingOutput> CODEC_OLD = RecordCodecBuilder.create(i -> i.group(
-		ITEM_CODEC_OLD.fieldOf("item").forGetter(s -> s.datagenOutput != null ? Either.right(Pair.of(s.datagenOutput, s.count)) : Either.left(s.item.getDefaultInstance())),
-		ExtraCodecs.intRange(1, 99).optionalFieldOf("count", 1).forGetter(s -> s.count),
-		ExtraCodecs.POSITIVE_FLOAT.optionalFieldOf("chance", 1F).forGetter(s -> s.chance)
-	).apply(i, (item, count, chance) -> item.map(
-		stack -> new ProcessingOutput(stack.getItem(), count, stack.getComponentsPatch(), chance),
-		compat -> new ProcessingOutput(compat.getFirst(), compat.getSecond(), chance)
-	)));
-
-	private static final Codec<Either<Item, ResourceLocation>> ITEM_CODEC = Codec.either(
+	private static final Codec<Either<Item, Identifier>> ITEM_CODEC = Codec.either(
 		BuiltInRegistries.ITEM.byNameCodec(),
-		ResourceLocation.CODEC
+		Identifier.CODEC
 	);
 
 	public static final Codec<ProcessingOutput> CODEC_NEW = RecordCodecBuilder.create(i -> i.group(
@@ -140,6 +130,6 @@ public class ProcessingOutput {
 
 	@ScheduledForRemoval(inVersion = "1.21.1+ Port")
 	@Deprecated(since = "6.0.3", forRemoval = true)
-	public static final Codec<ProcessingOutput> CODEC = Codec.withAlternative(CODEC_NEW, CODEC_OLD);
+	public static final Codec<ProcessingOutput> CODEC = CODEC_NEW;
 
 }

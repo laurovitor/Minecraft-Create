@@ -1,20 +1,21 @@
 package com.simibubi.create.foundation.gui.menu;
 
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.KeyEvent;
+import org.jspecify.annotations.NullMarked;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import javax.annotation.ParametersAreNonnullByDefault;
 
 import org.lwjgl.glfw.GLFW;
 
 import com.simibubi.create.foundation.gui.AllGuiTextures;
 
-import net.createmod.catnip.animation.AnimationTickHolder;
-import net.createmod.catnip.gui.TickableGuiEventListener;
-import net.createmod.catnip.gui.widget.AbstractSimiWidget;
+import net.createmod.catnip.api.client.animation.AnimationTickHolder;
+import net.createmod.catnip.api.client.gui.TickableGuiEventListener;
+import net.createmod.catnip.api.client.gui.widget.AbstractSimiWidget;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Renderable;
@@ -29,11 +30,7 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
-
-@OnlyIn(Dist.CLIENT)
-@ParametersAreNonnullByDefault
+@NullMarked
 public abstract class AbstractSimiContainerScreen<T extends AbstractContainerMenu> extends AbstractContainerScreen<T> {
 
 	protected int windowXOffset, windowYOffset;
@@ -99,31 +96,39 @@ public abstract class AbstractSimiContainerScreen<T extends AbstractContainerMen
 		}
 	}
 
-	/*@Override
-	public void renderBackground(GuiGraphics pGuiGraphics, int pMouseX, int pMouseY, float pPartialTick) {
-		NeoForge.EVENT_BUS.post(new ContainerScreenEvent.Render.Background(this, pGuiGraphics, pMouseX, pMouseY));
-		renderBg(pGuiGraphics, pPartialTick, pMouseX, pMouseY);
-	}*/
+	/**
+	 * 26.2 folded {@code renderBg} into the screen's background extraction, but Create's screens are
+	 * written around it, so it stays as the hook they override.
+	 */
+	@Override
+	public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks) {
+		super.extractBackground(graphics, mouseX, mouseY, partialTicks);
+		renderBg(graphics, partialTicks, mouseX, mouseY);
+	}
+
+	protected void renderBg(GuiGraphicsExtractor graphics, float partialTicks, int mouseX, int mouseY) {
+	}
 
 	@Override
-	public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
-		partialTicks = AnimationTickHolder.getPartialTicksUI();
+	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks) {
+		// The frame delta a screen is handed is not the accumulated tick fraction animations need.
+		partialTicks = AnimationTickHolder.getGuiPartialTicks();
 
-		super.render(graphics, mouseX, mouseY, partialTicks);
+		super.extractRenderState(graphics, mouseX, mouseY, partialTicks);
 
 		renderForeground(graphics, mouseX, mouseY, partialTicks);
 	}
 
 	@Override
-	protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
+	protected void extractLabels(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
 		// no-op to prevent screen- and inventory-title from being rendered at incorrect
 		// location
 		// could also set this.titleX/Y and this.playerInventoryTitleX/Y to the proper
 		// values instead
 	}
 
-	protected void renderForeground(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
-		renderTooltip(graphics, mouseX, mouseY);
+	protected void renderForeground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks) {
+		extractTooltip(graphics, mouseX, mouseY);
 		for (Renderable widget : renderables) {
 			if (widget instanceof AbstractSimiWidget simiWidget && simiWidget.isMouseOver(mouseX, mouseY)) {
 				List<Component> tooltip = simiWidget.getToolTip();
@@ -131,7 +136,7 @@ public abstract class AbstractSimiContainerScreen<T extends AbstractContainerMen
 					continue;
 				int ttx = simiWidget.lockedTooltipX == -1 ? mouseX : simiWidget.lockedTooltipX + simiWidget.getX();
 				int tty = simiWidget.lockedTooltipY == -1 ? mouseY : simiWidget.lockedTooltipY + simiWidget.getY();
-				graphics.renderComponentTooltip(font, tooltip, ttx, tty);
+				graphics.setComponentTooltipForNextFrame(font, tooltip, ttx, tty);
 			}
 		}
 	}
@@ -140,23 +145,42 @@ public abstract class AbstractSimiContainerScreen<T extends AbstractContainerMen
 		return leftPos - windowXOffset + (imageWidth - textureWidth) / 2;
 	}
 
-	public void renderPlayerInventory(GuiGraphics graphics, int x, int y) {
+	public void renderPlayerInventory(GuiGraphicsExtractor graphics, int x, int y) {
 		AllGuiTextures.PLAYER_INVENTORY.render(graphics, x, y);
-		graphics.drawString(font, playerInventoryTitle, x + 8, y + 6, 0x404040, false);
+		graphics.text(font, playerInventoryTitle, x + 8, y + 6, 0xFF404040, false);
 	}
 
 	@Override
-	public boolean keyPressed(int pKeyCode, int pScanCode, int pModifiers) {
+	public boolean keyPressed(KeyEvent event) {
+		int pKeyCode = event.key();
+		int pScanCode = event.scancode();
+		int pModifiers = event.modifiers();
 		if (getFocused() instanceof EditBox && pKeyCode != GLFW.GLFW_KEY_ESCAPE)
-			return getFocused().keyPressed(pKeyCode, pScanCode, pModifiers);
-		return super.keyPressed(pKeyCode, pScanCode, pModifiers);
+			return getFocused().keyPressed(event);
+		return super.keyPressed(event);
 	}
 
 	@Override
-	public boolean mouseClicked(double pMouseX, double pMouseY, int pButton) {
+	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+		double pMouseX = event.x();
+		double pMouseY = event.y();
+		int pButton = event.button();
 		if (getFocused() != null && !getFocused().isMouseOver(pMouseX, pMouseY))
 			setFocused(null);
-		return super.mouseClicked(pMouseX, pMouseY, pButton);
+		return super.mouseClicked(event, doubleClick);
+	}
+
+	/**
+	 * 26.2's AbstractContainerScreen answers a scroll itself and stops there, where it used to fall
+	 * through to whatever widget the cursor was over. Create's screens are full of widgets that are
+	 * driven by scrolling, so hand the event on when the slot actions do not want it.
+	 */
+	@Override
+	public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+		if (super.mouseScrolled(mouseX, mouseY, scrollX, scrollY))
+			return true;
+		return getChildAt(mouseX, mouseY).filter(child -> child.mouseScrolled(mouseX, mouseY, scrollX, scrollY))
+			.isPresent();
 	}
 
 	@Override
@@ -179,12 +203,12 @@ public abstract class AbstractSimiContainerScreen<T extends AbstractContainerMen
 	}
 
 	@Deprecated
-	protected void debugWindowArea(GuiGraphics graphics) {
+	protected void debugWindowArea(GuiGraphicsExtractor graphics) {
 		graphics.fill(leftPos + imageWidth, topPos + imageHeight, leftPos, topPos, 0xD3D3D3D3);
 	}
 
 	@Deprecated
-	protected void debugExtraAreas(GuiGraphics graphics) {
+	protected void debugExtraAreas(GuiGraphicsExtractor graphics) {
 		for (Rect2i area : getExtraAreas()) {
 			graphics.fill(area.getX() + area.getWidth(), area.getY() + area.getHeight(), area.getX(), area.getY(),
 				0xD3D3D3D3);

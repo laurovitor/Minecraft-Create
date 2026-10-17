@@ -1,16 +1,14 @@
 package com.simibubi.create.api.data.recipe;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.function.UnaryOperator;
 
 import com.google.common.base.Supplier;
 import com.simibubi.create.Create;
 
-import net.createmod.catnip.registry.RegisteredObjectsHelper;
+import net.createmod.catnip.api.registry.RegisteredObjectsHelper;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.data.PackOutput;
 import net.minecraft.data.recipes.RecipeOutput;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.ItemLike;
 
 /**
@@ -22,19 +20,15 @@ import net.minecraft.world.level.ItemLike;
  */
 public abstract class MechanicalCraftingRecipeGen extends BaseRecipeProvider {
 
-	public MechanicalCraftingRecipeGen(PackOutput output, CompletableFuture<HolderLookup.Provider> registries, String defaultNamespace) {
-		super(output, registries, defaultNamespace);
+	public MechanicalCraftingRecipeGen(HolderLookup.Provider registries, RecipeOutput output, String defaultNamespace) {
+		super(registries, output, defaultNamespace);
 	}
 
 	protected GeneratedRecipeBuilder create(Supplier<ItemLike> result) {
 		return new GeneratedRecipeBuilder(result);
 	}
 
-	@Override
-	public void buildRecipes(RecipeOutput output) {
-		all.forEach(c -> c.register(output));
-		Create.LOGGER.info("{} registered {} recipe{}", getName(), all.size(), all.size() == 1 ? "" : "s");
-	}
+
 
 	protected class GeneratedRecipeBuilder {
 
@@ -62,7 +56,7 @@ public abstract class MechanicalCraftingRecipeGen extends BaseRecipeProvider {
 			return register(consumer -> {
 				MechanicalCraftingRecipeBuilder b =
 					builder.apply(MechanicalCraftingRecipeBuilder.shapedRecipe(result.get(), amount));
-				ResourceLocation location = asResource("mechanical_crafting/" + RegisteredObjectsHelper.getKeyOrThrow(result.get()
+				Identifier location = asResource("mechanical_crafting/" + RegisteredObjectsHelper.getKeyOrThrow(result.get()
 								.asItem())
 					.getPath() + suffix);
 				b.build(consumer, location);

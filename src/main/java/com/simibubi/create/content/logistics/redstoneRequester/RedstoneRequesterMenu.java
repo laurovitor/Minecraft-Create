@@ -1,5 +1,10 @@
 package com.simibubi.create.content.logistics.redstoneRequester;
 
+import com.simibubi.create.foundation.utility.ClientAccess;
+
+import net.neoforged.neoforge.transfer.item.ItemUtil;
+import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,17 +15,12 @@ import com.simibubi.create.content.logistics.stockTicker.PackageOrder;
 import com.simibubi.create.content.logistics.stockTicker.PackageOrderWithCrafts;
 import com.simibubi.create.foundation.gui.menu.GhostItemMenu;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemStackHandler;
-import net.neoforged.neoforge.items.SlotItemHandler;
+import net.neoforged.neoforge.transfer.item.ResourceHandlerSlot;
 
 public class RedstoneRequesterMenu extends GhostItemMenu<RedstoneRequesterBlockEntity> {
 
@@ -37,11 +37,13 @@ public class RedstoneRequesterMenu extends GhostItemMenu<RedstoneRequesterBlockE
 	}
 
 	@Override
-	protected ItemStackHandler createGhostInventory() {
-		ItemStackHandler inventory = new ItemStackHandler(9);
+	protected ItemStacksResourceHandler createGhostInventory() {
+		ItemStacksResourceHandler inventory = new ItemStacksResourceHandler(9);
 		List<BigItemStack> stacks = contentHolder.encodedRequest.stacks();
-		for (int i = 0; i < stacks.size(); i++)
-			inventory.setStackInSlot(i, stacks.get(i).stack.copyWithCount(1));
+		for (int i = 0; i < stacks.size(); i++) {
+			ItemStack stack = stacks.get(i).stack.copyWithCount(1);
+			inventory.set(i, ItemResource.of(stack), stack.getCount());
+		}
 		return inventory;
 	}
 
@@ -51,11 +53,10 @@ public class RedstoneRequesterMenu extends GhostItemMenu<RedstoneRequesterBlockE
 	}
 
 	@Override
-	@OnlyIn(Dist.CLIENT)
 	protected RedstoneRequesterBlockEntity createOnClient(RegistryFriendlyByteBuf extraData) {
 		BlockPos blockPos = extraData.readBlockPos();
 		return AllBlocks.REDSTONE_REQUESTER.get()
-			.getBlockEntity(Minecraft.getInstance().level, blockPos);
+			.getBlockEntity(ClientAccess.level(), blockPos);
 	}
 
 	@Override
@@ -74,8 +75,8 @@ public class RedstoneRequesterMenu extends GhostItemMenu<RedstoneRequesterBlockE
 	protected void saveData(RedstoneRequesterBlockEntity contentHolder) {
 		List<BigItemStack> stacks = contentHolder.encodedRequest.stacks();
 		ArrayList<BigItemStack> list = new ArrayList<>();
-		for (int i = 0; i < ghostInventory.getSlots(); i++) {
-			ItemStack stackInSlot = ghostInventory.getStackInSlot(i);
+		for (int i = 0; i < ghostInventory.size(); i++) {
+			ItemStack stackInSlot = ItemUtil.getStack(ghostInventory, i);
 			if (stackInSlot.isEmpty())
 				continue;
 			list.add(new BigItemStack(stackInSlot.copyWithCount(1), i < stacks.size() ? stacks.get(i).count : 1));
@@ -90,9 +91,9 @@ public class RedstoneRequesterMenu extends GhostItemMenu<RedstoneRequesterBlockE
 
 	// this is used to prevent InventorySorter from interfering with scrolling on the slots.
 	// we just need a class to use as a marker, see InventorySorterCompat
-	public static class SorterProofSlot extends SlotItemHandler {
-		public SorterProofSlot(IItemHandler itemHandler, int index, int xPosition, int yPosition) {
-			super(itemHandler, index, xPosition, yPosition);
+	public static class SorterProofSlot extends ResourceHandlerSlot {
+		public SorterProofSlot(ItemStacksResourceHandler itemHandler, int index, int xPosition, int yPosition) {
+			super(itemHandler, itemHandler::set, index, xPosition, yPosition);
 		}
 	}
 }

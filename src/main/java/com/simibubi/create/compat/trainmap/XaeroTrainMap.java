@@ -1,5 +1,6 @@
 package com.simibubi.create.compat.trainmap;
 
+import org.joml.Matrix3x2fStack;
 import java.util.List;
 
 import com.mojang.blaze3d.platform.Window;
@@ -11,7 +12,7 @@ import com.simibubi.create.foundation.utility.CreateLang;
 import com.simibubi.create.infrastructure.config.AllConfigs;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.FormattedText;
@@ -29,7 +30,7 @@ public class XaeroTrainMap {
 	private static boolean encounteredException = false;
 
 	public static void tick() {
-		if (!AllConfigs.client().showTrainMapOverlay.get() || !isMapOpen(Minecraft.getInstance().screen)) {
+		if (!AllConfigs.client().showTrainMapOverlay.get() || !isMapOpen(Minecraft.getInstance().gui.screen())) {
 			if (requesting)
 				TrainMapSyncClient.stopRequesting();
 			requesting = false;
@@ -46,7 +47,7 @@ public class XaeroTrainMap {
 
 		Minecraft mc = Minecraft.getInstance();
 		try {
-			if (!(mc.screen instanceof GuiMap))
+			if (!(mc.gui.screen() instanceof GuiMap))
 				return;
 		} catch (Throwable e) {
 			Create.LOGGER.error("Failed to handle mouseClick for Xaero's World Map train map integration:", e);
@@ -63,7 +64,7 @@ public class XaeroTrainMap {
 	}
 
 	// Called by XaeroFullscreenMapMixin, guarded by try-catch
-	public static void onRender(GuiGraphics graphics, GuiMap screen, int mX, int mY, float pt) {
+	public static void onRender(GuiGraphicsExtractor graphics, GuiMap screen, int mX, int mY, float pt) {
 		double x = ((XaeroFullscreenMapAccessor) screen).create$getCameraX();
 		double z = ((XaeroFullscreenMapAccessor) screen).create$getCameraZ();
 		double mapScale = ((XaeroFullscreenMapAccessor) screen).create$getScale();
@@ -81,12 +82,12 @@ public class XaeroTrainMap {
 		double interfaceScale = (double) window.getWidth() / window.getScreenWidth();
 		double scale = mapScale / guiScale / interfaceScale;
 
-		PoseStack pose = graphics.pose();
-		pose.pushPose();
+		Matrix3x2fStack pose = graphics.pose();
+		pose.pushMatrix();
 
-		pose.translate(screen.width / 2.0f, screen.height / 2.0f, 0);
+		pose.translate((float) (screen.width / 2.0f), (float) (screen.height / 2.0f));
 		pose.scale((float) scale, (float) scale, 1);
-		pose.translate(-x, -z, 0);
+		pose.translate((float) (-x), (float) (-z));
 
 		float mouseX = mX - screen.width / 2.0f;
 		float mouseY = mY - screen.height / 2.0f;
@@ -102,13 +103,13 @@ public class XaeroTrainMap {
 		List<FormattedText> tooltip =
 			TrainMapManager.renderAndPick(graphics, Mth.floor(mouseX), Mth.floor(mouseY), false, bounds);
 
-		pose.popPose();
+		pose.popMatrix();
 
 		if (!renderToggleWidgetAndTooltip(graphics, screen, mX, mY) && tooltip != null)
 			RemovedGuiUtils.drawHoveringText(graphics, tooltip, mX, mY, screen.width, screen.height, 256, mc.font);
 	}
 
-	private static boolean renderToggleWidgetAndTooltip(GuiGraphics graphics, GuiMap screen, int mouseX,
+	private static boolean renderToggleWidgetAndTooltip(GuiGraphicsExtractor graphics, GuiMap screen, int mouseX,
 														int mouseY) {
 		TrainMapManager.renderToggleWidget(graphics, 3, 30);
 		if (!TrainMapManager.isToggleWidgetHovered(mouseX, mouseY, 3, 30))

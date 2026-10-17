@@ -8,7 +8,10 @@
   "type": "create:milling",
   "ingredients": [
     {
-      "item": "biomeswevegone:white_allium_flower_bush"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "biomeswevegone:white_allium_flower_bush"
+      ]
     }
   ],
   "processing_time": 50,

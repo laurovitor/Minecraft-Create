@@ -1,5 +1,11 @@
 package com.simibubi.create.content.trains.station;
 
+import net.neoforged.neoforge.transfer.transaction.Transaction;
+import net.neoforged.neoforge.transfer.ResourceHandlerUtil;
+import com.simibubi.create.foundation.utility.NbtValueIO;
+import net.neoforged.neoforge.transfer.item.ItemUtil;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,13 +23,11 @@ import com.simibubi.create.content.trains.graph.DimensionPalette;
 import com.simibubi.create.content.trains.graph.TrackNode;
 import com.simibubi.create.content.trains.signal.SingleBlockEntityEdgePoint;
 
-import net.createmod.catnip.nbt.NBTHelper;
+import net.createmod.catnip.api.nbt.NBTHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.NbtUtils;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.item.ItemStack;
@@ -31,9 +35,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.IItemHandlerModifiable;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 public class GlobalStation extends SingleBlockEntityEdgePoint {
@@ -61,17 +62,17 @@ public class GlobalStation extends SingleBlockEntityEdgePoint {
 	@Override
 	public void read(CompoundTag nbt, HolderLookup.Provider registries, boolean migration, DimensionPalette dimensions) {
 		super.read(nbt, registries, migration, dimensions);
-		name = nbt.getString("Name");
-		assembling = nbt.getBoolean("Assembling");
+		name = nbt.getStringOr("Name", "");
+		assembling = nbt.getBooleanOr("Assembling", false);
 		nearestTrain = new WeakReference<>(null);
 
 		connectedPorts.clear();
-		ListTag portList = nbt.getList("Ports", Tag.TAG_COMPOUND);
+		ListTag portList = nbt.getListOrEmpty("Ports");
 		NBTHelper.iterateCompoundList(portList, c -> {
 			GlobalPackagePort port = new GlobalPackagePort();
-			port.address = c.getString("Address");
-			port.offlineBuffer.deserializeNBT(registries, c.getCompound("OfflineBuffer"));
-			port.primed = c.getBoolean("Primed");
+			port.address = c.getStringOr("Address", "");
+			NbtValueIO.deserialize(port.offlineBuffer, c.getCompoundOrEmpty("OfflineBuffer"), registries);
+			port.primed = c.getBooleanOr("Primed", false);
 			connectedPorts.put(NBTHelper.readBlockPos(c, "Pos"), port);
 		});
 	}
@@ -94,9 +95,9 @@ public class GlobalStation extends SingleBlockEntityEdgePoint {
 		nbt.put("Ports", NBTHelper.writeCompoundList(connectedPorts.entrySet(), e -> {
 			CompoundTag c = new CompoundTag();
 			c.putString("Address", e.getValue().address);
-			c.put("OfflineBuffer", e.getValue().offlineBuffer.serializeNBT(registries));
+			c.put("OfflineBuffer", NbtValueIO.serialize(e.getValue().offlineBuffer, registries));
 			c.putBoolean("Primed", e.getValue().primed);
-			c.put("Pos", NbtUtils.writeBlockPos(e.getKey()));
+			c.store("Pos", BlockPos.CODEC, e.getKey());
 			return c;
 		}));
 	}
@@ -172,7 +173,7 @@ public class GlobalStation extends SingleBlockEntityEdgePoint {
 		Level level = server.getLevel(getBlockEntityDimension());
 
 		for (Carriage carriage : train.carriages) {
-			IItemHandlerModifiable carriageInventory = carriage.storage.getAllItems();
+			ResourceHandler<ItemResource> carriageInventory = carriage.storage.getAllItems();
 			if (carriageInventory == null)
 				continue;
 
@@ -182,27 +183,40 @@ public class GlobalStation extends SingleBlockEntityEdgePoint {
 				BlockPos pos = entry.getKey();
 				PostboxBlockEntity box = null;
 
-				IItemHandlerModifiable postboxInventory = port.offlineBuffer;
+				ResourceHandler<ItemResource> postboxInventory = port.offlineBuffer;
 				if (level != null && level.isLoaded(pos)
 					&& level.getBlockEntity(pos) instanceof PostboxBlockEntity ppbe) {
 					postboxInventory = ppbe.inventory;
 					box = ppbe;
 				}
 
-				for (int slot = 0; slot < postboxInventory.getSlots(); slot++) {
-					ItemStack stack = postboxInventory.getStackInSlot(slot);
+				for (int slot = 0; slot < postboxInventory.size(); slot++) {
+					ItemStack stack = ItemUtil.getStack(postboxInventory, slot);
 					if (!PackageItem.isPackage(stack))
 						continue;
 					if (PackageItem.matchAddress(stack, port.address))
 						continue;
 
-					ItemStack result = ItemHandlerHelper.insertItemStacked(carriageInventory, stack, false);
+					boolean sent;
+
+					// Taken out of the postbox and put into the carriage together, so a package that
+					// only half fits stays where it was rather than going missing.
+					try (Transaction transaction = Transaction.openRoot()) {
+						ItemResource packaged = ItemResource.of(stack);
+						sent = ResourceHandlerUtil.insertStacking(carriageInventory, packaged, stack.getCount(),
+							transaction) == stack.getCount();
+
+						if (sent) {
+							if (!packaged.isEmpty())
+								postboxInventory.extract(slot, packaged, stack.getCount(), transaction);
+							transaction.commit();
+						}
+					}
+
 					if (box != null)
 						box.computerBehaviour.prepareComputerEvent(new PackageEvent(stack, "package_sent"));
-					if (!result.isEmpty())
+					if (!sent)
 						continue;
-
-					postboxInventory.setStackInSlot(slot, ItemStack.EMPTY);
 
 					if (box == null) {
 						port.primed = true;
@@ -215,8 +229,8 @@ public class GlobalStation extends SingleBlockEntityEdgePoint {
 			}
 
 			// Export to station
-			for (int slot = 0; slot < carriageInventory.getSlots(); slot++) {
-				ItemStack stack = carriageInventory.getStackInSlot(slot);
+			for (int slot = 0; slot < carriageInventory.size(); slot++) {
+				ItemStack stack = ItemUtil.getStack(carriageInventory, slot);
 				if (!PackageItem.isPackage(stack))
 					continue;
 
@@ -228,20 +242,32 @@ public class GlobalStation extends SingleBlockEntityEdgePoint {
 					if (!PackageItem.matchAddress(stack, port.address))
 						continue;
 
-					IItemHandler postboxInventory = port.offlineBuffer;
+					ResourceHandler<ItemResource> postboxInventory = port.offlineBuffer;
 					if (level != null && level.isLoaded(pos)
 						&& level.getBlockEntity(pos) instanceof PostboxBlockEntity ppbe) {
 						postboxInventory = ppbe.inventory;
 						box = ppbe;
 					}
 
-					ItemStack result = ItemHandlerHelper.insertItemStacked(postboxInventory, stack, false);
+					boolean received;
+
+					// Likewise on the way back: out of the carriage and into the postbox at once.
+					try (Transaction transaction = Transaction.openRoot()) {
+						ItemResource packaged = ItemResource.of(stack);
+						received = ResourceHandlerUtil.insertStacking(postboxInventory, packaged, stack.getCount(),
+							transaction) == stack.getCount();
+
+						if (received) {
+							if (!packaged.isEmpty())
+								carriageInventory.extract(slot, packaged, stack.getCount(), transaction);
+							transaction.commit();
+						}
+					}
+
 					if (box != null)
 						box.computerBehaviour.prepareComputerEvent(new PackageEvent(stack, "package_received"));
-					if (!result.isEmpty())
+					if (!received)
 						continue;
-
-					carriageInventory.setStackInSlot(slot, ItemStack.EMPTY);
 
 					if (box == null) {
 						port.primed = true;

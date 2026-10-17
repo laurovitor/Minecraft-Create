@@ -1,5 +1,8 @@
 package com.simibubi.create.content.equipment.clipboard;
 
+import net.minecraft.world.level.ScheduledTickAccess;
+import net.minecraft.util.RandomSource;
+import net.createmod.catnip.api.platform.services.PlatformHelper;
 import java.util.List;
 
 import com.simibubi.create.AllBlocks;
@@ -22,8 +25,7 @@ import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import com.simibubi.create.foundation.block.IBE;
 import com.simibubi.create.foundation.block.ProperWaterloggedBlock;
 
-import net.createmod.catnip.gui.ScreenOpener;
-import net.createmod.catnip.platform.CatnipServices;
+import net.createmod.catnip.api.client.gui.ScreenOpener;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -53,8 +55,6 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.common.util.FakePlayer;
 
 import org.jetbrains.annotations.Nullable;
@@ -111,16 +111,11 @@ public class ClipboardBlock extends FaceAttachedHorizontalDirectionalBlock
 
 		return onBlockEntityUse(level, pos, cbe -> {
 			if (level.isClientSide())
-				CatnipServices.PLATFORM.executeOnClientOnly(() -> () -> openScreen(player, cbe.components(), pos));
+				PlatformHelper.INSTANCE.executeOnClientOnly(() -> () -> ClipboardBlockClient.openScreen(player, cbe.components(), pos));
 			return InteractionResult.SUCCESS;
 		});
 	}
 
-	@OnlyIn(Dist.CLIENT)
-	private void openScreen(Player player, DataComponentMap components, BlockPos pos) {
-		if (Minecraft.getInstance().player == player)
-			ScreenOpener.open(new ClipboardScreen(player.getInventory().selected, components, pos));
-	}
 
 	@Override
 	public void attack(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer) {
@@ -130,15 +125,15 @@ public class ClipboardBlock extends FaceAttachedHorizontalDirectionalBlock
 	private void breakAndCollect(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer) {
 		if (pPlayer instanceof FakePlayer)
 			return;
-		if (pLevel.isClientSide)
+		if (pLevel.isClientSide())
 			return;
-		ItemStack cloneItemStack = getCloneItemStack(pLevel, pPos, pState);
+		ItemStack cloneItemStack = getCloneItemStack(pLevel, pPos, pState, true);
 		pLevel.destroyBlock(pPos, false);
 		if (pLevel.getBlockState(pPos) != pState) {
 			Inventory inv = pPlayer.getInventory();
-			ItemStack selected = inv.getSelected();
+			ItemStack selected = inv.getSelectedItem();
 			if (selected.isEmpty()) {
-				inv.setItem(inv.selected, cloneItemStack);
+				inv.setItem(inv.getSelectedSlot(), cloneItemStack);
 			} else {
 				inv.placeItemBackInInventory(cloneItemStack);
 			}
@@ -146,7 +141,7 @@ public class ClipboardBlock extends FaceAttachedHorizontalDirectionalBlock
 	}
 
 	@Override
-	public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state) {
+	public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state, boolean includeData) {
 		return applyComponentsToDropStack(new ItemStack(this), level.getBlockEntity(pos));
 	}
 
@@ -154,7 +149,7 @@ public class ClipboardBlock extends FaceAttachedHorizontalDirectionalBlock
 	public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
 		if (!(level.getBlockEntity(pos) instanceof ClipboardBlockEntity cbe))
 			return state;
-		if (level.isClientSide || player.isCreative())
+		if (level.isClientSide() || player.isCreative())
 			return state;
 		Block.popResource(level, pos, applyComponentsToDropStack(new ItemStack(this), cbe));
 
@@ -185,10 +180,10 @@ public class ClipboardBlock extends FaceAttachedHorizontalDirectionalBlock
 	}
 
 	@Override
-	public BlockState updateShape(BlockState pState, Direction pFacing, BlockState pFacingState, LevelAccessor pLevel,
-		BlockPos pCurrentPos, BlockPos pFacingPos) {
-		updateWater(pLevel, pState, pCurrentPos);
-		return super.updateShape(pState, pFacing, pFacingState, pLevel, pCurrentPos, pFacingPos);
+	public BlockState updateShape(BlockState pState, LevelReader pLevel, ScheduledTickAccess ticks,
+		BlockPos pCurrentPos, Direction pFacing, BlockPos pFacingPos, BlockState pFacingState, RandomSource random) {
+		updateWater(pLevel, ticks, pState, pCurrentPos);
+		return super.updateShape(pState, pLevel, ticks, pCurrentPos, pFacing, pFacingPos, pFacingState, random);
 	}
 
 	@Override

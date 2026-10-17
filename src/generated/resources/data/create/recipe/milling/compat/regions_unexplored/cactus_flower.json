@@ -8,7 +8,10 @@
   "type": "create:milling",
   "ingredients": [
     {
-      "item": "regions_unexplored:cactus_flower"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "regions_unexplored:cactus_flower"
+      ]
     }
   ],
   "processing_time": 50,

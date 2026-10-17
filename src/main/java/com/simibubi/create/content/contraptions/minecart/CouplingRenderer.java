@@ -1,42 +1,43 @@
 package com.simibubi.create.content.contraptions.minecart;
 
+import com.simibubi.create.foundation.render.CachedBufferer;
+import net.minecraft.world.entity.vehicle.minecart.OldMinecartBehavior;
+import net.minecraft.util.LightCoordsUtil;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import static net.minecraft.util.Mth.lerp;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.simibubi.create.AllPartialModels;
 import com.simibubi.create.content.contraptions.minecart.capability.MinecartController;
 import com.simibubi.create.content.kinetics.KineticDebugger;
 
 import dev.engine_room.flywheel.lib.transform.TransformStack;
-import net.createmod.catnip.animation.AnimationTickHolder;
-import net.createmod.catnip.data.Couple;
-import net.createmod.catnip.math.VecHelper;
-import net.createmod.catnip.outliner.Outliner;
-import net.createmod.catnip.render.CachedBuffers;
-import net.createmod.catnip.render.SuperByteBuffer;
-import net.createmod.catnip.theme.Color;
+import net.createmod.catnip.api.client.animation.AnimationTickHolder;
+import net.createmod.catnip.api.data.Couple;
+import net.createmod.catnip.api.math.VecHelper;
+import net.createmod.catnip.api.client.outliner.Outliner;
+import net.createmod.catnip.api.client.render.SuperByteBuffer;
+import net.createmod.catnip.api.theme.Color;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.vehicle.AbstractMinecart;
+import net.minecraft.world.entity.vehicle.minecart.AbstractMinecart;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 public class CouplingRenderer {
 
-	public static void renderAll(PoseStack ms, MultiBufferSource buffer, Vec3 camera) {
+	public static void submitAll(PoseStack ms, SubmitNodeCollector queue, Vec3 camera) {
 		CouplingHandler.forEachLoadedCoupling(Minecraft.getInstance().level, c -> {
 			if (c.getFirst()
 				.hasContraptionCoupling(true))
 				return;
-			CouplingRenderer.renderCoupling(ms, buffer, camera, c.map(MinecartController::cart));
+			CouplingRenderer.submitCoupling(ms, queue, camera, c.map(MinecartController::cart));
 		});
 	}
 
@@ -45,14 +46,14 @@ public class CouplingRenderer {
 			CouplingHandler.forEachLoadedCoupling(Minecraft.getInstance().level, CouplingRenderer::doDebugRender);
 	}
 
-	public static void renderCoupling(PoseStack ms, MultiBufferSource buffer, Vec3 camera, Couple<AbstractMinecart> carts) {
+	public static void submitCoupling(PoseStack ms, SubmitNodeCollector queue, Vec3 camera, Couple<AbstractMinecart> carts) {
 		ClientLevel world = Minecraft.getInstance().level;
 
 		if (carts.getFirst() == null || carts.getSecond() == null)
 			return;
 
 		Couple<Integer> lightValues =
-			carts.map(c -> LevelRenderer.getLightColor(world, BlockPos.containing(c.getBoundingBox()
+			carts.map(c -> LightCoordsUtil.getLightCoords(world, BlockPos.containing(c.getBoundingBox()
 				.getCenter())));
 
 		Vec3 center = carts.getFirst()
@@ -64,10 +65,9 @@ public class CouplingRenderer {
 		Couple<CartEndpoint> transforms = carts.map(c -> getSuitableCartEndpoint(c, center));
 
 		BlockState renderState = Blocks.AIR.defaultBlockState();
-		VertexConsumer builder = buffer.getBuffer(RenderType.solid());
-		SuperByteBuffer attachment = CachedBuffers.partial(AllPartialModels.COUPLING_ATTACHMENT, renderState);
-		SuperByteBuffer ring = CachedBuffers.partial(AllPartialModels.COUPLING_RING, renderState);
-		SuperByteBuffer connector = CachedBuffers.partial(AllPartialModels.COUPLING_CONNECTOR, renderState);
+		SuperByteBuffer attachment = CachedBufferer.partial(AllPartialModels.COUPLING_ATTACHMENT, renderState);
+		SuperByteBuffer ring = CachedBufferer.partial(AllPartialModels.COUPLING_RING, renderState);
+		SuperByteBuffer connector = CachedBufferer.partial(AllPartialModels.COUPLING_CONNECTOR, renderState);
 
 		Vec3 zero = Vec3.ZERO;
 		Vec3 firstEndpoint = transforms.getFirst()
@@ -86,10 +86,10 @@ public class CouplingRenderer {
 			ms.pushPose();
 			cartTransform.apply(ms, camera);
 			attachment.light(lightValues.get(isFirst))
-				.renderInto(ms, builder);
+				.submit(ms, RenderTypes.solidMovingBlock(), queue);
 			msr.rotateYDegrees((float) connectorYaw - cartTransform.yaw);
 			ring.light(lightValues.get(isFirst))
-				.renderInto(ms, builder);
+				.submit(ms, RenderTypes.solidMovingBlock(), queue);
 			ms.popPose();
 		});
 
@@ -105,7 +105,7 @@ public class CouplingRenderer {
 		ms.scale((float) endPointDiff.length(), 1, 1);
 
 		connector.light(meanSkyLight << 20 | meanBlockLight << 4)
-			.renderInto(ms, builder);
+			.submit(ms, RenderTypes.solidMovingBlock(), queue);
 		ms.popPose();
 	}
 
@@ -135,12 +135,14 @@ public class CouplingRenderer {
 		Vec3 frontVec = positionVec.add(VecHelper.rotate(new Vec3(.5, 0, 0), 180 - yaw, Direction.Axis.Y));
 		Vec3 backVec = positionVec.add(VecHelper.rotate(new Vec3(-.5, 0, 0), 180 - yaw, Direction.Axis.Y));
 
-		Vec3 railVecOfPos = cart.getPos(xIn, yIn, zIn);
+		OldMinecartBehavior behavior =
+			cart.getBehavior() instanceof OldMinecartBehavior old ? old : null;
+		Vec3 railVecOfPos = behavior == null ? null : behavior.getPos(xIn, yIn, zIn);
 		boolean flip = false;
 
 		if (railVecOfPos != null) {
-			frontVec = cart.getPosOffs(xIn, yIn, zIn, (double) 0.3F);
-			backVec = cart.getPosOffs(xIn, yIn, zIn, (double) -0.3F);
+			frontVec = behavior.getPosOffs(xIn, yIn, zIn, (double) 0.3F);
+			backVec = behavior.getPosOffs(xIn, yIn, zIn, (double) -0.3F);
 			if (frontVec == null)
 				frontVec = railVecOfPos;
 			if (backVec == null)

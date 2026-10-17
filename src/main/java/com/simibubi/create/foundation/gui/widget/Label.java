@@ -4,10 +4,10 @@ import org.jetbrains.annotations.NotNull;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 
-import net.createmod.catnip.gui.widget.AbstractSimiWidget;
+import net.createmod.catnip.api.client.gui.widget.AbstractSimiWidget;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 
@@ -71,16 +71,18 @@ public class Label extends AbstractSimiWidget {
 	}
 
 	@Override
-	protected void doRender(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+	protected void doRender(@NotNull GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks) {
 		if (text == null || text.getString().isEmpty())
 			return;
 
-		RenderSystem.setShaderColor(1, 1, 1, 1);
 		MutableComponent copy = text.plainCopy();
 		if (suffix != null && !suffix.isEmpty())
 			copy.append(suffix);
 
-		graphics.drawString(font, copy, getX(), getY(), color, hasShadow);
+		// Labels are coloured with plain RGB; 26.2 draws nothing when a text colour has no alpha,
+		// whereas the font used to read that as fully opaque.
+		int argb = (color & 0xFF000000) == 0 ? color | 0xFF000000 : color;
+		graphics.text(font, copy, getX(), getY(), argb, hasShadow);
 	}
 
 }

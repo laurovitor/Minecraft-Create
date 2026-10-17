@@ -8,7 +8,7 @@ import com.simibubi.create.content.trains.track.FakeTrackBlock;
 import com.simibubi.create.content.trains.track.ITrackBlock;
 import com.simibubi.create.foundation.advancement.AllAdvancements;
 
-import net.createmod.catnip.math.VecHelper;
+import net.createmod.catnip.api.math.VecHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.server.level.ServerLevel;
@@ -18,7 +18,7 @@ import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.component.Unbreakable;
+import net.minecraft.util.Unit;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.ClipContext.Block;
@@ -27,7 +27,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.AnvilBlock;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.BubbleColumnBlock;
-import net.minecraft.world.level.block.FarmBlock;
+import net.minecraft.world.level.block.FarmlandBlock;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.loot.LootParams;
@@ -50,7 +50,7 @@ public class PloughMovementBehaviour extends BlockBreakingMovementBehaviour {
 	public void visitNewPosition(MovementContext context, BlockPos pos) {
 		super.visitNewPosition(context, pos);
 		Level world = context.world;
-		if (world.isClientSide)
+		if (world.isClientSide())
 			return;
 		BlockPos below = pos.below();
 		if (!world.isLoaded(below))
@@ -88,7 +88,7 @@ public class PloughMovementBehaviour extends BlockBreakingMovementBehaviour {
 	@Override
 	public Vec3 getActiveAreaOffset(MovementContext context) {
 		return Vec3.atLowerCornerOf(context.state.getValue(PloughBlock.FACING)
-				.getNormal())
+				.getUnitVec3i())
 			.scale(.45);
 	}
 
@@ -102,7 +102,7 @@ public class PloughMovementBehaviour extends BlockBreakingMovementBehaviour {
 		if (state.isAir())
 			return false;
 		if (world.getBlockState(breakingPos.below())
-			.getBlock() instanceof FarmBlock)
+			.getBlock() instanceof FarmlandBlock)
 			return false;
 		if (state.getBlock() instanceof LiquidBlock)
 			return false;
@@ -144,7 +144,7 @@ public class PloughMovementBehaviour extends BlockBreakingMovementBehaviour {
 		if (!(context.temporaryData instanceof PloughFakePlayer) && context.world != null) {
 			PloughFakePlayer player = new PloughFakePlayer((ServerLevel) context.world);
 			ItemStack heldItem = new ItemStack(Items.DIAMOND_HOE);
-			heldItem.set(DataComponents.UNBREAKABLE, new Unbreakable(false));
+			heldItem.set(DataComponents.UNBREAKABLE, Unit.INSTANCE);
 			player.setItemInHand(InteractionHand.MAIN_HAND, heldItem);
 			context.temporaryData = player;
 		}

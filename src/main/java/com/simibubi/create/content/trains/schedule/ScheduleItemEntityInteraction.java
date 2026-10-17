@@ -8,7 +8,7 @@ import com.simibubi.create.content.trains.entity.CarriageContraptionEntity;
 import com.simibubi.create.content.trains.entity.Train;
 import com.simibubi.create.foundation.utility.CreateLang;
 
-import net.createmod.catnip.data.Couple;
+import net.createmod.catnip.api.data.Couple;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -19,13 +19,15 @@ import net.minecraft.world.item.ItemStack;
 
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.EntityInteractSpecific;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.EntityInteract;
 
 @EventBusSubscriber
 public class ScheduleItemEntityInteraction {
 
+	// EntityInteractSpecific was folded into EntityInteract, which now carries the local hit
+	// location and covers every entity interaction.
 	@SubscribeEvent
-	public static void interactWithConductor(EntityInteractSpecific event) {
+	public static void interactWithConductor(EntityInteract event) {
 		Entity entity = event.getTarget();
 		Player player = event.getEntity();
 		if (player == null || entity == null)
@@ -38,8 +40,10 @@ public class ScheduleItemEntityInteraction {
 			return;
 		if (!(entity instanceof LivingEntity living))
 			return;
+		// Cooldowns are keyed by a stack's cooldown group rather than by Item, so a plain schedule
+		// stack stands in to reach the item's default group.
 		if (player.getCooldowns()
-			.isOnCooldown(AllItems.SCHEDULE.get()))
+			.isOnCooldown(AllItems.SCHEDULE.asStack()))
 			return;
 
 		ItemStack itemStack = event.getItemStack();
@@ -47,7 +51,7 @@ public class ScheduleItemEntityInteraction {
 			InteractionResult result = si.handScheduleTo(itemStack, player, living, event.getHand());
 			if (result.consumesAction()) {
 				player.getCooldowns()
-					.addCooldown(AllItems.SCHEDULE.get(), 5);
+					.addCooldown(AllItems.SCHEDULE.asStack(), 5);
 				event.setCancellationResult(result);
 				event.setCanceled(true);
 				return;
@@ -77,17 +81,17 @@ public class ScheduleItemEntityInteraction {
 		if (directions == null)
 			return;
 
-		boolean onServer = !event.getLevel().isClientSide;
+		boolean onServer = !event.getLevel().isClientSide();
 
 		if (train.runtime.paused && !train.runtime.completed) {
 			if (onServer) {
 				train.runtime.paused = false;
 				AllSoundEvents.CONFIRM.playOnServer(player.level(), player.blockPosition(), 1, 1);
-				player.displayClientMessage(CreateLang.translateDirect("schedule.continued"), true);
+				player.sendOverlayMessage(CreateLang.translateDirect("schedule.continued"));
 			}
 
 			player.getCooldowns()
-				.addCooldown(AllItems.SCHEDULE.get(), 5);
+				.addCooldown(AllItems.SCHEDULE.asStack(), 5);
 			event.setCancellationResult(InteractionResult.SUCCESS);
 			event.setCanceled(true);
 			return;
@@ -97,7 +101,7 @@ public class ScheduleItemEntityInteraction {
 		if (!itemInHand.isEmpty()) {
 			if (onServer) {
 				AllSoundEvents.DENY.playOnServer(player.level(), player.blockPosition(), 1, 1);
-				player.displayClientMessage(CreateLang.translateDirect("schedule.remove_with_empty_hand"), true);
+				player.sendOverlayMessage(CreateLang.translateDirect("schedule.remove_with_empty_hand"));
 			}
 			event.setCancellationResult(InteractionResult.SUCCESS);
 			event.setCanceled(true);
@@ -106,17 +110,16 @@ public class ScheduleItemEntityInteraction {
 
 		if (onServer) {
 			AllSoundEvents.playItemPickup(player);
-			player.displayClientMessage(
+			player.sendOverlayMessage(
 				CreateLang.translateDirect(
-					train.runtime.isAutoSchedule ? "schedule.auto_removed_from_train" : "schedule.removed_from_train"),
-				true);
+					train.runtime.isAutoSchedule ? "schedule.auto_removed_from_train" : "schedule.removed_from_train"));
 
 			player.getInventory()
 				.placeItemBackInInventory(train.runtime.returnSchedule(player.registryAccess()));
 		}
 
 		player.getCooldowns()
-			.addCooldown(AllItems.SCHEDULE.get(), 5);
+			.addCooldown(AllItems.SCHEDULE.asStack(), 5);
 		event.setCancellationResult(InteractionResult.SUCCESS);
 		event.setCanceled(true);
 		return;

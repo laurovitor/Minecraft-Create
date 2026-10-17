@@ -1,5 +1,10 @@
 package com.simibubi.create.content.logistics.packager.repackager;
 
+import org.jetbrains.annotations.Nullable;
+import net.neoforged.neoforge.transfer.transaction.TransactionContext;
+import net.neoforged.neoforge.transfer.transaction.Transaction;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
 import java.util.List;
 
 import com.simibubi.create.AllBlockEntityTypes;
@@ -21,8 +26,6 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
-import net.neoforged.neoforge.items.IItemHandler;
-
 public class RepackagerBlockEntity extends PackagerBlockEntity {
 
 	public PackageRepackageHelper repackageHelper;
@@ -32,19 +35,25 @@ public class RepackagerBlockEntity extends PackagerBlockEntity {
 		repackageHelper = new PackageRepackageHelper();
 	}
 
-	public boolean unwrapBox(ItemStack box, boolean simulate) {
+	public boolean unwrapBox(ItemStack box, boolean simulate, @Nullable TransactionContext parent) {
 		if (animationTicks > 0)
 			return false;
 
-		IItemHandler targetInv = targetInventory.getInventory();
+		ResourceHandler<ItemResource> targetInv = targetInventory.getInventory();
 		if (targetInv == null || targetInv instanceof PackagerItemHandler)
 			return false;
 
 		boolean targetIsCreativeCrate = targetInv instanceof BottomlessItemHandler;
 		boolean anySpace = false;
 
-		for (int slot = 0; slot < targetInv.getSlots(); slot++) {
-			ItemStack remainder = targetInv.insertItem(slot, box, simulate);
+		for (int slot = 0; slot < targetInv.size(); slot++) {
+			ItemStack remainder;
+			try (Transaction transaction = Transaction.openRoot()) {
+				int transferred = box.isEmpty() ? 0 : targetInv.insert(slot, ItemResource.of(box), box.getCount(), transaction);
+				remainder = transferred == box.getCount() ? ItemStack.EMPTY : box.copyWithCount(box.getCount() - transferred);
+				if (!simulate)
+					transaction.commit();
+			}
 			if (!remainder.isEmpty())
 				continue;
 			anySpace = true;
@@ -79,7 +88,7 @@ public class RepackagerBlockEntity extends PackagerBlockEntity {
 		if (!queuedExitingPackages.isEmpty())
 			return;
 
-		IItemHandler targetInv = targetInventory.getInventory();
+		ResourceHandler<ItemResource> targetInv = targetInventory.getInventory();
 		if (targetInv == null || targetInv instanceof PackagerItemHandler)
 			return;
 
@@ -92,17 +101,26 @@ public class RepackagerBlockEntity extends PackagerBlockEntity {
 			PackageItem.addAddress(heldBox, signBasedAddress);
 	}
 
-	protected void attemptToRepackage(IItemHandler targetInv) {
+	protected void attemptToRepackage(ResourceHandler<ItemResource> targetInv) {
 		repackageHelper.clear();
 		int completedOrderId = -1;
 
-		for (int slot = 0; slot < targetInv.getSlots(); slot++) {
-			ItemStack extracted = targetInv.extractItem(slot, 1, true);
+		for (int slot = 0; slot < targetInv.size(); slot++) {
+			ItemStack extracted;
+			try (Transaction transaction = Transaction.openRoot()) {
+				ItemResource transferred2Resource = targetInv.getResource(slot);
+				int transferred2 = transferred2Resource.isEmpty() ? 0 : targetInv.extract(slot, transferred2Resource, 1, transaction);
+				extracted = transferred2 <= 0 ? ItemStack.EMPTY : transferred2Resource.toStack(transferred2);
+			}
 			if (extracted.isEmpty() || !PackageItem.isPackage(extracted))
 				continue;
 
 			if (!repackageHelper.isFragmented(extracted)) {
-				targetInv.extractItem(slot, 1, false);
+				try (Transaction transaction = Transaction.openRoot()) {
+					ItemResource transferredResource = targetInv.getResource(slot);
+					int transferred = transferredResource.isEmpty() ? 0 : targetInv.extract(slot, transferredResource, 1, transaction);
+					transaction.commit();
+				}
 				heldBox = extracted.copy();
 				animationInward = false;
 				animationTicks = CYCLE;
@@ -120,13 +138,22 @@ public class RepackagerBlockEntity extends PackagerBlockEntity {
 
 		List<BigItemStack> boxesToExport = repackageHelper.repack(completedOrderId, level.getRandom());
 
-		for (int slot = 0; slot < targetInv.getSlots(); slot++) {
-			ItemStack extracted = targetInv.extractItem(slot, 1, true);
+		for (int slot = 0; slot < targetInv.size(); slot++) {
+			ItemStack extracted;
+			try (Transaction transaction = Transaction.openRoot()) {
+				ItemResource transferred3Resource = targetInv.getResource(slot);
+				int transferred3 = transferred3Resource.isEmpty() ? 0 : targetInv.extract(slot, transferred3Resource, 1, transaction);
+				extracted = transferred3 <= 0 ? ItemStack.EMPTY : transferred3Resource.toStack(transferred3);
+			}
 			if (extracted.isEmpty() || !PackageItem.isPackage(extracted))
 				continue;
 			if (PackageItem.getOrderId(extracted) != completedOrderId)
 				continue;
-			targetInv.extractItem(slot, 1, false);
+			try (Transaction transaction = Transaction.openRoot()) {
+				ItemResource transferred2Resource = targetInv.getResource(slot);
+				int transferred2 = transferred2Resource.isEmpty() ? 0 : targetInv.extract(slot, transferred2Resource, 1, transaction);
+				transaction.commit();
+			}
 		}
 
 		if (boxesToExport.isEmpty())
@@ -143,7 +170,7 @@ public class RepackagerBlockEntity extends PackagerBlockEntity {
 
 	public static void registerCapabilities(RegisterCapabilitiesEvent event) {
 		event.registerBlockEntity(
-			Capabilities.ItemHandler.BLOCK,
+			Capabilities.Item.BLOCK,
 			AllBlockEntityTypes.REPACKAGER.get(),
 			(be, context) -> be.inventory
 		);

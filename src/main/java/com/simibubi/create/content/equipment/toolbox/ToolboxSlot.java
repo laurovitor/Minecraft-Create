@@ -1,16 +1,22 @@
 package com.simibubi.create.content.equipment.toolbox;
 
-import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.SlotItemHandler;
+import net.neoforged.neoforge.transfer.transaction.Transaction;
+import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemUtil;
 
-public class ToolboxSlot extends SlotItemHandler {
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.transfer.item.ResourceHandlerSlot;
+
+public class ToolboxSlot extends ResourceHandlerSlot {
 
 	private ToolboxMenu toolboxMenu;
 	private boolean isVisible;
 
-	public ToolboxSlot(ToolboxMenu menu, IItemHandler itemHandler, int index, int xPosition, int yPosition, boolean isVisible) {
-		super(itemHandler, index, xPosition, yPosition);
+	public ToolboxSlot(ToolboxMenu menu, ItemStacksResourceHandler itemHandler, int index, int xPosition, int yPosition,
+		boolean isVisible) {
+		super(itemHandler, itemHandler::set, index, xPosition, yPosition);
 		this.toolboxMenu = menu;
 		this.isVisible = isVisible;
 	}
@@ -26,9 +32,13 @@ public class ToolboxSlot extends SlotItemHandler {
 		int maxInput = stack.getMaxStackSize();
 		maxAdd.setCount(maxInput);
 
-		IItemHandler handler = this.getItemHandler();
-		ItemStack currentStack = handler.getStackInSlot(index);
-		ItemStack remainder = handler.insertItem(index, maxAdd, true);
+		ResourceHandler<ItemResource> handler = this.getResourceHandler();
+		ItemStack currentStack = ItemUtil.getStack(handler, index);
+		ItemStack remainder;
+		try (Transaction transaction = Transaction.openRoot()) {
+			int transferred = maxAdd.isEmpty() ? 0 : handler.insert(index, ItemResource.of(maxAdd), maxAdd.getCount(), transaction);
+			remainder = transferred == maxAdd.getCount() ? ItemStack.EMPTY : maxAdd.copyWithCount(maxAdd.getCount() - transferred);
+		}
 		int current = currentStack.getCount();
 		int added = maxInput - remainder.getCount();
 		return current + added;

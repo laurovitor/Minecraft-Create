@@ -1,5 +1,6 @@
 package com.simibubi.create.foundation.recipe;
 
+import com.simibubi.create.foundation.recipe.RecipeAccessors;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,7 +37,7 @@ public class RecipeApplier {
 			for (int i = 0; i < stackIn.getCount(); i++) {
 				List<ProcessingOutput> outputs =
 					pr instanceof ManualApplicationRecipe mar ? mar.getRollableResults() : pr.getRollableResults();
-				for (ItemStack stack : pr.rollResults(outputs, level.random)) {
+				for (ItemStack stack : pr.rollResults(outputs, level.getRandom())) {
 					for (ItemStack previouslyRolled : stacks) {
 						if (stack.isEmpty())
 							continue;
@@ -53,13 +54,16 @@ public class RecipeApplier {
 
 					stacks.add(stack);
 				}
-				if (returnProcessingRemainder && stackIn.hasCraftingRemainingItem()) {
-					ItemHelper.addToList(stackIn.getCraftingRemainingItem(), stacks);
+				if (returnProcessingRemainder && ItemHelper.hasCraftingRemainder(stackIn)) {
+					ItemHelper.addToList(ItemHelper.getCraftingRemainder(stackIn), stacks);
 				}
 
 			}
 		} else {
-			ItemStack out = recipe.getResultItem(level.registryAccess())
+			// The level is what a recipe outside Create's own resolves its result against - a smoking or
+			// blasting recipe asked without one hands back nothing, so a fan would finish cooking an item
+			// and produce air. Create's own recipes carry their result outright and never noticed.
+			ItemStack out = RecipeAccessors.result(recipe, level)
 				.copy();
 			stacks = ItemHelper.multipliedOutput(stackIn, out);
 		}

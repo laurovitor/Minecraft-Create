@@ -8,7 +8,10 @@
   "type": "create:pressing",
   "ingredients": [
     {
-      "item": "betterendforge:end_moss"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "betterendforge:end_moss"
+      ]
     }
   ],
   "results": [

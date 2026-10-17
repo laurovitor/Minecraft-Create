@@ -1,5 +1,13 @@
 package com.simibubi.create.content.kinetics.crusher;
 
+import com.simibubi.create.foundation.utility.NbtValueIO;
+import net.neoforged.neoforge.transfer.item.ItemUtil;
+import net.neoforged.neoforge.items.IItemHandler;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.world.item.ItemStackTemplate;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.createmod.catnip.api.platform.services.PlatformHelper;
+import net.neoforged.neoforge.items.wrapper.RecipeWrapper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -18,9 +26,7 @@ import com.simibubi.create.foundation.sound.SoundScapes;
 import com.simibubi.create.foundation.sound.SoundScapes.AmbienceGroup;
 import com.simibubi.create.infrastructure.config.AllConfigs;
 
-import net.createmod.catnip.math.VecHelper;
-import net.createmod.catnip.nbt.NBTHelper;
-import net.createmod.catnip.platform.CatnipServices;
+import net.createmod.catnip.api.math.VecHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -30,7 +36,6 @@ import net.minecraft.core.particles.ItemParticleOption;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtUtils;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Clearable;
@@ -45,12 +50,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
-import net.neoforged.neoforge.items.wrapper.RecipeWrapper;
-
 public class CrushingWheelControllerBlockEntity extends SmartBlockEntity implements Clearable {
 	public Entity processingEntity;
 	private UUID entityUUID;
@@ -65,17 +66,17 @@ public class CrushingWheelControllerBlockEntity extends SmartBlockEntity impleme
 		inventory = new ProcessingInventory(this::itemInserted) {
 
 			@Override
-			public boolean isItemValid(int slot, ItemStack stack) {
-				return super.isItemValid(slot, stack) && processingEntity == null;
+			public boolean isValid(int slot, ItemResource resource) {
+				return super.isValid(slot, resource) && processingEntity == null;
 			}
 
 		};
-		wrapper = new RecipeWrapper(inventory);
+		wrapper = new RecipeWrapper(IItemHandler.of(inventory));
 	}
 
 	public static void registerCapabilities(RegisterCapabilitiesEvent event) {
 		event.registerBlockEntity(
-			Capabilities.ItemHandler.BLOCK,
+			Capabilities.Item.BLOCK,
 			AllBlockEntityTypes.CRUSHING_WHEEL_CONTROLLER.get(),
 			(be, context) -> be.inventory
 		);
@@ -112,8 +113,8 @@ public class CrushingWheelControllerBlockEntity extends SmartBlockEntity impleme
 		if (crushingspeed == 0)
 			return;
 
-		if (level.isClientSide)
-			CatnipServices.PLATFORM.executeOnClientOnly(() -> () -> this.tickAudio());
+		if (level.isClientSide())
+			PlatformHelper.INSTANCE.executeOnClientOnly(() -> () -> this.tickAudio());
 
 		float speed = crushingspeed * 4;
 
@@ -133,12 +134,12 @@ public class CrushingWheelControllerBlockEntity extends SmartBlockEntity impleme
 		if (!hasEntity()) {
 
 			float processingSpeed =
-				Mth.clamp((speed) / (!inventory.appliedRecipe ? (float) Math.log(inventory.getStackInSlot(0)
+				Mth.clamp((speed) / (!inventory.appliedRecipe ? (float) Math.log(ItemUtil.getStack(inventory, 0)
 					.getCount()) / (float) Math.log(2) : 1), .25f, 20);
 			inventory.remainingTime -= processingSpeed;
-			spawnParticles(inventory.getStackInSlot(0));
+			spawnParticles(ItemUtil.getStack(inventory, 0));
 
-			if (level.isClientSide)
+			if (level.isClientSide())
 				return;
 
 			if (inventory.remainingTime < 20 && !inventory.appliedRecipe) {
@@ -164,14 +165,14 @@ public class CrushingWheelControllerBlockEntity extends SmartBlockEntity impleme
 					boolean changed = false;
 					if (!behaviour.canInsertFromSide(facing))
 						return;
-					for (int slot = 0; slot < inventory.getSlots(); slot++) {
-						ItemStack stack = inventory.getStackInSlot(slot);
+					for (int slot = 0; slot < inventory.size(); slot++) {
+						ItemStack stack = ItemUtil.getStack(inventory, slot);
 						if (stack.isEmpty())
 							continue;
 						ItemStack remainder = behaviour.handleInsertion(stack, facing, false);
 						if (ItemStack.matches(remainder, stack))
 							continue;
-						inventory.setStackInSlot(slot, remainder);
+						inventory.set(slot, ItemResource.of(remainder), remainder.getCount());
 						changed = true;
 					}
 					if (changed) {
@@ -183,14 +184,14 @@ public class CrushingWheelControllerBlockEntity extends SmartBlockEntity impleme
 			}
 
 			// Eject Items
-			for (int slot = 0; slot < inventory.getSlots(); slot++) {
-				ItemStack stack = inventory.getStackInSlot(slot);
+			for (int slot = 0; slot < inventory.size(); slot++) {
+				ItemStack stack = ItemUtil.getStack(inventory, slot);
 				if (stack.isEmpty())
 					continue;
 				ItemEntity entityIn = new ItemEntity(level, outPos.x, outPos.y, outPos.z, stack);
 				entityIn.setDeltaMovement(outSpeed);
 				entityIn.getPersistentData()
-					.put("BypassCrushingWheel", NbtUtils.writeBlockPos(worldPosition));
+					.store("BypassCrushingWheel", BlockPos.CODEC, worldPosition);
 				level.addFreshEntity(entityIn);
 			}
 			inventory.clear();
@@ -223,7 +224,7 @@ public class CrushingWheelControllerBlockEntity extends SmartBlockEntity impleme
 				// crushers,
 				, facing.getAxis() == Axis.Z ? movement : zMotion)); // Or they'll only get their feet crushed.
 
-		if (level.isClientSide)
+		if (level.isClientSide())
 			return;
 
 		if (!(processingEntity instanceof ItemEntity itemEntity)) {
@@ -264,10 +265,9 @@ public class CrushingWheelControllerBlockEntity extends SmartBlockEntity impleme
 		}
 	}
 
-	@OnlyIn(Dist.CLIENT)
 	public void tickAudio() {
 		float pitch = Mth.clamp((crushingspeed / 256f) + .45f, .85f, 1f);
-		if (entityUUID == null && inventory.getStackInSlot(0)
+		if (entityUUID == null && ItemUtil.getStack(inventory, 0)
 			.isEmpty())
 			return;
 		SoundScapes.play(AmbienceGroup.CRUSHING, worldPosition, pitch);
@@ -275,9 +275,10 @@ public class CrushingWheelControllerBlockEntity extends SmartBlockEntity impleme
 
 	private void intakeItem(ItemEntity itemEntity) {
 		inventory.clear();
-		inventory.setStackInSlot(0, itemEntity.getItem()
-			.copy());
-		itemInserted(inventory.getStackInSlot(0));
+		ItemStack stack = itemEntity.getItem()
+			.copy();
+		inventory.set(0, ItemResource.of(stack), stack.getCount());
+		itemInserted(ItemUtil.getStack(inventory, 0));
 		itemEntity.discard();
 		level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 2 | 16);
 	}
@@ -291,9 +292,9 @@ public class CrushingWheelControllerBlockEntity extends SmartBlockEntity impleme
 			particleData = new BlockParticleOption(ParticleTypes.BLOCK, ((BlockItem) stack.getItem()).getBlock()
 				.defaultBlockState());
 		else
-			particleData = new ItemParticleOption(ParticleTypes.ITEM, stack);
+			particleData = new ItemParticleOption(ParticleTypes.ITEM, ItemStackTemplate.fromStack(stack));
 
-		RandomSource r = level.random;
+		RandomSource r = level.getRandom();
 		for (int i = 0; i < 4; i++)
 			level.addParticle(particleData, worldPosition.getX() + r.nextFloat(), worldPosition.getY() + r.nextFloat(),
 				worldPosition.getZ() + r.nextFloat(), 0, 0, 0);
@@ -304,21 +305,23 @@ public class CrushingWheelControllerBlockEntity extends SmartBlockEntity impleme
 
 		List<ItemStack> list = new ArrayList<>();
 		if (recipe.isPresent()) {
-			ItemStack input = inventory.getStackInSlot(0);
+			ItemStack input = ItemUtil.getStack(inventory, 0);
 			int rolls = input.getCount();
 			inventory.clear();
 			for (int roll = 0; roll < rolls; roll++) {
 				List<ItemStack> rolledResults = recipe.get().value()
-					.rollResults(level.random);
+					.rollResults(level.getRandom());
 				for (ItemStack stack : rolledResults) {
 					ItemHelper.addToList(stack, list);
 				}
 			}
-			if (input.hasCraftingRemainingItem()) {
-				ItemHelper.addToList(input.getCraftingRemainingItem(), list);
+			if (ItemHelper.hasCraftingRemainder(input)) {
+				ItemHelper.addToList(ItemHelper.getCraftingRemainder(input), list);
 			}
-			for (int slot = 0; slot < list.size() && slot + 1 < inventory.getSlots(); slot++)
-				inventory.setStackInSlot(slot + 1, list.get(slot));
+			for (int slot = 0; slot < list.size() && slot + 1 < inventory.size(); slot++) {
+				ItemStack stack = list.get(slot);
+				inventory.set(slot + 1, ItemResource.of(stack), stack.getCount());
+			}
 		} else {
 			inventory.clear();
 		}
@@ -335,8 +338,8 @@ public class CrushingWheelControllerBlockEntity extends SmartBlockEntity impleme
 	@Override
 	public void write(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
 		if (hasEntity())
-			compound.put("Entity", NbtUtils.createUUID(entityUUID));
-		compound.put("Inventory", inventory.serializeNBT(registries));
+			compound.store("Entity", UUIDUtil.CODEC, entityUUID);
+		compound.put("Inventory", NbtValueIO.serialize(inventory, registries));
 		compound.putFloat("Speed", crushingspeed);
 		super.write(compound, registries, clientPacket);
 	}
@@ -345,11 +348,12 @@ public class CrushingWheelControllerBlockEntity extends SmartBlockEntity impleme
 	protected void read(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
 		super.read(compound, registries, clientPacket);
 		if (compound.contains("Entity") && !isOccupied()) {
-			entityUUID = NbtUtils.loadUUID(NBTHelper.getINBT(compound, "Entity"));
+			entityUUID = compound.read("Entity", UUIDUtil.CODEC)
+				.orElse(null);
 			this.searchForEntity = true;
 		}
-		crushingspeed = compound.getFloat("Speed");
-		inventory.deserializeNBT(registries, compound.getCompound("Inventory"));
+		crushingspeed = compound.getFloatOr("Speed", 0);
+		NbtValueIO.deserialize(inventory, compound.getCompoundOrEmpty("Inventory"), registries);
 	}
 
 	@Override
@@ -380,5 +384,12 @@ public class CrushingWheelControllerBlockEntity extends SmartBlockEntity impleme
 
 	public boolean hasEntity() {
 		return processingEntity != null;
+	}
+
+	@Override
+	public void destroy() {
+		super.destroy();
+		if (level != null)
+			ItemHelper.dropContents(level, worldPosition, inventory);
 	}
 }

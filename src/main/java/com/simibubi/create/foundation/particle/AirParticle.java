@@ -1,15 +1,16 @@
 package com.simibubi.create.foundation.particle;
 
+import net.minecraft.util.LightCoordsUtil;
+import net.minecraft.util.RandomSource;
+import net.minecraft.client.particle.SingleQuadParticle;
 import com.simibubi.create.Create;
 
-import net.createmod.catnip.math.VecHelper;
+import net.createmod.catnip.api.math.VecHelper;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleProvider;
-import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SimpleAnimatedParticle;
 import net.minecraft.client.particle.SpriteSet;
-import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.util.Mth;
@@ -26,7 +27,7 @@ public class AirParticle extends SimpleAnimatedParticle {
 
 	protected AirParticle(ClientLevel world, AirParticleData data, double x, double y, double z, double dx, double dy,
 						  double dz, SpriteSet sprite) {
-		super(world, x, y, z, sprite, world.random.nextFloat() * .5f);
+		super(world, x, y, z, sprite, world.getRandom().nextFloat() * .5f);
 		quadSize *= 0.75F;
 		hasPhysics = false;
 
@@ -55,8 +56,8 @@ public class AirParticle extends SimpleAnimatedParticle {
 		}
 	}
 
-	public ParticleRenderType getRenderType() {
-		return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
+	public SingleQuadParticle.Layer getLayer() {
+		return SingleQuadParticle.Layer.TRANSLUCENT;
 	}
 
 	@Override
@@ -85,9 +86,9 @@ public class AirParticle extends SimpleAnimatedParticle {
 		this.move(this.xd, this.yd, this.zd);
 	}
 
-	public int getLightColor(float partialTick) {
+	public int getLightCoords(float partialTick) {
 		BlockPos blockpos = BlockPos.containing(this.x, this.y, this.z);
-		return this.level.isLoaded(blockpos) ? LevelRenderer.getLightColor(level, blockpos) : 0;
+		return this.level.hasChunkAt(blockpos) ? LightCoordsUtil.getLightCoords(level, blockpos) : 0;
 	}
 
 	private void selectSprite(int index) {
@@ -102,7 +103,7 @@ public class AirParticle extends SimpleAnimatedParticle {
 		}
 
 		public Particle createParticle(AirParticleData data, ClientLevel worldIn, double x, double y, double z, double xSpeed,
-			double ySpeed, double zSpeed) {
+			double ySpeed, double zSpeed, RandomSource random) {
 			return new AirParticle(worldIn, data, x, y, z, xSpeed, ySpeed, zSpeed, this.spriteSet);
 		}
 	}

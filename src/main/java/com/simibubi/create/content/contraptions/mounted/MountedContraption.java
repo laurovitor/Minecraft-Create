@@ -1,11 +1,13 @@
 package com.simibubi.create.content.contraptions.mounted;
 
+import net.neoforged.neoforge.transfer.item.VanillaContainerWrapper;
 import static com.simibubi.create.content.contraptions.mounted.CartAssemblerBlock.RAIL_SHAPE;
 
 import java.util.Queue;
 
 import org.apache.commons.lang3.tuple.Pair;
 
+import com.simibubi.create.foundation.item.ContainerItemHandler;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllContraptionTypes;
 import com.simibubi.create.api.contraption.ContraptionType;
@@ -13,9 +15,9 @@ import com.simibubi.create.content.contraptions.AssemblyException;
 import com.simibubi.create.content.contraptions.Contraption;
 import com.simibubi.create.content.contraptions.mounted.CartAssemblerBlockEntity.CartMovementMode;
 
-import net.createmod.catnip.data.Iterate;
-import net.createmod.catnip.math.VecHelper;
-import net.createmod.catnip.nbt.NBTHelper;
+import net.createmod.catnip.api.data.Iterate;
+import net.createmod.catnip.api.math.VecHelper;
+import net.createmod.catnip.api.nbt.NBTHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -23,7 +25,7 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.vehicle.AbstractMinecart;
+import net.minecraft.world.entity.vehicle.minecart.AbstractMinecart;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -32,8 +34,6 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.RailShape;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate.StructureBlockInfo;
 import net.minecraft.world.phys.AABB;
-
-import net.neoforged.neoforge.items.wrapper.InvWrapper;
 
 public class MountedContraption extends Contraption {
 
@@ -156,7 +156,7 @@ public class MountedContraption extends Contraption {
 
 	public void addExtraInventories(Entity cart) {
 		if (cart instanceof Container container)
-			storage.attachExternal(new InvWrapper(container));
+			storage.attachExternal(new ContainerItemHandler(container));
 	}
 
 

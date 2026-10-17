@@ -1,5 +1,6 @@
 package com.simibubi.create.content.trains;
 
+import net.createmod.catnip.api.network.SelfHandlingPayload;
 import java.util.UUID;
 
 import org.jetbrains.annotations.Nullable;
@@ -10,18 +11,13 @@ import com.simibubi.create.Create;
 import com.simibubi.create.content.trains.entity.Train;
 
 import io.netty.buffer.ByteBuf;
-import net.createmod.catnip.codecs.stream.CatnipStreamCodecBuilders;
-import net.createmod.catnip.net.base.ClientboundPacketPayload;
-import net.createmod.catnip.net.base.ServerboundPacketPayload;
-import net.minecraft.client.player.LocalPlayer;
+import net.createmod.catnip.api.data.codec.stream.CatnipStreamCodecBuilders;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
-
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 public abstract class TrainHUDUpdatePacket implements CustomPacketPayload {
 	protected final UUID trainId;
@@ -48,7 +44,7 @@ public abstract class TrainHUDUpdatePacket implements CustomPacketPayload {
 		);
 	}
 
-	public static class Clientbound extends TrainHUDUpdatePacket implements ClientboundPacketPayload {
+	public static class Clientbound extends TrainHUDUpdatePacket implements CustomPacketPayload {
 		public static final StreamCodec<ByteBuf, Clientbound> STREAM_CODEC = codec(Clientbound::new);
 
 		public Clientbound(Train train) {
@@ -59,9 +55,7 @@ public abstract class TrainHUDUpdatePacket implements CustomPacketPayload {
 			super(trainId, throttle, speed, fuelTicks);
 		}
 
-		@Override
-		@OnlyIn(Dist.CLIENT)
-		public void handle(LocalPlayer player) {
+		public void handle(Player player) {
 			Train train = Create.RAILWAYS.sided(null).trains.get(trainId);
 			if (train == null)
 				return;
@@ -75,8 +69,8 @@ public abstract class TrainHUDUpdatePacket implements CustomPacketPayload {
 		}
 
 		@Override
-		public PacketTypeProvider getTypeProvider() {
-			return AllPackets.S_TRAIN_HUD;
+		public Type<? extends CustomPacketPayload> type() {
+			return AllPackets.S_TRAIN_HUD.getType();
 		}
 
 		private static double nonStalledSpeed(Train train) {
@@ -84,7 +78,7 @@ public abstract class TrainHUDUpdatePacket implements CustomPacketPayload {
 		}
 	}
 
-	public static class Serverbound extends TrainHUDUpdatePacket implements ServerboundPacketPayload {
+	public static class Serverbound extends TrainHUDUpdatePacket implements SelfHandlingPayload {
 		public static final StreamCodec<ByteBuf, Serverbound> STREAM_CODEC = codec(Serverbound::new);
 
 		public Serverbound(Train train, Double sendThrottle) {
@@ -106,8 +100,8 @@ public abstract class TrainHUDUpdatePacket implements CustomPacketPayload {
 		}
 
 		@Override
-		public PacketTypeProvider getTypeProvider() {
-			return AllPackets.C_TRAIN_HUD;
+		public Type<? extends CustomPacketPayload> type() {
+			return AllPackets.C_TRAIN_HUD.getType();
 		}
 	}
 

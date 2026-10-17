@@ -1,5 +1,6 @@
 package com.simibubi.create.content.fluids.particle;
 
+import com.simibubi.create.foundation.fluid.FluidAppearance;
 import net.minecraft.core.particles.ColorParticleOption;
 
 import org.jetbrains.annotations.NotNull;
@@ -7,22 +8,34 @@ import org.jetbrains.annotations.NotNull;
 import com.simibubi.create.AllParticleTypes;
 import com.simibubi.create.content.fluids.potion.PotionFluid;
 
-import net.createmod.catnip.theme.Color;
+import net.createmod.catnip.api.theme.Color;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.particle.ParticleRenderType;
-import net.minecraft.client.particle.TextureSheetParticle;
+import net.minecraft.client.particle.ParticleProvider;
+import net.minecraft.client.particle.SingleQuadParticle;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.neoforged.neoforge.fluids.FluidStack;
 
-public class FluidStackParticle extends TextureSheetParticle {
+public class FluidStackParticle extends SingleQuadParticle {
 	private final float uo;
 	private final float vo;
 	private final FluidStack fluid;
-	private final IClientFluidTypeExtensions clientFluid;
+
+	/**
+	 * The provider, reached without {@link FluidParticleData} naming a client class.
+	 * <p>
+	 * The lambda that builds these used to sit in {@code FluidParticleData#getFactory}, and its body
+	 * returns a {@link net.minecraft.client.particle.Particle} -- which the JVM resolves when it
+	 * verifies the particle data, so a dedicated server could not load it. Behind a static returning
+	 * the interface, nothing client-side is named until a client calls it.
+	 */
+	public static ParticleProvider<FluidParticleData> provider() {
+		return (data, world, x, y, z, vx, vy, vz, random) -> create(data.getParticleType(), world, data.getFluid(), x,
+			y, z, vx, vy, vz);
+	}
 
 	public static FluidStackParticle create(ParticleType<FluidParticleData> type, ClientLevel world, FluidStack fluid,
 		double x, double y, double z, double vx, double vy, double vz) {
@@ -33,20 +46,16 @@ public class FluidStackParticle extends TextureSheetParticle {
 
 	public FluidStackParticle(ClientLevel world, FluidStack fluid, double x, double y, double z, double vx, double vy,
 		double vz) {
-		super(world, x, y, z, vx, vy, vz);
-
-		clientFluid = IClientFluidTypeExtensions.of(fluid.getFluid());
+		super(world, x, y, z, vx, vy, vz, FluidAppearance.stillTexture(fluid));
 
 		this.fluid = fluid;
-		this.setSprite(Minecraft.getInstance()
-			.getTextureAtlas(InventoryMenu.BLOCK_ATLAS)
-			.apply(clientFluid.getStillTexture(fluid)));
+		this.setSprite(FluidAppearance.stillTexture(fluid));
 
 		this.gravity = 1.0F;
 		this.rCol = 0.8F;
 		this.gCol = 0.8F;
 		this.bCol = 0.8F;
-		this.multiplyColor(clientFluid.getTintColor(fluid));
+		this.multiplyColor(FluidAppearance.tintColor(fluid));
 
 		this.xd = vx;
 		this.yd = vy;
@@ -58,8 +67,8 @@ public class FluidStackParticle extends TextureSheetParticle {
 	}
 
 	@Override
-	protected int getLightColor(float p_189214_1_) {
-		int brightnessForRender = super.getLightColor(p_189214_1_);
+	protected int getLightCoords(float p_189214_1_) {
+		int brightnessForRender = super.getLightCoords(p_189214_1_);
 		int skyLight = brightnessForRender >> 20;
 		int blockLight = (brightnessForRender >> 4) & 0xf;
 		blockLight = Math.max(blockLight, fluid.getFluid()
@@ -99,10 +108,10 @@ public class FluidStackParticle extends TextureSheetParticle {
 			remove();
 		if (!removed)
 			return;
-		if (!onGround && level.random.nextFloat() < 1 / 8f)
+		if (!onGround && level.getRandom().nextFloat() < 1 / 8f)
 			return;
 
-		Color color = new Color(clientFluid.getTintColor(fluid));
+		Color color = new Color(FluidAppearance.tintColor(fluid));
 		level.addParticle(ColorParticleOption.create(ParticleTypes.ENTITY_EFFECT, color.getRedAsFloat(), color.getGreenAsFloat(), color.getBlueAsFloat()), x, y, z, 0, 0, 0);
 	}
 
@@ -110,9 +119,13 @@ public class FluidStackParticle extends TextureSheetParticle {
 		return fluid.getFluid() instanceof PotionFluid;
 	}
 
+	/**
+	 * Fluid sprites live on the block atlas; the sprite itself decides whether the layer is
+	 * translucent.
+	 */
 	@Override
-	public @NotNull ParticleRenderType getRenderType() {
-		return ParticleRenderType.TERRAIN_SHEET;
+	protected @NotNull SingleQuadParticle.Layer getLayer() {
+		return SingleQuadParticle.Layer.bySprite(sprite);
 	}
 
 }

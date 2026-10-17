@@ -1,5 +1,9 @@
 package com.simibubi.create.content.trains;
 
+import net.neoforged.neoforge.client.gui.GuiLayer;
+import net.minecraft.client.renderer.RenderPipelines;
+import org.joml.Matrix3x2fStack;
+import net.createmod.catnip.api.client.network.ClientNetworkHelper;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.content.contraptions.actors.trainControls.ControlsBlock;
 import com.simibubi.create.content.contraptions.actors.trainControls.ControlsHandler;
@@ -10,16 +14,14 @@ import com.simibubi.create.foundation.gui.AllGuiTextures;
 import com.simibubi.create.foundation.utility.ControlsUtil;
 import com.simibubi.create.infrastructure.config.AllConfigs;
 
-import net.createmod.catnip.platform.CatnipServices;
-import net.createmod.catnip.animation.LerpedFloat;
-import net.createmod.catnip.animation.LerpedFloat.Chaser;
-import net.createmod.catnip.math.AngleHelper;
-import net.createmod.catnip.placement.PlacementClient;
+import net.createmod.catnip.api.animation.LerpedFloat;
+import net.createmod.catnip.api.animation.LerpedFloat.Chaser;
+import net.createmod.catnip.api.math.AngleHelper;
+import net.createmod.catnip.impl.client.placement.PlacementClient;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.LayeredDraw;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -30,7 +32,7 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemp
 
 public class TrainHUD {
 
-	public static final LayeredDraw.Layer OVERLAY = TrainHUD::renderOverlay;
+	public static final GuiLayer OVERLAY = TrainHUD::renderOverlay;
 
 	static LerpedFloat displayedSpeed = LerpedFloat.linear();
 	static LerpedFloat displayedThrottle = LerpedFloat.linear();
@@ -75,14 +77,14 @@ public class TrainHUD {
 		if (isSprintKeyPressed && honkPacketCooldown-- <= 0) {
 			train.determineHonk(mc.level);
 			if (train.lowHonk != null) {
-				CatnipServices.NETWORK.sendToServer(new HonkPacket.Serverbound(train, true));
+				ClientNetworkHelper.INSTANCE.sendToServer(new HonkPacket.Serverbound(train, true));
 				honkPacketCooldown = 5;
 				usedToHonk = true;
 			}
 		}
 
 		if (!isSprintKeyPressed && usedToHonk) {
-			CatnipServices.NETWORK.sendToServer(new HonkPacket.Serverbound(train, false));
+			ClientNetworkHelper.INSTANCE.sendToServer(new HonkPacket.Serverbound(train, false));
 			honkPacketCooldown = 0;
 			usedToHonk = false;
 		}
@@ -96,7 +98,7 @@ public class TrainHUD {
 		}
 
 		if (hudPacketCooldown-- <= 0) {
-			CatnipServices.NETWORK.sendToServer(new TrainHUDUpdatePacket.Serverbound(train, editedThrottle));
+			ClientNetworkHelper.INSTANCE.sendToServer(new TrainHUDUpdatePacket.Serverbound(train, editedThrottle));
 			hudPacketCooldown = 5;
 		}
 	}
@@ -107,10 +109,10 @@ public class TrainHUD {
 		return cce.getCarriage();
 	}
 
-	private static void renderOverlay(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
+	private static void renderOverlay(GuiGraphicsExtractor guiGraphics, DeltaTracker deltaTracker) {
 		float partialTicks = deltaTracker.getGameTimeDeltaPartialTick(false);
 		Minecraft mc = Minecraft.getInstance();
-		if (mc.options.hideGui || mc.gameMode.getPlayerMode() == GameType.SPECTATOR)
+		if (mc.gui.hud.isHidden() || mc.gameMode.getPlayerMode() == GameType.SPECTATOR)
 			return;
 
 		if (!(ControlsHandler.getContraption() instanceof CarriageContraptionEntity cce))
@@ -126,9 +128,9 @@ public class TrainHUD {
 		if (localPos == null)
 			return;
 
-		PoseStack poseStack = guiGraphics.pose();
-		poseStack.pushPose();
-		poseStack.translate(guiGraphics.guiWidth() / 2 - 91, guiGraphics.guiHeight() - 29, 0);
+		Matrix3x2fStack poseStack = guiGraphics.pose();
+		poseStack.pushMatrix();
+		poseStack.translate(guiGraphics.guiWidth() / 2 - 91, guiGraphics.guiHeight() - 29);
 
 		// Speed, Throttle
 
@@ -138,31 +140,29 @@ public class TrainHUD {
 		int w = (int) (AllGuiTextures.TRAIN_HUD_SPEED.getWidth() * displayedSpeed.getValue(partialTicks));
 		int h = AllGuiTextures.TRAIN_HUD_SPEED.getHeight();
 
-		guiGraphics.blit(AllGuiTextures.TRAIN_HUD_SPEED.location, 0, 0, 0, AllGuiTextures.TRAIN_HUD_SPEED.getStartX(),
-			AllGuiTextures.TRAIN_HUD_SPEED.getStartY(), w, h, 256, 256);
+		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, AllGuiTextures.TRAIN_HUD_SPEED.location, 0, 0, AllGuiTextures.TRAIN_HUD_SPEED.getStartX(), AllGuiTextures.TRAIN_HUD_SPEED.getStartY(), w, h, 256, 256);
 
 		int promptSize = (int) displayedPromptSize.getValue(partialTicks);
 		if (promptSize > 1) {
 
-			poseStack.pushPose();
-			poseStack.translate(promptSize / -2f + 91, -27, 0);
+			poseStack.pushMatrix();
+			poseStack.translate((float) (promptSize / -2f + 91), (float) (-27));
 
 			AllGuiTextures.TRAIN_PROMPT_L.render(guiGraphics, -3, 0);
 			AllGuiTextures.TRAIN_PROMPT_R.render(guiGraphics, promptSize, 0);
-			guiGraphics.blit(AllGuiTextures.TRAIN_PROMPT.location, 0, 0, 0, AllGuiTextures.TRAIN_PROMPT.getStartX() + (128 - promptSize / 2f),
-				AllGuiTextures.TRAIN_PROMPT.getStartY(), promptSize, AllGuiTextures.TRAIN_PROMPT.getHeight(), 256, 256);
+			guiGraphics.blit(RenderPipelines.GUI_TEXTURED, AllGuiTextures.TRAIN_PROMPT.location, 0, 0, AllGuiTextures.TRAIN_PROMPT.getStartX() + (128 - promptSize / 2f), AllGuiTextures.TRAIN_PROMPT.getStartY(), promptSize, AllGuiTextures.TRAIN_PROMPT.getHeight(), 256, 256);
 
-			poseStack.popPose();
+			poseStack.popMatrix();
 
 			Font font = mc.font;
 			if (currentPrompt != null && font.width(currentPrompt) < promptSize - 10) {
-				poseStack.pushPose();
-				poseStack.translate(font.width(currentPrompt) / -2f + 82, -27, 100);
+				poseStack.pushMatrix();
+				poseStack.translate(font.width(currentPrompt) / -2f + 82, -27);
 				if (currentPromptShadow)
-					guiGraphics.drawString(font, currentPrompt, 9, 4, 0x544D45);
+					guiGraphics.text(font, currentPrompt, 9, 4, 0xFF544D45);
 				else
-					guiGraphics.drawString(font, currentPrompt, 9, 4, 0x544D45, false);
-				poseStack.popPose();
+					guiGraphics.text(font, currentPrompt, 9, 4, 0xFF544D45, false);
+				poseStack.popMatrix();
 			}
 		}
 
@@ -170,8 +170,7 @@ public class TrainHUD {
 
 		w = (int) (AllGuiTextures.TRAIN_HUD_THROTTLE.getWidth() * (1 - displayedThrottle.getValue(partialTicks)));
 		int invW = AllGuiTextures.TRAIN_HUD_THROTTLE.getWidth() - w;
-		guiGraphics.blit(AllGuiTextures.TRAIN_HUD_THROTTLE.location, invW, 0, 0, AllGuiTextures.TRAIN_HUD_THROTTLE.getStartX() + invW,
-			AllGuiTextures.TRAIN_HUD_THROTTLE.getStartY(), w, h, 256, 256);
+		guiGraphics.blit(RenderPipelines.GUI_TEXTURED, AllGuiTextures.TRAIN_HUD_THROTTLE.location, invW, 0, AllGuiTextures.TRAIN_HUD_THROTTLE.getStartX() + invW, AllGuiTextures.TRAIN_HUD_THROTTLE.getStartY(), w, h, 256, 256);
 		AllGuiTextures.TRAIN_HUD_THROTTLE_POINTER.render(guiGraphics,
 			Math.max(1, AllGuiTextures.TRAIN_HUD_THROTTLE.getWidth() - w) - 3, -2);
 
@@ -202,11 +201,11 @@ public class TrainHUD {
 		float angle = diff + angleOffset;
 		float snappedAngle = (snapSize * Math.round(angle / snapSize)) % 360f;
 
-		poseStack.translate(91, -9, 0);
-		poseStack.scale(0.925f, 0.925f, 1);
-		PlacementClient.textured(poseStack, 0, 0, 1, snappedAngle);
+		poseStack.translate((float) (91), (float) (-9));
+		poseStack.scale((float) (0.925f), (float) (0.925f));
+		PlacementClient.textured(guiGraphics, 0, 0, 1, snappedAngle);
 
-		poseStack.popPose();
+		poseStack.popMatrix();
 	}
 
 	public static boolean onScroll(double delta) {

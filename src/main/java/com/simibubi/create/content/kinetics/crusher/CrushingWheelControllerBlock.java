@@ -1,5 +1,8 @@
 package com.simibubi.create.content.kinetics.crusher;
 
+import net.minecraft.world.entity.InsideBlockEffectApplier;
+import net.minecraft.world.level.ScheduledTickAccess;
+import net.minecraft.world.level.LevelReader;
 import org.jetbrains.annotations.NotNull;
 
 import com.mojang.serialization.MapCodec;
@@ -11,8 +14,10 @@ import com.simibubi.create.foundation.block.IBE;
 import com.simibubi.create.foundation.item.ItemHelper;
 import com.simibubi.create.infrastructure.config.AllConfigs;
 
-import net.createmod.catnip.data.Iterate;
-import net.createmod.catnip.nbt.NBTHelper;
+import net.createmod.catnip.api.data.Iterate;
+import net.createmod.catnip.api.nbt.NBTHelper;
+import com.simibubi.create.foundation.block.EntityRestingOnBlock;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -41,7 +46,7 @@ import net.minecraft.world.phys.shapes.EntityCollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-public class CrushingWheelControllerBlock extends DirectionalBlock implements IBE<CrushingWheelControllerBlockEntity> {
+public class CrushingWheelControllerBlock extends DirectionalBlock implements EntityRestingOnBlock, IBE<CrushingWheelControllerBlockEntity> {
 
 	public CrushingWheelControllerBlock(Properties p_i48440_1_) {
 		super(p_i48440_1_);
@@ -68,7 +73,9 @@ public class CrushingWheelControllerBlock extends DirectionalBlock implements IB
 		super.createBlockStateDefinition(builder);
 	}
 
-	public void entityInside(BlockState state, Level worldIn, BlockPos pos, Entity entityIn) {
+	@Override
+	public void entityInside(BlockState state, Level worldIn, BlockPos pos, Entity entityIn,
+		InsideBlockEffectApplier effectApplier, boolean isPrecise) {
 		if (!state.getValue(VALID))
 			return;
 
@@ -110,8 +117,7 @@ public class CrushingWheelControllerBlock extends DirectionalBlock implements IB
 	}
 
 	@Override
-	public void updateEntityAfterFallOn(BlockGetter worldIn, Entity entityIn) {
-		super.updateEntityAfterFallOn(worldIn, entityIn);
+	public void updateEntityAfterFallOn(Level worldIn, Entity entityIn) {
 		// Moved to onEntityCollision to allow for omnidirectional input
 	}
 
@@ -128,9 +134,10 @@ public class CrushingWheelControllerBlock extends DirectionalBlock implements IB
 	}
 
 	@Override
-	public BlockState updateShape(BlockState stateIn, Direction facing, BlockState facingState, LevelAccessor worldIn,
-		BlockPos currentPos, BlockPos facingPos) {
-		updateSpeed(stateIn, worldIn, currentPos);
+	public BlockState updateShape(BlockState stateIn, LevelReader worldIn, ScheduledTickAccess ticks,
+		BlockPos currentPos, Direction facing, BlockPos facingPos, BlockState facingState, RandomSource random) {
+		if (worldIn instanceof LevelAccessor levelAccess)
+			updateSpeed(stateIn, levelAccess, currentPos);
 		return stateIn;
 	}
 
@@ -165,6 +172,20 @@ public class CrushingWheelControllerBlock extends DirectionalBlock implements IB
 		});
 	}
 
+	/**
+	 * No outline, so nothing can target the controller: not the crosshair, not a click to break it.
+	 * <p>
+	 * The block used to be {@code air()}, and air was what kept players off it - both the client and
+	 * the server refuse to start breaking an air block. It had to stop being air (see
+	 * {@code AllBlocks.CRUSHING_WHEEL_CONTROLLER}), and without this it would be a full-block target
+	 * with no hardness, breaking the crusher in one click. An empty outline also lets skylight through
+	 * the gap, as air did.
+	 */
+	@Override
+	public VoxelShape getShape(BlockState state, BlockGetter worldIn, BlockPos pos, CollisionContext context) {
+		return Shapes.empty();
+	}
+
 	@Override
 	public VoxelShape getCollisionShape(BlockState state, BlockGetter worldIn, BlockPos pos, CollisionContext context) {
 		VoxelShape standardShape = AllShapes.CRUSHING_WHEEL_CONTROLLER_COLLISION.get(state.getValue(FACING));
@@ -187,15 +208,6 @@ public class CrushingWheelControllerBlock extends DirectionalBlock implements IB
 			return Shapes.empty();
 
 		return standardShape;
-	}
-
-	@Override
-	public void onRemove(BlockState state, Level worldIn, BlockPos pos, BlockState newState, boolean isMoving) {
-		if (!state.hasBlockEntity() || state.getBlock() == newState.getBlock())
-			return;
-
-		withBlockEntityDo(worldIn, pos, be -> ItemHelper.dropContents(worldIn, pos, be.inventory));
-		worldIn.removeBlockEntity(pos);
 	}
 
 	@Override

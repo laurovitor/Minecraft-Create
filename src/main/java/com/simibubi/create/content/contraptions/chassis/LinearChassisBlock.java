@@ -1,5 +1,8 @@
 package com.simibubi.create.content.contraptions.chassis;
 
+import net.minecraft.world.level.ScheduledTickAccess;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.util.RandomSource;
 import org.jetbrains.annotations.Nullable;
 
 import com.simibubi.create.AllBlocks;
@@ -13,7 +16,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.core.Direction.AxisDirection;
 import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
@@ -57,8 +59,8 @@ public class LinearChassisBlock extends AbstractChassisBlock {
 	}
 
 	@Override
-	public BlockState updateShape(BlockState state, Direction side, BlockState other, LevelAccessor p_196271_4_,
-		BlockPos p_196271_5_, BlockPos p_196271_6_) {
+	public BlockState updateShape(BlockState state, LevelReader p_196271_4_, ScheduledTickAccess ticks,
+		BlockPos p_196271_5_, Direction side, BlockPos p_196271_6_, BlockState other, RandomSource random) {
 		BooleanProperty property = getGlueableSide(state, side);
 		if (property == null || !sameKind(state, other) || state.getValue(AXIS) != other.getValue(AXIS))
 			return state;
@@ -99,7 +101,7 @@ public class LinearChassisBlock extends AbstractChassisBlock {
 		}
 
 		@Override
-		protected Direction getUpDirection(BlockAndTintGetter reader, BlockPos pos, BlockState state, Direction face) {
+		protected Direction getUpDirection(BlockGetter reader, BlockPos pos, BlockState state, Direction face) {
 			Axis axis = state.getValue(AXIS);
 			if (face.getAxis() == axis)
 				return super.getUpDirection(reader, pos, state, face);
@@ -107,7 +109,7 @@ public class LinearChassisBlock extends AbstractChassisBlock {
 		}
 
 		@Override
-		protected Direction getRightDirection(BlockAndTintGetter reader, BlockPos pos, BlockState state, Direction face) {
+		protected Direction getRightDirection(BlockGetter reader, BlockPos pos, BlockState state, Direction face) {
 			Axis axis = state.getValue(AXIS);
 			return axis != face.getAxis() && axis.isHorizontal() ? (face.getAxis()
 				.isHorizontal() ? Direction.DOWN : (axis == Axis.X ? Direction.NORTH : Direction.EAST))
@@ -141,7 +143,7 @@ public class LinearChassisBlock extends AbstractChassisBlock {
 		}
 
 		@Override
-		public boolean connectsTo(BlockState state, BlockState other, BlockAndTintGetter reader, BlockPos pos,
+		public boolean connectsTo(BlockState state, BlockState other, BlockGetter reader, BlockPos pos,
 			BlockPos otherPos, Direction face) {
 			Axis axis = state.getValue(AXIS);
 			boolean superConnect = face.getAxis() == axis ? super.connectsTo(state, other, reader, pos, otherPos, face)

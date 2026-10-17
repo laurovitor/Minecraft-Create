@@ -8,7 +8,10 @@
   "type": "create:crushing",
   "ingredients": [
     {
-      "item": "elementaryores:ore_copper_nether"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "elementaryores:ore_copper_nether"
+      ]
     }
   ],
   "processing_time": 350,

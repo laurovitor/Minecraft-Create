@@ -1,13 +1,14 @@
 package com.simibubi.create.compat.jei.category.animations;
 
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
+import org.joml.Matrix3x2fStack;
+
 import com.simibubi.create.AllBlocks;
 
-import net.createmod.catnip.gui.UIRenderHelper;
-import net.createmod.catnip.platform.NeoForgeCatnipServices;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.LightTexture;
+import net.createmod.catnip.api.client.render.FluidRenderHelper;
+import net.minecraft.world.level.block.state.BlockState;
+import net.createmod.catnip.api.client.gui.render.pip.GuiElementTransform;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.util.LightCoordsUtil;
 
 import net.neoforged.neoforge.fluids.FluidStack;
 
@@ -21,25 +22,29 @@ public class AnimatedItemDrain extends AnimatedKinetics {
 	}
 
 	@Override
-	public void draw(GuiGraphics graphics, int xOffset, int yOffset) {
-		PoseStack matrixStack = graphics.pose();
-		matrixStack.pushPose();
-		matrixStack.translate(xOffset, yOffset, 100);
-		matrixStack.mulPose(Axis.XP.rotationDegrees(-15.5f));
-		matrixStack.mulPose(Axis.YP.rotationDegrees(22.5f));
+	public void draw(GuiGraphicsExtractor graphics, int xOffset, int yOffset) {
+		viewRotation(-15.5f, 22.5f);
+		Matrix3x2fStack matrixStack = graphics.pose();
+		matrixStack.pushMatrix();
+		matrixStack.translate((float) (xOffset), (float) (yOffset));
 		int scale = 20;
 
-		blockElement(AllBlocks.ITEM_DRAIN.getDefaultState())
-			.scale(scale)
-			.render(graphics);
-
-		UIRenderHelper.flipForGuiRender(matrixStack);
-		matrixStack.scale(scale, scale, scale);
+		BlockState drain = AllBlocks.ITEM_DRAIN.getDefaultState();
 		float from = 2 / 16f;
 		float to = 1f - from;
-		NeoForgeCatnipServices.FLUID_RENDERER.renderFluidBox(fluid, from, from, from, to, 3 / 4f, to, graphics.bufferSource(), matrixStack, LightTexture.FULL_BRIGHT, false, true);
-		graphics.flush();
 
-		matrixStack.popPose();
+		// The fluid goes in the same pass as the drain so that the rim occludes it on depth, the way
+		// it did when both rode one pose stack.
+		scene(graphics, scale, (ps, col) -> {
+			part(ps, col, modelOf(drain), drain, 0, 0, 0, 0, 0, 0);
+
+			ps.pushPose();
+			GuiElementTransform.flipForGuiRender(ps);
+			FluidRenderHelper.submitFluidBox(col, fluid, from, from, from, to, 3 / 4f, to, ps,
+				LightCoordsUtil.FULL_BRIGHT, false, true);
+			ps.popPose();
+		});
+
+		matrixStack.popMatrix();
 	}
 }

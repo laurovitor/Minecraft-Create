@@ -19,14 +19,18 @@ import dev.engine_room.flywheel.lib.model.Models;
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
 import dev.engine_room.flywheel.lib.visual.AbstractBlockEntityVisual;
 import dev.engine_room.flywheel.lib.visual.SimpleTickableVisual;
-import net.createmod.catnip.animation.AnimationTickHolder;
-import net.minecraft.client.renderer.LightTexture;
+import net.createmod.catnip.api.client.animation.AnimationTickHolder;
+import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class SignalVisual extends AbstractBlockEntityVisual<SignalBlockEntity> implements SimpleTickableVisual {
+
+	// LightTexture.FULL_BLOCK is gone from LightCoordsUtil; the lit lamp still wants maximum block
+	// light with no sky contribution.
+	private static final int FULL_BLOCK_LIGHT = LightCoordsUtil.pack(15, 0);
 	private final TransformedInstance signalLight;
 	private final TransformedInstance signalOverlay;
 
@@ -86,7 +90,7 @@ public class SignalVisual extends AbstractBlockEntityVisual<SignalBlockEntity> i
 				.translate(getVisualPosition());
 
 			if (isRedLight)
-				signalLight.light(LightTexture.FULL_BLOCK);
+				signalLight.light(FULL_BLOCK_LIGHT);
 
 			signalLight.setChanged();
 

@@ -1,5 +1,8 @@
 package com.simibubi.create.content.contraptions.chassis;
 
+import com.simibubi.create.foundation.utility.ClientAccess;
+
+import net.createmod.catnip.api.platform.services.PlatformHelper;
 import java.util.List;
 
 import com.simibubi.create.AllBlockEntityTypes;
@@ -15,10 +18,8 @@ import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour
 
 import dan200.computercraft.api.peripheral.PeripheralCapability;
 import dev.engine_room.flywheel.lib.visualization.VisualizationHelper;
-import net.createmod.catnip.animation.LerpedFloat;
-import net.createmod.catnip.animation.LerpedFloat.Chaser;
-import net.createmod.catnip.platform.CatnipServices;
-import net.minecraft.client.Minecraft;
+import net.createmod.catnip.api.animation.LerpedFloat;
+import net.createmod.catnip.api.animation.LerpedFloat.Chaser;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -26,8 +27,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 
 public class StickerBlockEntity extends SmartBlockEntity {
@@ -61,7 +60,7 @@ public class StickerBlockEntity extends SmartBlockEntity {
 	@Override
 	public void initialize() {
 		super.initialize();
-		if (!level.isClientSide)
+		if (!level.isClientSide())
 			return;
 		piston.startWithValue(isBlockStateExtended() ? 1 : 0);
 	}
@@ -75,13 +74,13 @@ public class StickerBlockEntity extends SmartBlockEntity {
 	@Override
 	public void tick() {
 		super.tick();
-		if (!level.isClientSide)
+		if (!level.isClientSide())
 			return;
 		piston.tickChaser();
 
 		if (isAttachedToBlock() && piston.getValue(0) != piston.getValue() && piston.getValue() == 1) {
 			SuperGlueItem.spawnParticles(level, worldPosition, getBlockState().getValue(StickerBlock.FACING), true);
-			CatnipServices.PLATFORM.executeOnClientOnly(() -> () -> playSound(true));
+			PlatformHelper.INSTANCE.executeOnClientOnly(() -> () -> playSound(true));
 		}
 
 		if (!update)
@@ -89,10 +88,10 @@ public class StickerBlockEntity extends SmartBlockEntity {
 		update = false;
 		int target = isBlockStateExtended() ? 1 : 0;
 		if (isAttachedToBlock() && target == 0 && piston.getChaseTarget() == 1)
-			CatnipServices.PLATFORM.executeOnClientOnly(() -> () -> playSound(false));
+			PlatformHelper.INSTANCE.executeOnClientOnly(() -> () -> playSound(false));
 		piston.chase(target, .4f, Chaser.LINEAR);
 
-		CatnipServices.PLATFORM.executeOnClientOnly(() -> () -> VisualizationHelper.queueUpdate(this));
+		PlatformHelper.INSTANCE.executeOnClientOnly(() -> () -> VisualizationHelper.queueUpdate(this));
 	}
 
 	public boolean isAttachedToBlock() {
@@ -115,9 +114,8 @@ public class StickerBlockEntity extends SmartBlockEntity {
 			update = true;
 	}
 
-	@OnlyIn(Dist.CLIENT)
 	public void playSound(boolean attach) {
-		AllSoundEvents.SLIME_ADDED.play(level, Minecraft.getInstance().player, worldPosition, 0.35f, attach ? 0.75f : 0.2f);
+		AllSoundEvents.SLIME_ADDED.play(level, ClientAccess.player(), worldPosition, 0.35f, attach ? 0.75f : 0.2f);
 	}
 
 	@Override

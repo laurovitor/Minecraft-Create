@@ -1,16 +1,35 @@
 package com.simibubi.create.foundation.blockEntity;
 
+import net.neoforged.neoforge.transfer.transaction.Transaction;
+import net.neoforged.neoforge.transfer.IndexModifier;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemUtil;
+
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-
-import net.neoforged.neoforge.items.IItemHandlerModifiable;
+import net.neoforged.neoforge.transfer.item.ItemResource;
 
 public class ItemHandlerContainer implements Container {
-	protected final IItemHandlerModifiable inv;
 
-	public ItemHandlerContainer(IItemHandlerModifiable inv) {
+	protected final ResourceHandler<ItemResource> inv;
+
+	/**
+	 * The same inventory, seen as something whose slots can be written.
+	 * <p>
+	 * 26.2 keeps transfer and direct writes on separate interfaces and provides no type that is both,
+	 * so the two halves are held side by side - the shape NeoForge's own {@code ResourceHandlerSlot}
+	 * uses for the same reason.
+	 */
+	protected final IndexModifier<ItemResource> writable;
+
+	public <H extends ResourceHandler<ItemResource> & IndexModifier<ItemResource>> ItemHandlerContainer(H inv) {
+		this(inv, inv);
+	}
+
+	public ItemHandlerContainer(ResourceHandler<ItemResource> inv, IndexModifier<ItemResource> writable) {
 		this.inv = inv;
+		this.writable = writable;
 	}
 
 	/**
@@ -18,15 +37,19 @@ public class ItemHandlerContainer implements Container {
 	 */
 	@Override
 	public int getContainerSize() {
-		return inv.getSlots();
+		return inv.size();
 	}
 
 	/**
-	 * Returns the stack in this slot.  This stack should be a modifiable reference, not a copy of a stack in your inventory.
+	 * Returns the stack in this slot.
+	 * <p>
+	 * Container's contract asks for a modifiable reference, but a resource handler stores a resource
+	 * and an amount rather than a stack, so this is necessarily a copy. Callers that mutate the result
+	 * have to write it back with {@link #setItem}.
 	 */
 	@Override
 	public ItemStack getItem(int slot) {
-		return inv.getStackInSlot(slot);
+		return ItemUtil.getStack(inv, slot);
 	}
 
 	/**
@@ -34,8 +57,12 @@ public class ItemHandlerContainer implements Container {
 	 */
 	@Override
 	public ItemStack removeItem(int slot, int count) {
-		ItemStack stack = inv.getStackInSlot(slot);
-		return stack.isEmpty() ? ItemStack.EMPTY : stack.split(count);
+		try (Transaction transaction = Transaction.openRoot()) {
+			ItemResource transferredResource = inv.getResource(slot);
+			int transferred = transferredResource.isEmpty() ? 0 : inv.extract(slot, transferredResource, count, transaction);
+			transaction.commit();
+			return transferred <= 0 ? ItemStack.EMPTY : transferredResource.toStack(transferred);
+		}
 	}
 
 	/**
@@ -43,7 +70,7 @@ public class ItemHandlerContainer implements Container {
 	 */
 	@Override
 	public void setItem(int slot, ItemStack stack) {
-		inv.setStackInSlot(slot, stack);
+		writable.set(slot, ItemResource.of(stack), stack.getCount());
 	}
 
 	/**
@@ -61,8 +88,9 @@ public class ItemHandlerContainer implements Container {
 
 	@Override
 	public boolean isEmpty() {
-		for (int i = 0; i < inv.getSlots(); i++) {
-			if (!inv.getStackInSlot(i).isEmpty())
+		for (int i = 0; i < inv.size(); i++) {
+			if (!inv.getResource(i)
+				.isEmpty())
 				return false;
 		}
 		return true;
@@ -70,13 +98,13 @@ public class ItemHandlerContainer implements Container {
 
 	@Override
 	public boolean canPlaceItem(int slot, ItemStack stack) {
-		return inv.isItemValid(slot, stack);
+		return inv.isValid(slot, ItemResource.of(stack));
 	}
 
 	@Override
 	public void clearContent() {
-		for (int i = 0; i < inv.getSlots(); i++)
-			inv.setStackInSlot(i, ItemStack.EMPTY);
+		for (int i = 0; i < inv.size(); i++)
+			writable.set(i, ItemResource.EMPTY, 0);
 	}
 
 	//The following methods are never used by vanilla in crafting.  They are defunct as mods need not override them.
@@ -92,13 +120,5 @@ public class ItemHandlerContainer implements Container {
 	@Override
 	public boolean stillValid(Player player) {
 		return false;
-	}
-
-	@Override
-	public void startOpen(Player player) {
-	}
-
-	@Override
-	public void stopOpen(Player player) {
 	}
 }

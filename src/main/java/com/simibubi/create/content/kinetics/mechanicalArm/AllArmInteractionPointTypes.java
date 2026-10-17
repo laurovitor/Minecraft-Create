@@ -1,6 +1,13 @@
 package com.simibubi.create.content.kinetics.mechanicalArm;
 
-import java.util.Optional;
+import net.neoforged.neoforge.transfer.transaction.Transaction;
+import net.neoforged.neoforge.transfer.item.WorldlyContainerWrapper;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.crafting.SingleRecipeInput;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.server.level.ServerLevel;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
 
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.jetbrains.annotations.ApiStatus.Internal;
@@ -33,19 +40,16 @@ import com.simibubi.create.foundation.blockEntity.behaviour.filtering.FilteringB
 import com.simibubi.create.foundation.blockEntity.behaviour.inventory.InvManipulationBehaviour;
 import com.simibubi.create.foundation.item.SmartInventory;
 
-import net.createmod.catnip.math.VecHelper;
+import net.createmod.catnip.api.math.VecHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.Containers;
-import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.crafting.CampfireCookingRecipe;
-import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CampfireBlock;
@@ -58,10 +62,6 @@ import net.minecraft.world.level.block.entity.JukeboxBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.Vec3;
-
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
-import net.neoforged.neoforge.items.wrapper.SidedInvWrapper;
 
 public class AllArmInteractionPointTypes {
 	static {
@@ -361,9 +361,14 @@ public class AllArmInteractionPointTypes {
 		@Override
 		public ItemStack insert(ArmBlockEntity armBlockEntity, ItemStack stack, boolean simulate) {
 			ItemStack input = stack.copy();
-			InteractionResultHolder<ItemStack> res =
+			InteractionResult res =
 				BlazeBurnerBlock.tryInsert(cachedState, level, pos, input, false, false, simulate);
-			ItemStack remainder = res.getObject();
+			ItemStack remainder = ItemStack.EMPTY;
+			if (res instanceof InteractionResult.Success success) {
+				ItemStack transformed = success.heldItemTransformedTo();
+				if (transformed != null)
+					remainder = transformed;
+			}
 			if (input.isEmpty()) {
 				return remainder;
 			} else {
@@ -388,7 +393,7 @@ public class AllArmInteractionPointTypes {
 
 		@Override
 		protected Vec3 getInteractionPositionVector() {
-			return super.getInteractionPositionVector().add(Vec3.atLowerCornerOf(getInteractionDirection().getNormal())
+			return super.getInteractionPositionVector().add(Vec3.atLowerCornerOf(getInteractionDirection().getUnitVec3i())
 				.scale(.5f));
 		}
 
@@ -427,7 +432,7 @@ public class AllArmInteractionPointTypes {
 
 		@Override
 		protected Vec3 getInteractionPositionVector() {
-			return super.getInteractionPositionVector().add(Vec3.atLowerCornerOf(getInteractionDirection().getNormal())
+			return super.getInteractionPositionVector().add(Vec3.atLowerCornerOf(getInteractionDirection().getUnitVec3i())
 				.scale(.65f));
 		}
 
@@ -460,7 +465,7 @@ public class AllArmInteractionPointTypes {
 		@Override
 		protected Vec3 getInteractionPositionVector() {
 			Direction funnelFacing = FunnelBlock.getFunnelFacing(cachedState);
-			Vec3i normal = funnelFacing != null ? funnelFacing.getNormal() : Vec3i.ZERO;
+			Vec3i normal = funnelFacing != null ? funnelFacing.getUnitVec3i() : Vec3i.ZERO;
 			return VecHelper.getCenterOf(pos)
 				.add(Vec3.atLowerCornerOf(normal)
 					.scale(-.15f));
@@ -516,26 +521,29 @@ public class AllArmInteractionPointTypes {
 			BlockEntity blockEntity = level.getBlockEntity(pos);
 			if (!(blockEntity instanceof CampfireBlockEntity campfireBE))
 				return stack;
-			Optional<RecipeHolder<CampfireCookingRecipe>> recipe = campfireBE.getCookableRecipe(stack);
-			if (recipe.isEmpty())
+			if (!(level instanceof ServerLevel serverLevel))
 				return stack;
-			if (simulate) {
-				boolean hasSpace = false;
-				for (ItemStack campfireStack : campfireBE.getItems()) {
-					if (campfireStack.isEmpty()) {
-						hasSpace = true;
-						break;
-					}
+
+			boolean hasSpace = false;
+			for (ItemStack campfireStack : campfireBE.getItems()) {
+				if (campfireStack.isEmpty()) {
+					hasSpace = true;
+					break;
 				}
-				if (!hasSpace)
-					return stack;
-				ItemStack remainder = stack.copy();
-				remainder.shrink(1);
-				return remainder;
 			}
+			if (!hasSpace)
+				return stack;
+
+			if (serverLevel.recipeAccess()
+				.getRecipeFor(RecipeType.CAMPFIRE_COOKING, new SingleRecipeInput(stack), serverLevel)
+				.isEmpty())
+				return stack;
+
 			ItemStack remainder = stack.copy();
-			campfireBE.placeFood(null, remainder, recipe.get().value()
-				.getCookingTime());
+			if (simulate)
+				remainder.shrink(1);
+			else
+				campfireBE.placeFood(serverLevel, null, remainder);
 			return remainder;
 		}
 	}
@@ -561,7 +569,7 @@ public class AllArmInteractionPointTypes {
 
 		@Nullable
 		@Override
-		protected IItemHandler getHandler(ArmBlockEntity armBlockEntity) {
+		protected ResourceHandler<ItemResource> getHandler(ArmBlockEntity armBlockEntity) {
 			return null;
 		}
 
@@ -572,14 +580,25 @@ public class AllArmInteractionPointTypes {
 
 		@Override
 		public ItemStack insert(ArmBlockEntity armBlockEntity, ItemStack stack, boolean simulate) {
-			IItemHandler handler = new SidedInvWrapper(getContainer(), Direction.UP);
-			return ItemHandlerHelper.insertItem(handler, stack, simulate);
+			ResourceHandler<ItemResource> handler = new WorldlyContainerWrapper(getContainer(), Direction.UP);
+			try (Transaction transaction = Transaction.openRoot()) {
+				int transferred = stack.isEmpty() ? 0 : handler.insert(ItemResource.of(stack), stack.getCount(), transaction);
+				if (!simulate)
+					transaction.commit();
+				return transferred == stack.getCount() ? ItemStack.EMPTY : stack.copyWithCount(stack.getCount() - transferred);
+			}
 		}
 
 		@Override
 		public ItemStack extract(ArmBlockEntity armBlockEntity, int slot, int amount, boolean simulate) {
-			IItemHandler handler = new SidedInvWrapper(getContainer(), Direction.DOWN);
-			return handler.extractItem(slot, amount, simulate);
+			ResourceHandler<ItemResource> handler = new WorldlyContainerWrapper(getContainer(), Direction.DOWN);
+			try (Transaction transaction = Transaction.openRoot()) {
+				ItemResource transferred2Resource = handler.getResource(slot);
+				int transferred2 = transferred2Resource.isEmpty() ? 0 : handler.extract(slot, transferred2Resource, amount, transaction);
+				if (!simulate)
+					transaction.commit();
+				return transferred2 <= 0 ? ItemStack.EMPTY : transferred2Resource.toStack(transferred2);
+			}
 		}
 
 		@Override

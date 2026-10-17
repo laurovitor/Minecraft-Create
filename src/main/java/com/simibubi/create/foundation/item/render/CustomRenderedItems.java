@@ -1,43 +1,34 @@
 package com.simibubi.create.foundation.item.render;
 
-import java.util.Iterator;
-import java.util.Set;
-import java.util.function.Consumer;
+import java.util.IdentityHashMap;
+import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.Item;
-import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 
+/**
+ * The items Create draws itself.
+ * <p>
+ * These used to declare their renderer through NeoForge's client item extensions, which 26.2
+ * dropped along with the block-entity-without-level renderer. They are listed here instead, and
+ * {@link com.simibubi.create.foundation.model.ModelSwapper} wraps each one's baked model so the
+ * renderer is reached through the item's render state.
+ */
 public class CustomRenderedItems {
 
-	private static final Set<Item> ITEMS = new ReferenceOpenHashSet<>();
-	private static boolean itemsFiltered = false;
+	private static final Map<Item, CustomRenderedItemModelRenderer> ITEMS = new IdentityHashMap<>();
 
 	/**
-	 * Track an item that uses a subclass of {@link CustomRenderedItemModelRenderer} as its custom renderer
-	 * to automatically wrap its model with {@link CustomRenderedItemModel}.
-	 * @param item The item that should have its model swapped.
+	 * The renderer is built here rather than when the models are swapped: these renderers hold their
+	 * own {@link dev.engine_room.flywheel.lib.model.baked.PartialModel PartialModel}s in static
+	 * fields, and a partial only gets baked if it exists before the models are registered.
 	 */
-	public static void register(Item item) {
-		ITEMS.add(item);
+	public static void register(Item item, Supplier<CustomRenderedItemModelRenderer> renderer) {
+		ITEMS.put(item, renderer.get());
 	}
 
-	/**
-	 * This method must not be called before item registration is finished!
-	 */
-	public static void forEach(Consumer<Item> consumer) {
-		if (!itemsFiltered) {
-			Iterator<Item> iterator = ITEMS.iterator();
-			while (iterator.hasNext()) {
-				Item item = iterator.next();
-				if (!BuiltInRegistries.ITEM.containsValue(item) || !(IClientItemExtensions.of(item)
-					.getCustomRenderer() instanceof CustomRenderedItemModelRenderer)) {
-					iterator.remove();
-				}
-			}
-			itemsFiltered = true;
-		}
+	public static void forEach(BiConsumer<Item, CustomRenderedItemModelRenderer> consumer) {
 		ITEMS.forEach(consumer);
 	}
 

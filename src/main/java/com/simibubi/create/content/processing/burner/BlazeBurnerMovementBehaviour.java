@@ -1,5 +1,7 @@
 package com.simibubi.create.content.processing.burner;
 
+import com.simibubi.create.content.contraptions.render.ActorGeometry;
+import java.util.List;
 import com.simibubi.create.api.behaviour.movement.MovementBehaviour;
 import com.simibubi.create.content.contraptions.Contraption;
 import com.simibubi.create.content.contraptions.behaviour.MovementContext;
@@ -9,13 +11,12 @@ import com.simibubi.create.content.trains.entity.CarriageContraption;
 import com.simibubi.create.content.trains.entity.CarriageContraptionEntity;
 import com.simibubi.create.foundation.virtualWorld.VirtualRenderWorld;
 
-import net.createmod.catnip.animation.LerpedFloat;
-import net.createmod.catnip.animation.LerpedFloat.Chaser;
-import net.createmod.catnip.data.Iterate;
-import net.createmod.catnip.math.AngleHelper;
-import net.createmod.catnip.math.VecHelper;
+import net.createmod.catnip.api.animation.LerpedFloat;
+import net.createmod.catnip.api.animation.LerpedFloat.Chaser;
+import net.createmod.catnip.api.data.Iterate;
+import net.createmod.catnip.api.math.AngleHelper;
+import net.createmod.catnip.api.math.VecHelper;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.core.particles.ParticleTypes;
@@ -25,9 +26,6 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
-
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 public class BlazeBurnerMovementBehaviour implements MovementBehaviour {
 
@@ -62,12 +60,12 @@ public class BlazeBurnerMovementBehaviour implements MovementBehaviour {
 		context.data.remove("Conductor");
 	}
 
-	private boolean shouldRender(MovementContext context) {
+	boolean shouldRender(MovementContext context) {
 		return context.state.getOptionalValue(BlazeBurnerBlock.HEAT_LEVEL)
 			.orElse(HeatLevel.NONE) != HeatLevel.NONE;
 	}
 
-	private LerpedFloat getHeadAngle(MovementContext context) {
+	LerpedFloat getHeadAngle(MovementContext context) {
 		if (!(context.temporaryData instanceof LerpedFloat))
 			context.temporaryData = LerpedFloat.angular()
 				.startWithValue(getTargetAngle(context));
@@ -83,7 +81,7 @@ public class BlazeBurnerMovementBehaviour implements MovementBehaviour {
 				.getAxis() == Axis.X ? angle + 180 : angle;
 		}
 
-		Entity player = Minecraft.getInstance().cameraEntity;
+		Entity player = Minecraft.getInstance().getCameraEntity();
 		if (player != null && !player.isInvisible() && context.position != null) {
 			Vec3 applyRotation = context.contraption.entity.reverseRotation(player.position()
 				.subtract(context.position), 1);
@@ -94,11 +92,11 @@ public class BlazeBurnerMovementBehaviour implements MovementBehaviour {
 		return 0;
 	}
 
-	private boolean shouldRenderHat(MovementContext context) {
+	boolean shouldRenderHat(MovementContext context) {
 		CompoundTag data = context.data;
 		if (!data.contains("Conductor"))
 			data.putBoolean("Conductor", determineIfConducting(context));
-		return data.getBoolean("Conductor") && (context.contraption.entity instanceof CarriageContraptionEntity cce)
+		return data.getBooleanOr("Conductor", false) && (context.contraption.entity instanceof CarriageContraptionEntity cce)
 			&& cce.hasSchedule();
 	}
 
@@ -118,14 +116,5 @@ public class BlazeBurnerMovementBehaviour implements MovementBehaviour {
 		return true;
 	}
 
-	@Override
-	@OnlyIn(Dist.CLIENT)
-	public void renderInContraption(MovementContext context, VirtualRenderWorld renderWorld,
-		ContraptionMatrices matrices, MultiBufferSource buffer) {
-		if (!shouldRender(context))
-			return;
-		BlazeBurnerRenderer.renderInContraption(context, renderWorld, matrices, buffer, getHeadAngle(context),
-			shouldRenderHat(context));
-	}
 
 }

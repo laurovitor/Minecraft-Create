@@ -1,15 +1,15 @@
 package com.simibubi.create.content.kinetics.chainConveyor;
 
+import net.createmod.catnip.api.client.network.ClientNetworkHelper;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllSoundEvents;
 import com.simibubi.create.content.equipment.blueprint.BlueprintOverlayRenderer;
-import net.createmod.catnip.platform.CatnipServices;
 import com.simibubi.create.foundation.utility.CreateLang;
 import com.simibubi.create.infrastructure.config.AllConfigs;
 
-import net.createmod.catnip.data.Iterate;
-import net.createmod.catnip.math.VecHelper;
-import net.createmod.catnip.outliner.Outliner;
+import net.createmod.catnip.api.data.Iterate;
+import net.createmod.catnip.api.math.VecHelper;
+import net.createmod.catnip.api.client.outliner.Outliner;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -105,7 +105,7 @@ public class ChainConveyorConnectionHandler {
 			return;
 		}
 
-		SoundType soundtype = Blocks.CHAIN.defaultBlockState()
+		SoundType soundtype = Blocks.IRON_CHAIN.defaultBlockState()
 			.getSoundType();
 		if (soundtype != null)
 			level.playSound(player, pos, soundtype.getPlaceSound(), SoundSource.BLOCKS,
@@ -113,7 +113,7 @@ public class ChainConveyorConnectionHandler {
 	}
 
 	private static boolean isChain(ItemStack itemStack) {
-		return itemStack.is(Items.CHAIN); // Replace with tag? generic renderer?
+		return itemStack.is(Items.IRON_CHAIN); // Replace with tag? generic renderer?
 	}
 
 	public static void clientTick() {
@@ -262,7 +262,7 @@ public class ChainConveyorConnectionHandler {
 		if (simulate)
 			return true;
 
-		CatnipServices.NETWORK.sendToServer(new ChainConveyorConnectionPacket(firstPos, pos, chain, true));
+		ClientNetworkHelper.INSTANCE.sendToServer(new ChainConveyorConnectionPacket(firstPos, pos, chain, true));
 
 		CreateLang.text("") // Clear status message
 			.sendStatus(player);

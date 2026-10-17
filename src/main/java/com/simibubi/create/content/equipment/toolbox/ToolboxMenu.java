@@ -1,5 +1,9 @@
 package com.simibubi.create.content.equipment.toolbox;
 
+import net.minecraft.world.level.Level;
+
+import com.simibubi.create.foundation.utility.ClientAccess;
+
 import static com.simibubi.create.content.equipment.toolbox.ToolboxInventory.STACKS_PER_COMPARTMENT;
 
 import com.simibubi.create.AllMenuTypes;
@@ -7,14 +11,12 @@ import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour
 import com.simibubi.create.foundation.blockEntity.behaviour.animatedContainer.AnimatedContainerBehaviour;
 import com.simibubi.create.foundation.gui.menu.MenuBase;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
@@ -41,7 +43,7 @@ public class ToolboxMenu extends MenuBase<ToolboxBlockEntity> {
 		BlockPos readBlockPos = extraData.readBlockPos();
 		CompoundTag readNbt = extraData.readNbt();
 
-		ClientLevel world = Minecraft.getInstance().level;
+		Level world = ClientAccess.level();
 		BlockEntity blockEntity = world.getBlockEntity(readBlockPos);
 		if (blockEntity instanceof ToolboxBlockEntity toolbox) {
 			toolbox.readClient(readNbt, extraData.registryAccess());
@@ -58,11 +60,11 @@ public class ToolboxMenu extends MenuBase<ToolboxBlockEntity> {
 			return ItemStack.EMPTY;
 
 		ItemStack stack = clickedSlot.getItem();
-		int size = contentHolder.inventory.getSlots();
+		int size = contentHolder.inventory.size();
 		boolean success;
 		if (index < size) {
 			success = !moveItemStackTo(stack, size, slots.size(), true);
-			contentHolder.inventory.onContentsChanged(index);
+			contentHolder.inventory.onContentsChanged(index, ItemStack.EMPTY);
 		} else {
 			success = !moveItemStackTo(stack, 0, size, false);
 		}
@@ -76,14 +78,14 @@ public class ToolboxMenu extends MenuBase<ToolboxBlockEntity> {
 	}
 
 	@Override
-	public void clicked(int index, int flags, ClickType type, Player player) {
-		int size = contentHolder.inventory.getSlots();
+	public void clicked(int index, int flags, ContainerInput type, Player player) {
+		int size = contentHolder.inventory.size();
 
 		if (index >= 0 && index < size) {
 			ItemStack itemInClickedSlot = getSlot(index).getItem();
 			ItemStack carried = getCarried();
 
-			if (type == ClickType.PICKUP && !carried.isEmpty() && !itemInClickedSlot.isEmpty()
+			if (type == ContainerInput.PICKUP && !carried.isEmpty() && !itemInClickedSlot.isEmpty()
 				&& ToolboxInventory.canItemsShareCompartment(itemInClickedSlot, carried)) {
 				int subIndex = index % STACKS_PER_COMPARTMENT;
 				if (subIndex != STACKS_PER_COMPARTMENT - 1) {
@@ -92,8 +94,8 @@ public class ToolboxMenu extends MenuBase<ToolboxBlockEntity> {
 				}
 			}
 
-			if (type == ClickType.PICKUP && carried.isEmpty() && itemInClickedSlot.isEmpty())
-				if (!player.level().isClientSide) {
+			if (type == ContainerInput.PICKUP && carried.isEmpty() && itemInClickedSlot.isEmpty())
+				if (!player.level().isClientSide()) {
 					contentHolder.inventory.filters.set(index / STACKS_PER_COMPARTMENT, ItemStack.EMPTY);
 					contentHolder.sendData();
 				}
@@ -104,7 +106,7 @@ public class ToolboxMenu extends MenuBase<ToolboxBlockEntity> {
 
 	@Override
 	public boolean canDragTo(Slot slot) {
-		return slot.index > contentHolder.inventory.getSlots() && super.canDragTo(slot);
+		return slot.index > contentHolder.inventory.size() && super.canDragTo(slot);
 	}
 
 	public ItemStack getFilter(int compartment) {
@@ -154,7 +156,7 @@ public class ToolboxMenu extends MenuBase<ToolboxBlockEntity> {
 	@Override
 	public void removed(Player playerIn) {
 		super.removed(playerIn);
-		if (!playerIn.level().isClientSide)
+		if (!playerIn.level().isClientSide())
 			BlockEntityBehaviour.get(contentHolder, AnimatedContainerBehaviour.TYPE)
 				.stopOpen(playerIn);
 	}

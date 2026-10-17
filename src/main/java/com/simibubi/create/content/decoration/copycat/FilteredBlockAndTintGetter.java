@@ -2,9 +2,10 @@ package com.simibubi.create.content.decoration.copycat;
 
 import java.util.function.Predicate;
 
+import net.minecraft.world.level.CardinalLighting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.world.level.ColorResolver;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -12,7 +13,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.lighting.LevelLightEngine;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
-import net.neoforged.neoforge.client.model.data.ModelData;
+import net.neoforged.neoforge.model.data.ModelData;
 
 public class FilteredBlockAndTintGetter implements BlockAndTintGetter {
 
@@ -45,13 +46,13 @@ public class FilteredBlockAndTintGetter implements BlockAndTintGetter {
 	}
 
 	@Override
-	public int getMinBuildHeight() {
-		return wrapped.getMinBuildHeight();
+	public int getMinY() {
+		return wrapped.getMinY();
 	}
 
 	@Override
-	public float getShade(Direction pDirection, boolean pShade) {
-		return wrapped.getShade(pDirection, pShade);
+	public CardinalLighting cardinalLighting() {
+		return wrapped.cardinalLighting();
 	}
 
 	@Override

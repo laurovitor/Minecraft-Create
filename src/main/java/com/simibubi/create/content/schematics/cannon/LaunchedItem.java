@@ -1,5 +1,11 @@
 package com.simibubi.create.content.schematics.cannon;
 
+import com.simibubi.create.foundation.utility.RegistryNbt;
+import net.minecraft.world.level.storage.TagValueOutput;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.entity.EntitySpawnRequest;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.util.ProblemReporter;
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -13,14 +19,13 @@ import com.simibubi.create.content.kinetics.belt.item.BeltConnectorItem;
 import com.simibubi.create.content.kinetics.simpleRelays.AbstractSimpleShaftBlock;
 import com.simibubi.create.foundation.utility.BlockHelper;
 
-import net.createmod.catnip.nbt.NBTHelper;
+import net.createmod.catnip.api.nbt.NBTHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
-import net.minecraft.nbt.Tag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -58,7 +63,7 @@ public abstract class LaunchedItem {
 			ticksRemaining--;
 			return false;
 		}
-		if (world.isClientSide)
+		if (world.isClientSide())
 			return false;
 
 		place(world);
@@ -69,8 +74,8 @@ public abstract class LaunchedItem {
 		CompoundTag c = new CompoundTag();
 		c.putInt("TotalTicks", totalTicks);
 		c.putInt("TicksLeft", ticksRemaining);
-		c.put("Stack", stack.saveOptional(registries));
-		c.put("Target", NbtUtils.writeBlockPos(target));
+		c.store("Stack", ItemStack.OPTIONAL_CODEC, RegistryNbt.ops(registries), stack);
+		c.store("Target", BlockPos.CODEC, target);
 		return c;
 	}
 
@@ -85,9 +90,9 @@ public abstract class LaunchedItem {
 
 	void readNBT(CompoundTag c, HolderLookup.Provider registries, HolderGetter<Block> holderGetter) {
 		target = NBTHelper.readBlockPos(c, "Target");
-		ticksRemaining = c.getInt("TicksLeft");
-		totalTicks = c.getInt("TotalTicks");
-		stack = ItemStack.parseOptional(registries, c.getCompound("Stack"));
+		ticksRemaining = c.getIntOr("TicksLeft", 0);
+		totalTicks = c.getIntOr("TotalTicks", 0);
+		stack = c.read("Stack", ItemStack.OPTIONAL_CODEC, RegistryNbt.ops(registries)).orElse(ItemStack.EMPTY);
 	}
 
 	public static class ForBlockState extends LaunchedItem {
@@ -119,9 +124,9 @@ public abstract class LaunchedItem {
 		@Override
 		void readNBT(CompoundTag nbt, HolderLookup.Provider registries, HolderGetter<Block> holderGetter) {
 			super.readNBT(nbt, registries, holderGetter);
-			state = NbtUtils.readBlockState(holderGetter, nbt.getCompound("BlockState"));
-			if (nbt.contains("Data", Tag.TAG_COMPOUND)) {
-				data = nbt.getCompound("Data");
+			state = NbtUtils.readBlockState(holderGetter, nbt.getCompoundOrEmpty("BlockState"));
+			if (nbt.contains("Data")) {
+				data = nbt.getCompoundOrEmpty("Data");
 			}
 		}
 
@@ -143,15 +148,16 @@ public abstract class LaunchedItem {
 			CompoundTag serializeNBT = super.serializeNBT(registries);
 			serializeNBT.putInt("Length", length);
 			serializeNBT.putIntArray("Casing", Arrays.stream(casings)
-				.map(CasingType::ordinal)
-				.toList());
+				.mapToInt(CasingType::ordinal)
+				.toArray());
 			return serializeNBT;
 		}
 
 		@Override
 		void readNBT(CompoundTag nbt, HolderLookup.Provider registries, HolderGetter<Block> holderGetter) {
-			length = nbt.getInt("Length");
-			int[] intArray = nbt.getIntArray("Casing");
+			length = nbt.getIntOr("Length", 0);
+			int[] intArray = nbt.getIntArray("Casing")
+				.orElseGet(() -> new int[0]);
 			casings = new CasingType[length];
 			for (int i = 0; i < casings.length; i++)
 				casings[i] = i >= intArray.length ? CasingType.NONE
@@ -206,7 +212,9 @@ public abstract class LaunchedItem {
 		public boolean update(Level world) {
 			if (deferredTag != null && entity == null) {
 				try {
-					Optional<Entity> loadEntityUnchecked = EntityType.create(deferredTag, world);
+					Optional<Entity> loadEntityUnchecked = EntityType.create(
+						TagValueInput.create(ProblemReporter.DISCARDING, world.registryAccess(), deferredTag), world,
+						new EntitySpawnRequest(EntitySpawnReason.LOAD, true));
 					if (!loadEntityUnchecked.isPresent())
 						return true;
 					entity = loadEntityUnchecked.get();
@@ -222,7 +230,11 @@ public abstract class LaunchedItem {
 		public CompoundTag serializeNBT(HolderLookup.Provider registries) {
 			CompoundTag serializeNBT = super.serializeNBT(registries);
 			if (entity != null)
-				serializeNBT.put("Entity", entity.serializeNBT(registries));
+			{
+				TagValueOutput entityOutput = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, registries);
+				entity.save(entityOutput);
+				serializeNBT.put("Entity", entityOutput.buildResult());
+			}
 			return serializeNBT;
 		}
 
@@ -230,7 +242,7 @@ public abstract class LaunchedItem {
 		void readNBT(CompoundTag nbt, HolderLookup.Provider registries, HolderGetter<Block> holderGetter) {
 			super.readNBT(nbt, registries, holderGetter);
 			if (nbt.contains("Entity"))
-				deferredTag = nbt.getCompound("Entity");
+				deferredTag = nbt.getCompoundOrEmpty("Entity");
 		}
 
 		@Override

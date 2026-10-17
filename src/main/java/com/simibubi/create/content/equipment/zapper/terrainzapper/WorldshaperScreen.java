@@ -16,7 +16,7 @@ import com.simibubi.create.foundation.gui.widget.ScrollInput;
 import com.simibubi.create.foundation.gui.widget.SelectionScrollInput;
 import com.simibubi.create.foundation.utility.CreateLang;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
@@ -51,7 +51,8 @@ public class WorldshaperScreen extends ZapperScreen {
 
 	public WorldshaperScreen(ItemStack zapper, InteractionHand hand) {
 		super(AllGuiTextures.TERRAINZAPPER, zapper, hand);
-		fontColor = 0x767676;
+		// 26.2 draws nothing when a text colour has no alpha
+		fontColor = 0xFF767676;
 		title = zapper.getHoverName();
 
 		currentBrush = zapper.getOrDefault(AllDataComponents.SHAPER_BRUSH, TerrainBrushes.Cuboid);
@@ -186,7 +187,7 @@ public class WorldshaperScreen extends ZapperScreen {
 		toolButtons = new ArrayList<>(toolValues.length);
 		for (int id = 0; id < toolValues.length; id++) {
 			TerrainTools tool = toolValues[id];
-			IconButton toolButton = new IconButton(x + 7 + id * 18, y + 79, tool.icon);
+			IconButton toolButton = new IconButton(x + 7 + id * 18, y + 79, TerrainZapperIcons.of(tool));
 			toolButton.withCallback(() -> {
 				toolButtons.forEach(b -> b.green = false);
 				toolButton.green = true;
@@ -218,7 +219,7 @@ public class WorldshaperScreen extends ZapperScreen {
 			placementButtons = new ArrayList<>(placementValues.length);
 			for (int id = 0; id < placementValues.length; id++) {
 				PlacementOptions option = placementValues[id];
-				IconButton placementButton = new IconButton(x + 136 + id * 18, y + 79, option.icon);
+				IconButton placementButton = new IconButton(x + 136 + id * 18, y + 79, TerrainZapperIcons.of(option));
 				placementButton.withCallback(() -> {
 					placementButtons.forEach(b -> b.green = false);
 					placementButton.green = true;
@@ -235,16 +236,16 @@ public class WorldshaperScreen extends ZapperScreen {
 	}
 
 	@Override
-	protected void drawOnBackground(GuiGraphics graphics, int x, int y) {
+	protected void drawOnBackground(GuiGraphicsExtractor graphics, int x, int y) {
 		super.drawOnBackground(graphics, x, y);
 
 		Brush currentBrush = this.currentBrush.get();
 		for (int index = 2; index >= currentBrush.amtParams; index--)
 			AllGuiTextures.TERRAINZAPPER_INACTIVE_PARAM.render(graphics, x + 56 + 20 * index, y + 40);
 
-		graphics.drawString(font, toolSection, x + 7, y + 69, fontColor, false);
+		graphics.text(font, toolSection, x + 7, y + 69, fontColor, false);
 		if (currentBrush.hasPlacementOptions())
-			graphics.drawString(font, placementSection, x + 136, y + 69, fontColor, false);
+			graphics.text(font, placementSection, x + 136, y + 69, fontColor, false);
 	}
 
 	@Override

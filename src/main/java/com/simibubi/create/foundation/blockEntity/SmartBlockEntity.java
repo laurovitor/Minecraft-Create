@@ -19,7 +19,7 @@ import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour
 import com.simibubi.create.foundation.utility.IInteractionChecker;
 
 import it.unimi.dsi.fastutil.objects.Reference2ObjectArrayMap;
-import net.createmod.ponder.api.VirtualBlockEntity;
+import net.createmod.ponder.api.client.VirtualBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -157,6 +157,18 @@ public abstract class SmartBlockEntity extends CachedRenderBBBlockEntity
 		forEachBehaviour(BlockEntityBehaviour::destroy);
 	}
 
+	/**
+	 * 26.2 removes the block entity itself when a block is replaced, and offers this hook for
+	 * whatever the block entity wanted to do on the way out - which is exactly what
+	 * {@link #destroy()} is for. It only fires on the server, and only when the block entity is not
+	 * being kept across the state change.
+	 */
+	@Override
+	public void preRemoveSideEffects(BlockPos pos, BlockState state) {
+		super.preRemoveSideEffects(pos, state);
+		destroy();
+	}
+
 	@Override
 	public final void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
 		write(tag, registries, false);
@@ -224,7 +236,7 @@ public abstract class SmartBlockEntity extends CachedRenderBBBlockEntity
 	@Override
 	public boolean canPlayerUse(Player player) {
 		if (level != null && level.getBlockEntity(worldPosition) == this) {
-			return player.canInteractWithBlock(worldPosition, 8);
+			return player.isWithinBlockInteractionRange(worldPosition, 8);
 		}
 
 		return false;

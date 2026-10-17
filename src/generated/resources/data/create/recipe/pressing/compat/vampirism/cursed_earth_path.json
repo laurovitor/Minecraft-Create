@@ -8,7 +8,10 @@
   "type": "create:pressing",
   "ingredients": [
     {
-      "item": "vampirism:cursed_earth"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "vampirism:cursed_earth"
+      ]
     }
   ],
   "results": [

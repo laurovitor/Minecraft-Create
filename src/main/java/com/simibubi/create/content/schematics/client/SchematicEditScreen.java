@@ -1,7 +1,9 @@
 package com.simibubi.create.content.schematics.client;
 
+import net.minecraft.client.input.KeyEvent;
 import java.util.List;
 
+import com.simibubi.create.foundation.gui.widget.FilteredEditBox;
 import com.simibubi.create.AllDataComponents;
 import com.simibubi.create.AllItems;
 import com.simibubi.create.CreateClient;
@@ -13,9 +15,9 @@ import com.simibubi.create.foundation.gui.widget.ScrollInput;
 import com.simibubi.create.foundation.gui.widget.SelectionScrollInput;
 import com.simibubi.create.foundation.utility.CreateLang;
 
-import net.createmod.catnip.gui.AbstractSimiScreen;
-import net.createmod.catnip.gui.element.GuiGameElement;
-import net.minecraft.client.gui.GuiGraphics;
+import net.createmod.catnip.api.client.gui.AbstractSimiScreen;
+import net.createmod.catnip.api.client.gui.element.GuiGameElement;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.NbtUtils;
@@ -37,9 +39,9 @@ public class SchematicEditScreen extends AbstractSimiScreen {
 
 	private AllGuiTextures background;
 
-	private EditBox xInput;
-	private EditBox yInput;
-	private EditBox zInput;
+	private FilteredEditBox xInput;
+	private FilteredEditBox yInput;
+	private FilteredEditBox zInput;
 	private IconButton confirmButton;
 
 	private ScrollInput rotationArea;
@@ -60,9 +62,9 @@ public class SchematicEditScreen extends AbstractSimiScreen {
 		int x = guiLeft;
 		int y = guiTop + 2;
 
-		xInput = new EditBox(font, x + 50, y + 26, 34, 10, CommonComponents.EMPTY);
-		yInput = new EditBox(font, x + 90, y + 26, 34, 10, CommonComponents.EMPTY);
-		zInput = new EditBox(font, x + 130, y + 26, 34, 10, CommonComponents.EMPTY);
+		xInput = new FilteredEditBox(font, x + 50, y + 26, 34, 10, CommonComponents.EMPTY);
+		yInput = new FilteredEditBox(font, x + 90, y + 26, 34, 10, CommonComponents.EMPTY);
+		zInput = new FilteredEditBox(font, x + 130, y + 26, 34, 10, CommonComponents.EMPTY);
 
 		BlockPos anchor = handler.getTransformation()
 			.getAnchor();
@@ -77,12 +79,12 @@ public class SchematicEditScreen extends AbstractSimiScreen {
 			zInput.setValue("" + alt.getZ());
 		}
 
-		for (EditBox widget : new EditBox[]{xInput, yInput, zInput}) {
+		for (FilteredEditBox widget : new FilteredEditBox[] { xInput, yInput, zInput }) {
 			widget.setMaxLength(6);
 			widget.setBordered(false);
-			widget.setTextColor(0xFFFFFF);
+			widget.setTextColor(0xFFFFFFFF);
 			widget.setFocused(false);
-			widget.mouseClicked(0, 0, 0);
+			widget.setFocused(true);
 			widget.setFilter(s -> {
 				if (s.isEmpty() || s.equals("-"))
 					return true;
@@ -123,8 +125,11 @@ public class SchematicEditScreen extends AbstractSimiScreen {
 	}
 
 	@Override
-	public boolean keyPressed(int code, int p_keyPressed_2_, int p_keyPressed_3_) {
-		if (isPaste(code)) {
+	public boolean keyPressed(KeyEvent event) {
+		int code = event.key();
+		int p_keyPressed_2_ = event.scancode();
+		int p_keyPressed_3_ = event.modifiers();
+		if (event.isPaste()) {
 			String coords = minecraft.keyboardHandler.getClipboard();
 			if (coords != null && !coords.isEmpty()) {
 				coords.replaceAll(" ", "");
@@ -148,22 +153,22 @@ public class SchematicEditScreen extends AbstractSimiScreen {
 			}
 		}
 
-		return super.keyPressed(code, p_keyPressed_2_, p_keyPressed_3_);
+		return super.keyPressed(event);
 	}
 
 	@Override
-	protected void renderWindow(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+	protected void renderWindow(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks) {
 		int x = guiLeft;
 		int y = guiTop;
 
 		background.render(graphics, x, y);
 		String title = handler.getCurrentSchematicName();
-		graphics.drawString(font, title, x + (background.getWidth() - 8 - font.width(title)) / 2, y + 4, 0x505050, false);
+		graphics.text(font, title, x + (background.getWidth() - 8 - font.width(title)) / 2, y + 4, 0xFF505050, false);
 
 		GuiGameElement.of(AllItems.SCHEMATIC.asStack())
 			.<GuiGameElement.GuiRenderBuilder>at(x + background.getWidth() + 6, y + background.getHeight() - 40, -200)
 			.scale(3)
-			.render(graphics);
+			.submit(graphics);
 	}
 
 	@Override

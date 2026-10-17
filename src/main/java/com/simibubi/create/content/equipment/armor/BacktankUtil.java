@@ -1,5 +1,7 @@
 package com.simibubi.create.content.equipment.armor;
 
+import com.simibubi.create.foundation.utility.ClientAccess;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -15,8 +17,8 @@ import com.simibubi.create.infrastructure.config.AllConfigs;
 import net.neoforged.api.distmarker.Dist;
 
 import it.unimi.dsi.fastutil.objects.Object2IntMap.Entry;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
@@ -39,9 +41,13 @@ public class BacktankUtil {
 	static {
 		addBacktankSupplier(entity -> {
 			List<ItemStack> stacks = new ArrayList<>();
-			for (ItemStack itemStack : entity.getArmorSlots())
+			for (EquipmentSlot slot : EquipmentSlot.VALUES) {
+				if (slot.getType() != EquipmentSlot.Type.HUMANOID_ARMOR)
+					continue;
+				ItemStack itemStack = entity.getItemBySlot(slot);
 				if (AllTags.AllItemTags.PRESSURIZED_AIR_SOURCES.matches(itemStack))
 					stacks.add(itemStack);
+			}
 
 			return stacks;
 		});
@@ -143,7 +149,7 @@ public class BacktankUtil {
 	public static boolean isBarVisible(ItemStack stack, int usesPerTank) {
 		if (usesPerTank == 0)
 			return false;
-		Player player = DistExecutor.unsafeCallWhenOn(Dist.CLIENT, () -> () -> Minecraft.getInstance().player);
+		Player player = DistExecutor.unsafeCallWhenOn(Dist.CLIENT, () -> () -> ClientAccess.player());
 		if (player == null)
 			return false;
 		List<ItemStack> backtanks = getAllWithAir(player);
@@ -155,7 +161,7 @@ public class BacktankUtil {
 	public static int getBarWidth(ItemStack stack, int usesPerTank) {
 		if (usesPerTank == 0)
 			return 13;
-		Player player = DistExecutor.unsafeCallWhenOn(Dist.CLIENT, () -> () -> Minecraft.getInstance().player);
+		Player player = DistExecutor.unsafeCallWhenOn(Dist.CLIENT, () -> () -> ClientAccess.player());
 		if (player == null)
 			return 13;
 
@@ -181,7 +187,7 @@ public class BacktankUtil {
 	public static int getBarColor(ItemStack stack, int usesPerTank) {
 		if (usesPerTank == 0)
 			return 0;
-		Player player = DistExecutor.unsafeCallWhenOn(Dist.CLIENT, () -> () -> Minecraft.getInstance().player);
+		Player player = DistExecutor.unsafeCallWhenOn(Dist.CLIENT, () -> () -> ClientAccess.player());
 		if (player == null)
 			return 0;
 		List<ItemStack> backtanks = getAllWithAir(player);

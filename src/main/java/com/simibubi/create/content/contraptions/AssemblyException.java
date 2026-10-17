@@ -1,5 +1,6 @@
 package com.simibubi.create.content.contraptions;
 
+import com.simibubi.create.foundation.utility.ComponentJson;
 import com.simibubi.create.foundation.utility.CreateLang;
 import com.simibubi.create.infrastructure.config.AllConfigs;
 
@@ -20,7 +21,7 @@ public class AssemblyException extends Exception {
 			return;
 
 		CompoundTag nbt = new CompoundTag();
-		nbt.putString("Component", Component.Serializer.toJson(exception.component, registries));
+		nbt.putString("Component", ComponentJson.toJson(exception.component, registries));
 		if (exception.hasPosition())
 			nbt.putLong("Position", exception.getPosition()
 				.asLong());
@@ -32,11 +33,11 @@ public class AssemblyException extends Exception {
 		if (!compound.contains("LastException"))
 			return null;
 
-		CompoundTag nbt = compound.getCompound("LastException");
-		String string = nbt.getString("Component");
-		AssemblyException exception = new AssemblyException(Component.Serializer.fromJson(string, registries));
+		CompoundTag nbt = compound.getCompoundOrEmpty("LastException");
+		String string = nbt.getStringOr("Component", "");
+		AssemblyException exception = new AssemblyException(ComponentJson.fromJson(string, registries));
 		if (nbt.contains("Position"))
-			exception.position = BlockPos.of(nbt.getLong("Position"));
+			exception.position = BlockPos.of(nbt.getLongOr("Position", 0));
 
 		return exception;
 	}

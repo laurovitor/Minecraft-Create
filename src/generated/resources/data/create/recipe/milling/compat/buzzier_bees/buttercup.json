@@ -8,7 +8,10 @@
   "type": "create:milling",
   "ingredients": [
     {
-      "item": "buzzier_bees:buttercup"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "buzzier_bees:buttercup"
+      ]
     }
   ],
   "processing_time": 50,

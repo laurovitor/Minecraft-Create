@@ -1,8 +1,11 @@
 package com.simibubi.create.content.contraptions.actors.seat;
 
+import com.simibubi.create.foundation.block.EntityRestingOnBlock;
+import net.minecraft.world.level.ScheduledTickAccess;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.util.RandomSource;
+import org.jspecify.annotations.NullMarked;
 import java.util.List;
-
-import javax.annotation.ParametersAreNonnullByDefault;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -14,11 +17,10 @@ import com.simibubi.create.foundation.block.ProperWaterloggedBlock;
 import com.simibubi.create.foundation.utility.BlockHelper;
 import com.simibubi.create.infrastructure.config.AllConfigs;
 
-import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -46,9 +48,8 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 import net.neoforged.neoforge.common.util.FakePlayer;
 
-@ParametersAreNonnullByDefault
-@MethodsReturnNonnullByDefault
-public class SeatBlock extends Block implements ProperWaterloggedBlock {
+@NullMarked
+public class SeatBlock extends Block implements ProperWaterloggedBlock, EntityRestingOnBlock {
 
 	protected final DyeColor color;
 
@@ -69,9 +70,9 @@ public class SeatBlock extends Block implements ProperWaterloggedBlock {
 	}
 
 	@Override
-	public BlockState updateShape(BlockState pState, Direction pDirection, BlockState pNeighborState,
-								  LevelAccessor pLevel, BlockPos pCurrentPos, BlockPos pNeighborPos) {
-		updateWater(pLevel, pState, pCurrentPos);
+	public BlockState updateShape(BlockState pState, LevelReader pLevel, ScheduledTickAccess ticks,
+		BlockPos pCurrentPos, Direction pDirection, BlockPos pNeighborPos, BlockState pNeighborState, RandomSource random) {
+		updateWater(pLevel, ticks, pState, pCurrentPos);
 		return pState;
 	}
 
@@ -80,33 +81,43 @@ public class SeatBlock extends Block implements ProperWaterloggedBlock {
 		return fluidState(pState);
 	}
 
+	/**
+	 * A seat that will not take this passenger springs it back off instead. The entity applies the
+	 * bounce itself in 26.2, so only the condition stays here.
+	 */
 	@Override
-	public void fallOn(Level p_152426_, BlockState p_152427_, BlockPos p_152428_, Entity p_152429_, float p_152430_) {
-		super.fallOn(p_152426_, p_152427_, p_152428_, p_152429_, p_152430_ * 0.5F);
+	public float getBounceRestitution(Level level, BlockPos pos, BlockState blockState, Entity entity) {
+		return seats(entity, pos) ? 0 : 0.66f;
 	}
 
 	@Override
-	public void updateEntityAfterFallOn(BlockGetter reader, Entity entity) {
+	public void fallOn(Level level, BlockState fallenOn, BlockPos fallenOnPos, Entity entity, double fallDistance) {
+		// Seats halve fall damage.
+		super.fallOn(level, fallenOn, fallenOnPos, entity, fallDistance * 0.5);
+	}
+
+	/**
+	 * Anything that comes to rest on a seat sits down on it.
+	 * <p>
+	 * This has to be asked on every move the entity makes, not once as it lands. A mob led onto a seat,
+	 * or left standing where one is placed beneath it, never falls onto anything - and 1.21.1 asked the
+	 * block again for as long as the entity stayed put, through the {@code updateEntityAfterFallOn} that
+	 * 26.2 dropped. Seating from {@code fallOn} alone catches only a mob that happens to drop in.
+	 */
+	@Override
+	public void updateEntityAfterFallOn(Level level, Entity entity) {
 		BlockPos pos = entity.blockPosition();
-		if (entity instanceof Player || !(entity instanceof LivingEntity) || !canBePickedUp(entity)
-			|| isSeatOccupied(entity.level(), pos)) {
-			if (entity.isSuppressingBounce()) {
-				super.updateEntityAfterFallOn(reader, entity);
-				return;
-			}
-
-			Vec3 vec3 = entity.getDeltaMovement();
-			if (vec3.y < 0.0D) {
-				double d0 = entity instanceof LivingEntity ? 1.0D : 0.8D;
-				entity.setDeltaMovement(vec3.x, -vec3.y * (double) 0.66F * d0, vec3.z);
-			}
-
+		if (!seats(entity, pos))
 			return;
-		}
-		if (reader.getBlockState(pos)
+		if (level.getBlockState(pos)
 			.getBlock() != this)
 			return;
-		sitDown(entity.level(), pos, entity);
+		sitDown(level, pos, entity);
+	}
+
+	private boolean seats(Entity entity, BlockPos pos) {
+		return !(entity instanceof Player) && entity instanceof LivingEntity && canBePickedUp(entity)
+			&& !isSeatOccupied(entity.level(), pos);
 	}
 
 	@Override
@@ -129,18 +140,18 @@ public class SeatBlock extends Block implements ProperWaterloggedBlock {
 	}
 
 	@Override
-	protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
+	protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
 		if (player.isShiftKeyDown() || player instanceof FakePlayer)
-			return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+			return InteractionResult.TRY_WITH_EMPTY_HAND;
 
 		DyeColor color = DyeColor.getColor(stack);
 		if (color != null && color != this.color) {
-			if (level.isClientSide)
-				return ItemInteractionResult.SUCCESS;
+			if (level.isClientSide())
+				return InteractionResult.SUCCESS;
 			BlockState newState = BlockHelper.copyProperties(state, AllBlocks.SEATS.get(color)
 				.getDefaultState());
 			level.setBlockAndUpdate(pos, newState);
-			return ItemInteractionResult.SUCCESS;
+			return InteractionResult.SUCCESS;
 		}
 
 		List<SeatEntity> seats = level.getEntitiesOfClass(SeatEntity.class, new AABB(pos));
@@ -148,18 +159,18 @@ public class SeatBlock extends Block implements ProperWaterloggedBlock {
 			SeatEntity seatEntity = seats.get(0);
 			List<Entity> passengers = seatEntity.getPassengers();
 			if (!passengers.isEmpty() && passengers.get(0) instanceof Player)
-				return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
-			if (!level.isClientSide) {
+				return InteractionResult.TRY_WITH_EMPTY_HAND;
+			if (!level.isClientSide()) {
 				seatEntity.ejectPassengers();
 				player.startRiding(seatEntity);
 			}
-			return ItemInteractionResult.SUCCESS;
+			return InteractionResult.SUCCESS;
 		}
 
-		if (level.isClientSide)
-			return ItemInteractionResult.SUCCESS;
+		if (level.isClientSide())
+			return InteractionResult.SUCCESS;
 		sitDown(level, pos, getLeashed(level, player).or(player));
-		return ItemInteractionResult.SUCCESS;
+		return InteractionResult.SUCCESS;
 	}
 
 	public static boolean isSeatOccupied(Level world, BlockPos pos) {
@@ -191,12 +202,12 @@ public class SeatBlock extends Block implements ProperWaterloggedBlock {
 	}
 
 	public static void sitDown(Level level, BlockPos pos, Entity entity) {
-		if (level.isClientSide)
+		if (level.isClientSide())
 			return;
 		SeatEntity seat = new SeatEntity(level);
 		seat.setPos(pos.getX() + .5, pos.getY(), pos.getZ() + .5);
 		level.addFreshEntity(seat);
-		entity.startRiding(seat, true);
+		entity.startRiding(seat, true, true);
 		if (entity instanceof TamableAnimal ta)
 			ta.setInSittingPose(true);
 	}

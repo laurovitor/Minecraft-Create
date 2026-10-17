@@ -1,11 +1,25 @@
 package com.simibubi.create.foundation.events;
 
+import net.neoforged.neoforge.client.gui.map.RegisterMapDecorationRenderersEvent;
+
+import com.simibubi.create.foundation.map.StationMapDecorationRenderer;
+
+import com.simibubi.create.AllMapDecorationTypes;
+
+import net.neoforged.neoforge.client.event.CalculateDetachedCameraDistanceEvent;
+import net.neoforged.neoforge.client.event.RecipesReceivedEvent;
+import com.simibubi.create.foundation.recipe.ClientRecipes;
+import net.minecraft.client.renderer.state.level.LevelRenderState;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import com.simibubi.create.content.equipment.symmetryWand.SymmetryHandlerClient;
+import net.createmod.catnip.api.client.network.ClientNetworkHelper;
 import java.util.function.Supplier;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.AllItems;
 import com.simibubi.create.Create;
+import net.createmod.catnip.api.client.config.BaseConfigScreen;
 import com.simibubi.create.CreateClient;
 import com.simibubi.create.content.contraptions.ContraptionHandler;
 import com.simibubi.create.content.contraptions.actors.seat.ContraptionPlayerPassengerRotation;
@@ -24,7 +38,7 @@ import com.simibubi.create.content.equipment.armor.NetheriteBacktankFirstPersonR
 import com.simibubi.create.content.equipment.armor.NetheriteDivingHandler;
 import com.simibubi.create.content.equipment.armor.RemainingAirOverlay;
 import com.simibubi.create.content.equipment.blueprint.BlueprintOverlayRenderer;
-import com.simibubi.create.content.equipment.clipboard.ClipboardValueSettingsHandler;
+import com.simibubi.create.content.equipment.clipboard.ClipboardValueSettingsHandlerClient;
 import com.simibubi.create.content.equipment.extendoGrip.ExtendoGripRenderHandler;
 import com.simibubi.create.content.equipment.goggles.GoggleOverlayRenderer;
 import com.simibubi.create.content.equipment.hats.CreateHatArmorLayer;
@@ -57,7 +71,7 @@ import com.simibubi.create.content.trains.entity.TrainRelocator;
 import com.simibubi.create.content.trains.schedule.hat.TrainHatInfoReloadListener;
 import com.simibubi.create.content.trains.track.CurvedTrackInteraction;
 import com.simibubi.create.content.trains.track.TrackBlockOutline;
-import com.simibubi.create.content.trains.track.TrackPlacement;
+import com.simibubi.create.content.trains.track.TrackPlacementClient;
 import com.simibubi.create.content.trains.track.TrackPlacementOverlay;
 import com.simibubi.create.content.trains.track.TrackTargetingClient;
 import com.simibubi.create.foundation.blockEntity.behaviour.edgeInteraction.EdgeInteractionRenderer;
@@ -74,12 +88,8 @@ import com.simibubi.create.foundation.utility.TickBasedCache;
 import com.simibubi.create.infrastructure.command.AllCommands;
 import com.simibubi.create.infrastructure.config.AllConfigs;
 
-import net.createmod.catnip.animation.AnimationTickHolder;
-import net.createmod.catnip.config.ui.BaseConfigScreen;
-import net.createmod.catnip.levelWrappers.WrappedClientLevel;
-import net.createmod.catnip.platform.CatnipServices;
-import net.createmod.catnip.render.DefaultSuperRenderTypeBuffer;
-import net.createmod.catnip.render.SuperRenderTypeBuffer;
+import net.createmod.catnip.api.client.animation.AnimationTickHolder;
+import net.createmod.catnip.api.client.level.wrapper.WrappedClientLevel;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -104,12 +114,11 @@ import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterClientCommandsEvent;
-import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
+import net.neoforged.neoforge.client.event.AddClientReloadListenersEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RegisterItemDecorationsEvent;
 import net.neoforged.neoforge.client.event.RenderFrameEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
-import net.neoforged.neoforge.client.event.RenderLevelStageEvent.Stage;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
@@ -120,6 +129,22 @@ import net.neoforged.neoforge.event.level.LevelEvent;
 
 @EventBusSubscriber(Dist.CLIENT)
 public class ClientEvents {
+
+	/**
+	 * Client-side registrations Create makes on the mod bus.
+	 * <p>
+	 * The station map decoration used to be registered from {@code CommonEvents.ModBusEvents}, which
+	 * a dedicated server loads -- and the renderer it registers is a client class, so the server
+	 * could not construct the mod. The event is client-only anyway.
+	 */
+	@EventBusSubscriber(Dist.CLIENT)
+	public static class ModBusEvents {
+
+		@SubscribeEvent
+		public static void onRegisterMapDecorationRenderers(RegisterMapDecorationRenderersEvent event) {
+			event.register(AllMapDecorationTypes.STATION_MAP_DECORATION.value(), new StationMapDecorationRenderer());
+		}
+	}
 	@SubscribeEvent
 	public static void onTickPre(ClientTickEvent.Pre event) {
 		onTick(true);
@@ -179,14 +204,14 @@ public class ClientEvents {
 		ToolboxHandlerClient.clientTick();
 		RadialWrenchHandler.clientTick();
 		TrackTargetingClient.clientTick();
-		TrackPlacement.clientTick();
+		TrackPlacementClient.clientTick();
 		TrainRelocator.clientTick();
 		ClickToLinkBlockItem.clientTick();
 		CurvedTrackInteraction.clientTick();
 		CameraDistanceModifier.tick();
 		CameraAngleAnimationService.tick();
 		TrainHUD.tick();
-		ClipboardValueSettingsHandler.clientTick();
+		ClipboardValueSettingsHandlerClient.clientTick();
 		CreateClient.VALUE_SETTINGS_HANDLER.tick();
 		ScrollValueHandler.tick();
 		NetheriteBacktankFirstPersonRenderer.clientTick();
@@ -210,6 +235,16 @@ public class ClientEvents {
 	@SubscribeEvent
 	public static void onLeave(ClientPlayerNetworkEvent.LoggingOut event) {
 		CreateClient.RAILWAYS.cleanUp();
+		ClientRecipes.clear();
+	}
+
+	/**
+	 * 26.2 no longer sends the loaded recipes to clients; NeoForge sends back the types a mod asked
+	 * for on datapack sync, and this is where Create's arrive.
+	 */
+	@SubscribeEvent
+	public static void onRecipesReceived(RecipesReceivedEvent event) {
+		ClientRecipes.receive(event.getRecipeMap());
 	}
 
 	@SubscribeEvent
@@ -232,26 +267,25 @@ public class ClientEvents {
 		ControlsHandler.levelUnloaded(event.getLevel());
 	}
 
-	@SubscribeEvent
-	public static void onRenderWorld(RenderLevelStageEvent event) {
-		if (event.getStage() != Stage.AFTER_PARTICLES)
-			return;
-
-		PoseStack ms = event.getPoseStack();
+	/**
+	 * Everything Create draws in the world that is not a block entity or an entity.
+	 * <p>
+	 * 26.2 collects the nodes it will draw before drawing any of them, and NeoForge's render stage
+	 * events all fire during execution - too late to add anything. Catnip's submit-features callback
+	 * runs at the right point instead; {@link CreateClient} subscribes this method to it.
+	 */
+	public static void onSubmitFeatures(LevelRenderState state, SubmitNodeCollector queue, PoseStack ms) {
 		ms.pushPose();
-		SuperRenderTypeBuffer buffer = DefaultSuperRenderTypeBuffer.getInstance();
-		Vec3 camera = Minecraft.getInstance().gameRenderer.getMainCamera()
-			.getPosition();
+		Vec3 camera = state.cameraRenderState.pos;
 
-		TrackBlockOutline.drawCurveSelection(ms, buffer, camera);
-		TrackTargetingClient.render(ms, buffer, camera);
-		CouplingRenderer.renderAll(ms, buffer, camera);
-		CarriageCouplingRenderer.renderAll(ms, buffer, camera);
-		CreateClient.SCHEMATIC_HANDLER.render(ms, buffer, camera);
-		ChainConveyorInteractionHandler.drawCustomBlockSelection(ms, buffer, camera);
+		TrackBlockOutline.submitCurveSelection(ms, queue, camera);
+		TrackTargetingClient.submit(ms, queue, camera);
+		CouplingRenderer.submitAll(ms, queue, camera);
+		CarriageCouplingRenderer.submitAll(ms, queue, camera);
+		CreateClient.SCHEMATIC_HANDLER.submit(ms, queue, camera, state.cameraRenderState);
+		ChainConveyorInteractionHandler.submitCustomBlockSelection(ms, queue, camera);
+		SymmetryHandlerClient.onSubmitFeatures(state, queue, ms);
 
-		buffer.draw();
-		RenderSystem.enableCull();
 		ms.popPose();
 
 		ContraptionPlayerPassengerRotation.frame();
@@ -321,13 +355,13 @@ public class ClientEvents {
 	public static void getFogDensity(ViewportEvent.RenderFog event) {
 		Camera camera = event.getCamera();
 		Level level = Minecraft.getInstance().level;
-		BlockPos blockPos = camera.getBlockPosition();
+		BlockPos blockPos = camera.blockPosition();
 		FluidState fluidState = level.getFluidState(blockPos);
-		if (camera.getPosition().y >= blockPos.getY() + fluidState.getHeight(level, blockPos))
+		if (camera.position().y >= blockPos.getY() + fluidState.getHeight(level, blockPos))
 			return;
 
 		Fluid fluid = fluidState.getType();
-		Entity entity = camera.getEntity();
+		Entity entity = camera.entity();
 
 		if (entity.isSpectator())
 			return;
@@ -336,12 +370,10 @@ public class ClientEvents {
 		if (!divingHelmet.isEmpty()) {
 			if (FluidHelper.isWater(fluid)) {
 				event.scaleFarPlaneDistance(6.25f);
-				event.setCanceled(true);
 				return;
 			} else if (FluidHelper.isLava(fluid) && NetheriteDivingHandler.isNetheriteDivingHelmet(divingHelmet)) {
 				event.setNearPlaneDistance(-4.0f);
 				event.setFarPlaneDistance(20.0f);
-				event.setCanceled(true);
 				return;
 			}
 		}
@@ -351,7 +383,7 @@ public class ClientEvents {
 	public static void leftClickEmpty(PlayerInteractEvent.LeftClickEmpty event) {
 		ItemStack stack = event.getItemStack();
 		if (stack.getItem() instanceof ZapperItem) {
-			CatnipServices.NETWORK.sendToServer(LeftClickPacket.INSTANCE);
+			ClientNetworkHelper.INSTANCE.sendToServer(LeftClickPacket.INSTANCE);
 		}
 	}
 
@@ -361,9 +393,9 @@ public class ClientEvents {
 	}
 
 	@SubscribeEvent
-	public static void registerClientReloadListeners(RegisterClientReloadListenersEvent event) {
-		event.registerReloadListener(CreateClient.RESOURCE_RELOAD_LISTENER);
-		event.registerReloadListener(TrainHatInfoReloadListener.LISTENER);
+	public static void registerClientReloadListeners(AddClientReloadListenersEvent event) {
+		event.addListener(Create.asResource("resources"), CreateClient.RESOURCE_RELOAD_LISTENER);
+		event.addListener(Create.asResource("train_hat_info"), TrainHatInfoReloadListener.LISTENER);
 	}
 
 	@SubscribeEvent
@@ -374,11 +406,24 @@ public class ClientEvents {
 		CreateHatArmorLayer.registerOnAll(dispatcher);
 	}
 
+	/**
+	 * Trains pull the camera further out.
+	 * <p>
+	 * Create used to reach this by mixing into the camera's own zoom; 26.2 asks through an event of its
+	 * own, so the mixin is gone.
+	 */
+	@SubscribeEvent
+	public static void modifyDetachedCameraDistance(CalculateDetachedCameraDistanceEvent event) {
+		event.setDistance(event.getDistance() * CameraDistanceModifier.getMultiplier());
+	}
+
 	@SubscribeEvent
 	public static void registerGuiOverlays(RegisterGuiLayersEvent event) {
 		// Register overlays in reverse order
 		event.registerAbove(VanillaGuiLayers.AIR_LEVEL, Create.asResource("remaining_air"), RemainingAirOverlay.INSTANCE);
-		event.registerAbove(VanillaGuiLayers.EXPERIENCE_BAR, Create.asResource("train_hud"), TrainHUD.OVERLAY);
+		event.registerAbove(VanillaGuiLayers.CAMERA_OVERLAYS, Create.asResource("cardboard_stealth"),
+			CardboardArmorStealthOverlay.INSTANCE);
+		event.registerAbove(VanillaGuiLayers.CONTEXTUAL_INFO_BAR, Create.asResource("train_hud"), TrainHUD.OVERLAY);
 		event.registerAbove(VanillaGuiLayers.HOTBAR, Create.asResource("value_settings"), CreateClient.VALUE_SETTINGS_HANDLER);
 		event.registerAbove(VanillaGuiLayers.HOTBAR, Create.asResource("track_placement"), TrackPlacementOverlay.INSTANCE);
 		event.registerAbove(VanillaGuiLayers.HOTBAR, Create.asResource("goggle_info"), GoggleOverlayRenderer.OVERLAY);
@@ -398,7 +443,7 @@ public class ClientEvents {
 		ModContainer createContainer = ModList.get()
 			.getModContainerById(Create.ID)
 			.orElseThrow(() -> new IllegalStateException("Create mod container missing on LoadComplete"));
-		Supplier<IConfigScreenFactory> configScreen = () -> (mc, previousScreen) -> new BaseConfigScreen(previousScreen, Create.ID);
-		createContainer.registerExtensionPoint(IConfigScreenFactory.class, configScreen);
+		createContainer.registerExtensionPoint(IConfigScreenFactory.class,
+			(mc, previousScreen) -> new BaseConfigScreen(previousScreen, Create.ID));
 	}
 }

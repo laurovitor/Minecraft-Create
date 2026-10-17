@@ -6,7 +6,7 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.simibubi.create.content.processing.recipe.ProcessingOutput;
 
-import net.createmod.catnip.codecs.stream.CatnipStreamCodecBuilders;
+import net.createmod.catnip.api.data.codec.stream.CatnipStreamCodecBuilders;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -14,7 +14,20 @@ import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 
-public class SequencedAssemblyRecipeSerializer implements RecipeSerializer<SequencedAssemblyRecipe> {
+/**
+ * Holds the sequenced assembly codecs.
+ * <p>
+ * Both codecs build recipes that point back at this holder, so it stays an object rather than a
+ * pair of statics even though 26.2's {@link RecipeSerializer} is now a plain record.
+ */
+public class SequencedAssemblyRecipeSerializer {
+
+	/**
+	 * The codecs are the whole of this class, so one is enough - and a recipe under construction
+	 * needs to reach the same one the registry holds.
+	 */
+	public static final SequencedAssemblyRecipeSerializer INSTANCE = new SequencedAssemblyRecipeSerializer();
+
 	private final MapCodec<SequencedAssemblyRecipe> CODEC = RecordCodecBuilder.mapCodec(
 		i -> i.group(
 			Ingredient.CODEC.fieldOf("ingredient").forGetter(SequencedAssemblyRecipe::getIngredient),
@@ -54,13 +67,18 @@ public class SequencedAssemblyRecipeSerializer implements RecipeSerializer<Seque
 		}
 	);
 
-	@Override
+	private final RecipeSerializer<SequencedAssemblyRecipe> recipeSerializer =
+		new RecipeSerializer<>(CODEC, STREAM_CODEC);
+
 	public @NotNull MapCodec<SequencedAssemblyRecipe> codec() {
 		return CODEC;
 	}
 
-	@Override
 	public @NotNull StreamCodec<RegistryFriendlyByteBuf, SequencedAssemblyRecipe> streamCodec() {
 		return STREAM_CODEC;
+	}
+
+	public RecipeSerializer<SequencedAssemblyRecipe> recipeSerializer() {
+		return recipeSerializer;
 	}
 }

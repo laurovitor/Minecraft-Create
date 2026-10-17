@@ -1,9 +1,10 @@
 package com.simibubi.create.compat.jei.category.animations;
 
+import org.joml.Matrix3x2fStack;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import com.simibubi.create.AllBlocks;
-import net.minecraft.client.gui.GuiGraphics;
+import net.createmod.catnip.api.client.gui.render.pip.GuiElementTransform;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -14,25 +15,21 @@ public class AnimatedCrushingWheels extends AnimatedKinetics {
 			.setValue(BlockStateProperties.AXIS, Direction.Axis.X);
 
 	@Override
-	public void draw(GuiGraphics graphics, int xOffset, int yOffset) {
-		PoseStack matrixStack = graphics.pose();
-		matrixStack.pushPose();
-		matrixStack.translate(xOffset, yOffset, 100);
-		matrixStack.mulPose(Axis.YP.rotationDegrees(-22.5f));
+	public void draw(GuiGraphicsExtractor graphics, int xOffset, int yOffset) {
+		viewRotation(0, -22.5f);
+		Matrix3x2fStack matrixStack = graphics.pose();
+		matrixStack.pushMatrix();
+		matrixStack.translate((float) (xOffset), (float) (yOffset));
 		int scale = 22;
 
-		blockElement(wheel)
-				.rotateBlock(0, 90, -getCurrentAngle())
-				.scale(scale)
-				.render(graphics);
+		float angle = getCurrentAngle();
 
-		blockElement(wheel)
-				.rotateBlock(0, 90, getCurrentAngle())
-				.atLocal(2, 0, 0)
-				.scale(scale)
-				.render(graphics);
+		scene(graphics, scale, GuiElementTransform.WIDE_ROOM, (ps, col) -> {
+			part(ps, col, modelOf(wheel), wheel, 0, 0, 0, 0, 90, -angle);
+			part(ps, col, modelOf(wheel), wheel, 2, 0, 0, 0, 90, angle);
+		});
 
-		matrixStack.popPose();
+		matrixStack.popMatrix();
 	}
 
 }

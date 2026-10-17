@@ -8,7 +8,10 @@
   "type": "create:crushing",
   "ingredients": [
     {
-      "item": "thermal:niter_ore"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "thermal:niter_ore"
+      ]
     }
   ],
   "processing_time": 350,

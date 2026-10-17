@@ -1,5 +1,8 @@
 package com.simibubi.create.content.schematics;
 
+import net.minecraft.world.item.component.TooltipDisplay;
+import java.util.function.Consumer;
+import net.createmod.catnip.api.platform.services.PlatformHelper;
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -20,8 +23,7 @@ import com.simibubi.create.content.schematics.client.SchematicEditScreen;
 import com.simibubi.create.foundation.utility.CreateLang;
 import com.simibubi.create.foundation.utility.CreatePaths;
 
-import net.createmod.catnip.gui.ScreenOpener;
-import net.createmod.catnip.platform.CatnipServices;
+import net.createmod.catnip.api.client.gui.ScreenOpener;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -31,7 +33,6 @@ import net.minecraft.nbt.NbtIo;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -42,9 +43,6 @@ import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
-
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 public class SchematicItem extends Item {
 
@@ -69,14 +67,14 @@ public class SchematicItem extends Item {
 	}
 
 	@Override
-	@OnlyIn(value = Dist.CLIENT)
-	public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flagIn) {
+	public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display,
+		Consumer<Component> tooltip, TooltipFlag flagIn) {
 		if (stack.has(AllDataComponents.SCHEMATIC_FILE)) {
-			tooltip.add(Component.literal(ChatFormatting.GOLD + stack.get(AllDataComponents.SCHEMATIC_FILE)));
+			tooltip.accept(Component.literal(ChatFormatting.GOLD + stack.get(AllDataComponents.SCHEMATIC_FILE)));
 		} else {
-			tooltip.add(CreateLang.translateDirect("schematic.invalid").withStyle(ChatFormatting.RED));
+			tooltip.accept(CreateLang.translateDirect("schematic.invalid").withStyle(ChatFormatting.RED));
 		}
-		super.appendHoverText(stack, context, tooltip, flagIn);
+		super.appendHoverText(stack, context, display, tooltip, flagIn);
 	}
 
 	public static void writeSize(Level level, ItemStack blueprint) {
@@ -141,10 +139,10 @@ public class SchematicItem extends Item {
 	}
 
 	@Override
-	public InteractionResultHolder<ItemStack> use(Level worldIn, Player playerIn, InteractionHand handIn) {
+	public InteractionResult use(Level worldIn, Player playerIn, InteractionHand handIn) {
 		if (!onItemUse(playerIn, handIn))
 			return super.use(worldIn, playerIn, handIn);
-		return new InteractionResultHolder<>(InteractionResult.SUCCESS, playerIn.getItemInHand(handIn));
+		return InteractionResult.SUCCESS.heldItemTransformedTo(playerIn.getItemInHand(handIn));
 	}
 
 	private boolean onItemUse(Player player, InteractionHand hand) {
@@ -154,13 +152,9 @@ public class SchematicItem extends Item {
 			return false;
 		if (!player.level().isClientSide())
 			return true;
-		CatnipServices.PLATFORM.executeOnClientOnly(() -> this::displayBlueprintScreen);
+		PlatformHelper.INSTANCE.executeOnClientOnly(() -> SchematicItemClient::displayBlueprintScreen);
 		return true;
 	}
 
-	@OnlyIn(value = Dist.CLIENT)
-	protected void displayBlueprintScreen() {
-		ScreenOpener.open(new SchematicEditScreen());
-	}
 
 }

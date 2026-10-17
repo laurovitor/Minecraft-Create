@@ -15,7 +15,7 @@ public class PassengerCommand {
 
 	static ArgumentBuilder<CommandSourceStack, ?> register() {
 		return Commands.literal("passenger")
-			.requires(cs -> cs.hasPermission(2))
+			.requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
 			.then(Commands.argument("rider", EntityArgument.entity())
 				.then(Commands.argument("vehicle", EntityArgument.entity())
 					.executes(ctx -> {
@@ -48,6 +48,6 @@ public class PassengerCommand {
 			return;
 		}
 
-		rider.startRiding(vehicle, true);
+		rider.startRiding(vehicle, true, true);
 	}
 }

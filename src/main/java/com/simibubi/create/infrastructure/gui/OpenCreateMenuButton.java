@@ -6,23 +6,23 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.mutable.MutableObject;
 
-import com.simibubi.create.AllItems;
+import com.simibubi.create.Create;
 import com.simibubi.create.infrastructure.config.AllConfigs;
 
-import net.createmod.catnip.gui.ScreenOpener;
+import net.createmod.catnip.api.client.gui.ScreenOpener;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.resources.Identifier;
 import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.resources.language.I18n;
-import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.network.chat.CommonComponents;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.util.ARGB;
 
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -31,24 +31,23 @@ import net.neoforged.neoforge.client.event.ScreenEvent;
 
 public class OpenCreateMenuButton extends Button {
 
+	private static final Identifier GOGGLES_TEXTURE = Create.asResource("textures/item/goggles.png");
+
 	public OpenCreateMenuButton(int x, int y) {
 		super(x, y, 20, 20, CommonComponents.EMPTY, OpenCreateMenuButton::click, DEFAULT_NARRATION);
 	}
 
 	@Override
-	public void renderString(GuiGraphics graphics, Font pFont, int pColor) {
-		ItemStack icon = AllItems.GOGGLES.asStack();
-		BakedModel bakedmodel = Minecraft.getInstance()
-			.getItemRenderer()
-			.getModel(icon, Minecraft.getInstance().level, Minecraft.getInstance().player, 0);
-		if (bakedmodel == null)
-			return;
-		
-		graphics.renderItem(icon, getX() + 2, getY() + 2);
+	protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
+		extractDefaultSprite(graphics);
+		// 26.2 binds an item's components when world data loads, so no stack can be built while the
+		// title screen is up. The goggles are a flat item model, so their texture draws the same thing.
+		// The tint carries the widget's alpha so the icon fades in with the title screen's buttons.
+		graphics.blit(RenderPipelines.GUI_TEXTURED, GOGGLES_TEXTURE, getX() + 2, getY() + 2, 0, 0, 16, 16, 16, 16, ARGB.white(alpha));
 	}
 
 	public static void click(Button b) {
-		ScreenOpener.open(new CreateMainMenuScreen(Minecraft.getInstance().screen));
+		ScreenOpener.open(new CreateMainMenuScreen(Minecraft.getInstance().gui.screen()));
 	}
 
 	public record SingleMenuRow(String leftTextKey, String rightTextKey) {
@@ -65,11 +64,14 @@ public class OpenCreateMenuButton extends Button {
 			new SingleMenuRow("narrator.button.language", "narrator.button.accessibility")
 		));
 
+		// 26.2's pause menu turned the feedback row into a row of 20-wide icon buttons -- mods, report
+		// bugs, send feedback, friends, player reporting -- so its ends are the first and last of those.
+		// Naming send feedback, which now sits third, put the button over report bugs.
 		public static final MenuRows INGAME_MENU = new MenuRows(Arrays.asList(
 			new SingleMenuRow("menu.returnToGame"),
 			new SingleMenuRow("gui.advancements", "gui.stats"),
-			new SingleMenuRow("menu.sendFeedback", "menu.reportBugs"),
-			new SingleMenuRow("menu.options", "menu.shareToLan"),
+			new SingleMenuRow("fml.menu.mods", "menu.playerReporting"),
+			new SingleMenuRow("menu.options", "menu.multiplayerOptions.button"),
 			new SingleMenuRow("menu.returnToMenu")
 		));
 

@@ -1,5 +1,12 @@
 package com.simibubi.create.content.processing.sequenced;
 
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.core.HolderGetter;
+import net.minecraft.world.level.material.Fluid;
+import org.jspecify.annotations.Nullable;
+import net.minecraft.core.registries.BuiltInRegistries;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -15,7 +22,7 @@ import com.simibubi.create.content.processing.recipe.StandardProcessingRecipe;
 import com.simibubi.create.content.processing.recipe.StandardProcessingRecipe.Builder;
 
 import net.minecraft.data.recipes.RecipeOutput;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -27,34 +34,43 @@ import net.neoforged.neoforge.common.conditions.ICondition;
 
 public class SequencedAssemblyRecipeBuilder {
 
-	private ResourceLocation id;
+	private Identifier id;
 	private SequencedAssemblyRecipe recipe;
 	protected List<ICondition> recipeConditions;
 
-	public SequencedAssemblyRecipeBuilder(ResourceLocation id) {
+	@Nullable
+	private HolderGetter<Item> itemLookup;
+	@Nullable
+	private HolderGetter<Fluid> fluidLookup;
+
+	public SequencedAssemblyRecipeBuilder(Identifier id) {
 		this.id = id;
 		recipeConditions = new ArrayList<>();
-		this.recipe = new SequencedAssemblyRecipe(AllRecipeTypes.SEQUENCED_ASSEMBLY.getSerializer());
+		this.recipe = new SequencedAssemblyRecipe(SequencedAssemblyRecipeSerializer.INSTANCE);
 	}
 
 	public <R extends StandardProcessingRecipe<?>> SequencedAssemblyRecipeBuilder addStep(
 		StandardProcessingRecipe.Factory<R> factory,
 		UnaryOperator<Builder<R>> builder) {
-		return addStep((Function<ResourceLocation, Builder<R>>)
+		return addStep((Function<Identifier, Builder<R>>)
 			id -> new Builder<>(factory, id), builder);
 	}
 
 	public <R extends ItemApplicationRecipe> SequencedAssemblyRecipeBuilder addStep(
 		ItemApplicationRecipe.Factory<R> factory,
 		UnaryOperator<ItemApplicationRecipe.Builder<R>> builder) {
-		return addStep((Function<ResourceLocation, ItemApplicationRecipe.Builder<R>>)
+		return addStep((Function<Identifier, ItemApplicationRecipe.Builder<R>>)
 			id -> new ItemApplicationRecipe.Builder<>(factory, id), builder);
 	}
 
 	public <B extends ProcessingRecipeBuilder<?, ?, B>> SequencedAssemblyRecipeBuilder addStep(
-		Function<ResourceLocation, B> factory,
+		Function<Identifier, B> factory,
 		UnaryOperator<B> builder) {
-		B recipeBuilder = factory.apply(ResourceLocation.withDefaultNamespace("dummy"));
+		B recipeBuilder = factory.apply(Identifier.withDefaultNamespace("dummy"));
+		if (itemLookup != null)
+			recipeBuilder.withItemLookup(itemLookup);
+		if (fluidLookup != null)
+			recipeBuilder.withFluidLookup(fluidLookup);
 		Item placeHolder = recipe.getTransitionalItem().getItem();
 		recipe.getSequence()
 			.add(new SequencedRecipe<>(builder.apply(recipeBuilder.require(placeHolder)
@@ -67,8 +83,23 @@ public class SequencedAssemblyRecipeBuilder {
 		return require(Ingredient.of(ingredient));
 	}
 
+	/**
+	 * Tags are only bound on the lookup a datagen provider is handed, never on the static registry, so
+	 * the builder resolves them through {@link #withItemLookup} when it has one.
+	 */
 	public SequencedAssemblyRecipeBuilder require(TagKey<Item> tag) {
-		return require(Ingredient.of(tag));
+		return require(Ingredient.of(itemLookup == null ? BuiltInRegistries.ITEM.getOrThrow(tag)
+			: itemLookup.getOrThrow(tag)));
+	}
+
+	public SequencedAssemblyRecipeBuilder withItemLookup(HolderGetter<Item> lookup) {
+		this.itemLookup = lookup;
+		return this;
+	}
+
+	public SequencedAssemblyRecipeBuilder withFluidLookup(HolderGetter<Fluid> lookup) {
+		this.fluidLookup = lookup;
+		return this;
 	}
 
 	public SequencedAssemblyRecipeBuilder require(Ingredient ingredient) {
@@ -96,14 +127,17 @@ public class SequencedAssemblyRecipeBuilder {
 	}
 
 	public RecipeHolder<SequencedAssemblyRecipe> build() {
-		return new RecipeHolder<>(id, recipe);
+		return new RecipeHolder<>(ResourceKey.create(Registries.RECIPE, id), recipe);
 	}
 
 	public void build(RecipeOutput consumer) {
 		RecipeHolder<SequencedAssemblyRecipe> holder = build();
+		Identifier holderId = holder.id()
+			.identifier();
 
-		ResourceLocation id = ResourceLocation.fromNamespaceAndPath(holder.id().getNamespace(),
-				AllRecipeTypes.SEQUENCED_ASSEMBLY.getId().getPath() + "/" + holder.id().getPath());
+		ResourceKey<Recipe<?>> id = ResourceKey.create(Registries.RECIPE,
+			Identifier.fromNamespaceAndPath(holderId.getNamespace(), AllRecipeTypes.SEQUENCED_ASSEMBLY.getId()
+				.getPath() + "/" + holderId.getPath()));
 
 		consumer.accept(id, holder.value(), null, recipeConditions.toArray(new ICondition[0]));
 	}

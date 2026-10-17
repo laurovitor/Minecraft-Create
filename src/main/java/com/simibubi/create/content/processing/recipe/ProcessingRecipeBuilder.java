@@ -1,5 +1,12 @@
 package com.simibubi.create.content.processing.recipe;
 
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.core.HolderGetter;
+import org.jspecify.annotations.Nullable;
+import net.minecraft.core.registries.BuiltInRegistries;
+import java.util.Collections;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,7 +20,7 @@ import com.simibubi.create.foundation.recipe.IRecipeTypeInfo;
 
 import net.minecraft.core.NonNullList;
 import net.minecraft.data.recipes.RecipeOutput;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -27,16 +34,21 @@ import net.neoforged.neoforge.common.conditions.ModLoadedCondition;
 import net.neoforged.neoforge.common.conditions.NotCondition;
 import net.neoforged.neoforge.common.crafting.ICustomIngredient;
 import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.FluidStackTemplate;
 import net.neoforged.neoforge.fluids.crafting.FluidIngredient;
 import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 
 public abstract class ProcessingRecipeBuilder<P extends ProcessingRecipeParams, R extends ProcessingRecipe<?, P>, S extends ProcessingRecipeBuilder<P, R, S>> {
-	protected ResourceLocation recipeId;
+	protected Identifier recipeId;
 	protected Factory<P, R> factory;
 	protected P params;
 	protected List<ICondition> recipeConditions;
+	@Nullable
+	protected HolderGetter<Item> itemLookup;
+	@Nullable
+	protected HolderGetter<Fluid> fluidLookup;
 
-	public ProcessingRecipeBuilder(Factory<P, R> factory, ResourceLocation recipeId) {
+	public ProcessingRecipeBuilder(Factory<P, R> factory, Identifier recipeId) {
 		this.recipeId = recipeId;
 		this.factory = factory;
 		this.params = createParams();
@@ -48,12 +60,20 @@ public abstract class ProcessingRecipeBuilder<P extends ProcessingRecipeParams, 
 	public abstract S self();
 
 	public S withItemIngredients(Ingredient... ingredients) {
-		return withItemIngredients(NonNullList.of(Ingredient.EMPTY, ingredients));
+		NonNullList<Ingredient> list = NonNullList.createWithCapacity(ingredients.length);
+		Collections.addAll(list, ingredients);
+		return withItemIngredients(list);
 	}
 
 	public S withItemIngredients(NonNullList<Ingredient> ingredients) {
 		params.ingredients = ingredients;
 		return self();
+	}
+
+	public S withItemIngredients(List<Ingredient> ingredients) {
+		NonNullList<Ingredient> list = NonNullList.createWithCapacity(ingredients.size());
+		list.addAll(ingredients);
+		return withItemIngredients(list);
 	}
 
 	public S withSingleItemOutput(ItemStack output) {
@@ -70,7 +90,9 @@ public abstract class ProcessingRecipeBuilder<P extends ProcessingRecipeParams, 
 	}
 
 	public S withFluidIngredients(SizedFluidIngredient... ingredients) {
-		return withFluidIngredients(NonNullList.of(new SizedFluidIngredient(FluidIngredient.empty(), 1000), ingredients));
+		NonNullList<SizedFluidIngredient> list = NonNullList.createWithCapacity(ingredients.length);
+		Collections.addAll(list, ingredients);
+		return withFluidIngredients(list);
 	}
 
 	public S withFluidIngredients(NonNullList<SizedFluidIngredient> ingredients) {
@@ -83,7 +105,8 @@ public abstract class ProcessingRecipeBuilder<P extends ProcessingRecipeParams, 
 	}
 
 	public S withFluidOutputs(NonNullList<FluidStack> outputs) {
-		params.fluidResults = outputs;
+		params.fluidResults = NonNullList.create();
+		outputs.forEach(this::output);
 		return self();
 	}
 
@@ -108,8 +131,9 @@ public abstract class ProcessingRecipeBuilder<P extends ProcessingRecipeParams, 
 	public void build(RecipeOutput consumer) {
 		R recipe = build();
 		IRecipeTypeInfo recipeType = recipe.getTypeInfo();
-		ResourceLocation typeId = recipeType.getId();
-		ResourceLocation id = recipeId.withPrefix(typeId.getPath() + "/");
+		Identifier typeId = recipeType.getId();
+		ResourceKey<Recipe<?>> id =
+			ResourceKey.create(Registries.RECIPE, recipeId.withPrefix(typeId.getPath() + "/"));
 		var errors = recipe.validate();
 		if (!errors.isEmpty()) {
 			errors.add(recipe.getClass().getSimpleName() + "with id " + id + " failed validation:");
@@ -120,8 +144,25 @@ public abstract class ProcessingRecipeBuilder<P extends ProcessingRecipeParams, 
 
 	// Datagen shortcuts
 
+	/**
+	 * Tags are only bound on the lookup a datagen provider is handed, never on the static registry, so
+	 * the builder resolves them through {@link #withItemLookup} when it has one.
+	 */
 	public S require(TagKey<Item> tag) {
-		return require(Ingredient.of(tag));
+		return require(Ingredient.of(itemLookup == null ? BuiltInRegistries.ITEM.getOrThrow(tag)
+			: itemLookup.getOrThrow(tag)));
+	}
+
+	@SuppressWarnings("unchecked")
+	public S withItemLookup(HolderGetter<Item> lookup) {
+		this.itemLookup = lookup;
+		return (S) this;
+	}
+
+	@SuppressWarnings("unchecked")
+	public S withFluidLookup(HolderGetter<Fluid> lookup) {
+		this.fluidLookup = lookup;
+		return (S) this;
 	}
 
 	public S require(ItemLike item) {
@@ -149,7 +190,9 @@ public abstract class ProcessingRecipeBuilder<P extends ProcessingRecipeParams, 
 	}
 
 	public S require(TagKey<Fluid> fluidTag, int amount) {
-		return require(SizedFluidIngredient.of(fluidTag, amount));
+		return require(new SizedFluidIngredient(FluidIngredient.of(fluidLookup == null
+			? BuiltInRegistries.FLUID.getOrThrow(fluidTag)
+			: fluidLookup.getOrThrow(fluidTag)), amount));
 	}
 
 	public S require(SizedFluidIngredient ingredient) {
@@ -170,7 +213,9 @@ public abstract class ProcessingRecipeBuilder<P extends ProcessingRecipeParams, 
 	}
 
 	public S output(float chance, ItemLike item, int amount) {
-		return output(chance, new ItemStack(item, amount));
+		// Named rather than built as a stack: 26.2 binds an item's components when world data loads,
+		// and the dynamic pack's recipes are generated before that.
+		return output(new ProcessingOutput(item.asItem(), amount, chance));
 	}
 
 	public S output(ItemStack output) {
@@ -185,7 +230,7 @@ public abstract class ProcessingRecipeBuilder<P extends ProcessingRecipeParams, 
 		return output(new ProcessingOutput(mod.asResource(id), amount, chance));
 	}
 
-	public S output(ResourceLocation id) {
+	public S output(Identifier id) {
 		return output(1, id, 1);
 	}
 
@@ -193,7 +238,7 @@ public abstract class ProcessingRecipeBuilder<P extends ProcessingRecipeParams, 
 		return output(1, mod.asResource(id), 1);
 	}
 
-	public S output(float chance, ResourceLocation registryName, int amount) {
+	public S output(float chance, Identifier registryName, int amount) {
 		return output(new ProcessingOutput(registryName, amount, chance));
 	}
 
@@ -208,7 +253,9 @@ public abstract class ProcessingRecipeBuilder<P extends ProcessingRecipeParams, 
 	}
 
 	public S output(FluidStack fluidStack) {
-		params.fluidResults.add(fluidStack);
+		// Named rather than kept as a stack: a recipe's fluid results are read before fluid components
+		// are bound, so they travel as templates.
+		params.fluidResults.add(FluidStackTemplate.fromNonEmptyStack(fluidStack));
 		return self();
 	}
 

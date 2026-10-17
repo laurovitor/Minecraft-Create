@@ -1,5 +1,7 @@
 package com.simibubi.create.content.logistics.packagePort;
 
+import net.minecraft.client.input.KeyEvent;
+import net.createmod.catnip.api.client.network.ClientNetworkHelper;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
@@ -14,11 +16,10 @@ import com.simibubi.create.foundation.gui.menu.AbstractSimiContainerScreen;
 import com.simibubi.create.foundation.gui.widget.IconButton;
 import com.simibubi.create.foundation.utility.CreateLang;
 
-import net.createmod.catnip.gui.element.GuiGameElement;
-import net.createmod.catnip.gui.widget.AbstractSimiWidget;
-import net.createmod.catnip.platform.CatnipServices;
+import net.createmod.catnip.api.client.gui.element.GuiGameElement;
+import net.createmod.catnip.api.client.gui.widget.AbstractSimiWidget;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
@@ -63,10 +64,10 @@ public class PackagePortScreen extends AbstractSimiContainerScreen<PackagePortMe
                 Component.empty());
 		addressBox.setBordered(false);
 		addressBox.setMaxLength(25);
-		addressBox.setTextColor(0x3D3C48);
+		addressBox.setTextColor(0xFF3D3C48);
 		addressBox.setValue(menu.contentHolder.addressFilter);
 		addressBox.setFocused(false);
-		addressBox.mouseClicked(0, 0, 0);
+		addressBox.setFocused(true);
 		addressBox.setResponder(onTextChanged);
 		addressBox.setX(nameBoxX(addressBox.getValue(), addressBox));
 		addRenderableWidget(addressBox);
@@ -111,7 +112,7 @@ public class PackagePortScreen extends AbstractSimiContainerScreen<PackagePortMe
 	}
 
 	@Override
-	protected void renderBg(GuiGraphics graphics, float pPartialTick, int pMouseX, int pMouseY) {
+	protected void renderBg(GuiGraphicsExtractor graphics, float pPartialTick, int pMouseX, int pMouseY) {
 		int x = getGuiLeft();
 		int y = getGuiTop();
 
@@ -125,7 +126,7 @@ public class PackagePortScreen extends AbstractSimiContainerScreen<PackagePortMe
 				.isEmpty()) {
 				text = icon.getHoverName()
 					.getString();
-				graphics.drawString(font, text, nameBoxX(text, addressBox), y - 11, 0x3D3C48, false);
+				graphics.text(font, text, nameBoxX(text, addressBox), y - 11, 0xFF3D3C48, false);
 			}
 			AllGuiTextures.FROGPORT_EDIT_NAME.render(graphics, nameBoxX(text, addressBox) + font.width(text) + 5,
 				y - 14);
@@ -134,7 +135,7 @@ public class PackagePortScreen extends AbstractSimiContainerScreen<PackagePortMe
 		GuiGameElement.of(icon).<GuiGameElement
 			.GuiRenderBuilder>at(x + background.getWidth() + 6, y + background.getHeight() - 56, -200)
 			.scale(4)
-			.render(graphics);
+			.submit(graphics);
 
 		int invX = leftPos + 30;
 		int invY = topPos + 8 + imageHeight - AllGuiTextures.PLAYER_INVENTORY.getHeight();
@@ -146,10 +147,10 @@ public class PackagePortScreen extends AbstractSimiContainerScreen<PackagePortMe
 		x += 13;
 		y += 58;
 		AllGuiTextures.FROGPORT_SLOT.render(graphics, x, y);
-		graphics.renderItem(menu.contentHolder.target.getIcon(), x + 1, y + 1);
+		graphics.item(menu.contentHolder.target.getIcon(), x + 1, y + 1);
 
 		if (addressBox.isHovered()) {
-			graphics.renderComponentTooltip(font, List.of(CreateLang.translate("gui.package_port.catch_packages")
+			graphics.setComponentTooltipForNextFrame(font, List.of(CreateLang.translate("gui.package_port.catch_packages")
 				.color(AbstractSimiWidget.HEADER_RGB)
 				.component(),
 				CreateLang.translate("gui.package_port.catch_packages_empty")
@@ -163,7 +164,10 @@ public class PackagePortScreen extends AbstractSimiContainerScreen<PackagePortMe
 	}
 
 	@Override
-	public boolean keyPressed(int pKeyCode, int pScanCode, int pModifiers) {
+	public boolean keyPressed(KeyEvent event) {
+		int pKeyCode = event.key();
+		int pScanCode = event.scancode();
+		int pModifiers = event.modifiers();
 		boolean hitEnter = getFocused() instanceof EditBox
 			&& (pKeyCode == InputConstants.KEY_RETURN || pKeyCode == InputConstants.KEY_NUMPADENTER);
 
@@ -172,12 +176,12 @@ public class PackagePortScreen extends AbstractSimiContainerScreen<PackagePortMe
 			return true;
 		}
 
-		return super.keyPressed(pKeyCode, pScanCode, pModifiers);
+		return super.keyPressed(event);
 	}
 
 	@Override
 	public void removed() {
-		CatnipServices.NETWORK.sendToServer(new PackagePortConfigurationPacket(menu.contentHolder.getBlockPos(), addressBox.getValue(),
+		ClientNetworkHelper.INSTANCE.sendToServer(new PackagePortConfigurationPacket(menu.contentHolder.getBlockPos(), addressBox.getValue(),
 				acceptPackages.green));
 		super.removed();
 	}

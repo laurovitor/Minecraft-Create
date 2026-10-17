@@ -1,11 +1,13 @@
 package com.simibubi.create.content.schematics.table;
 
+import net.minecraft.world.level.Level;
+
+import com.simibubi.create.foundation.utility.ClientAccess;
+
 import com.simibubi.create.AllItems;
 import com.simibubi.create.AllMenuTypes;
 import com.simibubi.create.foundation.gui.menu.MenuBase;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -14,7 +16,7 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
-import net.neoforged.neoforge.items.SlotItemHandler;
+import net.neoforged.neoforge.transfer.item.ResourceHandlerSlot;
 
 public class SchematicTableMenu extends MenuBase<SchematicTableBlockEntity> {
 
@@ -54,7 +56,7 @@ public class SchematicTableMenu extends MenuBase<SchematicTableBlockEntity> {
 
 	@Override
 	protected SchematicTableBlockEntity createOnClient(RegistryFriendlyByteBuf extraData) {
-		ClientLevel world = Minecraft.getInstance().level;
+		Level world = ClientAccess.level();
 		BlockEntity blockEntity = world.getBlockEntity(extraData.readBlockPos());
 		if (blockEntity instanceof SchematicTableBlockEntity schematicTable) {
 			schematicTable.readClient(extraData.readNbt(), extraData.registryAccess());
@@ -69,7 +71,7 @@ public class SchematicTableMenu extends MenuBase<SchematicTableBlockEntity> {
 
 	@Override
 	protected void addSlots() {
-		inputSlot = new SlotItemHandler(contentHolder.inventory, 0, 21, 59) {
+		inputSlot = new ResourceHandlerSlot(contentHolder.inventory, contentHolder.inventory::set, 0, 21, 59) {
 			@Override
 			public boolean mayPlace(ItemStack stack) {
 				return AllItems.EMPTY_SCHEMATIC.isIn(stack) || AllItems.SCHEMATIC_AND_QUILL.isIn(stack)
@@ -77,7 +79,7 @@ public class SchematicTableMenu extends MenuBase<SchematicTableBlockEntity> {
 			}
 		};
 
-		outputSlot = new SlotItemHandler(contentHolder.inventory, 1, 166, 59) {
+		outputSlot = new ResourceHandlerSlot(contentHolder.inventory, contentHolder.inventory::set, 1, 166, 59) {
 			@Override
 			public boolean mayPlace(ItemStack stack) {
 				return false;

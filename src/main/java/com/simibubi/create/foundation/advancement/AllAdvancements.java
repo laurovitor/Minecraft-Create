@@ -25,21 +25,23 @@ import com.simibubi.create.foundation.advancement.CreateAdvancement.Builder;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponentPatch;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.CachedOutput;
 import net.minecraft.data.DataProvider;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.PackOutput.PathProvider;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.armortrim.ArmorTrim;
-import net.minecraft.world.item.armortrim.TrimMaterial;
-import net.minecraft.world.item.armortrim.TrimMaterials;
-import net.minecraft.world.item.armortrim.TrimPattern;
-import net.minecraft.world.item.armortrim.TrimPatterns;
+import net.minecraft.world.item.equipment.trim.ArmorTrim;
+import net.minecraft.world.item.equipment.trim.TrimMaterial;
+import net.minecraft.world.item.equipment.trim.TrimMaterials;
+import net.minecraft.world.item.equipment.trim.TrimPattern;
+import net.minecraft.world.item.equipment.trim.TrimPatterns;
 import net.minecraft.world.level.block.Blocks;
 
 public class AllAdvancements implements DataProvider {
@@ -282,7 +284,7 @@ public class AllAdvancements implements DataProvider {
 
 	// Logistics - Secret
 
-	PACKAGE_CHUTE_THROW = create("package_chute_throw", b -> b.icon(PackageStyles.getDefaultBox())
+	PACKAGE_CHUTE_THROW = create("package_chute_throw", b -> b.icon(PackageStyles.getDefaultBoxItem())
 		.title("Nothing but net")
 		.description("Land your cardboard package throw in an item chute")
 		.after(CARDBOARD_ARMOR)
@@ -668,7 +670,11 @@ public class AllAdvancements implements DataProvider {
 	//
 	END = null;
 
-	private static ItemStack createArmorTrimmedCardboardChestplate(HolderLookup.Provider registries) {
+	/**
+	 * Built as a template rather than as a stack: a stack reads its item's default components, and
+	 * those are not bound while data is being generated.
+	 */
+	private static ItemStackTemplate createArmorTrimmedCardboardChestplate(HolderLookup.Provider registries) {
 		HolderLookup.RegistryLookup<TrimMaterial> materialLookup = registries.lookupOrThrow(Registries.TRIM_MATERIAL);
 		HolderLookup.RegistryLookup<TrimPattern> patternLookup = registries.lookupOrThrow(Registries.TRIM_PATTERN);
 
@@ -677,9 +683,11 @@ public class AllAdvancements implements DataProvider {
 			patternLookup.getOrThrow(TrimPatterns.SENTRY)
 		);
 
-		ItemStack asStack = AllItems.CARDBOARD_CHESTPLATE.asStack();
-		asStack.set(DataComponents.TRIM, trim);
-		return asStack;
+		return new ItemStackTemplate(AllItems.CARDBOARD_CHESTPLATE.asItem()
+			.builtInRegistryHolder(), 1,
+			DataComponentPatch.builder()
+				.set(DataComponents.TRIM, trim)
+				.build());
 	}
 
 	private static CreateAdvancement create(String id, UnaryOperator<Builder> b) {
@@ -702,9 +710,9 @@ public class AllAdvancements implements DataProvider {
 			PathProvider pathProvider = output.createPathProvider(PackOutput.Target.DATA_PACK, "advancement");
 			List<CompletableFuture<?>> futures = new ArrayList<>();
 
-			Set<ResourceLocation> set = Sets.newHashSet();
+			Set<Identifier> set = Sets.newHashSet();
 			Consumer<AdvancementHolder> consumer = (advancement) -> {
-				ResourceLocation id = advancement.id();
+				Identifier id = advancement.id();
 				if (!set.add(id))
 					throw new IllegalStateException("Duplicate advancement " + id);
 				Path path = pathProvider.json(id);

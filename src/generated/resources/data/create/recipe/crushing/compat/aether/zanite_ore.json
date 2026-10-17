@@ -8,7 +8,10 @@
   "type": "create:crushing",
   "ingredients": [
     {
-      "item": "aether:zanite_ore"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "aether:zanite_ore"
+      ]
     }
   ],
   "processing_time": 350,

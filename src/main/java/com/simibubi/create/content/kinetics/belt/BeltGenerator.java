@@ -1,15 +1,17 @@
 package com.simibubi.create.content.kinetics.belt;
 
 import com.simibubi.create.foundation.data.SpecialBlockStateGen;
+
 import com.tterrag.registrate.providers.DataGenContext;
-import com.tterrag.registrate.providers.RegistrateBlockstateProvider;
+import com.tterrag.registrate.providers.generators.RegistrateBlockModelGenerator;
 
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.AxisDirection;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.client.model.generators.ModelFile;
+import net.minecraft.client.data.models.BlockModelGenerators;
+import net.minecraft.client.data.models.MultiVariant;
 
 public class BeltGenerator extends SpecialBlockStateGen {
 
@@ -33,13 +35,12 @@ public class BeltGenerator extends SpecialBlockStateGen {
 	}
 
 	@Override
-	public <T extends Block> ModelFile getModel(DataGenContext<Block, T> ctx, RegistrateBlockstateProvider prov,
+	public <T extends Block> MultiVariant getModel(DataGenContext<Block, T> ctx, RegistrateBlockModelGenerator prov,
 		BlockState state) {
 		Boolean casing = state.getValue(BeltBlock.CASING);
 
 		if (!casing)
-			return prov.models()
-				.getExistingFile(prov.modLoc("block/belt/particle"));
+			return BlockModelGenerators.plainVariant(prov.modLoc("block/belt/particle"));
 
 		BeltPart part = state.getValue(BeltBlock.PART);
 		Direction direction = state.getValue(BeltBlock.HORIZONTAL_FACING);
@@ -69,9 +70,8 @@ public class BeltGenerator extends SpecialBlockStateGen {
 		if (diagonal)
 			slopeName = "diagonal";
 
-		ResourceLocation location = prov.modLoc(path + slopeName + "_" + partName);
-		return prov.models()
-			.getExistingFile(location);
+		Identifier location = prov.modLoc(path + slopeName + "_" + partName);
+		return BlockModelGenerators.plainVariant(location);
 	}
 
 }

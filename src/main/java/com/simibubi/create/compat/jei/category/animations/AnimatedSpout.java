@@ -1,18 +1,18 @@
 package com.simibubi.create.compat.jei.category.animations;
 
+import org.joml.Matrix3x2fStack;
 import java.util.List;
 
-import com.mojang.blaze3d.platform.Lighting;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Axis;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllPartialModels;
 
-import net.createmod.catnip.animation.AnimationTickHolder;
-import net.createmod.catnip.gui.UIRenderHelper;
-import net.createmod.catnip.platform.NeoForgeCatnipServices;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.LightTexture;
+import net.createmod.catnip.api.client.animation.AnimationTickHolder;
+import net.createmod.catnip.api.client.gui.ILightingSettings;
+import net.createmod.catnip.api.client.render.FluidRenderHelper;
+import net.minecraft.world.level.block.state.BlockState;
+import net.createmod.catnip.api.client.gui.render.pip.GuiElementTransform;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.util.Mth;
 
 import net.neoforged.neoforge.fluids.FluidStack;
@@ -27,66 +27,66 @@ public class AnimatedSpout extends AnimatedKinetics {
 	}
 
 	@Override
-	public void draw(GuiGraphics graphics, int xOffset, int yOffset) {
-		PoseStack matrixStack = graphics.pose();
-		matrixStack.pushPose();
-		matrixStack.translate(xOffset, yOffset, 100);
-		matrixStack.mulPose(Axis.XP.rotationDegrees(-15.5f));
-		matrixStack.mulPose(Axis.YP.rotationDegrees(22.5f));
+	public void draw(GuiGraphicsExtractor graphics, int xOffset, int yOffset) {
+		viewRotation(-15.5f, 22.5f);
+		Matrix3x2fStack matrixStack = graphics.pose();
+		matrixStack.pushMatrix();
+		matrixStack.translate((float) (xOffset), (float) (yOffset));
 		int scale = 20;
-
-		blockElement(AllBlocks.SPOUT.getDefaultState())
-			.scale(scale)
-			.render(graphics);
 
 		float cycle = (AnimationTickHolder.getRenderTime() - offset * 8) % 30;
 		float squeeze = cycle < 20 ? Mth.sin((float) (cycle / 20f * Math.PI)) : 0;
 		squeeze *= 20;
 
-		matrixStack.pushPose();
-
-		blockElement(AllPartialModels.SPOUT_TOP)
-			.scale(scale)
-			.render(graphics);
-		matrixStack.translate(0, -3 * squeeze / 32f, 0);
-		blockElement(AllPartialModels.SPOUT_MIDDLE)
-			.scale(scale)
-			.render(graphics);
-		matrixStack.translate(0, -3 * squeeze / 32f, 0);
-		blockElement(AllPartialModels.SPOUT_BOTTOM)
-			.scale(scale)
-			.render(graphics);
-		matrixStack.translate(0, -3 * squeeze / 32f, 0);
-
-		matrixStack.popPose();
-
-		blockElement(AllBlocks.DEPOT.getDefaultState())
-			.atLocal(0, 2, 0)
-			.scale(scale)
-			.render(graphics);
-
-		AnimatedKinetics.DEFAULT_LIGHTING.applyLighting();
-		matrixStack.pushPose();
-		UIRenderHelper.flipForGuiRender(matrixStack);
-		matrixStack.scale(16, 16, 16);
+		FluidStack fluidStack = fluids.get(0);
 		float from = 3f / 16f;
 		float to = 17f / 16f;
-		FluidStack fluidStack = fluids.get(0);
-		NeoForgeCatnipServices.FLUID_RENDERER.renderFluidBox(fluidStack, from, from, from, to, to, to, graphics.bufferSource(), matrixStack, LightTexture.FULL_BRIGHT, false, true);
-		matrixStack.popPose();
-
 		float width = 1 / 128f * squeeze;
-		matrixStack.translate(scale / 2f, scale * 1.5f, scale / 2f);
-		UIRenderHelper.flipForGuiRender(matrixStack);
-		matrixStack.scale(16, 16, 16);
-		matrixStack.translate(-0.5f, 0, -0.5f);
-		from = -width / 2 + 0.5f;
-		to = width / 2 + 0.5f;
-		NeoForgeCatnipServices.FLUID_RENDERER.renderFluidBox(fluidStack, from, 0, from, to, 2, to, graphics.bufferSource(), matrixStack, LightTexture.FULL_BRIGHT, false, true);
-		graphics.flush();
-		Lighting.setupFor3DItems();
+		float streamFrom = -width / 2 + 0.5f;
+		float streamTo = width / 2 + 0.5f;
 
-		matrixStack.popPose();
+		BlockState spout = AllBlocks.SPOUT.getDefaultState();
+		BlockState depot = AllBlocks.DEPOT.getDefaultState();
+		// Each segment was nudged along the pose stack in pixels between draws; a scene works in
+		// blocks, so the same nudge is that many of the widget's pixels to the block.
+		float nudge = -3 * squeeze / 32f / scale;
+
+		scene(graphics, scale, TALL_ROOM, (ps, col) -> {
+			part(ps, col, modelOf(spout), spout, 0, 0, 0, 0, 0, 0);
+
+			ps.pushPose();
+			part(ps, col, AllPartialModels.SPOUT_TOP.get(), null, 0, 0, 0, 0, 0, 0);
+			ps.translate(0, nudge, 0);
+			part(ps, col, AllPartialModels.SPOUT_MIDDLE.get(), null, 0, 0, 0, 0, 0, 0);
+			ps.translate(0, nudge, 0);
+			part(ps, col, AllPartialModels.SPOUT_BOTTOM.get(), null, 0, 0, 0, 0, 0, 0);
+			ps.popPose();
+
+			part(ps, col, modelOf(depot), depot, 0, 2, 0, 0, 0, 0);
+
+			// The fluid belongs in the same pass as the spout, or it is composited over it instead of
+			// being occluded by it. Both boxes were drawn at sixteen pixels to the unit while the
+			// blocks around them go at the widget's own scale, so they keep that ratio here.
+			float unitsToBlocks = 16f / scale;
+
+			ps.pushPose();
+			GuiElementTransform.flipForGuiRender(ps);
+			ps.scale(unitsToBlocks, unitsToBlocks, unitsToBlocks);
+			FluidRenderHelper.submitFluidBox(col, fluidStack, from, from, from, to, to, to, ps,
+				LightCoordsUtil.FULL_BRIGHT, false, true);
+			ps.popPose();
+
+			ps.pushPose();
+			ps.translate(0.5F, 1.5F, 0.5F);
+			GuiElementTransform.flipForGuiRender(ps);
+			ps.scale(unitsToBlocks, unitsToBlocks, unitsToBlocks);
+			ps.translate(-0.5F, 0, -0.5F);
+			FluidRenderHelper.submitFluidBox(col, fluidStack, streamFrom, 0, streamFrom, streamTo, 2, streamTo, ps,
+				LightCoordsUtil.FULL_BRIGHT, false, true);
+			ps.popPose();
+		});
+
+		matrixStack.popMatrix();
 	}
 
 }

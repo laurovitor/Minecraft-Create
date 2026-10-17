@@ -1,5 +1,8 @@
 package com.simibubi.create.content.trains.schedule;
 
+import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
 import com.simibubi.create.foundation.gui.menu.HeldItemGhostItemMenu;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -9,9 +12,8 @@ import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemStackHandler;
-import net.neoforged.neoforge.items.SlotItemHandler;
+import net.neoforged.neoforge.transfer.IndexModifier;
+import net.neoforged.neoforge.transfer.item.ResourceHandlerSlot;
 
 public class ScheduleMenu extends HeldItemGhostItemMenu {
 
@@ -29,8 +31,8 @@ public class ScheduleMenu extends HeldItemGhostItemMenu {
 	}
 
 	@Override
-	protected ItemStackHandler createGhostInventory() {
-		return new ItemStackHandler(slots);
+	protected ItemStacksResourceHandler createGhostInventory() {
+		return new ItemStacksResourceHandler(slots);
 	}
 
 	@Override
@@ -42,7 +44,7 @@ public class ScheduleMenu extends HeldItemGhostItemMenu {
 	protected void addSlots() {
 		addPlayerSlots(46, 140);
 		for (int i = 0; i < slots; i++)
-			addSlot(new InactiveItemHandlerSlot(ghostInventory, i, i, 54 + 20 * i, 88));
+			addSlot(new InactiveItemHandlerSlot(ghostInventory, ghostInventory::set, i, i, 54 + 20 * i, 88));
 	}
 
 	@Override
@@ -66,13 +68,15 @@ public class ScheduleMenu extends HeldItemGhostItemMenu {
 
 	}
 
-	class InactiveItemHandlerSlot extends SlotItemHandler {
+	// SlotItemHandler is tied to the legacy IItemHandler; ResourceHandlerSlot is its transfer-API
+	// counterpart and needs the handler's direct-mutation function alongside the handler itself.
+	class InactiveItemHandlerSlot extends ResourceHandlerSlot {
 
 		private int targetIndex;
 
-		public InactiveItemHandlerSlot(IItemHandler itemHandler, int targetIndex, int index, int xPosition,
-			int yPosition) {
-			super(itemHandler, index, xPosition, yPosition);
+		public InactiveItemHandlerSlot(ResourceHandler<ItemResource> itemHandler,
+			IndexModifier<ItemResource> slotModifier, int targetIndex, int index, int xPosition, int yPosition) {
+			super(itemHandler, slotModifier, index, xPosition, yPosition);
 			this.targetIndex = targetIndex;
 		}
 

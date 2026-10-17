@@ -1,11 +1,16 @@
 package com.simibubi.create.content.equipment.blueprint;
 
+import com.simibubi.create.foundation.utility.ClientAccess;
+
+import net.neoforged.neoforge.transfer.item.ItemUtil;
+import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
+import com.simibubi.create.foundation.recipe.RecipeFinder;
+import net.neoforged.neoforge.transfer.item.ItemResource;
 import com.simibubi.create.AllDataComponents;
 import com.simibubi.create.AllMenuTypes;
 import com.simibubi.create.content.equipment.blueprint.BlueprintEntity.BlueprintSection;
 import com.simibubi.create.foundation.gui.menu.GhostItemMenu;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
 import net.minecraft.server.level.ServerPlayer;
@@ -22,11 +27,7 @@ import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemStackHandler;
-import net.neoforged.neoforge.items.SlotItemHandler;
+import net.neoforged.neoforge.transfer.item.ResourceHandlerSlot;
 
 import java.util.Optional;
 
@@ -61,36 +62,34 @@ public class BlueprintMenu extends GhostItemMenu<BlueprintSection> {
 				this.addSlot(new BlueprintCraftSlot(ghostInventory, index++, x + col * 18, y + row * 18));
 
 		addSlot(new BlueprintCraftSlot(ghostInventory, index++, 123, 40));
-		addSlot(new SlotItemHandler(ghostInventory, index++, 135, 57));
+		addSlot(new ResourceHandlerSlot(ghostInventory, ghostInventory::set, index++, 135, 57));
 	}
 
 	public void onCraftMatrixChanged() {
 		Level level = contentHolder.getBlueprintWorld();
-		if (level.isClientSide)
+		if (level.isClientSide())
 			return;
 
 		ServerPlayer serverplayerentity = (ServerPlayer) player;
 		CraftingContainer craftingInventory = new BlueprintCraftingInventory(this, ghostInventory);
-		Optional<RecipeHolder<CraftingRecipe>> optional = player.getServer()
-			.getRecipeManager()
-			.getRecipeFor(RecipeType.CRAFTING, craftingInventory.asCraftInput(), player.getCommandSenderWorld());
+		Optional<RecipeHolder<CraftingRecipe>> optional = RecipeFinder.find(RecipeType.CRAFTING, craftingInventory.asCraftInput(), player.level());
 
 		if (!optional.isPresent()) {
-			if (ghostInventory.getStackInSlot(9)
+			if (ItemUtil.getStack(ghostInventory, 9)
 				.isEmpty())
 				return;
 			if (!contentHolder.inferredIcon)
 				return;
 
-			ghostInventory.setStackInSlot(9, ItemStack.EMPTY);
+			ghostInventory.set(9, ItemResource.EMPTY, 0);
 			serverplayerentity.connection.send(new ClientboundContainerSetSlotPacket(containerId, incrementStateId(), 36 + 9, ItemStack.EMPTY));
 			contentHolder.inferredIcon = false;
 			return;
 		}
 
 		CraftingRecipe icraftingrecipe = optional.get().value();
-		ItemStack itemstack = icraftingrecipe.assemble(craftingInventory.asCraftInput(), level.registryAccess());
-		ghostInventory.setStackInSlot(9, itemstack);
+		ItemStack itemstack = icraftingrecipe.assemble(craftingInventory.asCraftInput());
+		ghostInventory.set(9, ItemResource.of(itemstack), itemstack.getCount());
 		contentHolder.inferredIcon = true;
 		ItemStack toSend = itemstack.copy();
 		toSend.set(AllDataComponents.INFERRED_FROM_RECIPE, true);
@@ -107,7 +106,7 @@ public class BlueprintMenu extends GhostItemMenu<BlueprintSection> {
 	}
 
 	@Override
-	protected ItemStackHandler createGhostInventory() {
+	protected ItemStacksResourceHandler createGhostInventory() {
 		return contentHolder.getItems();
 	}
 
@@ -122,11 +121,10 @@ public class BlueprintMenu extends GhostItemMenu<BlueprintSection> {
 	}
 
 	@Override
-	@OnlyIn(Dist.CLIENT)
 	protected BlueprintSection createOnClient(RegistryFriendlyByteBuf extraData) {
 		int entityID = extraData.readVarInt();
 		int section = extraData.readVarInt();
-		Entity entityByID = Minecraft.getInstance().level.getEntity(entityID);
+		Entity entityByID = ClientAccess.level().getEntity(entityID);
 		if (!(entityByID instanceof BlueprintEntity blueprintEntity))
 			return null;
 		BlueprintSection blueprintSection = blueprintEntity.getSection(section);
@@ -140,11 +138,11 @@ public class BlueprintMenu extends GhostItemMenu<BlueprintSection> {
 
 	static class BlueprintCraftingInventory extends TransientCraftingContainer {
 
-		public BlueprintCraftingInventory(AbstractContainerMenu menu, ItemStackHandler items) {
+		public BlueprintCraftingInventory(AbstractContainerMenu menu, ItemStacksResourceHandler items) {
 			super(menu, 3, 3);
 			for (int y = 0; y < 3; y++) {
 				for (int x = 0; x < 3; x++) {
-					ItemStack stack = items.getStackInSlot(y * 3 + x);
+					ItemStack stack = ItemUtil.getStack(items, y * 3 + x);
 					setItem(y * 3 + x, stack == null ? ItemStack.EMPTY : stack.copy());
 				}
 			}
@@ -152,19 +150,19 @@ public class BlueprintMenu extends GhostItemMenu<BlueprintSection> {
 
 	}
 
-	class BlueprintCraftSlot extends SlotItemHandler {
+	class BlueprintCraftSlot extends ResourceHandlerSlot {
 
 		private int index;
 
-		public BlueprintCraftSlot(IItemHandler itemHandler, int index, int xPosition, int yPosition) {
-			super(itemHandler, index, xPosition, yPosition);
+		public BlueprintCraftSlot(ItemStacksResourceHandler itemHandler, int index, int xPosition, int yPosition) {
+			super(itemHandler, itemHandler::set, index, xPosition, yPosition);
 			this.index = index;
 		}
 
 		@Override
-		public void setChanged() {
-			super.setChanged();
-			if (index == 9 && hasItem() && !contentHolder.getBlueprintWorld().isClientSide) {
+		protected void setStackCopy(ItemStack stack) {
+			super.setStackCopy(stack);
+			if (index == 9 && hasItem() && !contentHolder.getBlueprintWorld().isClientSide()) {
 				contentHolder.inferredIcon = false;
 				ServerPlayer serverplayerentity = (ServerPlayer) player;
 				serverplayerentity.connection.send(new ClientboundContainerSetSlotPacket(containerId, incrementStateId(), 36 + 9, getItem()));

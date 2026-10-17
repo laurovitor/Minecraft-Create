@@ -1,5 +1,14 @@
 package com.simibubi.create.content.equipment.toolbox;
 
+import net.neoforged.neoforge.transfer.transaction.Transaction;
+import net.neoforged.neoforge.transfer.item.ItemUtil;
+import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
+import net.neoforged.neoforge.transfer.transaction.TransactionContext;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.neoforged.neoforge.transfer.transaction.RootCommitJournal;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -15,20 +24,15 @@ import com.simibubi.create.AllItems;
 import com.simibubi.create.foundation.item.ItemHelper;
 import com.simibubi.create.foundation.item.ItemSlots;
 
-import net.createmod.catnip.codecs.stream.CatnipStreamCodecBuilders;
-import net.createmod.catnip.nbt.NBTHelper;
-import net.minecraft.core.HolderLookup;
+import net.createmod.catnip.api.data.codec.stream.CatnipStreamCodecBuilders;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
 
-import net.neoforged.neoforge.items.ItemStackHandler;
-
 // TODO - This should use NonNullList<ItemStack>
-public class ToolboxInventory extends ItemStackHandler {
+public class ToolboxInventory extends ItemStacksResourceHandler {
 	public static final int STACKS_PER_COMPARTMENT = 4;
 	public static final Codec<ToolboxInventory> CODEC = RecordCodecBuilder.create(instance -> instance.group(
 		ItemSlots.maxSizeCodec(8 * STACKS_PER_COMPARTMENT).fieldOf("items").forGetter(ItemSlots::fromHandler),
@@ -81,7 +85,7 @@ public class ToolboxInventory extends ItemStackHandler {
 		ItemStack sample = ItemStack.EMPTY;
 
 		for (int i = 0; i < STACKS_PER_COMPARTMENT; i++) {
-			ItemStack stackInSlot = getStackInSlot(compartment * STACKS_PER_COMPARTMENT + i);
+			ItemStack stackInSlot = ItemUtil.getStack(this, compartment * STACKS_PER_COMPARTMENT + i);
 			totalCount += stackInSlot.getCount();
 			if (!shouldBeEmpty)
 				shouldBeEmpty = stackInSlot.isEmpty() || stackInSlot.getCount() != stackInSlot.getMaxStackSize();
@@ -97,14 +101,14 @@ public class ToolboxInventory extends ItemStackHandler {
 		settling = true;
 		if (!sample.isStackable()) {
 			for (int i = 0; i < STACKS_PER_COMPARTMENT; i++) {
-				if (!getStackInSlot(compartment * STACKS_PER_COMPARTMENT + i).isEmpty())
+				if (!ItemUtil.getStack(this, compartment * STACKS_PER_COMPARTMENT + i).isEmpty())
 					continue;
 				for (int j = i + 1; j < STACKS_PER_COMPARTMENT; j++) {
-					ItemStack stackInSlot = getStackInSlot(compartment * STACKS_PER_COMPARTMENT + j);
+					ItemStack stackInSlot = ItemUtil.getStack(this, compartment * STACKS_PER_COMPARTMENT + j);
 					if (stackInSlot.isEmpty())
 						continue;
-					setStackInSlot(compartment * STACKS_PER_COMPARTMENT + i, stackInSlot);
-					setStackInSlot(compartment * STACKS_PER_COMPARTMENT + j, ItemStack.EMPTY);
+					this.set(compartment * STACKS_PER_COMPARTMENT + i, ItemResource.of(stackInSlot), stackInSlot.getCount());
+					this.set(compartment * STACKS_PER_COMPARTMENT + j, ItemResource.EMPTY, 0);
 					break;
 				}
 			}
@@ -112,7 +116,7 @@ public class ToolboxInventory extends ItemStackHandler {
 			for (int i = 0; i < STACKS_PER_COMPARTMENT; i++) {
 				ItemStack copy = totalCount <= 0 ? ItemStack.EMPTY
 					: sample.copyWithCount(Math.min(totalCount, sample.getMaxStackSize()));
-				setStackInSlot(compartment * STACKS_PER_COMPARTMENT + i, copy);
+				this.set(compartment * STACKS_PER_COMPARTMENT + i, ItemResource.of(copy), copy.getCount());
 				totalCount -= copy.getCount();
 			}
 		}
@@ -121,70 +125,78 @@ public class ToolboxInventory extends ItemStackHandler {
 	}
 
 	@Override
-	public boolean isItemValid(int slot, ItemStack stack) {
-		if (!stack.getItem().canFitInsideContainerItems())
+	public boolean isValid(int slot, ItemResource resource) {
+		ItemStack stack = resource.toStack(1);
+		if (!stack.getItem()
+			.canFitInsideContainerItems())
 			return false;
 
-		if (slot < 0 || slot >= getSlots())
+		if (slot < 0 || slot >= size())
 			return false;
 		int compartment = slot / STACKS_PER_COMPARTMENT;
 		ItemStack filter = filters.get(compartment);
 		if (limitedMode && filter.isEmpty())
 			return false;
 		if (filter.isEmpty() || ToolboxInventory.canItemsShareCompartment(filter, stack))
-			return super.isItemValid(slot, stack);
+			return super.isValid(slot, resource);
 		return false;
 	}
 
 	@Override
-	public void setStackInSlot(int slot, ItemStack stack) {
-		super.setStackInSlot(slot, stack);
+	public void set(int slot, ItemResource resource, int amount) {
+		super.set(slot, resource, amount);
+		claimCompartment(slot, resource);
+	}
+
+	@Override
+	public int insert(int slot, ItemResource resource, int amount, TransactionContext transaction) {
+		int inserted = super.insert(slot, resource, amount, transaction);
+		// An empty compartment takes on the first thing put into it as its filter, but only once the
+		// insertion is actually kept.
+		if (inserted > 0)
+			new RootCommitJournal(() -> claimCompartment(slot, resource)).updateSnapshots(transaction);
+		return inserted;
+	}
+
+	private void claimCompartment(int slot, ItemResource resource) {
+		if (resource.isEmpty())
+			return;
 		int compartment = slot / STACKS_PER_COMPARTMENT;
-		if (!stack.isEmpty() && filters.get(compartment)
-			.isEmpty()) {
-			filters.set(compartment, stack.copyWithCount(1));
-			notifyUpdate();
-		}
+		if (!filters.get(compartment)
+			.isEmpty())
+			return;
+		filters.set(compartment, resource.toStack(1));
+		notifyUpdate();
+	}
+
+	/**
+	 * The compartment filters ride along with the stacks. 26.2 serialises handlers through ValueIO,
+	 * so this hooks the handler's own serialize/deserialize rather than a CompoundTag pair.
+	 */
+	@Override
+	public void serialize(ValueOutput output) {
+		super.serialize(output);
+		output.store("Compartments", ItemStack.CODEC.listOf(), filters);
 	}
 
 	@Override
-	public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
-		ItemStack insertItem = super.insertItem(slot, stack, simulate);
-		if (insertItem.getCount() != stack.getCount()) {
-			int compartment = slot / STACKS_PER_COMPARTMENT;
-			if (!stack.isEmpty() && filters.get(compartment)
-				.isEmpty()) {
-				filters.set(compartment, stack.copyWithCount(1));
-				notifyUpdate();
-			}
-		}
-		return insertItem;
-	}
-
-	@Override
-	public @NotNull CompoundTag serializeNBT(@NotNull HolderLookup.Provider registries) {
-		CompoundTag compound = super.serializeNBT(registries);
-		compound.put("Compartments", NBTHelper.writeItemList(filters, registries));
-		return compound;
-	}
-
-	@Override
-	protected void onContentsChanged(int slot) {
-		if (!settling && (blockEntity == null || !blockEntity.getLevel().isClientSide))
+	protected void onContentsChanged(int slot, ItemStack previousContents) {
+		if (!settling && (blockEntity == null || !blockEntity.getLevel().isClientSide()))
 			settle(slot / STACKS_PER_COMPARTMENT);
 		notifyUpdate();
-		super.onContentsChanged(slot);
+		super.onContentsChanged(slot, previousContents);
 	}
 
 	@Override
-	public void deserializeNBT(@NotNull HolderLookup.Provider registries, CompoundTag nbt) {
-		filters = NBTHelper.readItemList(nbt.getList("Compartments", Tag.TAG_COMPOUND), registries);
+	public void deserialize(ValueInput input) {
+		filters = new ArrayList<>(input.read("Compartments", ItemStack.CODEC.listOf())
+			.orElse(List.of()));
 		if (filters.size() != 8) {
 			filters.clear();
 			for (int i = 0; i < 8; i++)
 				filters.add(ItemStack.EMPTY);
 		}
-		super.deserializeNBT(registries, nbt);
+		super.deserialize(input);
 	}
 
 	public ItemStack distributeToCompartment(@NotNull ItemStack stack, int compartment, boolean simulate) {
@@ -196,7 +208,12 @@ public class ToolboxInventory extends ItemStackHandler {
 
 		for (int i = STACKS_PER_COMPARTMENT - 1; i >= 0; i--) {
 			int slot = compartment * STACKS_PER_COMPARTMENT + i;
-			stack = insertItem(slot, stack, simulate);
+			try (Transaction transaction = Transaction.openRoot()) {
+				int transferred = stack.isEmpty() ? 0 : this.insert(slot, ItemResource.of(stack), stack.getCount(), transaction);
+				stack = transferred == stack.getCount() ? ItemStack.EMPTY : stack.copyWithCount(stack.getCount() - transferred);
+				if (!simulate)
+					transaction.commit();
+			}
 			if (stack.isEmpty())
 				return ItemStack.EMPTY;
 		}
@@ -213,7 +230,14 @@ public class ToolboxInventory extends ItemStackHandler {
 
 		for (int i = STACKS_PER_COMPARTMENT - 1; i >= 0; i--) {
 			int slot = compartment * STACKS_PER_COMPARTMENT + i;
-			ItemStack extracted = extractItem(slot, remaining, simulate);
+			ItemStack extracted;
+			try (Transaction transaction = Transaction.openRoot()) {
+				ItemResource transferred2Resource = this.getResource(slot);
+				int transferred2 = transferred2Resource.isEmpty() ? 0 : this.extract(slot, transferred2Resource, remaining, transaction);
+				extracted = transferred2 <= 0 ? ItemStack.EMPTY : transferred2Resource.toStack(transferred2);
+				if (!simulate)
+					transaction.commit();
+			}
 			remaining -= extracted.getCount();
 			if (!extracted.isEmpty())
 				lastValid = extracted;
@@ -249,7 +273,7 @@ public class ToolboxInventory extends ItemStackHandler {
 	private static ToolboxInventory deserialize(ItemSlots slots, List<ItemStack> filters) {
 		ToolboxInventory inventory = new ToolboxInventory(null);
 		inventory.settling = true;
-		slots.forEach(inventory::setStackInSlot);
+		slots.forEach((slot, stack) -> inventory.set(slot, ItemResource.of(stack), stack.getCount()));
 		inventory.settling = false;
 		inventory.filters = new ArrayList<>(filters);
 		return inventory;

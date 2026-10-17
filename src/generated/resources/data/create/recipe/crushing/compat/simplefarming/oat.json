@@ -8,7 +8,10 @@
   "type": "create:crushing",
   "ingredients": [
     {
-      "item": "simplefarming:oat"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "simplefarming:oat"
+      ]
     }
   ],
   "processing_time": 150,

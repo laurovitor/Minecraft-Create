@@ -1,10 +1,11 @@
 package com.simibubi.create.compat.jei;
 
+import org.joml.Matrix3x2fStack;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import mezz.jei.api.gui.drawable.IDrawable;
-import net.createmod.catnip.gui.element.GuiGameElement;
-import net.minecraft.client.gui.GuiGraphics;
+import net.createmod.catnip.api.client.gui.element.GuiGameElement;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.function.Supplier;
@@ -32,31 +33,30 @@ public class DoubleItemIcon implements IDrawable {
 	}
 
 	@Override
-	public void draw(GuiGraphics graphics, int xOffset, int yOffset) {
-		PoseStack matrixStack = graphics.pose();
+	public void draw(GuiGraphicsExtractor graphics, int xOffset, int yOffset) {
+		Matrix3x2fStack matrixStack = graphics.pose();
 		if (primaryStack == null) {
 			primaryStack = primarySupplier.get();
 			secondaryStack = secondarySupplier.get();
 		}
 
-		RenderSystem.enableDepthTest();
-		matrixStack.pushPose();
-		matrixStack.translate(xOffset, yOffset, 0);
+		matrixStack.pushMatrix();
+		matrixStack.translate((float) (xOffset), (float) (yOffset));
 
-		matrixStack.pushPose();
-		matrixStack.translate(1, 1, 0);
+		matrixStack.pushMatrix();
+		matrixStack.translate((float) (1), (float) (1));
 		GuiGameElement.of(primaryStack)
-			.render(graphics);
-		matrixStack.popPose();
+			.submit(graphics);
+		matrixStack.popMatrix();
 
-		matrixStack.pushPose();
-		matrixStack.translate(10, 10, 100);
-		matrixStack.scale(.5f, .5f, .5f);
+		matrixStack.pushMatrix();
+		matrixStack.translate((float) (10), (float) (10));
+		matrixStack.scale((float) (.5f), (float) (.5f));
 		GuiGameElement.of(secondaryStack)
-			.render(graphics);
-		matrixStack.popPose();
+			.submit(graphics);
+		matrixStack.popMatrix();
 
-		matrixStack.popPose();
+		matrixStack.popMatrix();
 	}
 
 }

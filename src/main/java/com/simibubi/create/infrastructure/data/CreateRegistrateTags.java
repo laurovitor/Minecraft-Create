@@ -1,5 +1,8 @@
 package com.simibubi.create.infrastructure.data;
 
+import net.minecraft.tags.BlockItemTags;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.entity.EntityTypes;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,10 +36,10 @@ public class CreateRegistrateTags {
 
 	private static final Block[] SHULKER_BOXES = {
 		Blocks.SHULKER_BOX,
-		Blocks.WHITE_SHULKER_BOX, Blocks.ORANGE_SHULKER_BOX, Blocks.MAGENTA_SHULKER_BOX, Blocks.LIGHT_BLUE_SHULKER_BOX,
-		Blocks.YELLOW_SHULKER_BOX, Blocks.LIME_SHULKER_BOX, Blocks.PINK_SHULKER_BOX, Blocks.GRAY_SHULKER_BOX,
-		Blocks.LIGHT_GRAY_SHULKER_BOX, Blocks.CYAN_SHULKER_BOX, Blocks.PURPLE_SHULKER_BOX, Blocks.BLUE_SHULKER_BOX,
-		Blocks.BROWN_SHULKER_BOX, Blocks.GREEN_SHULKER_BOX, Blocks.RED_SHULKER_BOX, Blocks.BLACK_SHULKER_BOX
+		Blocks.DYED_SHULKER_BOX.pick(DyeColor.WHITE), Blocks.DYED_SHULKER_BOX.pick(DyeColor.ORANGE), Blocks.DYED_SHULKER_BOX.pick(DyeColor.MAGENTA), Blocks.DYED_SHULKER_BOX.pick(DyeColor.LIGHT_BLUE),
+		Blocks.DYED_SHULKER_BOX.pick(DyeColor.YELLOW), Blocks.DYED_SHULKER_BOX.pick(DyeColor.LIME), Blocks.DYED_SHULKER_BOX.pick(DyeColor.PINK), Blocks.DYED_SHULKER_BOX.pick(DyeColor.GRAY),
+		Blocks.DYED_SHULKER_BOX.pick(DyeColor.LIGHT_GRAY), Blocks.DYED_SHULKER_BOX.pick(DyeColor.CYAN), Blocks.DYED_SHULKER_BOX.pick(DyeColor.PURPLE), Blocks.DYED_SHULKER_BOX.pick(DyeColor.BLUE),
+		Blocks.DYED_SHULKER_BOX.pick(DyeColor.BROWN), Blocks.DYED_SHULKER_BOX.pick(DyeColor.GREEN), Blocks.DYED_SHULKER_BOX.pick(DyeColor.RED), Blocks.DYED_SHULKER_BOX.pick(DyeColor.BLACK)
 	};
 
 	public static void addGenerators() {
@@ -58,14 +61,14 @@ public class CreateRegistrateTags {
 			.addTag(BlockTags.CAVE_VINES)
 			.addTag(BlockTags.BANNERS)
 			.addTag(BlockTags.BEDS)
-			.addTag(BlockTags.DOORS);
+			.addTag(BlockItemTags.DOORS.block());
 
 		prov.tag(AllBlockTags.COPYCAT_ALLOW.tag)
 			.add(Blocks.BARREL);
 
 		prov.tag(AllBlockTags.COPYCAT_DENY.tag)
 			.addTag(BlockTags.CAULDRONS)
-			.addTag(BlockTags.SAPLINGS)
+			.addTag(BlockItemTags.SAPLINGS.block())
 			.addTag(BlockTags.CLIMBABLE);
 
 		prov.tag(AllBlockTags.FAN_PROCESSING_CATALYSTS_HAUNTING.tag)
@@ -79,12 +82,11 @@ public class CreateRegistrateTags {
 		prov.tag(AllBlockTags.FAN_TRANSPARENT.tag)
 			.add(Blocks.IRON_BARS)
 			.add(Blocks.MANGROVE_ROOTS)
-			.add(Blocks.COPPER_GRATE, Blocks.EXPOSED_COPPER_GRATE, Blocks.WEATHERED_COPPER_GRATE,
-				Blocks.OXIDIZED_COPPER_GRATE, Blocks.WAXED_COPPER_GRATE, Blocks.WAXED_EXPOSED_COPPER_GRATE,
-				Blocks.WAXED_WEATHERED_COPPER_GRATE, Blocks.WAXED_OXIDIZED_COPPER_GRATE
-			)
+			// 26.2 groups the weathering stages and their waxed twins into one collection.
+			.add(Blocks.COPPER_GRATE.asList()
+				.toArray(Block[]::new))
 			.addTag(BlockTags.CAMPFIRES)
-			.addTag(BlockTags.FENCES)
+			.addTag(BlockItemTags.FENCES.block())
 			.addTag(BlockTags.LEAVES);
 
 		prov.tag(AllBlockTags.MOVABLE_EMPTY_COLLIDER.tag)
@@ -94,7 +96,7 @@ public class CreateRegistrateTags {
 			)
 			.addTag(AllBlockTags.CORALS.tag)
 			.addTag(BlockTags.CAVE_VINES)
-			.addTag(BlockTags.FENCE_GATES)
+			.addTag(BlockItemTags.FENCE_GATES.block())
 			.addTag(BlockTags.BANNERS);
 
 		prov.tag(AllBlockTags.PASSIVE_BOILER_HEATERS.tag)
@@ -116,7 +118,7 @@ public class CreateRegistrateTags {
 			.add(Blocks.REDSTONE_WIRE, Blocks.REDSTONE_TORCH, Blocks.REPEATER, Blocks.LEVER, Blocks.REDSTONE_LAMP,
 				Blocks.COMPARATOR, Blocks.OBSERVER, Blocks.REDSTONE_WALL_TORCH, Blocks.PISTON, Blocks.STICKY_PISTON,
 				Blocks.TRIPWIRE, Blocks.TRIPWIRE_HOOK, Blocks.DAYLIGHT_DETECTOR, Blocks.TARGET, Blocks.HOPPER)
-			.addTag(BlockTags.BUTTONS)
+			.addTag(BlockItemTags.BUTTONS.block())
 			.addTag(BlockTags.PRESSURE_PLATES)
 			.addTag(BlockTags.RAILS);
 
@@ -301,7 +303,7 @@ public class CreateRegistrateTags {
 		CreateTagsProvider<EntityType<?>> prov = new CreateTagsProvider<>(provIn, EntityType::builtInRegistryHolder);
 
 		prov.tag(AllEntityTags.BLAZE_BURNER_CAPTURABLE.tag)
-			.add(EntityType.BLAZE);
+			.add(EntityTypes.BLAZE);
 
 		prov.tag(AllEntityTags.IGNORE_SEAT.tag)
 			.addTag(Tags.EntityTypes.CAPTURING_NOT_SUPPORTED);

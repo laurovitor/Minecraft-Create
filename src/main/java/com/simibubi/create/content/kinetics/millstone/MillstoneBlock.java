@@ -1,18 +1,25 @@
 package com.simibubi.create.content.kinetics.millstone;
 
+import net.neoforged.neoforge.transfer.transaction.Transaction;
+import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemUtil;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+
 import com.simibubi.create.AllBlockEntityTypes;
 import com.simibubi.create.AllShapes;
 import com.simibubi.create.content.kinetics.base.KineticBlock;
 import com.simibubi.create.content.kinetics.simpleRelays.ICogWheel;
 import com.simibubi.create.foundation.block.IBE;
 
-import net.createmod.catnip.data.Iterate;
+import net.createmod.catnip.api.data.Iterate;
+import com.simibubi.create.foundation.block.EntityRestingOnBlock;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
@@ -28,11 +35,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.IItemHandlerModifiable;
-import net.neoforged.neoforge.items.ItemStackHandler;
-
-public class MillstoneBlock extends KineticBlock implements IBE<MillstoneBlockEntity>, ICogWheel {
+public class MillstoneBlock extends KineticBlock implements EntityRestingOnBlock, IBE<MillstoneBlockEntity>, ICogWheel {
 
 	public MillstoneBlock(Properties properties) {
 		super(properties);
@@ -49,30 +52,30 @@ public class MillstoneBlock extends KineticBlock implements IBE<MillstoneBlockEn
 	}
 
 	@Override
-	protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
+	protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
 		if (!stack.isEmpty())
-			return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
-		if (level.isClientSide)
-			return ItemInteractionResult.SUCCESS;
+			return InteractionResult.TRY_WITH_EMPTY_HAND;
+		if (level.isClientSide())
+			return InteractionResult.SUCCESS;
 
 		withBlockEntityDo(level, pos, millstone -> {
 			boolean emptyOutput = true;
-			IItemHandlerModifiable inv = millstone.outputInv;
-			for (int slot = 0; slot < inv.getSlots(); slot++) {
-				ItemStack stackInSlot = inv.getStackInSlot(slot);
+			ItemStacksResourceHandler inv = millstone.outputInv;
+			for (int slot = 0; slot < inv.size(); slot++) {
+				ItemStack stackInSlot = ItemUtil.getStack(inv, slot);
 				if (!stackInSlot.isEmpty())
 					emptyOutput = false;
 				player.getInventory()
 					.placeItemBackInInventory(stackInSlot);
-				inv.setStackInSlot(slot, ItemStack.EMPTY);
+				inv.set(slot, ItemResource.EMPTY, 0);
 			}
 
 			if (emptyOutput) {
 				inv = millstone.inputInv;
-				for (int slot = 0; slot < inv.getSlots(); slot++) {
+				for (int slot = 0; slot < inv.size(); slot++) {
 					player.getInventory()
-						.placeItemBackInInventory(inv.getStackInSlot(slot));
-					inv.setStackInSlot(slot, ItemStack.EMPTY);
+						.placeItemBackInInventory(ItemUtil.getStack(inv, slot));
+					inv.set(slot, ItemResource.EMPTY, 0);
 				}
 			}
 
@@ -80,14 +83,13 @@ public class MillstoneBlock extends KineticBlock implements IBE<MillstoneBlockEn
 			millstone.sendData();
 		});
 
-		return ItemInteractionResult.SUCCESS;
+		return InteractionResult.SUCCESS;
 	}
 
 	@Override
-	public void updateEntityAfterFallOn(BlockGetter worldIn, Entity entityIn) {
-		super.updateEntityAfterFallOn(worldIn, entityIn);
+	public void updateEntityAfterFallOn(Level worldIn, Entity entityIn) {
 
-		if (entityIn.level().isClientSide)
+		if (entityIn.level().isClientSide())
 			return;
 		if (!(entityIn instanceof ItemEntity itemEntity))
 			return;
@@ -102,12 +104,16 @@ public class MillstoneBlock extends KineticBlock implements IBE<MillstoneBlockEn
 		if (millstone == null)
 			return;
 
-		IItemHandler capability = millstone.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, millstone.getBlockPos(), null);
+		ResourceHandler<ItemResource> capability = millstone.getLevel().getCapability(Capabilities.Item.BLOCK, millstone.getBlockPos(), null);
 		if (capability == null)
 			return;
 
-		ItemStack remainder = capability
-			.insertItem(0, itemEntity.getItem(), false);
+		ItemStack remainder;
+		try (Transaction transaction = Transaction.openRoot()) {
+			int transferred = itemEntity.getItem().isEmpty() ? 0 : capability.insert(0, ItemResource.of(itemEntity.getItem()), itemEntity.getItem().getCount(), transaction);
+			remainder = transferred == itemEntity.getItem().getCount() ? ItemStack.EMPTY : itemEntity.getItem().copyWithCount(itemEntity.getItem().getCount() - transferred);
+			transaction.commit();
+		}
 		if (remainder.isEmpty())
 			itemEntity.discard();
 		if (remainder.getCount() < itemEntity.getItem()

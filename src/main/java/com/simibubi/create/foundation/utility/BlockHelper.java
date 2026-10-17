@@ -1,5 +1,9 @@
 package com.simibubi.create.foundation.utility;
 
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.attribute.EnvironmentAttributes;
+import net.minecraft.util.ProblemReporter;
+import net.neoforged.neoforge.event.level.block.BreakBlockEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -22,7 +26,7 @@ import com.simibubi.create.content.processing.burner.BlazeBurnerBlock.HeatLevel;
 import com.simibubi.create.foundation.blockEntity.IMergeableBE;
 import com.simibubi.create.foundation.blockEntity.IMultiBlockEntityContainer;
 
-import net.createmod.catnip.nbt.NBTProcessors;
+import net.createmod.catnip.api.nbt.NBTProcessors;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
@@ -31,7 +35,6 @@ import net.minecraft.core.SectionPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtUtils;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -40,7 +43,6 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -48,7 +50,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseRailBlock;
 import net.minecraft.world.level.block.BedBlock;
@@ -73,7 +75,6 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.SpecialPlantable;
 import net.neoforged.neoforge.event.level.BlockDropsEvent;
-import net.neoforged.neoforge.event.level.BlockEvent;
 
 public class BlockHelper {
 	private static final List<IntegerProperty> COUNT_STATES = List.of(
@@ -153,7 +154,7 @@ public class BlockHelper {
 
 		{
 			// Try held Item first
-			int preferredSlot = player.getInventory().selected;
+			int preferredSlot = player.getInventory().getSelectedSlot();
 			ItemStack itemstack = player.getInventory()
 				.getItem(preferredSlot);
 			int count = itemstack.getCount();
@@ -215,12 +216,12 @@ public class BlockHelper {
 		FluidState fluidState = level.getFluidState(pos);
 		BlockState state = level.getBlockState(pos);
 
-		if (level.random.nextFloat() < effectChance)
+		if (level.getRandom().nextFloat() < effectChance)
 			level.levelEvent(LevelEvent.PARTICLES_DESTROY_BLOCK, pos, Block.getId(state));
 		BlockEntity blockEntity = state.hasBlockEntity() ? level.getBlockEntity(pos) : null;
 
 		if (player != null) {
-			BlockEvent.BreakEvent event = new BlockEvent.BreakEvent(level, pos, state, player);
+			BreakBlockEvent event = new BreakBlockEvent(level, pos, state, player);
 			NeoForge.EVENT_BUS.post(event);
 			if (event.isCanceled())
 				return;
@@ -229,8 +230,8 @@ public class BlockHelper {
 			player.awardStat(Stats.BLOCK_MINED.get(state.getBlock()));
 		}
 
-		if (level instanceof ServerLevel serverLevel && level.getGameRules()
-			.getBoolean(GameRules.RULE_DOBLOCKDROPS) && !level.restoringBlockSnapshots
+		if (level instanceof ServerLevel serverLevel && serverLevel.getGameRules()
+			.get(GameRules.BLOCK_DROPS) && !level.restoringBlockSnapshots
 			&& (player == null || !player.isCreative())) {
 			List<ItemStack> drops = Block.getDrops(state, serverLevel, pos, blockEntity, player, usedTool);
 
@@ -247,9 +248,10 @@ public class BlockHelper {
 
 			// Simulating IceBlock#playerDestroy. Not calling method directly as it would drop item
 			// entities as a side-effect
-			Registry<Enchantment> enchantmentRegistry = level.registryAccess().registryOrThrow(Registries.ENCHANTMENT);
-			if (state.getBlock() instanceof IceBlock && usedTool.getEnchantmentLevel(enchantmentRegistry.getHolderOrThrow(Enchantments.SILK_TOUCH)) == 0) {
-				if (!level.dimensionType().ultraWarm()) {
+			Registry<Enchantment> enchantmentRegistry = level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT);
+			if (state.getBlock() instanceof IceBlock && usedTool.getEnchantmentLevel(enchantmentRegistry.getOrThrow(Enchantments.SILK_TOUCH)) == 0) {
+				if (!level.environmentAttributes()
+					.getValue(EnvironmentAttributes.WATER_EVAPORATES, pos)) {
 					BlockState below = level.getBlockState(pos.below());
 					if (below.blocksMotion() || below.liquid()) {
 						fluidState = IceBlock.meltsInto().getFluidState();
@@ -279,18 +281,17 @@ public class BlockHelper {
 		int idx = chunk.getSectionIndex(target.getY());
 		LevelChunkSection chunksection = chunk.getSection(idx);
 		if (chunksection == null) {
-			chunksection = new LevelChunkSection(world.registryAccess()
-				.registryOrThrow(Registries.BIOME));
+			chunksection = new LevelChunkSection(world.palettedContainerFactory());
 			chunk.getSections()[idx] = chunksection;
 		}
 		BlockState old = chunksection.setBlockState(SectionPos.sectionRelative(target.getX()),
 			SectionPos.sectionRelative(target.getY()), SectionPos.sectionRelative(target.getZ()), state);
-		chunk.setUnsaved(true);
+		chunk.markUnsaved();
 		world.markAndNotifyBlock(target, chunk, old, state, 82, 512);
 
 		world.setBlock(target, state, Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_MOVE_BY_PISTON);
 		world.neighborChanged(target, world.getBlockState(target.below())
-			.getBlock(), target.below());
+			.getBlock(), null);
 	}
 
 	public static CompoundTag prepareBlockEntityData(Level level, BlockState blockState, BlockEntity blockEntity) {
@@ -343,13 +344,13 @@ public class BlockHelper {
 			state = Blocks.CAULDRON.defaultBlockState();
 		}
 
-		if (world.dimensionType()
-			.ultraWarm() && state.getFluidState().is(FluidTags.WATER)) {
+		if (world.environmentAttributes()
+			.getValue(EnvironmentAttributes.WATER_EVAPORATES, target) && state.getFluidState().is(FluidTags.WATER)) {
 			int i = target.getX();
 			int j = target.getY();
 			int k = target.getZ();
 			world.playSound(null, target, SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 0.5F,
-				2.6F + (world.random.nextFloat() - world.random.nextFloat()) * 0.8F);
+				2.6F + (world.getRandom().nextFloat() - world.getRandom().nextFloat()) * 0.8F);
 
 			for (int l = 0; l < 8; ++l) {
 				world.addParticle(ParticleTypes.LARGE_SMOKE, i + Math.random(), j + Math.random(), k + Math.random(),
@@ -390,8 +391,9 @@ public class BlockHelper {
 					kbe.warnOfMovement();
 				if (blockEntity instanceof IMultiBlockEntityContainer imbe)
 					if (!imbe.isController())
-						data.put("Controller", NbtUtils.writeBlockPos(imbe.getController()));
-				blockEntity.loadWithComponents(data, world.registryAccess());
+						data.store("Controller", BlockPos.CODEC, imbe.getController());
+				blockEntity.loadWithComponents(
+				TagValueInput.create(ProblemReporter.DISCARDING, world.registryAccess(), data));
 			}
 		}
 
@@ -454,14 +456,14 @@ public class BlockHelper {
 
 	public static InteractionResult invokeUse(BlockState state, Level level, Player player,
 											   InteractionHand hand, BlockHitResult ray) {
-		ItemInteractionResult iteminteractionresult = state.useItemOn(
+		InteractionResult iteminteractionresult = state.useItemOn(
 				player.getItemInHand(hand), level, player, hand, ray
 		);
 		if (iteminteractionresult.consumesAction()) {
-			return iteminteractionresult.result();
+			return iteminteractionresult;
 		}
 
-		if (iteminteractionresult == ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION && hand == InteractionHand.MAIN_HAND) {
+		if (iteminteractionresult == InteractionResult.TRY_WITH_EMPTY_HAND && hand == InteractionHand.MAIN_HAND) {
 			InteractionResult interactionresult = state.useWithoutItem(level, player, ray);
 			if (interactionresult.consumesAction()) {
 				return interactionresult;

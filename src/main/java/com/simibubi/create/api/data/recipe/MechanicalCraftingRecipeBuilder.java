@@ -10,13 +10,18 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.simibubi.create.content.kinetics.crafter.MechanicalCraftingRecipe;
 
-import net.createmod.catnip.registry.RegisteredObjectsHelper;
+import net.createmod.catnip.api.registry.RegisteredObjectsHelper;
+import net.minecraft.core.HolderGetter;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.data.recipes.RecipeOutput;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
+import net.minecraft.world.item.crafting.CraftingRecipe;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.ShapedRecipePattern;
 import net.minecraft.world.level.ItemLike;
@@ -62,8 +67,8 @@ public class MechanicalCraftingRecipeBuilder {
 	/**
 	 * Adds a new unique key to the recipe key for use in the pattern
 	 */
-	public MechanicalCraftingRecipeBuilder key(Character c, TagKey<Item> tag) {
-		return this.key(c, Ingredient.of(tag));
+	public MechanicalCraftingRecipeBuilder key(Character c, HolderGetter<Item> items, TagKey<Item> tag) {
+		return this.key(c, Ingredient.of(items.getOrThrow(tag)));
 	}
 
 	/**
@@ -122,8 +127,8 @@ public class MechanicalCraftingRecipeBuilder {
 	 * {@link #build(RecipeOutput)} if the recipe id is the same as the result item id
 	 */
 	public void build(RecipeOutput output, String id) {
-		ResourceLocation resourcelocation = RegisteredObjectsHelper.getKeyOrThrow(this.result);
-		ResourceLocation idRs = ResourceLocation.parse(id);
+		Identifier resourcelocation = RegisteredObjectsHelper.getKeyOrThrow(this.result);
+		Identifier idRs = Identifier.parse(id);
 		if (idRs.equals(resourcelocation)) {
 			throw new IllegalStateException("Shaped Recipe " + id + " should remove its 'id' argument");
 		} else {
@@ -134,23 +139,24 @@ public class MechanicalCraftingRecipeBuilder {
 	/**
 	 * Builds this recipe into a {@link RecipeOutput}.
 	 */
-	public void build(RecipeOutput output, ResourceLocation id) {
+	public void build(RecipeOutput output, Identifier id) {
 		validate(id);
 		MechanicalCraftingRecipe recipe = new MechanicalCraftingRecipe(
-			"",
-			CraftingBookCategory.MISC,
+			new Recipe.CommonInfo(true),
+			new CraftingRecipe.CraftingBookInfo(CraftingBookCategory.MISC, ""),
 			ShapedRecipePattern.of(key, pattern),
-			new ItemStack(result, count),
+			new ItemStackTemplate(result, count),
 			acceptMirrored
 		);
-		output.accept(id, recipe, null, recipeConditions.toArray(ICondition[]::new));
+		output.accept(ResourceKey.create(Registries.RECIPE, id), recipe, null,
+			recipeConditions.toArray(ICondition[]::new));
 	}
 
 	/**
 	 * Makes sure that this recipe is valid.
 	 * @param recipeId The id of this recipe, only used for error messages.
 	 */
-	private void validate(ResourceLocation recipeId) {
+	private void validate(Identifier recipeId) {
 		if (pattern.isEmpty()) {
 			throw new IllegalStateException("No pattern is defined for shaped recipe " + recipeId + "!");
 		} else {

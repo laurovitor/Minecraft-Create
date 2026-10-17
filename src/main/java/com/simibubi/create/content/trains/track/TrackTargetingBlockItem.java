@@ -1,5 +1,6 @@
 package com.simibubi.create.content.trains.track;
 
+import net.createmod.catnip.api.client.network.ClientNetworkHelper;
 import java.util.List;
 import java.util.function.BiConsumer;
 
@@ -21,15 +22,13 @@ import com.simibubi.create.foundation.utility.CreateLang;
 import com.simibubi.create.infrastructure.config.AllConfigs;
 import com.tterrag.registrate.util.nullness.NonNullBiFunction;
 
-import net.createmod.catnip.data.Couple;
-import net.createmod.catnip.platform.CatnipServices;
+import net.createmod.catnip.api.data.Couple;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction.AxisDirection;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.world.InteractionResult;
@@ -37,16 +36,12 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.component.TypedEntityData;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 public class TrackTargetingBlockItem extends BlockItem {
 
@@ -74,9 +69,9 @@ public class TrackTargetingBlockItem extends BlockItem {
 			return InteractionResult.FAIL;
 
 		if (player.isShiftKeyDown() && stack.has(AllDataComponents.TRACK_TARGETING_ITEM_SELECTED_POS)) {
-			if (level.isClientSide)
+			if (level.isClientSide())
 				return InteractionResult.SUCCESS;
-			player.displayClientMessage(CreateLang.translateDirect("track_target.clear"), true);
+			player.sendOverlayMessage(CreateLang.translateDirect("track_target.clear"));
 			stack.remove(AllDataComponents.TRACK_TARGETING_ITEM_SELECTED_POS);
 			stack.remove(AllDataComponents.TRACK_TARGETING_ITEM_SELECTED_DIRECTION);
 			stack.remove(AllDataComponents.TRACK_TARGETING_ITEM_BEZIER);
@@ -85,7 +80,7 @@ public class TrackTargetingBlockItem extends BlockItem {
 		}
 
 		if (state.getBlock() instanceof ITrackBlock track) {
-			if (level.isClientSide)
+			if (level.isClientSide())
 				return InteractionResult.SUCCESS;
 
 			Vec3 lookAngle = player.getLookAngle();
@@ -97,8 +92,8 @@ public class TrackTargetingBlockItem extends BlockItem {
 			withGraphLocation(level, pos, front, null, type, (overlap, location) -> result.setValue(overlap));
 
 			if (result.getValue().feedback != null) {
-				player.displayClientMessage(CreateLang.translateDirect(result.getValue().feedback)
-					.withStyle(ChatFormatting.RED), true);
+				player.sendOverlayMessage(CreateLang.translateDirect(result.getValue().feedback)
+					.withStyle(ChatFormatting.RED));
 				AllSoundEvents.DENY.play(level, null, pos, .5f, 1);
 				return InteractionResult.FAIL;
 			}
@@ -106,14 +101,14 @@ public class TrackTargetingBlockItem extends BlockItem {
 			stack.set(AllDataComponents.TRACK_TARGETING_ITEM_SELECTED_POS, pos);
 			stack.set(AllDataComponents.TRACK_TARGETING_ITEM_SELECTED_DIRECTION, front);
 			stack.remove(AllDataComponents.TRACK_TARGETING_ITEM_BEZIER);
-			player.displayClientMessage(CreateLang.translateDirect("track_target.set"), true);
+			player.sendOverlayMessage(CreateLang.translateDirect("track_target.set"));
 			AllSoundEvents.CONTROLLER_CLICK.play(level, null, pos, 1, 1);
 			return InteractionResult.SUCCESS;
 		}
 
 		if (!stack.has(AllDataComponents.TRACK_TARGETING_ITEM_SELECTED_POS)) {
-			player.displayClientMessage(CreateLang.translateDirect("track_target.missing")
-				.withStyle(ChatFormatting.RED), true);
+			player.sendOverlayMessage(CreateLang.translateDirect("track_target.missing")
+				.withStyle(ChatFormatting.RED));
 			return InteractionResult.FAIL;
 		}
 
@@ -126,8 +121,8 @@ public class TrackTargetingBlockItem extends BlockItem {
 		boolean bezier = stack.has(AllDataComponents.TRACK_TARGETING_ITEM_BEZIER);
 
 		if (!selectedPos.closerThan(placedPos, bezier ? AllConfigs.server().trains.maxTrackPlacementLength.get() + 16 : 16)) {
-			player.displayClientMessage(CreateLang.translateDirect("track_target.too_far")
-				.withStyle(ChatFormatting.RED), true);
+			player.sendOverlayMessage(CreateLang.translateDirect("track_target.too_far")
+				.withStyle(ChatFormatting.RED));
 			return InteractionResult.FAIL;
 		}
 
@@ -136,16 +131,17 @@ public class TrackTargetingBlockItem extends BlockItem {
 				stack.get(AllDataComponents.TRACK_TARGETING_ITEM_BEZIER);
 			CompoundTag bezierNbt = new CompoundTag();
 			bezierNbt.putInt("Segment", bezierTrackPointLocation.segment());
-			bezierNbt.put("Key", NbtUtils.writeBlockPos(bezierTrackPointLocation.curveTarget()
-				.subtract(placedPos)));
+			bezierNbt.store("Key", BlockPos.CODEC, bezierTrackPointLocation.curveTarget()
+				.subtract(placedPos));
 			blockEntityData.put("Bezier", bezierNbt);
 		}
 
-		blockEntityData.put("TargetTrack", NbtUtils.writeBlockPos(selectedPos.subtract(placedPos)));
-		blockEntityData.putString("id", BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
-		BlockEntity.addEntityType(blockEntityData, ((IBE<?>) this.getBlock()).getBlockEntityType());
+		blockEntityData.store("TargetTrack", BlockPos.CODEC, selectedPos.subtract(placedPos));
 
-		stack.set(DataComponents.BLOCK_ENTITY_DATA, CustomData.of(blockEntityData));
+		// BLOCK_ENTITY_DATA holds a TypedEntityData now, which carries the block entity type
+		// alongside the tag instead of having it written in as an "id" key.
+		stack.set(DataComponents.BLOCK_ENTITY_DATA,
+			TypedEntityData.of(((IBE<?>) this.getBlock()).getBlockEntityType(), blockEntityData));
 		stack.remove(AllDataComponents.TRACK_TARGETING_ITEM_SELECTED_POS);
 		stack.remove(AllDataComponents.TRACK_TARGETING_ITEM_SELECTED_DIRECTION);
 		stack.remove(AllDataComponents.TRACK_TARGETING_ITEM_BEZIER);
@@ -153,7 +149,7 @@ public class TrackTargetingBlockItem extends BlockItem {
 		InteractionResult useOn = super.useOn(pContext);
 		stack.remove(DataComponents.BLOCK_ENTITY_DATA);
 
-		if (level.isClientSide || useOn == InteractionResult.FAIL)
+		if (level.isClientSide() || useOn == InteractionResult.FAIL)
 			return useOn;
 
 		ItemStack itemInHand = player.getItemInHand(pContext.getHand());
@@ -162,8 +158,8 @@ public class TrackTargetingBlockItem extends BlockItem {
 			itemInHand.remove(AllDataComponents.TRACK_TARGETING_ITEM_SELECTED_DIRECTION);
 			itemInHand.remove(AllDataComponents.TRACK_TARGETING_ITEM_BEZIER);
 		}
-		player.displayClientMessage(CreateLang.translateDirect("track_target.success")
-			.withStyle(ChatFormatting.GREEN), true);
+		player.sendOverlayMessage(CreateLang.translateDirect("track_target.success")
+			.withStyle(ChatFormatting.GREEN));
 
 		if (type == EdgePointType.SIGNAL)
 			AllAdvancements.SIGNAL.awardTo(player);
@@ -175,7 +171,6 @@ public class TrackTargetingBlockItem extends BlockItem {
 		return type;
 	}
 
-	@OnlyIn(Dist.CLIENT)
 	public boolean useOnCurve(BezierPointSelection selection, ItemStack stack) {
 		Minecraft mc = Minecraft.getInstance();
 		LocalPlayer player = mc.player;
@@ -184,8 +179,8 @@ public class TrackTargetingBlockItem extends BlockItem {
 		boolean front = player.getLookAngle()
 			.dot(selection.direction()) < 0;
 
-		CatnipServices.NETWORK.sendToServer(new CurvedTrackSelectionPacket(be.getBlockPos(), loc.curveTarget(),
-			front, loc.segment(), player.getInventory().selected));
+		ClientNetworkHelper.INSTANCE.sendToServer(new CurvedTrackSelectionPacket(be.getBlockPos(), loc.curveTarget(),
+			front, loc.segment(), player.getInventory().getSelectedSlot()));
 		return true;
 	}
 

@@ -19,23 +19,29 @@ import com.simibubi.create.foundation.block.connected.ConnectedTextureBehaviour;
 import com.simibubi.create.foundation.block.connected.HorizontalCTBehaviour;
 import com.simibubi.create.foundation.block.connected.RotatedPillarCTBehaviour;
 import com.tterrag.registrate.providers.DataGenContext;
-import com.tterrag.registrate.providers.RegistrateBlockstateProvider;
-import com.tterrag.registrate.providers.RegistrateRecipeProvider;
+import com.simibubi.create.foundation.data.BlockStateGen;
+import com.tterrag.registrate.providers.generators.RegistrateBlockModelGenerator;
+import com.tterrag.registrate.providers.generators.RegistrateRecipeProvider;
 import com.tterrag.registrate.util.nullness.NonNullBiConsumer;
 import com.tterrag.registrate.util.nullness.NonNullFunction;
 import com.tterrag.registrate.util.nullness.NonNullSupplier;
 
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.data.models.BlockModelGenerators;
+import net.minecraft.client.data.models.MultiVariant;
+import net.minecraft.client.data.models.blockstates.MultiVariantGenerator;
+import net.minecraft.client.data.models.blockstates.PropertyDispatch;
+import net.minecraft.client.data.models.model.ModelTemplates;
+import net.minecraft.client.data.models.model.TextureMapping;
+import net.minecraft.client.data.models.model.TextureSlot;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.Direction.Axis;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockBehaviour.Properties;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.neoforge.client.model.generators.ConfiguredModel;
 
 public class PaletteBlockPattern {
 
@@ -80,7 +86,6 @@ public class PaletteBlockPattern {
 	private NonNullFunction<NonNullSupplier<Block>, NonNullBiConsumer<DataGenContext<Block, ? extends Block>, RegistrateRecipeProvider>> additionalRecipes;
 	private PaletteBlockPartial<? extends Block>[] partials;
 
-	@OnlyIn(Dist.CLIENT)
 	private RenderType renderType;
 
 	private static PaletteBlockPattern create(String name, PatternNameType nameType,
@@ -161,48 +166,50 @@ public class PaletteBlockPattern {
 	// Model generators
 
 	public IBlockStateProvider cubeAll(String variant) {
-		ResourceLocation all = toLocation(variant, textures[0]);
-		return (ctx, prov) -> prov.simpleBlock(ctx.get(), prov.models()
-			.cubeAll(createName(variant), all));
+		Material all = new Material(toLocation(variant, textures[0]));
+		return (ctx, prov) -> prov.generateWithTemplate(ctx.get(), ModelTemplates.CUBE_ALL,
+			TextureMapping.cube(all));
 	}
 
 	public IBlockStateProvider cubeBottomTop(String variant) {
-		ResourceLocation side = toLocation(variant, textures[0]);
-		ResourceLocation bottom = toLocation(variant, textures[1]);
-		ResourceLocation top = toLocation(variant, textures[2]);
-		return (ctx, prov) -> prov.simpleBlock(ctx.get(), prov.models()
-			.cubeBottomTop(createName(variant), side, bottom, top));
+		Material side = new Material(toLocation(variant, textures[0]));
+		Material bottom = new Material(toLocation(variant, textures[1]));
+		Material top = new Material(toLocation(variant, textures[2]));
+		return (ctx, prov) -> prov.generateWithTemplate(ctx.get(), ModelTemplates.CUBE_BOTTOM_TOP,
+			new TextureMapping().put(TextureSlot.SIDE, side)
+				.put(TextureSlot.BOTTOM, bottom)
+				.put(TextureSlot.TOP, top)
+				.put(TextureSlot.PARTICLE, side));
 	}
 
+	/**
+	 * The upright pillar keeps the block's own model; the two horizontal axes share a second model that
+	 * is tipped onto its side, so the cap only ever faces along the pillar.
+	 */
 	public IBlockStateProvider pillar(String variant) {
-		ResourceLocation side = toLocation(variant, textures[0]);
-		ResourceLocation end = toLocation(variant, textures[1]);
+		Material side = new Material(toLocation(variant, textures[0]));
+		Material end = new Material(toLocation(variant, textures[1]));
 
-		return (ctx, prov) -> prov.getVariantBuilder(ctx.getEntry())
-			.forAllStatesExcept(state -> {
-				Axis axis = state.getValue(BlockStateProperties.AXIS);
-				if (axis == Axis.Y)
-					return ConfiguredModel.builder()
-						.modelFile(prov.models()
-							.cubeColumn(createName(variant), side, end))
-						.uvLock(false)
-						.build();
-				return ConfiguredModel.builder()
-					.modelFile(prov.models()
-						.cubeColumnHorizontal(createName(variant) + "_horizontal", side, end))
-					.uvLock(false)
-					.rotationX(90)
-					.rotationY(axis == Axis.X ? 90 : 0)
-					.build();
-			}, BlockStateProperties.WATERLOGGED, ConnectedPillarBlock.NORTH, ConnectedPillarBlock.SOUTH,
-				ConnectedPillarBlock.EAST, ConnectedPillarBlock.WEST);
+		return (ctx, prov) -> {
+			TextureMapping textures = TextureMapping.column(side, end);
+			MultiVariant upright = BlockModelGenerators
+				.plainVariant(ModelTemplates.CUBE_COLUMN.create(ctx.get(), textures, prov.modelOutput));
+			MultiVariant horizontal = BlockModelGenerators.plainVariant(
+				ModelTemplates.CUBE_COLUMN_HORIZONTAL.create(ctx.get(), textures, prov.modelOutput));
+
+			prov.blockStateOutput.accept(MultiVariantGenerator.dispatch(ctx.get())
+				.with(PropertyDispatch.initial(BlockStateProperties.AXIS)
+					.generate(axis -> axis == Axis.Y ? upright
+						: BlockStateGen.rotateY(BlockStateGen.rotateX(horizontal, 90),
+							axis == Axis.X ? 90 : 0))));
+		};
 	}
 
 	public IBlockStateProvider cubeColumn(String variant) {
-		ResourceLocation side = toLocation(variant, textures[0]);
-		ResourceLocation end = toLocation(variant, textures[1]);
-		return (ctx, prov) -> prov.simpleBlock(ctx.get(), prov.models()
-			.cubeColumn(createName(variant), side, end));
+		Material side = new Material(toLocation(variant, textures[0]));
+		Material end = new Material(toLocation(variant, textures[1]));
+		return (ctx, prov) -> prov.generateWithTemplate(ctx.get(), ModelTemplates.CUBE_COLUMN,
+			TextureMapping.column(side, end));
 	}
 
 	// Utility
@@ -219,16 +226,16 @@ public class PaletteBlockPattern {
 		return nameType == SUFFIX ? String.format(formatString, variant, id) : String.format(formatString, id, variant);
 	}
 
-	protected static ResourceLocation toLocation(String variant, String texture) {
+	protected static Identifier toLocation(String variant, String texture) {
 		return Create.asResource(
 			String.format(TEXTURE_LOCATION, texture, variant + (texture.equals("cut") ? "_" : "_cut_") + texture));
 	}
 
 	protected static CTSpriteShiftEntry ct(String variant, CTs texture) {
-		ResourceLocation resLoc = texture.srcFactory.apply(variant);
-		ResourceLocation resLocTarget = texture.targetFactory.apply(variant);
+		Identifier resLoc = texture.srcFactory.apply(variant);
+		Identifier resLocTarget = texture.targetFactory.apply(variant);
 		return CTSpriteShifter.getCT(texture.type, resLoc,
-			ResourceLocation.fromNamespaceAndPath(resLocTarget.getNamespace(), resLocTarget.getPath() + "_connected"));
+			Identifier.fromNamespaceAndPath(resLocTarget.getNamespace(), resLocTarget.getPath() + "_connected"));
 	}
 
 	@FunctionalInterface
@@ -238,7 +245,7 @@ public class PaletteBlockPattern {
 
 	@FunctionalInterface
 	static interface IBlockStateProvider
-		extends NonNullBiConsumer<DataGenContext<Block, ? extends Block>, RegistrateBlockstateProvider> {
+		extends NonNullBiConsumer<DataGenContext<Block, ? extends Block>, RegistrateBlockModelGenerator> {
 	}
 
 	enum PatternNameType {
@@ -256,15 +263,15 @@ public class PaletteBlockPattern {
 		;
 
 		public CTType type;
-		private Function<String, ResourceLocation> srcFactory;
-		private Function<String, ResourceLocation> targetFactory;
+		private Function<String, Identifier> srcFactory;
+		private Function<String, Identifier> targetFactory;
 
-		private CTs(CTType type, Function<String, ResourceLocation> factory) {
+		private CTs(CTType type, Function<String, Identifier> factory) {
 			this(type, factory, factory);
 		}
 
-		private CTs(CTType type, Function<String, ResourceLocation> srcFactory,
-			Function<String, ResourceLocation> targetFactory) {
+		private CTs(CTType type, Function<String, Identifier> srcFactory,
+			Function<String, Identifier> targetFactory) {
 			this.type = type;
 			this.srcFactory = srcFactory;
 			this.targetFactory = targetFactory;

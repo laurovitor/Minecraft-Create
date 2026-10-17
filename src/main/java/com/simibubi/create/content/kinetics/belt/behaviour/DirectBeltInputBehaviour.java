@@ -1,5 +1,9 @@
 package com.simibubi.create.content.kinetics.belt.behaviour;
 
+import net.neoforged.neoforge.transfer.transaction.Transaction;
+import net.neoforged.neoforge.transfer.ResourceHandlerUtil;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
 import java.util.function.Supplier;
 
 import org.jetbrains.annotations.Nullable;
@@ -20,9 +24,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
-
 /**
  * Behaviour for BlockEntities to which belts can transfer items directly in a
  * backup-friendly manner. Example uses: Basin, Saw, Depot
@@ -70,10 +71,15 @@ public class DirectBeltInputBehaviour extends BlockEntityBehaviour {
 	}
 
 	private ItemStack defaultInsertionCallback(TransportedItemStack inserted, Direction side, boolean simulate) {
-		IItemHandler lazy = blockEntity.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, blockEntity.getBlockPos(), side);
+		ResourceHandler<ItemResource> lazy = blockEntity.getLevel().getCapability(Capabilities.Item.BLOCK, blockEntity.getBlockPos(), side);
 		if (lazy == null)
 			return inserted.stack;
-		return ItemHandlerHelper.insertItemStacked(lazy, inserted.stack.copy(), simulate);
+		try (Transaction transaction = Transaction.openRoot()) {
+			int transferred = inserted.stack.copy().isEmpty() ? 0 : ResourceHandlerUtil.insertStacking(lazy, ItemResource.of(inserted.stack.copy()), inserted.stack.copy().getCount(), transaction);
+			if (!simulate)
+				transaction.commit();
+			return transferred == inserted.stack.copy().getCount() ? ItemStack.EMPTY : inserted.stack.copy().copyWithCount(inserted.stack.copy().getCount() - transferred);
+		}
 	}
 
 	// TODO: verify that this side is consistent across all calls

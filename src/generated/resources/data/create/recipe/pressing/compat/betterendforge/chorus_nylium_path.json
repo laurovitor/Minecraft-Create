@@ -8,7 +8,10 @@
   "type": "create:pressing",
   "ingredients": [
     {
-      "item": "betterendforge:chorus_nylium"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "betterendforge:chorus_nylium"
+      ]
     }
   ],
   "results": [

@@ -4,30 +4,54 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.tterrag.registrate.providers.DataGenContext;
+import com.tterrag.registrate.providers.generators.RegistrateBlockModelGenerator;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.data.models.BlockModelGenerators;
+import net.minecraft.client.data.models.MultiVariant;
+import net.minecraft.client.data.models.model.TextureSlot;
+import net.minecraft.client.resources.model.sprite.Material;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.client.model.generators.BlockModelProvider;
-import net.neoforged.neoforge.client.model.generators.ModelFile;
 
 public class BrassDiodeGenerator extends AbstractDiodeGenerator {
 
-	@Override
-	protected <T extends Block> List<ModelFile> createModels(DataGenContext<Block, T> ctx, BlockModelProvider prov) {
-		List<ModelFile> models = new ArrayList<>(4);
-		String name = ctx.getName();
-		ResourceLocation template = existing(name);
+	/**
+	 * The client-only constants this class builds its models from.
+	 *
+	 * A nested class is initialised on first use rather than with its owner, which is the whole
+	 * point of the indirection: these are client types, this class is reached from common
+	 * registration code, and a static field here would be initialised on a dedicated server that
+	 * has no such class. Only the datagen methods below touch them, and a server runs none.
+	 */
+	private static final class Client {
+		static final TextureSlot TOP = TextureSlot.create("top");
+		static final TextureSlot TORCH = TextureSlot.create("torch");
+	}
 
-		models.add(prov.getExistingFile(template));
-		models.add(prov.withExistingParent(name + "_powered", template)
-			.texture("top", texture(ctx, "powered")));
-		models.add(prov.withExistingParent(name + "_powering", template)
-			.texture("torch", poweredTorch())
-			.texture("top", texture(ctx, "powering")));
-		models.add(prov.withExistingParent(name + "_powered_powering", template)
-			.texture("torch", poweredTorch())
-			.texture("top", texture(ctx, "powered_powering")));
+
+	@Override
+	protected <T extends Block> List<MultiVariant> createModels(DataGenContext<Block, T> ctx,
+		RegistrateBlockModelGenerator prov) {
+		List<MultiVariant> models = new ArrayList<>(4);
+		String name = ctx.getName();
+		Identifier template = existing(name);
+
+		models.add(BlockModelGenerators.plainVariant(template));
+		models.add(BlockModelGenerators.plainVariant(prov.getBuilder()
+			.parent(template)
+			.texture(Client.TOP, new Material(texture(ctx, "powered")))
+			.build(prov.modLoc("block/" + name + "_powered"))));
+		models.add(BlockModelGenerators.plainVariant(prov.getBuilder()
+			.parent(template)
+			.texture(Client.TORCH, new Material(poweredTorch()))
+			.texture(Client.TOP, new Material(texture(ctx, "powering")))
+			.build(prov.modLoc("block/" + name + "_powering"))));
+		models.add(BlockModelGenerators.plainVariant(prov.getBuilder()
+			.parent(template)
+			.texture(Client.TORCH, new Material(poweredTorch()))
+			.texture(Client.TOP, new Material(texture(ctx, "powered_powering")))
+			.build(prov.modLoc("block/" + name + "_powered_powering"))));
 
 		return models;
 	}

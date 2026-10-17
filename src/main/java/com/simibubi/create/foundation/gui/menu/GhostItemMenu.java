@@ -1,18 +1,18 @@
 package com.simibubi.create.foundation.gui.menu;
 
+import net.neoforged.neoforge.transfer.item.ItemUtil;
+import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
-import net.neoforged.neoforge.items.ItemStackHandler;
-
 public abstract class GhostItemMenu<T> extends MenuBase<T> implements IClearableMenu {
 
-	public ItemStackHandler ghostInventory;
+	public ItemStacksResourceHandler ghostInventory;
 
 	protected GhostItemMenu(MenuType<?> type, int id, Inventory inv, RegistryFriendlyByteBuf extraData) {
 		super(type, id, inv, extraData);
@@ -22,7 +22,7 @@ public abstract class GhostItemMenu<T> extends MenuBase<T> implements IClearable
 		super(type, id, inv, contentHolder);
 	}
 
-	protected abstract ItemStackHandler createGhostInventory();
+	protected abstract ItemStacksResourceHandler createGhostInventory();
 
 	protected abstract boolean allowRepeats();
 
@@ -33,8 +33,20 @@ public abstract class GhostItemMenu<T> extends MenuBase<T> implements IClearable
 
 	@Override
 	public void clearContents() {
-		for (int i = 0; i < ghostInventory.getSlots(); i++)
-			ghostInventory.setStackInSlot(i, ItemStack.EMPTY);
+		for (int i = 0; i < ghostInventory.size(); i++)
+			setGhost(i, ItemStack.EMPTY);
+	}
+
+	/**
+	 * Puts a stack into one of the ghost slots.
+	 * <p>
+	 * Through the slot rather than into the handler behind it, because a slot over a resource handler
+	 * remembers the stack it last handed out and, when told that something changed, writes that
+	 * remembered stack back over the handler. Anything written to the handler directly is undone by the
+	 * next such notice; going through the slot keeps the two in step.
+	 */
+	protected void setGhost(int slot, ItemStack stack) {
+		getSlot(slot + 36).set(stack);
 	}
 
 	@Override
@@ -50,19 +62,19 @@ public abstract class GhostItemMenu<T> extends MenuBase<T> implements IClearable
 	}
 
 	@Override
-	public void clicked(int slotId, int dragType, ClickType clickTypeIn, Player player) {
+	public void clicked(int slotId, int dragType, ContainerInput clickTypeIn, Player player) {
 		if (slotId < 36) {
 			super.clicked(slotId, dragType, clickTypeIn, player);
 			return;
 		}
-		if (clickTypeIn == ClickType.THROW)
+		if (clickTypeIn == ContainerInput.THROW)
 			return;
 
 		ItemStack held = getCarried();
 		int slot = slotId - 36;
-		if (clickTypeIn == ClickType.CLONE) {
+		if (clickTypeIn == ContainerInput.CLONE) {
 			if (player.isCreative() && held.isEmpty()) {
-				ItemStack stackInSlot = ghostInventory.getStackInSlot(slot)
+				ItemStack stackInSlot = ItemUtil.getStack(ghostInventory, slot)
 						.copy();
 				stackInSlot.setCount(stackInSlot.getMaxStackSize());
 				setCarried(stackInSlot);
@@ -78,8 +90,7 @@ public abstract class GhostItemMenu<T> extends MenuBase<T> implements IClearable
 			insert = held.copy();
 			insert.setCount(1);
 		}
-		ghostInventory.setStackInSlot(slot, insert);
-		getSlot(slotId).setChanged();
+		setGhost(slot, insert);
 	}
 
 	@Override
@@ -92,21 +103,19 @@ public abstract class GhostItemMenu<T> extends MenuBase<T> implements IClearable
 		if (index < 36) {
 			Slot slot = this.slots.get(index);
 			ItemStack stackToInsert = slot.getItem();
-			for (int i = 0; i < ghostInventory.getSlots(); i++) {
-				ItemStack stack = ghostInventory.getStackInSlot(i);
+			for (int i = 0; i < ghostInventory.size(); i++) {
+				ItemStack stack = ItemUtil.getStack(ghostInventory, i);
 				if (!allowRepeats() && ItemStack.isSameItemSameComponents(stack, stackToInsert))
 					break;
 				if (stack.isEmpty()) {
 					ItemStack copy = stackToInsert.copy();
 					copy.setCount(1);
-					ghostInventory.insertItem(i, copy, false);
-					getSlot(i + 36).setChanged();
+					setGhost(i, copy);
 					break;
 				}
 			}
 		} else {
-			ghostInventory.extractItem(index - 36, 1, false);
-			getSlot(index).setChanged();
+			setGhost(index - 36, ItemStack.EMPTY);
 		}
 		return ItemStack.EMPTY;
 	}

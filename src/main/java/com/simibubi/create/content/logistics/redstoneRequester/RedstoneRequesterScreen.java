@@ -1,10 +1,13 @@
 package com.simibubi.create.content.logistics.redstoneRequester;
 
+import net.neoforged.neoforge.transfer.item.ItemUtil;
+import net.minecraft.client.Minecraft;
+import org.joml.Matrix3x2fStack;
+import net.createmod.catnip.api.client.network.ClientNetworkHelper;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.content.logistics.AddressEditBox;
 import com.simibubi.create.content.logistics.BigItemStack;
@@ -16,17 +19,16 @@ import com.simibubi.create.foundation.gui.widget.IconButton;
 import com.simibubi.create.foundation.gui.widget.ScrollInput;
 import com.simibubi.create.foundation.utility.CreateLang;
 
-import net.createmod.catnip.gui.element.GuiGameElement;
-import net.createmod.catnip.platform.CatnipServices;
+import net.createmod.catnip.api.client.gui.element.GuiGameElement;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
-import net.neoforged.neoforge.items.SlotItemHandler;
+import net.neoforged.neoforge.transfer.item.ResourceHandlerSlot;
 
 public class RedstoneRequesterScreen extends AbstractSimiContainerScreen<RedstoneRequesterMenu> {
 
@@ -54,7 +56,7 @@ public class RedstoneRequesterScreen extends AbstractSimiContainerScreen<Redston
 		super.containerTick();
 		addressBox.tick();
 		for (int i = 0; i < amounts.size(); i++)
-			if (menu.ghostInventory.getStackInSlot(i)
+			if (ItemUtil.getStack(menu.ghostInventory, i)
 				.isEmpty())
 				amounts.set(i, 1);
 	}
@@ -72,7 +74,7 @@ public class RedstoneRequesterScreen extends AbstractSimiContainerScreen<Redston
 		if (addressBox == null) {
 			addressBox = new AddressEditBox(this, new NoShadowFontWrapper(font), x + 55, y + 68, 110, 10, false);
 			addressBox.setValue(menu.contentHolder.encodedTargetAdress);
-			addressBox.setTextColor(0x555555);
+			addressBox.setTextColor(0xFF555555);
 		}
 		addRenderableWidget(addressBox);
 
@@ -104,7 +106,7 @@ public class RedstoneRequesterScreen extends AbstractSimiContainerScreen<Redston
 	}
 
 	@Override
-	protected void renderBg(GuiGraphics pGuiGraphics, float pPartialTick, int pMouseX, int pMouseY) {
+	protected void renderBg(GuiGraphicsExtractor pGuiGraphics, float pPartialTick, int pMouseX, int pMouseY) {
 		int x = getGuiLeft();
 		int y = getGuiTop();
 		AllGuiTextures.REDSTONE_REQUESTER.render(pGuiGraphics, x + 3, y);
@@ -114,7 +116,7 @@ public class RedstoneRequesterScreen extends AbstractSimiContainerScreen<Redston
 		Component title = CreateLang.text(stack.getHoverName()
 			.getString())
 			.component();
-		pGuiGraphics.drawString(font, title, x + 117 - font.width(title) / 2, y + 4, 0x3D3C48, false);
+		pGuiGraphics.text(font, title, x + 117 - font.width(title) / 2, y + 4, 0xFF3D3C48, false);
 
 		GuiGameElement.of(stack)
 			.scale(3)
@@ -122,7 +124,7 @@ public class RedstoneRequesterScreen extends AbstractSimiContainerScreen<Redston
 	}
 
 	@Override
-	protected void renderForeground(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+	protected void renderForeground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks) {
 		super.renderForeground(graphics, mouseX, mouseY, partialTicks);
 		int x = getGuiLeft();
 		int y = getGuiTop();
@@ -130,20 +132,20 @@ public class RedstoneRequesterScreen extends AbstractSimiContainerScreen<Redston
 		for (int i = 0; i < amounts.size(); i++) {
 			int inputX = x + 27 + i * 20;
 			int inputY = y + 28;
-			ItemStack itemStack = menu.ghostInventory.getStackInSlot(i);
+			ItemStack itemStack = ItemUtil.getStack(menu.ghostInventory, i);
 			if (itemStack.isEmpty())
 				continue;
-			PoseStack ms = graphics.pose();
-			ms.pushPose();
-			ms.translate(0, 0, 100);
-			graphics.renderItemDecorations(font, itemStack, inputX, inputY, "" + amounts.get(i));
-			ms.popPose();
+			Matrix3x2fStack ms = graphics.pose();
+			ms.pushMatrix();
+			ms.translate((float) (0), (float) (0));
+			graphics.itemDecorations(font, itemStack, inputX, inputY, "" + amounts.get(i));
+			ms.popMatrix();
 		}
 
 		if (addressBox.isHovered() && !addressBox.isFocused()) {
 			if (addressBox.getValue()
 				.isBlank())
-				graphics.renderComponentTooltip(font,
+				graphics.setComponentTooltipForNextFrame(font,
 					List.of(CreateLang.translate("gui.redstone_requester.requester_address")
 						.color(ScrollInput.HEADER_RGB)
 						.component(),
@@ -159,7 +161,7 @@ public class RedstoneRequesterScreen extends AbstractSimiContainerScreen<Redston
 							.component()),
 					mouseX, mouseY);
 			else
-				graphics.renderComponentTooltip(font,
+				graphics.setComponentTooltipForNextFrame(font,
 					List.of(CreateLang.translate("gui.redstone_requester.requester_address_given")
 						.color(ScrollInput.HEADER_RGB)
 						.component(),
@@ -182,11 +184,11 @@ public class RedstoneRequesterScreen extends AbstractSimiContainerScreen<Redston
 			int inputX = x + 27 + i * 20;
 			int inputY = y + 28;
 			if (mouseX >= inputX && mouseX < inputX + 16 && mouseY >= inputY && mouseY < inputY + 16) {
-				ItemStack itemStack = menu.ghostInventory.getStackInSlot(i);
+				ItemStack itemStack = ItemUtil.getStack(menu.ghostInventory, i);
 				if (itemStack.isEmpty())
 					return true;
 				amounts.set(i,
-					Mth.clamp((int) (amounts.get(i) + Math.signum(scrollY) * (hasShiftDown() ? 10 : 1)), 1, 256));
+					Mth.clamp((int) (amounts.get(i) + Math.signum(scrollY) * (Minecraft.getInstance().hasShiftDown() ? 10 : 1)), 1, 256));
 				return true;
 			}
 		}
@@ -197,7 +199,7 @@ public class RedstoneRequesterScreen extends AbstractSimiContainerScreen<Redston
 	@Override
 	protected List<Component> getTooltipFromContainerItem(ItemStack pStack) {
 		List<Component> tooltip = super.getTooltipFromContainerItem(pStack);
-		if (!(hoveredSlot instanceof SlotItemHandler))
+		if (!(hoveredSlot instanceof ResourceHandlerSlot))
 			return tooltip;
 
 		int slotIndex = this.hoveredSlot.getSlotIndex();
@@ -225,7 +227,7 @@ public class RedstoneRequesterScreen extends AbstractSimiContainerScreen<Redston
 
 	@Override
 	public void removed() {
-		CatnipServices.NETWORK.sendToServer(new RedstoneRequesterConfigurationPacket(menu.contentHolder.getBlockPos(),
+		ClientNetworkHelper.INSTANCE.sendToServer(new RedstoneRequesterConfigurationPacket(menu.contentHolder.getBlockPos(),
 				addressBox.getValue(), allowPartial.green, amounts));
 		super.removed();
 	}

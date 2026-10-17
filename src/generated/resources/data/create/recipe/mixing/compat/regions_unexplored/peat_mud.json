@@ -8,12 +8,14 @@
   "type": "create:mixing",
   "ingredients": [
     {
-      "item": "regions_unexplored:peat_dirt"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "regions_unexplored:peat_dirt"
+      ]
     },
     {
-      "type": "neoforge:single",
       "amount": 250,
-      "fluid": "minecraft:water"
+      "ingredient": "minecraft:water"
     }
   ],
   "results": [

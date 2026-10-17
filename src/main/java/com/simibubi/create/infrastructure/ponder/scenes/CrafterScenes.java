@@ -1,5 +1,7 @@
 package com.simibubi.create.infrastructure.ponder.scenes;
 
+import net.neoforged.neoforge.transfer.transaction.Transaction;
+import net.neoforged.neoforge.transfer.item.ItemResource;
 import java.util.Collection;
 
 import com.google.common.collect.ImmutableList;
@@ -8,14 +10,14 @@ import com.simibubi.create.content.kinetics.crafter.MechanicalCrafterBlock;
 import com.simibubi.create.content.kinetics.crafter.MechanicalCrafterBlockEntity;
 import com.simibubi.create.foundation.ponder.CreateSceneBuilder;
 
-import net.createmod.catnip.data.Couple;
-import net.createmod.catnip.math.Pointing;
-import net.createmod.ponder.api.PonderPalette;
-import net.createmod.ponder.api.element.ElementLink;
-import net.createmod.ponder.api.element.EntityElement;
-import net.createmod.ponder.api.scene.SceneBuilder;
-import net.createmod.ponder.api.scene.SceneBuildingUtil;
-import net.createmod.ponder.api.scene.Selection;
+import net.createmod.catnip.api.data.Couple;
+import net.createmod.catnip.api.math.Pointing;
+import net.createmod.ponder.api.client.PonderPalette;
+import net.createmod.ponder.api.client.element.ElementLink;
+import net.createmod.ponder.api.client.element.EntityElement;
+import net.createmod.ponder.api.client.scene.SceneBuilder;
+import net.createmod.ponder.api.client.scene.SceneBuildingUtil;
+import net.createmod.ponder.api.client.scene.Selection;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
@@ -24,8 +26,6 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
-
 public class CrafterScenes {
 
 	public static void setup(SceneBuilder builder, SceneBuildingUtil util) {
@@ -145,8 +145,13 @@ public class CrafterScenes {
 				.withItem(planks);
 		scene.idle(7);
 		Class<MechanicalCrafterBlockEntity> type = MechanicalCrafterBlockEntity.class;
-		scene.world().modifyBlockEntity(util.grid().at(1, 3, 2), type, mct -> mct.getInventory()
-			.insertItem(0, planks.copy(), false));
+		scene.world().modifyBlockEntity(util.grid().at(1, 3, 2), type, mct -> {
+			try (Transaction transaction = Transaction.openRoot()) {
+				if (!planks.isEmpty())
+					mct.getInventory().insert(0, ItemResource.of(planks), planks.getCount(), transaction);
+				transaction.commit();
+			}
+		});
 
 		scene.idle(10);
 		scene.overlay().showText(50)
@@ -162,29 +167,69 @@ public class CrafterScenes {
 
 		scene.world().setCraftingResult(util.grid().at(1, 1, 2), new ItemStack(Items.PISTON));
 
-		scene.world().modifyBlockEntity(util.grid().at(2, 3, 2), type, mct -> mct.getInventory()
-			.insertItem(0, planks.copy(), false));
+		scene.world().modifyBlockEntity(util.grid().at(2, 3, 2), type, mct -> {
+			try (Transaction transaction = Transaction.openRoot()) {
+				if (!planks.isEmpty())
+					mct.getInventory().insert(0, ItemResource.of(planks), planks.getCount(), transaction);
+				transaction.commit();
+			}
+		});
 		scene.idle(5);
-		scene.world().modifyBlockEntity(util.grid().at(3, 3, 2), type, mct -> mct.getInventory()
-			.insertItem(0, planks.copy(), false));
+		scene.world().modifyBlockEntity(util.grid().at(3, 3, 2), type, mct -> {
+			try (Transaction transaction = Transaction.openRoot()) {
+				if (!planks.isEmpty())
+					mct.getInventory().insert(0, ItemResource.of(planks), planks.getCount(), transaction);
+				transaction.commit();
+			}
+		});
 		scene.idle(5);
-		scene.world().modifyBlockEntity(util.grid().at(3, 2, 2), type, mct -> mct.getInventory()
-			.insertItem(0, cobble.copy(), false));
+		scene.world().modifyBlockEntity(util.grid().at(3, 2, 2), type, mct -> {
+			try (Transaction transaction = Transaction.openRoot()) {
+				if (!cobble.isEmpty())
+					mct.getInventory().insert(0, ItemResource.of(cobble), cobble.getCount(), transaction);
+				transaction.commit();
+			}
+		});
 		scene.idle(5);
-		scene.world().modifyBlockEntity(util.grid().at(2, 2, 2), type, mct -> mct.getInventory()
-			.insertItem(0, iron.copy(), false));
+		scene.world().modifyBlockEntity(util.grid().at(2, 2, 2), type, mct -> {
+			try (Transaction transaction = Transaction.openRoot()) {
+				if (!iron.isEmpty())
+					mct.getInventory().insert(0, ItemResource.of(iron), iron.getCount(), transaction);
+				transaction.commit();
+			}
+		});
 		scene.idle(5);
-		scene.world().modifyBlockEntity(util.grid().at(1, 2, 2), type, mct -> mct.getInventory()
-			.insertItem(0, cobble.copy(), false));
+		scene.world().modifyBlockEntity(util.grid().at(1, 2, 2), type, mct -> {
+			try (Transaction transaction = Transaction.openRoot()) {
+				if (!cobble.isEmpty())
+					mct.getInventory().insert(0, ItemResource.of(cobble), cobble.getCount(), transaction);
+				transaction.commit();
+			}
+		});
 		scene.idle(5);
-		scene.world().modifyBlockEntity(util.grid().at(1, 1, 2), type, mct -> mct.getInventory()
-			.insertItem(0, cobble.copy(), false));
+		scene.world().modifyBlockEntity(util.grid().at(1, 1, 2), type, mct -> {
+			try (Transaction transaction = Transaction.openRoot()) {
+				if (!cobble.isEmpty())
+					mct.getInventory().insert(0, ItemResource.of(cobble), cobble.getCount(), transaction);
+				transaction.commit();
+			}
+		});
 		scene.idle(5);
-		scene.world().modifyBlockEntity(util.grid().at(2, 1, 2), type, mct -> mct.getInventory()
-			.insertItem(0, redstoneDust.copy(), false));
+		scene.world().modifyBlockEntity(util.grid().at(2, 1, 2), type, mct -> {
+			try (Transaction transaction = Transaction.openRoot()) {
+				if (!redstoneDust.isEmpty())
+					mct.getInventory().insert(0, ItemResource.of(redstoneDust), redstoneDust.getCount(), transaction);
+				transaction.commit();
+			}
+		});
 		scene.idle(5);
-		scene.world().modifyBlockEntity(util.grid().at(3, 1, 2), type, mct -> mct.getInventory()
-			.insertItem(0, cobble.copy(), false));
+		scene.world().modifyBlockEntity(util.grid().at(3, 1, 2), type, mct -> {
+			try (Transaction transaction = Transaction.openRoot()) {
+				if (!cobble.isEmpty())
+					mct.getInventory().insert(0, ItemResource.of(cobble), cobble.getCount(), transaction);
+				transaction.commit();
+			}
+		});
 
 		scene.overlay().showText(80)
 			.attachKeyFrame()
@@ -199,20 +244,45 @@ public class CrafterScenes {
 
 		scene.world().setCraftingResult(util.grid().at(1, 1, 2), new ItemStack(Items.IRON_PICKAXE));
 
-		scene.world().modifyBlockEntity(util.grid().at(1, 3, 2), type, mct -> mct.getInventory()
-			.insertItem(0, iron.copy(), false));
+		scene.world().modifyBlockEntity(util.grid().at(1, 3, 2), type, mct -> {
+			try (Transaction transaction = Transaction.openRoot()) {
+				if (!iron.isEmpty())
+					mct.getInventory().insert(0, ItemResource.of(iron), iron.getCount(), transaction);
+				transaction.commit();
+			}
+		});
 		scene.idle(2);
-		scene.world().modifyBlockEntity(util.grid().at(2, 3, 2), type, mct -> mct.getInventory()
-			.insertItem(0, iron.copy(), false));
+		scene.world().modifyBlockEntity(util.grid().at(2, 3, 2), type, mct -> {
+			try (Transaction transaction = Transaction.openRoot()) {
+				if (!iron.isEmpty())
+					mct.getInventory().insert(0, ItemResource.of(iron), iron.getCount(), transaction);
+				transaction.commit();
+			}
+		});
 		scene.idle(2);
-		scene.world().modifyBlockEntity(util.grid().at(3, 3, 2), type, mct -> mct.getInventory()
-			.insertItem(0, iron.copy(), false));
+		scene.world().modifyBlockEntity(util.grid().at(3, 3, 2), type, mct -> {
+			try (Transaction transaction = Transaction.openRoot()) {
+				if (!iron.isEmpty())
+					mct.getInventory().insert(0, ItemResource.of(iron), iron.getCount(), transaction);
+				transaction.commit();
+			}
+		});
 		scene.idle(2);
-		scene.world().modifyBlockEntity(util.grid().at(2, 2, 2), type, mct -> mct.getInventory()
-			.insertItem(0, stick.copy(), false));
+		scene.world().modifyBlockEntity(util.grid().at(2, 2, 2), type, mct -> {
+			try (Transaction transaction = Transaction.openRoot()) {
+				if (!stick.isEmpty())
+					mct.getInventory().insert(0, ItemResource.of(stick), stick.getCount(), transaction);
+				transaction.commit();
+			}
+		});
 		scene.idle(2);
-		scene.world().modifyBlockEntity(util.grid().at(2, 1, 2), type, mct -> mct.getInventory()
-			.insertItem(0, stick.copy(), false));
+		scene.world().modifyBlockEntity(util.grid().at(2, 1, 2), type, mct -> {
+			try (Transaction transaction = Transaction.openRoot()) {
+				if (!stick.isEmpty())
+					mct.getInventory().insert(0, ItemResource.of(stick), stick.getCount(), transaction);
+				transaction.commit();
+			}
+		});
 		scene.world().showSection(redstone, Direction.SOUTH);
 		scene.idle(10);
 
@@ -260,8 +330,13 @@ public class CrafterScenes {
 		scene.world().createItemOnBelt(util.grid().at(4, 1, 2), Direction.EAST, planks.copy());
 		scene.idle(22);
 
-		scene.world().modifyBlockEntity(util.grid().at(2, 2, 2), type, mct -> mct.getInventory()
-			.insertItem(0, planks.copy(), false));
+		scene.world().modifyBlockEntity(util.grid().at(2, 2, 2), type, mct -> {
+			try (Transaction transaction = Transaction.openRoot()) {
+				if (!planks.isEmpty())
+					mct.getInventory().insert(0, ItemResource.of(planks), planks.getCount(), transaction);
+				transaction.commit();
+			}
+		});
 		scene.world().removeItemsFromBelt(util.grid().at(3, 1, 2));
 		scene.world().flapFunnel(util.grid().at(3, 2, 2), false);
 
@@ -330,8 +405,13 @@ public class CrafterScenes {
 
 		scene.world().setCraftingResult(util.grid().at(1, 1, 2), new ItemStack(Items.OAK_DOOR, 3));
 		for (BlockPos pos : positions) {
-			scene.world().modifyBlockEntity(pos, type, mct -> mct.getInventory()
-				.insertItem(0, planks.copy(), false));
+			scene.world().modifyBlockEntity(pos, type, mct -> {
+				try (Transaction transaction = Transaction.openRoot()) {
+					if (!planks.isEmpty())
+						mct.getInventory().insert(0, ItemResource.of(planks), planks.getCount(), transaction);
+					transaction.commit();
+				}
+			});
 			scene.idle(1);
 		}
 
@@ -358,14 +438,29 @@ public class CrafterScenes {
 		ItemStack iron = new ItemStack(Items.IRON_INGOT);
 
 		Class<MechanicalCrafterBlockEntity> type = MechanicalCrafterBlockEntity.class;
-		scene.world().modifyBlockEntity(util.grid().at(3, 2, 2), type, mct -> mct.getInventory()
-			.insertItem(0, iron.copy(), false));
+		scene.world().modifyBlockEntity(util.grid().at(3, 2, 2), type, mct -> {
+			try (Transaction transaction = Transaction.openRoot()) {
+				if (!iron.isEmpty())
+					mct.getInventory().insert(0, ItemResource.of(iron), iron.getCount(), transaction);
+				transaction.commit();
+			}
+		});
 		scene.idle(5);
-		scene.world().modifyBlockEntity(util.grid().at(2, 1, 2), type, mct -> mct.getInventory()
-			.insertItem(0, iron.copy(), false));
+		scene.world().modifyBlockEntity(util.grid().at(2, 1, 2), type, mct -> {
+			try (Transaction transaction = Transaction.openRoot()) {
+				if (!iron.isEmpty())
+					mct.getInventory().insert(0, ItemResource.of(iron), iron.getCount(), transaction);
+				transaction.commit();
+			}
+		});
 		scene.idle(5);
-		scene.world().modifyBlockEntity(util.grid().at(1, 2, 2), type, mct -> mct.getInventory()
-			.insertItem(0, iron.copy(), false));
+		scene.world().modifyBlockEntity(util.grid().at(1, 2, 2), type, mct -> {
+			try (Transaction transaction = Transaction.openRoot()) {
+				if (!iron.isEmpty())
+					mct.getInventory().insert(0, ItemResource.of(iron), iron.getCount(), transaction);
+				transaction.commit();
+			}
+		});
 		scene.idle(5);
 
 		Selection emptyCrafter = util.select().position(2, 2, 2);
@@ -425,18 +520,33 @@ public class CrafterScenes {
 			scene.world().createItemEntity(util.vector().centerOf(4, 4, 2), util.vector().of(0, 0.2, 0), iron);
 		scene.idle(17);
 		scene.world().modifyEntity(ingot, Entity::discard);
-		scene.world().modifyBlockEntity(util.grid().at(3, 2, 2), type, mct -> mct.getInventory()
-			.insertItem(0, iron.copy(), false));
+		scene.world().modifyBlockEntity(util.grid().at(3, 2, 2), type, mct -> {
+			try (Transaction transaction = Transaction.openRoot()) {
+				if (!iron.isEmpty())
+					mct.getInventory().insert(0, ItemResource.of(iron), iron.getCount(), transaction);
+				transaction.commit();
+			}
+		});
 		ingot = scene.world().createItemEntity(util.vector().centerOf(4, 4, 2), util.vector().of(0, 0.2, 0), iron);
 		scene.idle(17);
 		scene.world().modifyEntity(ingot, Entity::discard);
-		scene.world().modifyBlockEntity(util.grid().at(2, 1, 2), type, mct -> mct.getInventory()
-			.insertItem(0, iron.copy(), false));
+		scene.world().modifyBlockEntity(util.grid().at(2, 1, 2), type, mct -> {
+			try (Transaction transaction = Transaction.openRoot()) {
+				if (!iron.isEmpty())
+					mct.getInventory().insert(0, ItemResource.of(iron), iron.getCount(), transaction);
+				transaction.commit();
+			}
+		});
 		ingot = scene.world().createItemEntity(util.vector().centerOf(4, 4, 2), util.vector().of(0, 0.2, 0), iron);
 		scene.idle(17);
 		scene.world().modifyEntity(ingot, Entity::discard);
-		scene.world().modifyBlockEntity(util.grid().at(1, 2, 2), type, mct -> mct.getInventory()
-			.insertItem(0, iron.copy(), false));
+		scene.world().modifyBlockEntity(util.grid().at(1, 2, 2), type, mct -> {
+			try (Transaction transaction = Transaction.openRoot()) {
+				if (!iron.isEmpty())
+					mct.getInventory().insert(0, ItemResource.of(iron), iron.getCount(), transaction);
+				transaction.commit();
+			}
+		});
 
 	}
 

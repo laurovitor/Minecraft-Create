@@ -1,5 +1,8 @@
 package com.simibubi.create.compat.computercraft.implementation;
 
+import net.neoforged.neoforge.transfer.item.ItemUtil;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -11,17 +14,20 @@ import java.util.Objects;
 import com.simibubi.create.compat.computercraft.implementation.luaObjects.LuaComparable;
 import com.simibubi.create.content.logistics.BigItemStack;
 import com.simibubi.create.content.logistics.packager.InventorySummary;
+import com.simibubi.create.foundation.utility.GlobalRegistryAccess;
 
 import dan200.computercraft.api.detail.VanillaDetailRegistries;
 import dan200.computercraft.api.lua.LuaException;
-import net.createmod.catnip.data.Glob;
-
-import net.neoforged.neoforge.items.IItemHandler;
+import net.createmod.catnip.api.data.Glob;
 
 public class ComputerUtil {
 
+	// CC:Tweaked's detail registries now take a HolderLookup.Provider so that item components can be
+	// encoded against the active registries. None of these helpers are handed a Level, so the lookup
+	// comes from the global registry access; peripherals only ever run with a server present.
+
 	public static int bigItemStackToLuaTableFilter(BigItemStack entry, Map<?, ?> filter) throws LuaException {
-		Map<String, Object> details = VanillaDetailRegistries.ITEM_STACK.getDetails(entry.stack);
+		Map<String, Object> details = VanillaDetailRegistries.ITEM_STACK.getDetails(GlobalRegistryAccess.getOrThrow(), entry.stack);
 
 		// Count needs to be replaced because BigItemStack can have a different count than the stack
 		details.put("count", entry.count);
@@ -287,24 +293,24 @@ public class ComputerUtil {
 		return out;
 	}
 
-	public static Map<Integer, Map<String, ?>> list(IItemHandler inventory) {
+	public static Map<Integer, Map<String, ?>> list(ResourceHandler<ItemResource> inventory) {
 		Map<Integer, Map<String, ?>> result = new HashMap<>();
-		var size = inventory.getSlots();
+		var size = inventory.size();
 		for (var i = 0; i < size; i++) {
-			var stack = inventory.getStackInSlot(i);
-			if (!stack.isEmpty()) result.put(i + 1, VanillaDetailRegistries.ITEM_STACK.getBasicDetails(stack));
+			var stack = ItemUtil.getStack(inventory, i);
+			if (!stack.isEmpty()) result.put(i + 1, VanillaDetailRegistries.ITEM_STACK.getBasicDetails(GlobalRegistryAccess.getOrThrow(), stack));
 		}
 
 		return result;
 	}
 
-	public static Map<String, ?> getItemDetail(IItemHandler inventory, int slot) throws LuaException {
+	public static Map<String, ?> getItemDetail(ResourceHandler<ItemResource> inventory, int slot) throws LuaException {
 
-		int maxSlots = inventory.getSlots();
+		int maxSlots = inventory.size();
 		if (slot < 1 || slot > maxSlots)
 			throw new LuaException(String.format("Slot " + slot + " out of range, available slots between " + 1 + " and " + maxSlots));
-		var stack = inventory.getStackInSlot(slot - 1);
-		return stack.isEmpty() ? null : VanillaDetailRegistries.ITEM_STACK.getDetails(stack);
+		var stack = ItemUtil.getStack(inventory, slot - 1);
+		return stack.isEmpty() ? null : VanillaDetailRegistries.ITEM_STACK.getDetails(GlobalRegistryAccess.getOrThrow(), stack);
 	}
 
 	public static Map<String, ?> getItemDetail(InventorySummary inventorySummary, int slot) throws LuaException {
@@ -313,7 +319,7 @@ public class ComputerUtil {
 		if (slot < 1 || slot > maxSlots)
 			throw new LuaException(String.format("Slot " + slot + " out of range, available slots between " + 1 + " and " + maxSlots));
 		BigItemStack entry = stacks.get(slot - 1);
-		Map<String, Object> details = new HashMap<>(VanillaDetailRegistries.ITEM_STACK.getDetails(entry.stack));
+		Map<String, Object> details = new HashMap<>(VanillaDetailRegistries.ITEM_STACK.getDetails(GlobalRegistryAccess.getOrThrow(), entry.stack));
 		details.put("count", entry.count);
 
 		return

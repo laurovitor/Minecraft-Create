@@ -8,7 +8,10 @@
   "type": "create:pressing",
   "ingredients": [
     {
-      "item": "betterendforge:cave_moss"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "betterendforge:cave_moss"
+      ]
     }
   ],
   "results": [

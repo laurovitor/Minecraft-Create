@@ -1,5 +1,11 @@
 package com.simibubi.create.content.contraptions.glue;
 
+import net.minecraft.world.level.storage.TagValueOutput;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
+import com.simibubi.create.foundation.utility.NbtValueIO;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -20,8 +26,8 @@ import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
 import com.simibubi.create.content.schematics.requirement.ItemRequirement;
 import com.simibubi.create.content.schematics.requirement.ItemRequirement.ItemUseType;
 
-import net.createmod.catnip.data.Iterate;
-import net.createmod.catnip.math.VecHelper;
+import net.createmod.catnip.api.data.Iterate;
+import net.createmod.catnip.api.math.VecHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -156,7 +162,12 @@ public class SuperGlueEntity extends Entity implements IEntityWithComplexSpawn, 
 	}
 
 	@Override
-	public boolean hurt(DamageSource source, float amount) {
+	public boolean hurtServer(ServerLevel level, DamageSource source, float amount) {
+		return false;
+	}
+
+	@Override
+	public boolean hurtClient(DamageSource source) {
 		return false;
 	}
 
@@ -164,7 +175,6 @@ public class SuperGlueEntity extends Entity implements IEntityWithComplexSpawn, 
 	public void tick() {
 		xRotO = getXRot();
 		yRotO = getYRot();
-		walkDistO = walkDist;
 		xo = getX();
 		yo = getY();
 		zo = getZ();
@@ -184,13 +194,13 @@ public class SuperGlueEntity extends Entity implements IEntityWithComplexSpawn, 
 
 	@Override
 	public void move(MoverType typeIn, Vec3 pos) {
-		if (!level().isClientSide && isAlive() && pos.lengthSqr() > 0.0D)
+		if (!level().isClientSide() && isAlive() && pos.lengthSqr() > 0.0D)
 			discard();
 	}
 
 	@Override
 	public void push(double x, double y, double z) {
-		if (!level().isClientSide && isAlive() && x * x + y * y + z * z > 0.0D)
+		if (!level().isClientSide() && isAlive() && x * x + y * y + z * z > 0.0D)
 			discard();
 	}
 
@@ -209,18 +219,21 @@ public class SuperGlueEntity extends Entity implements IEntityWithComplexSpawn, 
 	}
 
 	@Override
-	public InteractionResult interact(Player player, InteractionHand hand) {
+	public InteractionResult interact(Player player, InteractionHand hand, Vec3 location) {
 		return InteractionResult.PASS;
 	}
 
 	@Override
-	public void addAdditionalSaveData(CompoundTag compound) {
+	public void addAdditionalSaveData(ValueOutput output) {
+		CompoundTag compound = new CompoundTag();
 		Vec3 position = position();
 		writeBoundingBox(compound, getBoundingBox().move(position.scale(-1)));
+		NbtValueIO.store(output, compound);
 	}
 
 	@Override
-	public void readAdditionalSaveData(CompoundTag compound) {
+	public void readAdditionalSaveData(ValueInput input) {
+		CompoundTag compound = NbtValueIO.read(input);
 		Vec3 position = position();
 		setBoundingBox(readBoundingBox(compound).move(position));
 	}
@@ -231,8 +244,8 @@ public class SuperGlueEntity extends Entity implements IEntityWithComplexSpawn, 
 	}
 
 	public static AABB readBoundingBox(CompoundTag compound) {
-		Vec3 from = VecHelper.readNBT(compound.getList("From", Tag.TAG_DOUBLE));
-		Vec3 to = VecHelper.readNBT(compound.getList("To", Tag.TAG_DOUBLE));
+		Vec3 from = VecHelper.readNBT(compound.getListOrEmpty("From"));
+		Vec3 to = VecHelper.readNBT(compound.getListOrEmpty("To"));
 		return new AABB(from, to);
 	}
 
@@ -268,14 +281,18 @@ public class SuperGlueEntity extends Entity implements IEntityWithComplexSpawn, 
 
 	@Override
 	public void writeSpawnData(RegistryFriendlyByteBuf buffer) {
-		CompoundTag compound = new CompoundTag();
-		addAdditionalSaveData(compound);
-		buffer.writeNbt(compound);
+		// 26.2 saves entities through a ValueOutput rather than straight into a tag.
+		TagValueOutput output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, registryAccess());
+		addAdditionalSaveData(output);
+		buffer.writeNbt(output.buildResult());
 	}
 
 	@Override
 	public void readSpawnData(RegistryFriendlyByteBuf additionalData) {
-		readAdditionalSaveData(additionalData.readNbt());
+		CompoundTag tag = additionalData.readNbt();
+		if (tag == null)
+			return;
+		readAdditionalSaveData(TagValueInput.create(ProblemReporter.DISCARDING, registryAccess(), tag));
 	}
 
 	@Override
@@ -309,19 +326,19 @@ public class SuperGlueEntity extends Entity implements IEntityWithComplexSpawn, 
 			AxisDirection positive = AxisDirection.POSITIVE;
 			double max = axis.choose(extents.x, extents.y, extents.z);
 			Vec3 normal = Vec3.atLowerCornerOf(Direction.fromAxisAndDirection(axis, positive)
-				.getNormal());
+				.getUnitVec3i());
 			for (Axis axis2 : Iterate.axes) {
 				if (axis2 == axis)
 					continue;
 				double max2 = axis2.choose(extents.x, extents.y, extents.z);
 				Vec3 normal2 = Vec3.atLowerCornerOf(Direction.fromAxisAndDirection(axis2, positive)
-					.getNormal());
+					.getUnitVec3i());
 				for (Axis axis3 : Iterate.axes) {
 					if (axis3 == axis2 || axis3 == axis)
 						continue;
 					double max3 = axis3.choose(extents.x, extents.y, extents.z);
 					Vec3 normal3 = Vec3.atLowerCornerOf(Direction.fromAxisAndDirection(axis3, positive)
-						.getNormal());
+						.getUnitVec3i());
 
 					for (int i = 0; i <= max * 2; i++) {
 						for (int o1 : Iterate.zeroAndOne) {

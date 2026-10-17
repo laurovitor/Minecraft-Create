@@ -1,17 +1,14 @@
 package com.simibubi.create.content.equipment.zapper;
 
-import net.createmod.catnip.net.base.ClientboundPacketPayload;
-
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
-public abstract class ShootGadgetPacket implements ClientboundPacketPayload {
+public abstract class ShootGadgetPacket implements CustomPacketPayload {
 	protected final Vec3 location;
 	protected final InteractionHand hand;
 	protected final boolean self;
@@ -22,15 +19,11 @@ public abstract class ShootGadgetPacket implements ClientboundPacketPayload {
 		this.self = self;
 	}
 
-	@OnlyIn(Dist.CLIENT)
 	protected abstract void handleAdditional();
 
-	@OnlyIn(Dist.CLIENT)
 	protected abstract ShootableGadgetRenderHandler getHandler();
 
-	@Override
-	@OnlyIn(Dist.CLIENT)
-	public void handle(LocalPlayer player) {
+	public void handle(Player player) {
 		Entity renderViewEntity = Minecraft.getInstance()
 				.getCameraEntity();
 		if (renderViewEntity == null)

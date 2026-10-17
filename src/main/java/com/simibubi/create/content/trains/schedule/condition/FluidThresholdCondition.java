@@ -1,5 +1,10 @@
 package com.simibubi.create.content.trains.schedule.condition;
 
+import com.simibubi.create.foundation.utility.ClientAccess;
+
+import net.neoforged.neoforge.transfer.fluid.FluidUtil;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.fluid.FluidResource;
 import java.util.List;
 
 import com.google.common.collect.ImmutableList;
@@ -10,21 +15,16 @@ import com.simibubi.create.content.trains.entity.Train;
 import com.simibubi.create.foundation.gui.ModularGuiLineBuilder;
 import com.simibubi.create.foundation.utility.CreateLang;
 
-import net.createmod.catnip.lang.Lang;
+import net.createmod.catnip.api.lang.Lang;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.fluids.FluidStack;
-import net.neoforged.neoforge.fluids.capability.IFluidHandler;
-
 public class FluidThresholdCondition extends CargoThresholdCondition {
 
 	private FilterItemStack compareStack = FilterItemStack.empty();
@@ -46,9 +46,9 @@ public class FluidThresholdCondition extends CargoThresholdCondition {
 
 		int foundFluid = 0;
 		for (Carriage carriage : train.carriages) {
-			IFluidHandler fluids = carriage.storage.getFluids();
-			for (int i = 0; i < fluids.getTanks(); i++) {
-				FluidStack fluidInTank = fluids.getFluidInTank(i);
+			ResourceHandler<FluidResource> fluids = carriage.storage.getFluids();
+			for (int i = 0; i < fluids.size(); i++) {
+				FluidStack fluidInTank = FluidUtil.getStack(fluids, i);
 				if (!compareStack.test(level, fluidInTank))
 					continue;
 				foundFluid += fluidInTank.getAmount();
@@ -69,7 +69,7 @@ public class FluidThresholdCondition extends CargoThresholdCondition {
 	protected void readAdditional(HolderLookup.Provider registries, CompoundTag tag) {
 		super.readAdditional(registries, tag);
 		if (tag.contains("Bucket"))
-			compareStack = FilterItemStack.of(registries, tag.getCompound("Bucket"));
+			compareStack = FilterItemStack.of(registries, tag.getCompoundOrEmpty("Bucket"));
 	}
 
 	@Override
@@ -77,9 +77,8 @@ public class FluidThresholdCondition extends CargoThresholdCondition {
 		return super.tickCompletion(level, train, context);
 	}
 
-	@OnlyIn(Dist.CLIENT)
 	private FluidStack loadFluid() {
-		return compareStack.fluid(Minecraft.getInstance().level);
+		return compareStack.fluid(ClientAccess.level());
 	}
 
 	@Override
@@ -107,12 +106,11 @@ public class FluidThresholdCondition extends CargoThresholdCondition {
 	}
 
 	@Override
-	public ResourceLocation getId() {
+	public Identifier getId() {
 		return Create.asResource("fluid_threshold");
 	}
 
 	@Override
-	@OnlyIn(Dist.CLIENT)
 	public void initConfigurationWidgets(ModularGuiLineBuilder builder) {
 		super.initConfigurationWidgets(builder);
 		builder.addSelectionScrollInput(71, 50, (i, l) -> {

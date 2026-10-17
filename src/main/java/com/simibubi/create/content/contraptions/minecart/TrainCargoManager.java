@@ -1,5 +1,10 @@
 package com.simibubi.create.content.contraptions.minecart;
 
+import net.neoforged.neoforge.transfer.item.ItemUtil;
+import net.neoforged.neoforge.transfer.transaction.RootCommitJournal;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.neoforged.neoforge.transfer.transaction.TransactionContext;
+import net.neoforged.neoforge.transfer.fluid.FluidResource;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.jetbrains.annotations.Nullable;
@@ -11,9 +16,6 @@ import com.simibubi.create.content.contraptions.MountedStorageManager;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.item.ItemStack;
-
-import net.neoforged.neoforge.fluids.FluidStack;
 
 public class TrainCargoManager extends MountedStorageManager {
 
@@ -45,7 +47,7 @@ public class TrainCargoManager extends MountedStorageManager {
 	@Override
 	public void read(CompoundTag nbt, HolderLookup.Provider registries, boolean clientPacket, @Nullable Contraption contraption) {
 		super.read(nbt, registries, clientPacket, contraption);
-		ticksSinceLastExchange = nbt.getInt("TicksSinceLastExchange");
+		ticksSinceLastExchange = nbt.getIntOr("TicksSinceLastExchange", 0);
 	}
 
 	public void resetIdleCargoTracker() {
@@ -70,31 +72,33 @@ public class TrainCargoManager extends MountedStorageManager {
 	}
 
 	class CargoInvWrapper extends MountedItemStorageWrapper {
+		private final RootCommitJournal onChange = new RootCommitJournal(TrainCargoManager.this::changeDetected);
+
 		CargoInvWrapper(MountedItemStorageWrapper wrapped) {
 			super(wrapped.storages);
 		}
 
 		@Override
-		public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
-			ItemStack remainder = super.insertItem(slot, stack, simulate);
-			if (!simulate && stack.getCount() != remainder.getCount())
-				changeDetected();
-			return remainder;
+		public int insert(int slot, ItemResource resource, int amount, TransactionContext transaction) {
+			int inserted = super.insert(slot, resource, amount, transaction);
+			if (inserted > 0)
+				onChange.updateSnapshots(transaction);
+			return inserted;
 		}
 
 		@Override
-		public ItemStack extractItem(int slot, int amount, boolean simulate) {
-			ItemStack extracted = super.extractItem(slot, amount, simulate);
-			if (!simulate && !extracted.isEmpty())
-				changeDetected();
+		public int extract(int slot, ItemResource resource, int amount, TransactionContext transaction) {
+			int extracted = resource.isEmpty() ? 0 : super.extract(slot, resource, amount, transaction);
+			if (extracted > 0)
+				onChange.updateSnapshots(transaction);
 			return extracted;
 		}
 
 		@Override
-		public void setStackInSlot(int slot, ItemStack stack) {
-			if (!stack.equals(getStackInSlot(slot)))
+		public void set(int slot, ItemResource resource, int amount) {
+			if (!resource.matches(ItemUtil.getStack(this, slot)))
 				changeDetected();
-			super.setStackInSlot(slot, stack);
+			super.set(slot, resource, amount);
 		}
 
 	}
@@ -105,25 +109,17 @@ public class TrainCargoManager extends MountedStorageManager {
 		}
 
 		@Override
-		public int fill(FluidStack resource, FluidAction action) {
-			int filled = super.fill(resource, action);
-			if (action.execute() && filled > 0)
+		public int insert(int tank, FluidResource resource, int amount, TransactionContext transaction) {
+			int filled = super.insert(tank, resource, amount, transaction);
+			if (filled > 0)
 				changeDetected();
 			return filled;
 		}
 
 		@Override
-		public FluidStack drain(FluidStack resource, FluidAction action) {
-			FluidStack drained = super.drain(resource, action);
-			if (action.execute() && !drained.isEmpty())
-				changeDetected();
-			return drained;
-		}
-
-		@Override
-		public FluidStack drain(int maxDrain, FluidAction action) {
-			FluidStack drained = super.drain(maxDrain, action);
-			if (action.execute() && !drained.isEmpty())
+		public int extract(int tank, FluidResource resource, int amount, TransactionContext transaction) {
+			int drained = resource.isEmpty() ? 0 : super.extract(tank, resource, amount, transaction);
+			if (drained > 0)
 				changeDetected();
 			return drained;
 		}

@@ -6,33 +6,30 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.fml.util.thread.EffectiveSide;
 
 /** Deprecated so simi doensn't forget to remove debug calls **/
-@OnlyIn(value = Dist.CLIENT)
 public class Debug {
 
 	@Deprecated
 	public static void debugChat(String message) {
 		if (Minecraft.getInstance().player != null) {
-            Minecraft.getInstance().player.displayClientMessage(Component.literal(message), false);
+            Minecraft.getInstance().gui.hud.setOverlayMessage(Component.literal(message), false);
         }
 	}
 
 	@Deprecated
 	public static void debugChatAndShowStack(String message, int depth) {
 		if (Minecraft.getInstance().player != null) {
-            Minecraft.getInstance().player.displayClientMessage(Component.literal(message).append("@")
-                .append(debugStack(depth)), false);
+            Minecraft.getInstance().player.sendSystemMessage(Component.literal(message).append("@")
+                .append(debugStack(depth)));
         }
 	}
 
 	@Deprecated
 	public static void debugMessage(String message) {
 		if (Minecraft.getInstance().player != null) {
-            Minecraft.getInstance().player.displayClientMessage(Component.literal(message), true);
+            Minecraft.getInstance().player.sendSystemMessage(Component.literal(message));
         }
 	}
 

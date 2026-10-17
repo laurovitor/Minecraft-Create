@@ -4,7 +4,7 @@
 	"textures": {
 		"0": "create:block/brass_casing",
 		"1": "block/black_stained_glass",
-		"2": "create:item/goggles_model",
+		"2": "create:block/goggles_model",
 		"particle": "create:block/brass_casing"
 	},
 	"elements": [
@@ -111,8 +111,8 @@
 				"east": {"uv": [11, 0, 11.2, 1], "texture": "#1"},
 				"south": {"uv": [1, 0, 7, 1], "texture": "#1"},
 				"west": {"uv": [11, 0, 11.2, 1], "texture": "#1"},
-				"up": {"uv": [11, 0, 17, 0.2], "texture": "#1"},
-				"down": {"uv": [11, 0, 17, 0.2], "texture": "#1"}
+				"up": {"uv": [10, 0, 16, 0.2], "texture": "#1"},
+				"down": {"uv": [10, 0, 16, 0.2], "texture": "#1"}
 			}
 		},
 		{

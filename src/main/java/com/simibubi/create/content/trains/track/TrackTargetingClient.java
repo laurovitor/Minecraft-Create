@@ -1,5 +1,15 @@
 package com.simibubi.create.content.trains.track;
 
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.LevelAccessor;
+import net.createmod.ponder.api.client.level.PonderLevel;
+import net.createmod.catnip.api.level.wrapper.SchematicLevel;
+import net.createmod.catnip.api.client.render.SuperByteBuffer;
+import dev.engine_room.flywheel.lib.model.baked.PartialModel;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.util.LightCoordsUtil;
+import com.simibubi.create.foundation.render.CachedBufferer;
 import com.google.common.base.Objects;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.AllDataComponents;
@@ -11,11 +21,8 @@ import com.simibubi.create.content.trains.track.TrackTargetingBehaviour.Rendered
 import com.simibubi.create.content.trains.track.TrackTargetingBlockItem.OverlapResult;
 
 import dev.engine_room.flywheel.lib.transform.TransformStack;
-import net.createmod.catnip.render.SuperRenderTypeBuffer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction.AxisDirection;
 import net.minecraft.world.item.ItemStack;
@@ -110,13 +117,12 @@ public class TrackTargetingClient {
 			});
 	}
 
-	public static void render(PoseStack ms, SuperRenderTypeBuffer buffer, Vec3 camera) {
+	public static void submit(PoseStack ms, SubmitNodeCollector queue, Vec3 camera) {
 		if (lastLocation == null || lastResult.feedback != null)
 			return;
 
 		Minecraft mc = Minecraft.getInstance();
 		BlockPos pos = lastHovered;
-		int light = LevelRenderer.getLightColor(mc.level, pos);
 		AxisDirection direction = lastDirection ? AxisDirection.POSITIVE : AxisDirection.NEGATIVE;
 
 		RenderedTrackOverlayType type = lastType == EdgePointType.SIGNAL ? RenderedTrackOverlayType.SIGNAL
@@ -126,8 +132,38 @@ public class TrackTargetingClient {
 		TransformStack.of(ms)
 			.translate(Vec3.atLowerCornerOf(pos)
 				.subtract(camera));
-		TrackTargetingBehaviour.render(mc.level, pos, direction, lastHoveredBezierSegment, ms, buffer, light,
-			OverlayTexture.NO_OVERLAY, type, 1 + 1 / 16f);
+		submitOverlay(mc.level, pos, direction, lastHoveredBezierSegment, ms, queue, type,
+			1 + 1 / 16f);
+		ms.popPose();
+	}
+
+	/**
+	 * The overlay's placement comes from {@code prepareTrackOverlay}, which walks the PoseStack, so
+	 * this stays a submit-time operation rather than being split into an extracted state.
+	 */
+	public static void submitOverlay(LevelAccessor level, BlockPos pos, AxisDirection direction,
+							  BezierTrackPointLocation bezier, PoseStack ms, SubmitNodeCollector queue,
+							  RenderedTrackOverlayType type, float scale) {
+		if (level instanceof SchematicLevel && !(level instanceof PonderLevel))
+			return;
+
+		BlockState trackState = level.getBlockState(pos);
+		Block block = trackState.getBlock();
+		if (!(block instanceof ITrackBlock track))
+			return;
+
+		ms.pushPose();
+		var msr = TransformStack.of(ms);
+		PartialModel partial = track.prepareTrackOverlay(msr, level, pos, trackState, bezier, direction, type);
+		if (partial != null) {
+			SuperByteBuffer buffer = CachedBufferer.partial(partial, trackState);
+			TransformStack.of(buffer.getTransforms())
+				.translate(.5, 0, .5)
+				.scale(scale)
+				.translate(-.5, 0, -.5);
+			buffer.light(LightCoordsUtil.getLightCoords(level, pos))
+				.submit(ms, RenderTypes.cutoutMovingBlock(), queue);
+		}
 		ms.popPose();
 	}
 

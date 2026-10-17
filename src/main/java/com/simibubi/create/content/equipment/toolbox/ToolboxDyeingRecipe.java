@@ -1,11 +1,13 @@
 package com.simibubi.create.content.equipment.toolbox;
 
+import net.minecraft.network.codec.StreamCodec;
+import com.mojang.serialization.MapCodec;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllRecipeTypes;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.RegistryAccess;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
@@ -19,9 +21,12 @@ import net.neoforged.neoforge.common.Tags;
 
 public class ToolboxDyeingRecipe extends CustomRecipe {
 
-	public ToolboxDyeingRecipe(CraftingBookCategory category) {
-		super(category);
-	}
+	// StreamCodec#unit checks the decoded value against the one it holds, so the recipe read from
+	// data and the recipe sent over the network have to be the same object.
+	private static final ToolboxDyeingRecipe INSTANCE = new ToolboxDyeingRecipe();
+
+	public static final RecipeSerializer<ToolboxDyeingRecipe> SERIALIZER =
+		new RecipeSerializer<>(MapCodec.unit(INSTANCE), StreamCodec.unit(INSTANCE));
 
 	@Override
 	public boolean matches(CraftingInput input, Level level) {
@@ -49,7 +54,7 @@ public class ToolboxDyeingRecipe extends CustomRecipe {
 	}
 
 	@Override
-	public ItemStack assemble(CraftingInput input, HolderLookup.Provider registries) {
+	public ItemStack assemble(CraftingInput input) {
 		ItemStack toolbox = ItemStack.EMPTY;
 		DyeColor color = DyeColor.BROWN;
 
@@ -77,13 +82,8 @@ public class ToolboxDyeingRecipe extends CustomRecipe {
 	}
 
 	@Override
-	public boolean canCraftInDimensions(int width, int height) {
-		return width * height >= 2;
-	}
-
-	@Override
-	public RecipeSerializer<?> getSerializer() {
-		return AllRecipeTypes.TOOLBOX_DYEING.getSerializer();
+	public RecipeSerializer<ToolboxDyeingRecipe> getSerializer() {
+		return SERIALIZER;
 	}
 
 }

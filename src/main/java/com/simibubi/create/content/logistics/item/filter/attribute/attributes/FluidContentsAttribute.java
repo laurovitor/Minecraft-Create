@@ -1,5 +1,9 @@
 package com.simibubi.create.content.logistics.item.filter.attribute.attributes;
 
+import net.neoforged.neoforge.transfer.fluid.FluidUtil;
+import net.neoforged.neoforge.transfer.access.ItemAccess;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.fluid.FluidResource;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,8 +16,8 @@ import com.simibubi.create.content.logistics.item.filter.attribute.AllItemAttrib
 import com.simibubi.create.content.logistics.item.filter.attribute.ItemAttribute;
 import com.simibubi.create.content.logistics.item.filter.attribute.ItemAttributeType;
 
-import net.createmod.catnip.codecs.stream.CatnipStreamCodecBuilders;
-import net.createmod.catnip.codecs.stream.CatnipStreamCodecs;
+import net.createmod.catnip.api.data.codec.stream.CatnipStreamCodecBuilders;
+import net.createmod.catnip.api.data.codec.stream.CatnipStreamCodecs;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -22,8 +26,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.Fluid;
 
 import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.fluids.capability.IFluidHandlerItem;
-
 public record FluidContentsAttribute(@Nullable Fluid fluid) implements ItemAttribute {
 	public static final MapCodec<FluidContentsAttribute> CODEC = BuiltInRegistries.FLUID.byNameCodec()
 			.xmap(FluidContentsAttribute::new, FluidContentsAttribute::fluid)
@@ -35,11 +37,11 @@ public record FluidContentsAttribute(@Nullable Fluid fluid) implements ItemAttri
 	private static List<Fluid> extractFluids(ItemStack stack) {
 		List<Fluid> fluids = new ArrayList<>();
 
-		IFluidHandlerItem capability = stack.getCapability(Capabilities.FluidHandler.ITEM);
+		ResourceHandler<FluidResource> capability = Capabilities.Fluid.ITEM.getCapability(stack, ItemAccess.forStack(stack));
 
 		if (capability != null) {
-			for (int i = 0; i < capability.getTanks(); i++) {
-				fluids.add(capability.getFluidInTank(i).getFluid());
+			for (int i = 0; i < capability.size(); i++) {
+				fluids.add(FluidUtil.getStack(capability, i).getFluid());
 			}
 		}
 

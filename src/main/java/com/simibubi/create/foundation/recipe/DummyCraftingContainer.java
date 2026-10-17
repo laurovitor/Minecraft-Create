@@ -1,18 +1,19 @@
 package com.simibubi.create.foundation.recipe;
 
+import net.neoforged.neoforge.transfer.item.ItemUtil;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
 import org.jetbrains.annotations.NotNull;
 
+import net.minecraft.world.entity.player.StackedItemContents;
 import net.minecraft.core.NonNullList;
-import net.minecraft.world.entity.player.StackedContents;
 import net.minecraft.world.inventory.TransientCraftingContainer;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.IItemHandler;
-
 public class DummyCraftingContainer extends TransientCraftingContainer {
 
 	private final NonNullList<ItemStack> inv;
 
-	public DummyCraftingContainer(IItemHandler itemHandler, int[] extractedItemsFromSlot) {
+	public DummyCraftingContainer(ResourceHandler<ItemResource> itemHandler, int[] extractedItemsFromSlot) {
 		super(null, 0, 0);
 
 		this.inv = createInventory(itemHandler, extractedItemsFromSlot);
@@ -55,13 +56,13 @@ public class DummyCraftingContainer extends TransientCraftingContainer {
 	public void clearContent() {}
 
 	@Override
-	public void fillStackedContents(@NotNull StackedContents helper) {}
+	public void fillStackedContents(@NotNull StackedItemContents contents) {}
 
-	private static NonNullList<ItemStack> createInventory(IItemHandler itemHandler, int[] extractedItemsFromSlot) {
+	private static NonNullList<ItemStack> createInventory(ResourceHandler<ItemResource> itemHandler, int[] extractedItemsFromSlot) {
 		NonNullList<ItemStack> inv = NonNullList.create();
 
-		for (int slot = 0; slot < itemHandler.getSlots(); slot++) {
-			ItemStack stack = itemHandler.getStackInSlot(slot);
+		for (int slot = 0; slot < itemHandler.size(); slot++) {
+			ItemStack stack = ItemUtil.getStack(itemHandler, slot);
 
 			if (stack.isEmpty())
 				continue;

@@ -1,5 +1,7 @@
 package com.simibubi.create.content.decoration.palettes;
 
+import net.minecraft.tags.BlockTags;
+import net.minecraft.core.registries.BuiltInRegistries;
 import static com.simibubi.create.foundation.data.CreateRegistrate.connectedTextures;
 import static com.simibubi.create.foundation.data.TagGen.pickaxeOnly;
 
@@ -13,7 +15,7 @@ import com.tterrag.registrate.util.DataIngredient;
 import com.tterrag.registrate.util.entry.BlockEntry;
 import com.tterrag.registrate.util.nullness.NonNullSupplier;
 
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.BlockItem;
@@ -35,8 +37,10 @@ public class PalettesVariantEntry {
 			BlockBuilder<? extends Block, CreateRegistrate> builder =
 				REGISTRATE.block(pattern.createName(name), pattern.getBlockFactory())
 					.initialProperties(baseBlock)
-					.transform(pickaxeOnly())
-					.blockstate(pattern.getBlockStateGenerator()
+					// Applied directly rather than through transform(pickaxeOnly()): with the blockstate
+					// chain below gone, the wildcard on the left leaves transform nothing to infer from.
+					.tag(BlockTags.MINEABLE_WITH_PICKAXE)
+					.blockstate(() -> pattern.getBlockStateGenerator()
 						.apply(pattern)
 						.apply(name)::accept);
 
@@ -52,13 +56,14 @@ public class PalettesVariantEntry {
 
 			itemBuilder.tag(paletteStoneVariants.materialTag);
 
-			if (pattern.isTranslucent())
-				builder.addLayer(() -> RenderType::translucent);
 			pattern.createCTBehaviour(name)
 				.ifPresent(b -> builder.onRegister(connectedTextures(b)));
 
+			// The tag comes off the provider's own item getter: only that lookup has tags bound while
+			// datagen runs.
 			builder.recipe((c, p) -> {
-				p.stonecutting(DataIngredient.tag(paletteStoneVariants.materialTag), RecipeCategory.BUILDING_BLOCKS, c);
+				p.stonecutting(DataIngredient.tag(p.itemLookup()
+					.getOrThrow(paletteStoneVariants.materialTag)), RecipeCategory.BUILDING_BLOCKS, c);
 				pattern.addRecipes(baseBlock, c, p);
 			});
 
@@ -72,11 +77,12 @@ public class PalettesVariantEntry {
 		}
 
 		REGISTRATE.addDataGenerator(ProviderType.RECIPE,
-			p -> p.stonecutting(DataIngredient.tag(paletteStoneVariants.materialTag), RecipeCategory.BUILDING_BLOCKS,
-				baseBlock));
-		REGISTRATE.addDataGenerator(ProviderType.ITEM_TAGS, p -> p.addTag(paletteStoneVariants.materialTag)
-			.add(baseBlock.get()
-				.asItem()));
+			p -> p.stonecutting(DataIngredient.tag(p.itemLookup()
+				.getOrThrow(paletteStoneVariants.materialTag)), RecipeCategory.BUILDING_BLOCKS, baseBlock));
+		REGISTRATE.addDataGenerator(ProviderType.ITEM_TAGS, p -> p.tag(paletteStoneVariants.materialTag)
+			.add(BuiltInRegistries.ITEM.getResourceKey(baseBlock.get()
+				.asItem())
+				.orElseThrow()));
 
 		this.registeredBlocks = registeredBlocks.build();
 		this.registeredPartials = registeredPartials.build();

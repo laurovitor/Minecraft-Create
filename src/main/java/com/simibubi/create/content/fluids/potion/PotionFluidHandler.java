@@ -1,5 +1,8 @@
 package com.simibubi.create.content.fluids.potion;
 
+import com.simibubi.create.foundation.utility.ClientAccess;
+
+import com.simibubi.create.foundation.item.ItemHelper;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -9,9 +12,8 @@ import com.simibubi.create.AllTags.AllItemTags;
 import com.simibubi.create.content.fluids.potion.PotionFluid.BottleType;
 import com.simibubi.create.foundation.fluid.FluidHelper;
 
-import net.createmod.catnip.data.Pair;
+import net.createmod.catnip.api.data.Pair;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.CommonComponents;
@@ -34,8 +36,6 @@ import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.material.Fluids;
 
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.crafting.DataComponentFluidIngredient;
 import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
@@ -45,7 +45,7 @@ public class PotionFluidHandler {
 
 	public static boolean isPotionItem(ItemStack stack) {
 		return stack.getItem() instanceof PotionItem
-			&& !(stack.getCraftingRemainingItem().getItem() instanceof BucketItem)
+			&& !(ItemHelper.getCraftingRemainder(stack).getItem() instanceof BucketItem)
 			&& !AllItemTags.NOT_POTION.matches(stack);
 	}
 
@@ -105,7 +105,6 @@ public class PotionFluidHandler {
 	}
 
 	// Modified version of PotionContents#addPotionTooltip
-	@OnlyIn(Dist.CLIENT)
 	public static void addPotionTooltip(FluidStack fs, Consumer<Component> tooltipAdder, float durationFactor) {
 		PotionContents contents = fs.getOrDefault(DataComponents.POTION_CONTENTS, PotionContents.EMPTY);
 		Iterable<MobEffectInstance> effects = contents.getAllEffects();
@@ -126,7 +125,7 @@ public class PotionFluidHandler {
 
 			if (!mobeffectinstance.endsWithin(20)) {
 				mutablecomponent.append(" (")
-					.append(MobEffectUtil.formatDuration(mobeffectinstance, durationFactor, Minecraft.getInstance().level.tickRateManager().tickrate()))
+					.append(MobEffectUtil.formatDuration(mobeffectinstance, durationFactor, ClientAccess.level().tickRateManager().tickrate()))
 					.append(")");
 			}
 

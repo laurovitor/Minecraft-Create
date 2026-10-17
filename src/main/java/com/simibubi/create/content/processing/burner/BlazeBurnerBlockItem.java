@@ -1,23 +1,22 @@
 package com.simibubi.create.content.processing.burner;
 
+import com.simibubi.create.foundation.utility.NbtValueIO;
+import org.jspecify.annotations.NullMarked;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import javax.annotation.ParametersAreNonnullByDefault;
-
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllTags.AllEntityTags;
 
-import net.createmod.catnip.math.VecHelper;
-import net.createmod.catnip.registry.RegisteredObjectsHelper;
-import net.minecraft.MethodsReturnNonnullByDefault;
+import net.createmod.catnip.api.math.VecHelper;
+import net.createmod.catnip.api.registry.RegisteredObjectsHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.random.WeightedEntry.Wrapper;
+import net.minecraft.util.random.Weighted;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
@@ -35,14 +34,14 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
 import net.minecraft.world.phys.Vec3;
 
-@MethodsReturnNonnullByDefault
-@ParametersAreNonnullByDefault
+@NullMarked
 public class BlazeBurnerBlockItem extends BlockItem {
 
 	private final boolean capturedBlaze;
 
 	public static BlazeBurnerBlockItem empty(Properties properties) {
-		return new BlazeBurnerBlockItem(AllBlocks.BLAZE_BURNER.get(), properties, false);
+		return new BlazeBurnerBlockItem(AllBlocks.BLAZE_BURNER.get(),
+			properties.overrideDescription("item.create.empty_blaze_burner"), false);
 	}
 
 	public static BlazeBurnerBlockItem withBlaze(Block block, Properties properties) {
@@ -62,11 +61,6 @@ public class BlazeBurnerBlockItem extends BlockItem {
 	}
 
 	@Override
-	public String getDescriptionId() {
-		return hasCapturedBlaze() ? super.getDescriptionId() : "item.create." + RegisteredObjectsHelper.getKeyOrThrow(this).getPath();
-	}
-
-	@Override
 	public InteractionResult useOn(UseOnContext context) {
 		if (hasCapturedBlaze())
 			return super.useOn(context);
@@ -83,7 +77,7 @@ public class BlazeBurnerBlockItem extends BlockItem {
 
 		List<SpawnData> possibleSpawns = spawner.spawnPotentials.unwrap()
 			.stream()
-			.map(Wrapper::data)
+			.map(Weighted::value)
 			.toList();
 
 		if (possibleSpawns.isEmpty()) {
@@ -92,12 +86,12 @@ public class BlazeBurnerBlockItem extends BlockItem {
 		}
 
 		for (SpawnData e : possibleSpawns) {
-			Optional<EntityType<?>> optionalEntity = EntityType.by(e.entityToSpawn());
+			Optional<EntityType<?>> optionalEntity = EntityType.by(NbtValueIO.fromTag(e.entityToSpawn()));
 			if (optionalEntity.isEmpty() || !AllEntityTags.BLAZE_BURNER_CAPTURABLE.matches(optionalEntity.get()))
 				continue;
 
 			spawnCaptureEffects(world, VecHelper.getCenterOf(pos));
-			if (world.isClientSide || player == null)
+			if (world.isClientSide() || player == null)
 				return InteractionResult.SUCCESS;
 
 			giveBurnerItemTo(player, context.getItemInHand(), context.getHand());
@@ -117,7 +111,7 @@ public class BlazeBurnerBlockItem extends BlockItem {
 
 		Level world = player.level();
 		spawnCaptureEffects(world, entity.position());
-		if (world.isClientSide)
+		if (world.isClientSide())
 			return InteractionResult.FAIL;
 
 		giveBurnerItemTo(player, heldItem, hand);
@@ -138,9 +132,9 @@ public class BlazeBurnerBlockItem extends BlockItem {
 	}
 
 	private void spawnCaptureEffects(Level world, Vec3 vec) {
-		if (world.isClientSide) {
+		if (world.isClientSide()) {
 			for (int i = 0; i < 40; i++) {
-				Vec3 motion = VecHelper.offsetRandomly(Vec3.ZERO, world.random, .125f);
+				Vec3 motion = VecHelper.offsetRandomly(Vec3.ZERO, world.getRandom(), .125f);
 				world.addParticle(ParticleTypes.FLAME, vec.x, vec.y, vec.z, motion.x, motion.y, motion.z);
 				Vec3 circle = motion.multiply(1, 0, 1)
 					.normalize()

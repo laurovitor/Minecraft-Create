@@ -1,5 +1,8 @@
 package com.simibubi.create.content.equipment.toolbox;
 
+import net.neoforged.neoforge.client.gui.GuiLayer;
+import org.joml.Matrix3x2fStack;
+import net.createmod.catnip.api.client.network.ClientNetworkHelper;
 import static com.simibubi.create.foundation.gui.AllGuiTextures.TOOLBELT_HOTBAR_OFF;
 import static com.simibubi.create.foundation.gui.AllGuiTextures.TOOLBELT_HOTBAR_ON;
 import static com.simibubi.create.foundation.gui.AllGuiTextures.TOOLBELT_SELECTED_OFF;
@@ -14,13 +17,11 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.AllKeys;
 import com.simibubi.create.foundation.gui.AllGuiTextures;
 
-import net.createmod.catnip.gui.ScreenOpener;
-import net.createmod.catnip.nbt.NBTHelper;
-import net.createmod.catnip.platform.CatnipServices;
+import net.createmod.catnip.api.client.gui.ScreenOpener;
+import net.createmod.catnip.api.nbt.NBTHelper;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.LayeredDraw;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -37,7 +38,7 @@ import net.minecraft.world.phys.HitResult;
 
 public class ToolboxHandlerClient {
 
-	public static final LayeredDraw.Layer OVERLAY = ToolboxHandlerClient::renderOverlay;
+	public static final GuiLayer OVERLAY = ToolboxHandlerClient::renderOverlay;
 
 	static int COOLDOWN = 0;
 
@@ -70,11 +71,11 @@ public class ToolboxHandlerClient {
 			BlockState state = level.getBlockState(pos);
 			if (state.isAir())
 				return false;
-			result = state.getCloneItemStack(hitResult, level, pos, player);
+			result = state.getCloneItemStack(pos, level, true, player);
 
 		} else if (hitResult.getType() == HitResult.Type.ENTITY) {
 			Entity entity = ((EntityHitResult) hitResult).getEntity();
-			result = entity.getPickedResult(hitResult);
+			result = entity.getPickResult();
 		}
 
 		if (result.isEmpty())
@@ -91,8 +92,8 @@ public class ToolboxHandlerClient {
 				if (!ItemStack.matches(inSlot, result))
 					continue;
 
-				CatnipServices.NETWORK.sendToServer(
-					new ToolboxEquipPacket(toolboxBlockEntity.getBlockPos(), comp, player.getInventory().selected));
+				ClientNetworkHelper.INSTANCE.sendToServer(
+					new ToolboxEquipPacket(toolboxBlockEntity.getBlockPos(), comp, player.getInventory().getSelectedSlot()));
 				return true;
 			}
 
@@ -119,13 +120,13 @@ public class ToolboxHandlerClient {
 		toolboxes.sort(Comparator.comparing(ToolboxBlockEntity::getUniqueId));
 
 		CompoundTag compound = player.getPersistentData()
-			.getCompound("CreateToolboxData");
+			.getCompoundOrEmpty("CreateToolboxData");
 
-		String slotKey = String.valueOf(player.getInventory().selected);
+		String slotKey = String.valueOf(player.getInventory().getSelectedSlot());
 		boolean equipped = compound.contains(slotKey);
 
 		if (equipped) {
-			BlockPos pos = NBTHelper.readBlockPos(compound.getCompound(slotKey), "Pos");
+			BlockPos pos = NBTHelper.readBlockPos(compound.getCompoundOrEmpty(slotKey), "Pos");
 			double max = ToolboxHandler.getMaxRange(player);
 			boolean canReachToolbox = ToolboxHandler.distance(player.position(), pos) < max * max;
 
@@ -134,8 +135,8 @@ public class ToolboxHandlerClient {
 				if (blockEntity instanceof ToolboxBlockEntity) {
 					RadialToolboxMenu screen = new RadialToolboxMenu(toolboxes,
 						RadialToolboxMenu.State.SELECT_ITEM_UNEQUIP, (ToolboxBlockEntity) blockEntity);
-					screen.prevSlot(compound.getCompound(slotKey)
-						.getInt("Slot"));
+					screen.prevSlot(compound.getCompoundOrEmpty(slotKey)
+						.getIntOr("Slot", 0));
 					ScreenOpener.open(screen);
 					return;
 				}
@@ -154,16 +155,15 @@ public class ToolboxHandlerClient {
 			ScreenOpener.open(new RadialToolboxMenu(toolboxes, RadialToolboxMenu.State.SELECT_BOX, null));
 	}
 
-	public static void renderOverlay(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
+	public static void renderOverlay(GuiGraphicsExtractor guiGraphics, DeltaTracker deltaTracker) {
 		int width = guiGraphics.guiWidth();
 		int height = guiGraphics.guiHeight();
 		Minecraft mc = Minecraft.getInstance();
-		if (mc.options.hideGui || mc.gameMode.getPlayerMode() == GameType.SPECTATOR)
+		if (mc.gui.hud.isHidden() || mc.gameMode.getPlayerMode() == GameType.SPECTATOR)
 			return;
 
 		int x = width / 2 - 90;
 		int y = height - 23;
-		RenderSystem.enableDepthTest();
 
 		Player player = mc.player;
 		CompoundTag persistentData = player.getPersistentData();
@@ -171,27 +171,27 @@ public class ToolboxHandlerClient {
 			return;
 
 		CompoundTag compound = player.getPersistentData()
-			.getCompound("CreateToolboxData");
+			.getCompoundOrEmpty("CreateToolboxData");
 
 		if (compound.isEmpty())
 			return;
 
-		PoseStack poseStack = guiGraphics.pose();
-		poseStack.pushPose();
+		Matrix3x2fStack poseStack = guiGraphics.pose();
+		poseStack.pushMatrix();
 		for (int slot = 0; slot < 9; slot++) {
 			String key = String.valueOf(slot);
 			if (!compound.contains(key))
 				continue;
-			BlockPos pos = NBTHelper.readBlockPos(compound.getCompound(key), "Pos");
+			BlockPos pos = NBTHelper.readBlockPos(compound.getCompoundOrEmpty(key), "Pos");
 			double max = ToolboxHandler.getMaxRange(player);
-			boolean selected = player.getInventory().selected == slot;
+			boolean selected = player.getInventory().getSelectedSlot() == slot;
 			int offset = selected ? 1 : 0;
 			AllGuiTextures texture = ToolboxHandler.distance(player.position(), pos) < max * max
 				? selected ? TOOLBELT_SELECTED_ON : TOOLBELT_HOTBAR_ON
 				: selected ? TOOLBELT_SELECTED_OFF : TOOLBELT_HOTBAR_OFF;
 			texture.render(guiGraphics, x + 20 * slot - offset, y + offset);
 		}
-		poseStack.popPose();
+		poseStack.popMatrix();
 	}
 
 }

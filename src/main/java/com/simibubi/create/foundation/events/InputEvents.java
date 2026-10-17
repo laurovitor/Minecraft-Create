@@ -1,5 +1,6 @@
 package com.simibubi.create.foundation.events;
 
+import net.createmod.catnip.api.platform.services.PlatformHelper;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.CreateClient;
 import com.simibubi.create.content.contraptions.elevator.ElevatorControlsHandler;
@@ -15,7 +16,6 @@ import com.simibubi.create.content.trains.TrainHUD;
 import com.simibubi.create.content.trains.entity.TrainRelocator;
 import com.simibubi.create.content.trains.track.CurvedTrackInteraction;
 
-import net.createmod.catnip.platform.CatnipServices;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.item.ItemStack;
@@ -32,7 +32,7 @@ public class InputEvents {
 
 	@SubscribeEvent
 	public static void onKeyInput(InputEvent.Key event) {
-		if (Minecraft.getInstance().screen != null)
+		if (Minecraft.getInstance().gui.screen() != null)
 			return;
 
 		int key = event.getKey();
@@ -45,7 +45,7 @@ public class InputEvents {
 
 	@SubscribeEvent
 	public static void onMouseScrolled(InputEvent.MouseScrollingEvent event) {
-		if (Minecraft.getInstance().screen != null)
+		if (Minecraft.getInstance().gui.screen() != null)
 			return;
 
 		double delta = event.getScrollDeltaY();
@@ -58,7 +58,7 @@ public class InputEvents {
 
 	@SubscribeEvent
 	public static void onMouseInput(InputEvent.MouseButton.Pre event) {
-		if (Minecraft.getInstance().screen != null)
+		if (Minecraft.getInstance().gui.screen() != null)
 			return;
 
 		int button = event.getButton();
@@ -74,7 +74,7 @@ public class InputEvents {
 	@SubscribeEvent
 	public static void onClickInput(InputEvent.InteractionKeyMappingTriggered event) {
 		Minecraft mc = Minecraft.getInstance();
-		if (mc.screen != null)
+		if (mc.gui.screen() != null)
 			return;
 
 		if (CurvedTrackInteraction.onClickInput(event)) {
@@ -119,11 +119,11 @@ public class InputEvents {
 			ItemStack itemInHand = mc.player.getItemInHand(event.getHand());
 			if (itemInHand.is(Tags.Items.TOOLS_WRENCH))
 				return;
-			if (itemInHand.is(Items.CHAIN) || AllBlocks.PACKAGE_FROGPORT.isIn(itemInHand))
+			if (itemInHand.is(Items.IRON_CHAIN) || AllBlocks.PACKAGE_FROGPORT.isIn(itemInHand))
 				return;
 		}
 
-		CatnipServices.PLATFORM.executeOnClientOnly(() -> () -> {
+		PlatformHelper.INSTANCE.executeOnClientOnly(() -> () -> {
 			if (ChainPackageInteractionHandler.onUse())
 				event.setCanceled(true);
 		});

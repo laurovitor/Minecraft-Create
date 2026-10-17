@@ -8,7 +8,10 @@
   "type": "create:crushing",
   "ingredients": [
     {
-      "item": "immersiveengineering:slag"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "immersiveengineering:slag"
+      ]
     }
   ],
   "processing_time": 200,

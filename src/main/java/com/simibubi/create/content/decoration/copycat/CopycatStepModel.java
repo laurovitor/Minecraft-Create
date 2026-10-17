@@ -1,15 +1,15 @@
 package com.simibubi.create.content.decoration.copycat;
 
+import org.jspecify.annotations.Nullable;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.simibubi.create.foundation.model.BakedModelHelper;
-import com.simibubi.create.foundation.model.BakedQuadHelper;
 
-import net.createmod.catnip.data.Iterate;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.resources.model.BakedModel;
+import net.createmod.catnip.api.data.Iterate;
+import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
@@ -18,7 +18,6 @@ import net.minecraft.world.level.block.state.properties.Half;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-import net.neoforged.neoforge.client.model.data.ModelData;
 
 public class CopycatStepModel extends CopycatModel {
 
@@ -27,25 +26,24 @@ public class CopycatStepModel extends CopycatModel {
 	protected static final Vec3 VEC_Y_N2 = new Vec3(0, -.5, 0);
 	protected static final AABB CUBE_AABB = new AABB(BlockPos.ZERO);
 
-	public CopycatStepModel(BakedModel originalModel) {
+	public CopycatStepModel(BlockStateModel originalModel) {
 		super(originalModel);
 	}
 
 	@Override
-	protected List<BakedQuad> getCroppedQuads(BlockState state, Direction side, RandomSource rand, BlockState material,
-		ModelData wrappedData, RenderType renderType) {
+	protected List<BakedQuad> getCroppedQuads(BlockState state, @Nullable Direction side, RandomSource rand,
+		BlockState material, List<BlockStateModelPart> materialParts) {
 		Direction facing = state.getOptionalValue(CopycatStepBlock.FACING)
 			.orElse(Direction.SOUTH);
 		boolean upperHalf = state.getOptionalValue(CopycatStepBlock.HALF)
 			.orElse(Half.BOTTOM) == Half.TOP;
 
-		BakedModel model = getModelOf(material);
-		List<BakedQuad> templateQuads = model.getQuads(material, side, rand, wrappedData, renderType);
+		List<BakedQuad> templateQuads = BakedModelHelper.quadsOf(materialParts, side);
 		int size = templateQuads.size();
 
 		List<BakedQuad> quads = new ArrayList<>();
 
-		Vec3 normal = Vec3.atLowerCornerOf(facing.getNormal());
+		Vec3 normal = Vec3.atLowerCornerOf(facing.getUnitVec3i());
 		Vec3 normalScaled2 = normal.scale(.5);
 		Vec3 normalScaledN3 = normal.scale(-.75);
 		AABB bb = CUBE_AABB.contract(-normal.x * .75, .75, -normal.z * .75);
@@ -68,7 +66,7 @@ public class CopycatStepModel extends CopycatModel {
 
 				for (int i = 0; i < size; i++) {
 					BakedQuad quad = templateQuads.get(i);
-					Direction direction = quad.getDirection();
+					Direction direction = quad.direction();
 
 					if (front && direction == facing)
 						continue;
@@ -79,8 +77,7 @@ public class CopycatStepModel extends CopycatModel {
 					if (top && direction == Direction.DOWN)
 						continue;
 
-					quads.add(BakedQuadHelper.cloneWithCustomGeometry(quad,
-						BakedModelHelper.cropAndMove(quad.getVertices(), quad.getSprite(), bb1, offset)));
+					quads.add(BakedModelHelper.cropAndMove(quad, bb1, offset));
 				}
 
 			}

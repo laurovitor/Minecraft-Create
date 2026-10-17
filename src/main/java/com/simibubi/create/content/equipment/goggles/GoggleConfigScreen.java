@@ -1,5 +1,6 @@
 package com.simibubi.create.content.equipment.goggles;
 
+import net.minecraft.client.input.MouseButtonEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -7,10 +8,10 @@ import com.simibubi.create.AllItems;
 import com.simibubi.create.foundation.utility.CreateLang;
 import com.simibubi.create.infrastructure.config.AllConfigs;
 
-import net.createmod.catnip.gui.AbstractSimiScreen;
-import net.createmod.catnip.gui.element.GuiGameElement;
+import net.createmod.catnip.api.client.gui.AbstractSimiScreen;
+import net.createmod.catnip.api.client.gui.element.GuiGameElement;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
@@ -68,15 +69,20 @@ public class GoggleConfigScreen extends AbstractSimiScreen {
 	}
 
 	@Override
-	public boolean mouseClicked(double x, double y, int button) {
+	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+		double x = event.x();
+		double y = event.y();
+		int button = event.button();
 		updateOffset(x, y);
 
 		return true;
 	}
 
 	@Override
-	public boolean mouseDragged(double p_mouseDragged_1_, double p_mouseDragged_3_, int p_mouseDragged_5_,
-								double p_mouseDragged_6_, double p_mouseDragged_8_) {
+	public boolean mouseDragged(MouseButtonEvent event, double p_mouseDragged_6_, double p_mouseDragged_8_) {
+		double p_mouseDragged_1_ = event.x();
+		double p_mouseDragged_3_ = event.y();
+		int p_mouseDragged_5_ = event.button();
 		updateOffset(p_mouseDragged_1_, p_mouseDragged_3_);
 
 		return true;
@@ -105,10 +111,10 @@ public class GoggleConfigScreen extends AbstractSimiScreen {
 	}
 
 	@Override
-	protected void renderWindow(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+	protected void renderWindow(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks) {
 		int posX = this.width / 2 + offsetX;
 		int posY = this.height / 2 + offsetY;
-		graphics.renderComponentTooltip(font, tooltip, posX, posY);
+		graphics.setComponentTooltipForNextFrame(font, tooltip, posX, posY);
 
 		// UIRenderHelper.breadcrumbArrow(ms, 50, 50, 100, 50, 20, 10, 0x80aa9999, 0x10aa9999);
 		// UIRenderHelper.breadcrumbArrow(ms, 100, 80, 0, -50, 20, -10, 0x80aa9999, 0x10aa9999);
@@ -116,7 +122,7 @@ public class GoggleConfigScreen extends AbstractSimiScreen {
 		ItemStack item = AllItems.GOGGLES.asStack();
 		GuiGameElement.of(item)
 			.at(posX + 10, posY - 16, 450)
-			.render(graphics);
-		// GuiGameElement.of(item).at(0, 0, 450).render(ms);
+			.submit(graphics);
+		// GuiGameElement.of(item).at(0, 0, 450).submit(ms);
 	}
 }

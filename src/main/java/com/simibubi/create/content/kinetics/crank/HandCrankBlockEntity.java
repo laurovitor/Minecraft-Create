@@ -1,5 +1,6 @@
 package com.simibubi.create.content.kinetics.crank;
 
+import com.simibubi.create.foundation.render.CachedBufferer;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllPartialModels;
 import com.simibubi.create.AllSoundEvents;
@@ -8,9 +9,8 @@ import com.simibubi.create.content.kinetics.base.GeneratingKineticBlockEntity;
 
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 
-import net.createmod.catnip.animation.AnimationTickHolder;
-import net.createmod.catnip.render.CachedBuffers;
-import net.createmod.catnip.render.SuperByteBuffer;
+import net.createmod.catnip.api.client.animation.AnimationTickHolder;
+import net.createmod.catnip.api.client.render.SuperByteBuffer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -18,9 +18,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 public class HandCrankBlockEntity extends GeneratingKineticBlockEntity {
 
@@ -44,7 +41,7 @@ public class HandCrankBlockEntity extends GeneratingKineticBlockEntity {
 
 		inUse = 10;
 		this.backwards = back;
-		if (update && !level.isClientSide)
+		if (update && !level.isClientSide())
 			updateGeneratedRotation();
 	}
 
@@ -77,8 +74,8 @@ public class HandCrankBlockEntity extends GeneratingKineticBlockEntity {
 
 	@Override
 	protected void read(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
-		inUse = compound.getInt("InUse");
-		backwards = compound.getBoolean("Backwards");
+		inUse = compound.getIntOr("InUse", 0);
+		backwards = compound.getBooleanOr("Backwards", false);
 		super.read(compound, registries, clientPacket);
 	}
 
@@ -93,22 +90,20 @@ public class HandCrankBlockEntity extends GeneratingKineticBlockEntity {
 		if (inUse > 0) {
 			inUse--;
 
-			if (inUse == 0 && !level.isClientSide) {
+			if (inUse == 0 && !level.isClientSide()) {
 				sequenceContext = null;
 				updateGeneratedRotation();
 			}
 		}
 	}
 
-	@OnlyIn(Dist.CLIENT)
 	public SuperByteBuffer getRenderedHandle() {
 		BlockState blockState = getBlockState();
 		Direction facing = blockState.getOptionalValue(HandCrankBlock.FACING)
 			.orElse(Direction.UP);
-		return CachedBuffers.partialFacing(AllPartialModels.HAND_CRANK_HANDLE, blockState, facing.getOpposite());
+		return CachedBufferer.partialFacing(AllPartialModels.HAND_CRANK_HANDLE, blockState, facing.getOpposite());
 	}
 
-	@OnlyIn(Dist.CLIENT)
 	public boolean shouldRenderShaft() {
 		return true;
 	}
@@ -120,7 +115,6 @@ public class HandCrankBlockEntity extends GeneratingKineticBlockEntity {
 	}
 
 	@Override
-	@OnlyIn(Dist.CLIENT)
 	public void tickAudio() {
 		super.tickAudio();
 		if (inUse > 0 && AnimationTickHolder.getTicks() % 10 == 0) {

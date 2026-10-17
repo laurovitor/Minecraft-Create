@@ -1,5 +1,10 @@
 package com.simibubi.create.content.logistics.filter;
 
+import org.joml.Matrix3x2fStack;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.createmod.catnip.api.client.network.ClientNetworkHelper;
 import org.lwjgl.glfw.GLFW;
 
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -9,9 +14,8 @@ import com.simibubi.create.content.logistics.filter.FilterScreenPacket.Option;
 import com.simibubi.create.foundation.gui.AllGuiTextures;
 import com.simibubi.create.foundation.gui.widget.IconButton;
 
-import net.createmod.catnip.gui.element.GuiGameElement;
-import net.createmod.catnip.platform.CatnipServices;
-import net.minecraft.client.gui.GuiGraphics;
+import net.createmod.catnip.api.client.gui.element.GuiGameElement;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -44,7 +48,7 @@ public class PackageFilterScreen extends AbstractFilterScreen<PackageFilterMenu>
 		int y = topPos;
 
 		addressBox = new AddressEditBox(this, this.font, x + 44, y + 28, 129, 9, false);
-		addressBox.setTextColor(0xffffff);
+		addressBox.setTextColor(0xFFffffff);
 		addressBox.setValue(menu.address);
 		addressBox.setResponder(this::onAddressEdited);
 		addRenderableWidget(addressBox);
@@ -53,27 +57,30 @@ public class PackageFilterScreen extends AbstractFilterScreen<PackageFilterMenu>
 	}
 
 	@Override
-	public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
-		super.render(graphics, mouseX, mouseY, partialTicks);
+	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks) {
+		super.extractRenderState(graphics, mouseX, mouseY, partialTicks);
 
-		PoseStack ms = graphics.pose();
-		ms.pushPose();
-		ms.translate(leftPos + 16, topPos + 23, 0);
+		Matrix3x2fStack ms = graphics.pose();
+		ms.pushMatrix();
+		ms.translate((float) (leftPos + 16), (float) (topPos + 23));
 		GuiGameElement.of(PackageStyles.getDefaultBox())
-			.render(graphics);
-		ms.popPose();
+			.submit(graphics);
+		ms.popMatrix();
 	}
 
 	public void onAddressEdited(String s) {
 		menu.address = s;
 		CompoundTag tag = new CompoundTag();
 		tag.putString("Address", s);
-		CatnipServices.NETWORK.sendToServer(new FilterScreenPacket(Option.UPDATE_ADDRESS, tag));
+		ClientNetworkHelper.INSTANCE.sendToServer(new FilterScreenPacket(Option.UPDATE_ADDRESS, tag));
 	}
 
 	@Override
-	public boolean mouseClicked(double pMouseX, double pMouseY, int pButton) {
-		return super.mouseClicked(pMouseX, pMouseY, pButton);
+	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+		double pMouseX = event.x();
+		double pMouseY = event.y();
+		int pButton = event.button();
+		return super.mouseClicked(event, doubleClick);
 	}
 
 	@Override
@@ -84,15 +91,20 @@ public class PackageFilterScreen extends AbstractFilterScreen<PackageFilterMenu>
 	}
 
 	@Override
-	public boolean keyPressed(int pKeyCode, int pScanCode, int pModifiers) {
+	public boolean keyPressed(KeyEvent event) {
+		int pKeyCode = event.key();
+		int pScanCode = event.scancode();
+		int pModifiers = event.modifiers();
 		if (pKeyCode == GLFW.GLFW_KEY_ENTER)
 			setFocused(null);
-		return super.keyPressed(pKeyCode, pScanCode, pModifiers);
+		return super.keyPressed(event);
 	}
 
 	@Override
-	public boolean charTyped(char pCodePoint, int pModifiers) {
-		return super.charTyped(pCodePoint, pModifiers);
+	public boolean charTyped(CharacterEvent event) {
+		char pCodePoint = (char) event.codepoint();
+		int pModifiers = 0;
+		return super.charTyped(event);
 	}
 
 	@Override

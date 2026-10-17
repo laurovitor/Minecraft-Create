@@ -1,5 +1,11 @@
 package com.simibubi.create.content.logistics.depot;
 
+import net.neoforged.neoforge.transfer.transaction.Transaction;
+import net.neoforged.neoforge.transfer.ResourceHandlerUtil;
+import com.simibubi.create.foundation.utility.NbtValueIO;
+import net.neoforged.neoforge.transfer.item.ItemUtil;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -21,16 +27,14 @@ import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BehaviourType;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.foundation.item.ItemHelper;
-import com.simibubi.create.foundation.mixin.accessor.ItemStackHandlerAccessor;
 
-import net.createmod.catnip.math.VecHelper;
-import net.createmod.catnip.nbt.NBTHelper;
+import net.createmod.catnip.api.math.VecHelper;
+import net.createmod.catnip.api.nbt.NBTHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.world.Clearable;
 import net.minecraft.world.Containers;
 import net.minecraft.world.item.ItemStack;
@@ -39,15 +43,12 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
-import net.neoforged.neoforge.items.ItemHandlerHelper;
-import net.neoforged.neoforge.items.ItemStackHandler;
-
 public class DepotBehaviour extends BlockEntityBehaviour implements Clearable {
 	public static final BehaviourType<DepotBehaviour> TYPE = new BehaviourType<>();
 
 	TransportedItemStack heldItem;
 	List<TransportedItemStack> incoming;
-	ItemStackHandler processingOutputBuffer;
+	ItemStacksResourceHandler processingOutputBuffer;
 	public DepotItemHandler itemHandler;
 	TransportedItemStackHandlerBehaviour transportedHandler;
 	Supplier<Integer> maxStackSize;
@@ -67,8 +68,8 @@ public class DepotBehaviour extends BlockEntityBehaviour implements Clearable {
 		};
 		incoming = new ArrayList<>();
 		itemHandler = new DepotItemHandler(this);
-		processingOutputBuffer = new ItemStackHandler(8) {
-			protected void onContentsChanged(int slot) {
+		processingOutputBuffer = new ItemStacksResourceHandler(8) {
+			protected void onContentsChanged(int slot, ItemStack previousContents) {
 				be.notifyUpdate();
 			}
 		};
@@ -98,7 +99,7 @@ public class DepotBehaviour extends BlockEntityBehaviour implements Clearable {
 			TransportedItemStack ts = iterator.next();
 			if (!tick(ts))
 				continue;
-			if (world.isClientSide && !blockEntity.isVirtual())
+			if (world.isClientSide() && !blockEntity.isVirtual())
 				continue;
 			if (heldItem == null) {
 				heldItem = ts;
@@ -121,7 +122,7 @@ public class DepotBehaviour extends BlockEntityBehaviour implements Clearable {
 
 		BlockPos pos = blockEntity.getBlockPos();
 
-		if (world.isClientSide)
+		if (world.isClientSide())
 			return;
 		if (handleBeltFunnelOutput())
 			return;
@@ -166,8 +167,8 @@ public class DepotBehaviour extends BlockEntityBehaviour implements Clearable {
 		if (funnelFacing == null || !canFunnelsPullFrom.test(funnelFacing.getOpposite()))
 			return false;
 
-		for (int slot = 0; slot < processingOutputBuffer.getSlots(); slot++) {
-			ItemStack previousItem = processingOutputBuffer.getStackInSlot(slot);
+		for (int slot = 0; slot < processingOutputBuffer.size(); slot++) {
+			ItemStack previousItem = ItemUtil.getStack(processingOutputBuffer, slot);
 			if (previousItem.isEmpty())
 				continue;
 			ItemStack afterInsert = blockEntity.getBehaviour(DirectBeltInputBehaviour.TYPE)
@@ -175,7 +176,7 @@ public class DepotBehaviour extends BlockEntityBehaviour implements Clearable {
 			if (afterInsert == null)
 				return false;
 			if (previousItem.getCount() != afterInsert.getCount()) {
-				processingOutputBuffer.setStackInSlot(slot, afterInsert);
+				processingOutputBuffer.set(slot, ItemResource.of(afterInsert), afterInsert.getCount());
 				blockEntity.notifyUpdate();
 				return true;
 			}
@@ -200,7 +201,8 @@ public class DepotBehaviour extends BlockEntityBehaviour implements Clearable {
 
 	@Override
 	public void clearContent() {
-		((ItemStackHandlerAccessor) processingOutputBuffer).create$getStacks().clear();
+		for (int slot = 0; slot < processingOutputBuffer.size(); slot++)
+			processingOutputBuffer.set(slot, ItemResource.EMPTY, 0);
 		incoming.clear();
 		heldItem = null;
 	}
@@ -227,7 +229,7 @@ public class DepotBehaviour extends BlockEntityBehaviour implements Clearable {
 	public void write(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
 		if (heldItem != null)
 			compound.put("HeldItem", heldItem.serializeNBT(registries));
-		compound.put("OutputBuffer", processingOutputBuffer.serializeNBT(registries));
+		compound.put("OutputBuffer", NbtValueIO.serialize(processingOutputBuffer, registries));
 		if (canMergeItems() && !incoming.isEmpty())
 			compound.put("Incoming", NBTHelper.writeCompoundList(incoming, stack -> stack.serializeNBT(registries)));
 	}
@@ -236,10 +238,10 @@ public class DepotBehaviour extends BlockEntityBehaviour implements Clearable {
 	public void read(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
 		heldItem = null;
 		if (compound.contains("HeldItem"))
-			heldItem = TransportedItemStack.read(compound.getCompound("HeldItem"), registries);
-		processingOutputBuffer.deserializeNBT(registries, compound.getCompound("OutputBuffer"));
+			heldItem = TransportedItemStack.read(compound.getCompoundOrEmpty("HeldItem"), registries);
+		NbtValueIO.deserialize(processingOutputBuffer, compound.getCompoundOrEmpty("OutputBuffer"), registries);
 		if (canMergeItems()) {
-			ListTag list = compound.getList("Incoming", Tag.TAG_COMPOUND);
+			ListTag list = compound.getListOrEmpty("Incoming");
 			incoming = NBTHelper.readCompoundList(list, c -> TransportedItemStack.read(c, registries));
 		}
 	}
@@ -263,8 +265,8 @@ public class DepotBehaviour extends BlockEntityBehaviour implements Clearable {
 	public int getPresentStackSize() {
 		int cumulativeStackSize = 0;
 		cumulativeStackSize += getHeldItemStack().getCount();
-		for (int slot = 0; slot < processingOutputBuffer.getSlots(); slot++)
-			cumulativeStackSize += processingOutputBuffer.getStackInSlot(slot)
+		for (int slot = 0; slot < processingOutputBuffer.size(); slot++)
+			cumulativeStackSize += ItemUtil.getStack(processingOutputBuffer, slot)
 				.getCount();
 		return cumulativeStackSize;
 	}
@@ -408,7 +410,12 @@ public class DepotBehaviour extends BlockEntityBehaviour implements Clearable {
 				setCenteredHeldItem(added);
 				continue;
 			}
-			ItemStack remainder = ItemHandlerHelper.insertItemStacked(processingOutputBuffer, added.stack, false);
+			ItemStack remainder;
+			try (Transaction transaction = Transaction.openRoot()) {
+				int transferred = added.stack.isEmpty() ? 0 : ResourceHandlerUtil.insertStacking(processingOutputBuffer, ItemResource.of(added.stack), added.stack.getCount(), transaction);
+				remainder = transferred == added.stack.getCount() ? ItemStack.EMPTY : added.stack.copyWithCount(added.stack.getCount() - transferred);
+				transaction.commit();
+			}
 			Vec3 vec = VecHelper.getCenterOf(blockEntity.getBlockPos());
 			Containers.dropItemStack(blockEntity.getLevel(), vec.x, vec.y + .5f, vec.z, remainder);
 		}
@@ -422,8 +429,8 @@ public class DepotBehaviour extends BlockEntityBehaviour implements Clearable {
 	}
 
 	public boolean isOutputEmpty() {
-		for (int i = 0; i < processingOutputBuffer.getSlots(); i++)
-			if (!processingOutputBuffer.getStackInSlot(i)
+		for (int i = 0; i < processingOutputBuffer.size(); i++)
+			if (!ItemUtil.getStack(processingOutputBuffer, i)
 				.isEmpty())
 				return false;
 		return true;

@@ -1,9 +1,15 @@
 package com.simibubi.create.compat.jei.category;
 
+import com.simibubi.create.content.kinetics.crafter.MechanicalCraftingRecipe;
+
+import java.util.Optional;
+
+import com.simibubi.create.foundation.recipe.RecipeAccessors;
+import org.joml.Matrix3x2fStack;
+import org.jspecify.annotations.NullMarked;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.annotation.ParametersAreNonnullByDefault;
 
 import net.minecraft.world.item.Item;
 
@@ -11,8 +17,6 @@ import net.minecraft.world.item.crafting.ShapedRecipe;
 
 import org.jetbrains.annotations.NotNull;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.compat.jei.category.animations.AnimatedCrafter;
 import com.simibubi.create.foundation.gui.AllGuiTextures;
 
@@ -25,7 +29,7 @@ import mezz.jei.api.recipe.RecipeIngredientRole;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.entity.player.Player;
@@ -34,9 +38,7 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
 
-import org.joml.Matrix4fStack;
-
-@ParametersAreNonnullByDefault
+@NullMarked
 public class MechanicalCraftingCategory extends CreateRecipeCategory<CraftingRecipe> {
 
 	private final AnimatedCrafter crafter = new AnimatedCrafter();
@@ -57,14 +59,15 @@ public class MechanicalCraftingCategory extends CreateRecipeCategory<CraftingRec
 		IIngredientRenderer<ItemStack> renderer = new CrafterIngredientRenderer(recipe);
 		int i = 0;
 
-		for (Ingredient ingredient : recipe.getIngredients()) {
+		for (Optional<Ingredient> cell : grid(recipe)) {
 			float f = 19 * scale;
 			int xPosition = (int) (x + 1 + (i % getWidth(recipe)) * f);
 			int yPosition = (int) (y + 1 + (i / getWidth(recipe)) * f);
 
-			builder.addSlot(RecipeIngredientRole.INPUT, xPosition, yPosition)
+			// A gap in the pattern still takes its place in the grid; it just holds no slot.
+			cell.ifPresent(ingredient -> builder.addSlot(RecipeIngredientRole.INPUT, xPosition, yPosition)
 				.setCustomRenderer(VanillaTypes.ITEM_STACK, renderer)
-				.addIngredients(ingredient);
+				.addIngredients(ingredient));
 
 			i++;
 		}
@@ -87,57 +90,77 @@ public class MechanicalCraftingCategory extends CreateRecipeCategory<CraftingRec
 		return 3 + 50 - (int) (getScale(recipe) * getWidth(recipe) * 19 * .5);
 	}
 
+	/**
+	 * The recipe's grid, one entry per cell and empty where the pattern has a gap - which is what
+	 * positions each ingredient, so the flat list {@link RecipeAccessors#ingredients} gives will not do.
+	 *
+	 * <p>1.21.1 had this from {@code getIngredients}, with an empty ingredient in each gap. 26.2 has
+	 * no empty ingredient, and a mechanical crafting recipe is no longer a {@link ShapedRecipe}; both
+	 * kinds still hand out their pattern's cells, as optionals.
+	 */
+	private static List<Optional<Ingredient>> grid(CraftingRecipe recipe) {
+		if (recipe instanceof MechanicalCraftingRecipe mechanical)
+			return mechanical.getIngredients();
+		if (recipe instanceof ShapedRecipe shaped)
+			return shaped.getIngredients();
+		return RecipeAccessors.ingredients(recipe)
+			.stream()
+			.map(Optional::of)
+			.toList();
+	}
+
 	private static int getWidth(CraftingRecipe recipe) {
-		return recipe instanceof ShapedRecipe ? ((ShapedRecipe) recipe).getWidth() : 1;
+		if (recipe instanceof MechanicalCraftingRecipe mechanical)
+			return mechanical.getWidth();
+		return recipe instanceof ShapedRecipe shaped ? shaped.getWidth() : 1;
 	}
 
 	private static int getHeight(CraftingRecipe recipe) {
-		return recipe instanceof ShapedRecipe ? ((ShapedRecipe) recipe).getHeight() : 1;
+		if (recipe instanceof MechanicalCraftingRecipe mechanical)
+			return mechanical.getHeight();
+		return recipe instanceof ShapedRecipe shaped ? shaped.getHeight() : 1;
 	}
 
 	@Override
-	public void draw(CraftingRecipe recipe, IRecipeSlotsView iRecipeSlotsView, GuiGraphics graphics, double mouseX,
+	public void draw(CraftingRecipe recipe, IRecipeSlotsView iRecipeSlotsView, GuiGraphicsExtractor graphics, double mouseX,
 		double mouseY) {
-		PoseStack matrixStack = graphics.pose();
-		matrixStack.pushPose();
+		Matrix3x2fStack matrixStack = graphics.pose();
+		matrixStack.pushMatrix();
 		float scale = getScale(recipe);
-		matrixStack.translate(getXPadding(recipe), getYPadding(recipe), 0);
+		List<Optional<Ingredient>> grid = grid(recipe);
+		matrixStack.translate(getXPadding(recipe), getYPadding(recipe));
 
 		for (int row = 0; row < getHeight(recipe); row++)
 			for (int col = 0; col < getWidth(recipe); col++) {
 				int pIndex = row * getWidth(recipe) + col;
-				if (pIndex >= recipe.getIngredients()
-					.size())
+				if (pIndex >= grid.size())
 					break;
-				if (recipe.getIngredients()
-					.get(pIndex)
+				if (grid.get(pIndex)
 					.isEmpty())
 					continue;
-				matrixStack.pushPose();
-				matrixStack.translate(col * 19 * scale, row * 19 * scale, 0);
-				matrixStack.scale(scale, scale, scale);
+				matrixStack.pushMatrix();
+				matrixStack.translate((float) (col * 19 * scale), (float) (row * 19 * scale));
+				matrixStack.scale((float) (scale), (float) (scale));
 				AllGuiTextures.JEI_SLOT.render(graphics, 0, 0);
-				matrixStack.popPose();
+				matrixStack.popMatrix();
 			}
 
-		matrixStack.popPose();
+		matrixStack.popMatrix();
 
 		AllGuiTextures.JEI_SLOT.render(graphics, 133, 80);
 		AllGuiTextures.JEI_DOWN_ARROW.render(graphics, 128, 59);
 		crafter.draw(graphics, 129, 25);
 
-		matrixStack.pushPose();
-		matrixStack.translate(0, 0, 300);
+		matrixStack.pushMatrix();
+		matrixStack.translate((float) (0), (float) (0));
 
-		int amount = 0;
-		for (Ingredient ingredient : recipe.getIngredients()) {
-			if (Ingredient.EMPTY == ingredient)
-				continue;
-			amount++;
-		}
+		// One crafter per filled cell.
+		long amount = grid.stream()
+			.filter(Optional::isPresent)
+			.count();
 
-		graphics.drawString(Minecraft.getInstance().font, amount + "", 142, 39, 0xFFFFFF);
-		matrixStack.popPose();
+		graphics.text(Minecraft.getInstance().font, amount + "", 142, 39, 0xFFFFFFFF);
+		matrixStack.popMatrix();
 	}
 
 	private static final class CrafterIngredientRenderer implements IIngredientRenderer<ItemStack> {
@@ -151,27 +174,22 @@ public class MechanicalCraftingCategory extends CreateRecipeCategory<CraftingRec
 		}
 
 		@Override
-		public void render(GuiGraphics graphics, @NotNull ItemStack ingredient) {
-			PoseStack matrixStack = graphics.pose();
-			matrixStack.pushPose();
+		public void render(GuiGraphicsExtractor graphics, @NotNull ItemStack ingredient) {
+			Matrix3x2fStack matrixStack = graphics.pose();
+			matrixStack.pushMatrix();
 			float scale = getScale(recipe);
-			matrixStack.scale(scale, scale, scale);
+			matrixStack.scale((float) (scale), (float) (scale));
 
+			// The model-view stack no longer feeds GUI drawing - the 2D pose stack above is what
+			// items are placed by - so the push/apply/pop around this is gone.
 			if (ingredient != null) {
-				Matrix4fStack modelViewStack = RenderSystem.getModelViewStack();
-				modelViewStack.pushMatrix();
-				RenderSystem.applyModelViewMatrix();
-				RenderSystem.enableDepthTest();
 				Minecraft minecraft = Minecraft.getInstance();
 				Font font = getFontRenderer(minecraft, ingredient);
-				graphics.renderItem(ingredient, 0, 0);
-				graphics.renderItemDecorations(font, ingredient, 0, 0, null);
-				RenderSystem.disableBlend();
-				modelViewStack.popMatrix();
-				RenderSystem.applyModelViewMatrix();
+				graphics.item(ingredient, 0, 0);
+				graphics.itemDecorations(font, ingredient, 0, 0, null);
 			}
 
-			matrixStack.popPose();
+			matrixStack.popMatrix();
 		}
 
 		@Override

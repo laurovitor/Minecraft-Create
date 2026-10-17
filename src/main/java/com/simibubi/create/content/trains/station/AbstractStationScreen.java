@@ -1,9 +1,10 @@
 package com.simibubi.create.content.trains.station;
 
+import org.joml.Matrix3x2fStack;
+import net.minecraft.client.Minecraft;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.CreateClient;
 import com.simibubi.create.compat.computercraft.ComputerScreen;
 import com.simibubi.create.content.trains.entity.Carriage;
@@ -14,10 +15,9 @@ import com.simibubi.create.foundation.gui.AllIcons;
 import com.simibubi.create.foundation.gui.widget.IconButton;
 
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
-import dev.engine_room.flywheel.lib.transform.TransformStack;
-import net.createmod.catnip.gui.AbstractSimiScreen;
-import net.createmod.catnip.gui.element.GuiGameElement;
-import net.minecraft.client.gui.GuiGraphics;
+import net.createmod.catnip.api.client.gui.AbstractSimiScreen;
+import net.createmod.catnip.api.client.gui.element.GuiGameElement;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 
@@ -43,7 +43,7 @@ public abstract class AbstractStationScreen extends AbstractSimiScreen {
 	@Override
 	protected void init() {
 		if (blockEntity.computerBehaviour.hasAttachedComputer())
-			minecraft.setScreen(new ComputerScreen(title, () ->
+			minecraft.gui.setScreen(new ComputerScreen(title, () ->
                 Component.literal(station.name),
 				this::renderAdditional, this, blockEntity.computerBehaviour::hasAttachedComputer));
 
@@ -84,13 +84,13 @@ public abstract class AbstractStationScreen extends AbstractSimiScreen {
 		super.tick();
 
 		if (blockEntity.computerBehaviour.hasAttachedComputer())
-			minecraft.setScreen(new ComputerScreen(title, () ->
+			minecraft.gui.setScreen(new ComputerScreen(title, () ->
                 Component.literal(station.name),
 				this::renderAdditional, this, blockEntity.computerBehaviour::hasAttachedComputer));
 	}
 
 	@Override
-	protected void renderWindow(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+	protected void renderWindow(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks) {
 		int x = guiLeft;
 		int y = guiTop;
 
@@ -98,27 +98,35 @@ public abstract class AbstractStationScreen extends AbstractSimiScreen {
 		renderAdditional(graphics, mouseX, mouseY, partialTicks, x, y, background);
 	}
 
-	private void renderAdditional(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks, int guiLeft, int guiTop, AllGuiTextures background) {
-		PoseStack ms = graphics.pose();
-		ms.pushPose();
-		var msr = TransformStack.of(ms);
-		msr.pushPose()
-			.translate(guiLeft + background.getWidth() + 4, guiTop + background.getHeight() + 4, 100)
-			.scale(40)
-			.rotateXDegrees(-22)
-			.rotateYDegrees(63);
+	private void renderAdditional(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks, int guiLeft, int guiTop, AllGuiTextures background) {
+		Matrix3x2fStack ms = graphics.pose();
+		ms.pushMatrix();
+		// Only the position on the screen goes on the stack now that it is two-dimensional; the
+		// angle the station is viewed from rides along with each element instead.
+		ms.translate(guiLeft + background.getWidth() + 4, guiTop + background.getHeight() + 4);
+
 		GuiGameElement.of(blockEntity.getBlockState()
 			.setValue(BlockStateProperties.WATERLOGGED, false))
-			.render(graphics);
+			.viewRotate(-22, 63, 0)
+			.scale(40)
+			.submit(graphics);
 
 		if (blockEntity.resolveFlagAngle()) {
-			msr.translate(1 / 16f, -19 / 16f, -12 / 16f);
-			StationRenderer.transformFlag(msr, blockEntity, partialTicks, 180, false);
-			GuiGameElement.of(getFlag(partialTicks))
-				.render(graphics);
+			// StationRenderer.transformFlag walks a 3D stack, which a GUI element has no way to
+			// follow. For this call - yaw 180, not flipped - that whole chain reduces to a fixed
+			// offset followed by the flag's pitch about X and the 180 degree yaw, so it is spelled
+			// out here rather than replayed.
+			float nudge = 1 / 512f;
+			float pitch = StationRenderer.flagProgress(blockEntity, partialTicks) * 90 + 270;
+			GuiGameElement.of(getFlag(partialTicks).get())
+				.viewRotate(-22, 63, 0)
+				.atLocal(1 + 1 / 16f - nudge, -9.5f / 16f, 1 / 8f - nudge)
+				.rotate(pitch, 180, 0)
+				.scale(40)
+				.submit(graphics);
 		}
 
-		ms.popPose();
+		ms.popMatrix();
 	}
 
 	protected abstract PartialModel getFlag(float partialTicks);

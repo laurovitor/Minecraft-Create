@@ -1,44 +1,51 @@
 package com.simibubi.create.foundation.block.connected;
 
-import java.util.ArrayList;
+import net.neoforged.neoforge.client.model.DelegateBlockStateModel;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
+import com.simibubi.create.foundation.model.TransformedModelPart;
+import com.tterrag.registrate.util.nullness.NonNullFunction;
 import java.util.Arrays;
 import java.util.List;
 
 import com.simibubi.create.content.decoration.copycat.CopycatBlock;
 import com.simibubi.create.foundation.block.connected.ConnectedTextureBehaviour.CTContext;
-import com.simibubi.create.foundation.model.BakedModelWrapperWithData;
 import com.simibubi.create.foundation.model.BakedQuadHelper;
 
-import net.createmod.catnip.data.Iterate;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.resources.model.BakedModel;
+import net.createmod.catnip.api.data.Iterate;
+import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.BlockPos.MutableBlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.client.model.data.ModelData;
-import net.neoforged.neoforge.client.model.data.ModelData.Builder;
-import net.neoforged.neoforge.client.model.data.ModelProperty;
 
-public class CTModel extends BakedModelWrapperWithData {
-
-	private static final ModelProperty<CTData> CT_PROPERTY = new ModelProperty<>();
+public class CTModel extends DelegateBlockStateModel {
 
 	private final ConnectedTextureBehaviour behaviour;
 
-	public CTModel(BakedModel originalModel, ConnectedTextureBehaviour behaviour) {
+	public CTModel(BlockStateModel originalModel, ConnectedTextureBehaviour behaviour) {
 		super(originalModel);
 		this.behaviour = behaviour;
 	}
 
-	@Override
-	protected ModelData.Builder gatherModelData(Builder builder, BlockAndTintGetter world, BlockPos pos, BlockState state,
-		ModelData blockEntityData) {
-		return builder.with(CT_PROPERTY, createCTData(world, pos, state));
+	/**
+	 * Wraps a block's model in a {@link CTModel} carrying this behaviour.
+	 * <p>
+	 * Here rather than at the call site in {@code CreateRegistrate}, and that placement is
+	 * load-bearing. A lambda capturing the behaviour compiles to a synthetic method on whichever
+	 * class writes it, and that method's descriptor names {@link BlockStateModel} - a class the
+	 * dedicated server does not have. The JVM verifies a class as a whole when it is linked, so a
+	 * common class carrying such a method cannot be loaded on a server at all, whether or not the
+	 * method is ever called. Until 26.2 {@code @OnlyIn} stripped those members and the question did
+	 * not arise; NeoForge no longer strips them, so the code has to sit where it belongs instead.
+	 */
+	public static NonNullFunction<BlockStateModel, ? extends BlockStateModel> swapper(
+		ConnectedTextureBehaviour behaviour) {
+		return model -> new CTModel(model, behaviour);
 	}
 
 	protected CTData createCTData(BlockAndTintGetter world, BlockPos pos, BlockState state) {
@@ -47,7 +54,8 @@ public class CTModel extends BakedModelWrapperWithData {
 		for (Direction face : Iterate.directions) {
 			BlockState actualState = world.getBlockState(pos);
 			if (!behaviour.buildContextForOccludedDirections()
-				&& !Block.shouldRenderFace(state, world, pos, face, mutablePos.setWithOffset(pos, face))
+				&& !Block.shouldRenderFace(world, pos, state,
+					world.getBlockState(mutablePos.setWithOffset(pos, face)), face)
 				&& !(actualState.getBlock()instanceof CopycatBlock ufb
 					&& !ufb.canFaceBeOccluded(actualState, face)))
 				continue;
@@ -61,41 +69,35 @@ public class CTModel extends BakedModelWrapperWithData {
 	}
 
 	@Override
-	public List<BakedQuad> getQuads(BlockState state, Direction side, RandomSource rand, ModelData extraData, RenderType renderType) {
-		List<BakedQuad> quads = super.getQuads(state, side, rand, extraData, renderType);
-		if (!extraData.has(CT_PROPERTY))
-			return quads;
+	public void collectParts(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random,
+		List<BlockStateModelPart> parts) {
+		int from = parts.size();
+		super.collectParts(level, pos, state, random, parts);
+		CTData data = createCTData(level, pos, state);
+		TransformedModelPart.wrapFrom(parts, from, (quad, cullFace, out) -> out.add(shift(quad, data, state, random)));
+	}
 
-		CTData data = extraData.get(CT_PROPERTY);
-		quads = new ArrayList<>(quads);
+	/**
+	 * Moves a quad onto the connected-texture variant its face resolved to.
+	 */
+	private BakedQuad shift(BakedQuad quad, CTData data, BlockState state, RandomSource random) {
+		int index = data.get(quad.direction());
+		if (index == -1)
+			return quad;
 
-		for (int i = 0; i < quads.size(); i++) {
-			BakedQuad quad = quads.get(i);
+		TextureAtlasSprite sprite = BakedQuadHelper.getSprite(quad);
+		CTSpriteShiftEntry spriteShift = behaviour.getShift(state, random, quad.direction(), sprite);
+		if (spriteShift == null || sprite != spriteShift.getOriginal())
+			return quad;
 
-			int index = data.get(quad.getDirection());
-			if (index == -1)
-				continue;
-
-			CTSpriteShiftEntry spriteShift = behaviour.getShift(state, rand, quad.getDirection(), quad.getSprite());
-			if (spriteShift == null)
-				continue;
-			if (quad.getSprite() != spriteShift.getOriginal())
-				continue;
-
-			BakedQuad newQuad = BakedQuadHelper.clone(quad);
-			int[] vertexData = newQuad.getVertices();
-
-			for (int vertex = 0; vertex < 4; vertex++) {
-				float u = BakedQuadHelper.getU(vertexData, vertex);
-				float v = BakedQuadHelper.getV(vertexData, vertex);
-				BakedQuadHelper.setU(vertexData, vertex, spriteShift.getTargetU(u, index));
-				BakedQuadHelper.setV(vertexData, vertex, spriteShift.getTargetV(v, index));
-			}
-
-			quads.set(i, newQuad);
+		long[] uvs = BakedQuadHelper.uvs(quad);
+		for (int vertex = 0; vertex < BakedQuadHelper.VERTEX_COUNT; vertex++) {
+			float u = BakedQuadHelper.getU(uvs, vertex);
+			float v = BakedQuadHelper.getV(uvs, vertex);
+			BakedQuadHelper.setU(uvs, vertex, spriteShift.getTargetU(u, index));
+			BakedQuadHelper.setV(uvs, vertex, spriteShift.getTargetV(v, index));
 		}
-
-		return quads;
+		return BakedQuadHelper.withGeometry(quad, BakedQuadHelper.positions(quad), uvs);
 	}
 
 	private static class CTData {

@@ -1,13 +1,14 @@
 package com.simibubi.create.content.kinetics.base;
 
+import net.minecraft.client.particle.ParticleResources;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.simibubi.create.AllParticleTypes;
 import com.simibubi.create.foundation.particle.ICustomParticleDataWithSprite;
 
-import net.createmod.catnip.codecs.stream.CatnipStreamCodecs;
-import net.minecraft.client.particle.ParticleEngine.SpriteParticleRegistration;
+import net.createmod.catnip.api.data.codec.stream.CatnipStreamCodecs;
+import net.minecraft.client.particle.ParticleResources.SpriteParticleRegistration;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;
@@ -15,8 +16,6 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 
 import net.minecraft.network.codec.StreamCodec;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 public class RotationIndicatorParticleData
 	implements ParticleOptions, ICustomParticleDataWithSprite<RotationIndicatorParticleData> {
@@ -87,7 +86,6 @@ public class RotationIndicatorParticleData
 	}
 
 	@Override
-	@OnlyIn(Dist.CLIENT)
 	public SpriteParticleRegistration<RotationIndicatorParticleData> getMetaFactory() {
 		return RotationIndicatorParticle.Factory::new;
 	}

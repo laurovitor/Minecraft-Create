@@ -8,7 +8,10 @@
   "type": "create:milling",
   "ingredients": [
     {
-      "item": "regions_unexplored:salmon_poppy_bush"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "regions_unexplored:salmon_poppy_bush"
+      ]
     }
   ],
   "processing_time": 50,

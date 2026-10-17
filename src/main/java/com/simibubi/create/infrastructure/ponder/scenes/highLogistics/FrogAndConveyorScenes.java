@@ -15,26 +15,28 @@ import com.simibubi.create.content.logistics.packagePort.frogport.FrogportBlockE
 import com.simibubi.create.content.logistics.packager.PackagerBlockEntity;
 import com.simibubi.create.foundation.ponder.CreateSceneBuilder;
 
-import net.createmod.catnip.math.AngleHelper;
-import net.createmod.catnip.math.Pointing;
-import net.createmod.ponder.api.PonderPalette;
-import net.createmod.ponder.api.element.ElementLink;
-import net.createmod.ponder.api.element.ParrotElement;
-import net.createmod.ponder.api.element.ParrotPose;
-import net.createmod.ponder.api.element.WorldSectionElement;
-import net.createmod.ponder.api.level.PonderLevel;
-import net.createmod.ponder.api.scene.SceneBuilder;
-import net.createmod.ponder.api.scene.SceneBuildingUtil;
-import net.createmod.ponder.api.scene.Selection;
-import net.createmod.ponder.foundation.element.ElementLinkImpl;
-import net.createmod.ponder.foundation.element.ParrotElementImpl;
-import net.createmod.ponder.foundation.instruction.CreateParrotInstruction;
+import net.createmod.catnip.api.math.AngleHelper;
+import net.createmod.catnip.api.math.Pointing;
+import net.createmod.ponder.api.client.PonderPalette;
+import net.createmod.ponder.api.client.element.ElementLink;
+import net.createmod.ponder.api.client.element.ParrotElement;
+import net.createmod.ponder.api.client.element.ParrotPose;
+import net.createmod.ponder.api.client.element.WorldSectionElement;
+import net.createmod.ponder.api.client.level.PonderLevel;
+import net.createmod.ponder.api.client.scene.SceneBuilder;
+import net.createmod.ponder.api.client.scene.SceneBuildingUtil;
+import net.createmod.ponder.api.client.scene.Selection;
+import net.createmod.ponder.impl.client.element.ElementLinkImpl;
+import net.createmod.ponder.impl.client.element.ParrotElementImpl;
+import net.createmod.ponder.impl.client.instruction.CreateParrotInstruction;
+import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
@@ -117,7 +119,7 @@ public class FrogAndConveyorScenes {
 			.showSection(conv2S, Direction.DOWN);
 		scene.idle(20);
 
-		ItemStack chainItem = new ItemStack(Items.CHAIN);
+		ItemStack chainItem = new ItemStack(Items.IRON_CHAIN);
 		scene.overlay()
 			.showControls(util.vector()
 				.topOf(conv1), Pointing.DOWN, 117)
@@ -321,9 +323,8 @@ public class FrogAndConveyorScenes {
 		}
 
 		@Override
-		protected void renderLast(PonderLevel world, MultiBufferSource buffer, GuiGraphics graphics, float fade,
-								  float pt) {
-			PoseStack poseStack = graphics.pose();
+		protected void renderLast(PonderLevel world, SubmitNodeCollector queue, Camera camera,
+								  CameraRenderState cameraRenderState, PoseStack poseStack, float fade, float pt) {
 			EntityRenderDispatcher entityrenderermanager = Minecraft.getInstance()
 				.getEntityRenderDispatcher();
 
@@ -357,17 +358,21 @@ public class FrogAndConveyorScenes {
 			poseStack.mulPose(Axis.ZP.rotationDegrees(90));
 			poseStack.scale(1.5f, 1.5f, 1.5f);
 			poseStack.translate(-0.1, 0.2, -0.6);
-			BakedModel bakedmodel = Minecraft.getInstance()
-				.getItemRenderer()
-				.getModel(wrench.getItem(), world, null, 0);
+
+			// Item rendering no longer walks a BakedModel into a MultiBufferSource: the model layers
+			// are resolved up front into an ItemStackRenderState, which is then submitted to the queue.
+			ItemStackRenderState wrenchState = new ItemStackRenderState();
 			Minecraft.getInstance()
-				.getItemRenderer()
-				.render(wrench.getItem(), ItemDisplayContext.GROUND, false, poseStack, buffer,
-					lightCoordsFromFade(fade), OverlayTexture.NO_OVERLAY, bakedmodel);
+				.getItemModelResolver()
+				.updateForTopItem(wrenchState, wrench.getItem(), ItemDisplayContext.GROUND, world, null, 0);
+			wrenchState.submit(poseStack, queue, lightCoordsFromFade(fade), OverlayTexture.NO_OVERLAY, 0);
 			poseStack.popPose();
 
+			// The flap speed has to be set before the render state is extracted; extraction is what
+			// snapshots the entity for the deferred submit.
 			entity.flapSpeed = 2;
-			entityrenderermanager.render(entity, 0, 0, 0, 0, pt, poseStack, buffer, lightCoordsFromFade(fade));
+			EntityRenderState parrotState = entityrenderermanager.extractEntity(entity, pt);
+			entityrenderermanager.submit(parrotState, cameraRenderState, 0, 0, 0, poseStack, queue);
 			poseStack.popPose();
 		}
 

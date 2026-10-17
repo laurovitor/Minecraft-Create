@@ -1,13 +1,13 @@
 package com.simibubi.create.content.fluids.particle;
 
+import net.minecraft.client.renderer.state.level.QuadParticleRenderState;
 import org.joml.Quaternionf;
 
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.content.processing.basin.BasinBlock;
 import com.simibubi.create.content.processing.basin.BasinBlockEntity;
 
-import net.createmod.catnip.math.VecHelper;
+import net.createmod.catnip.api.math.VecHelper;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
@@ -30,7 +30,7 @@ public class BasinFluidParticle extends FluidStackParticle {
 		xd = 0;
 		yd = 0;
 		zd = 0;
-		yOffset = world.random.nextFloat() * 1 / 32f;
+		yOffset = world.getRandom().nextFloat() * 1 / 32f;
 		y += yOffset;
 		quadSize = 0;
 		lifetime = 60;
@@ -83,15 +83,15 @@ public class BasinFluidParticle extends FluidStackParticle {
 		}
 	}
 
+	/**
+	 * The fluid surface lies flat in the basin, so the quad faces up rather than the camera. The
+	 * rotation is handed straight to the quad now instead of being forced onto the camera first.
+	 */
 	@Override
-	public void render(VertexConsumer vb, Camera info, float pt) {
-		Quaternionf rotation = info.rotation();
-		Quaternionf prevRotation = new Quaternionf(rotation);
-		rotation.set(-1, 0, 0, 1);
-		rotation.normalize();
-		super.render(vb, info, pt);
-		rotation.set(0, 0, 0, 1);
-		rotation.mul(prevRotation);
+	protected void extractRotatedQuad(QuadParticleRenderState particleTypeRenderState, Camera camera,
+		Quaternionf rotation, float partialTickTime) {
+		Quaternionf flat = new Quaternionf(-1, 0, 0, 1).normalize();
+		super.extractRotatedQuad(particleTypeRenderState, camera, flat, partialTickTime);
 	}
 
 	@Override

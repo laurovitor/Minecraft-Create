@@ -1,5 +1,7 @@
 package com.simibubi.create.content.equipment.zapper;
 
+import org.joml.Matrix3x2fStack;
+import net.createmod.catnip.api.client.network.ClientNetworkHelper;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,10 +13,9 @@ import com.simibubi.create.foundation.gui.AllIcons;
 import com.simibubi.create.foundation.gui.widget.IconButton;
 import com.simibubi.create.foundation.utility.CreateLang;
 
-import net.createmod.catnip.gui.AbstractSimiScreen;
-import net.createmod.catnip.gui.element.GuiGameElement;
-import net.createmod.catnip.platform.CatnipServices;
-import net.minecraft.client.gui.GuiGraphics;
+import net.createmod.catnip.api.client.gui.AbstractSimiScreen;
+import net.createmod.catnip.api.client.gui.element.GuiGameElement;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
@@ -45,7 +46,7 @@ public abstract class ZapperScreen extends AbstractSimiScreen {
 		this.zapper = zapper;
 		this.hand = hand;
 		title = CommonComponents.EMPTY;
-		brightColor = 0xFEFEFE;
+		brightColor = 0xFFFEFEFE;
 		fontColor = AllGuiTextures.FONT_COLOR;
 
 		currentPattern = zapper.getOrDefault(AllDataComponents.PLACEMENT_PATTERN, PlacementPatterns.Solid);
@@ -72,7 +73,7 @@ public abstract class ZapperScreen extends AbstractSimiScreen {
 			for (int col = 0; col <= 2; col++) {
 				int id = patternButtons.size();
 				PlacementPatterns pattern = PlacementPatterns.values()[id];
-				IconButton patternButton = new IconButton(x + background.getWidth() - 76 + col * 18, y + 21 + row * 18, pattern.icon);
+				IconButton patternButton = new IconButton(x + background.getWidth() - 76 + col * 18, y + 21 + row * 18, PlacementPatternsClient.iconFor(pattern));
 				patternButton.withCallback(() -> {
 					patternButtons.forEach(b -> b.green = false);
 					patternButton.green = true;
@@ -89,7 +90,7 @@ public abstract class ZapperScreen extends AbstractSimiScreen {
 	}
 
 	@Override
-	protected void renderWindow(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+	protected void renderWindow(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks) {
 		int x = guiLeft;
 		int y = guiTop;
 
@@ -100,8 +101,8 @@ public abstract class ZapperScreen extends AbstractSimiScreen {
 		renderZapper(graphics, x, y);
 	}
 
-	protected void drawOnBackground(GuiGraphics graphics, int x, int y) {
-		graphics.drawString(font, title, x + (background.getWidth() - font.width(title)) / 2, y + 4, 0x54214F, false);
+	protected void drawOnBackground(GuiGraphicsExtractor graphics, int x, int y) {
+		graphics.text(font, title, x + (background.getWidth() - font.width(title)) / 2, y + 4, 0xFF54214F, false);
 	}
 
 	@Override
@@ -114,29 +115,24 @@ public abstract class ZapperScreen extends AbstractSimiScreen {
 	public void removed() {
 		ConfigureZapperPacket packet = getConfigurationPacket();
 		packet.configureZapper(zapper);
-		CatnipServices.NETWORK.sendToServer(packet);
+		ClientNetworkHelper.INSTANCE.sendToServer(packet);
 	}
 
-	protected void renderZapper(GuiGraphics graphics, int x, int y) {
+	protected void renderZapper(GuiGraphicsExtractor graphics, int x, int y) {
 		GuiGameElement.of(zapper)
 			.scale(4)
 			.at(x + background.getWidth(), y + background.getHeight() - 48, -200)
-			.render(graphics);
+			.submit(graphics);
 	}
 
-	protected void renderBlock(GuiGraphics graphics, int x, int y) {
-		PoseStack ms = graphics.pose();
-		ms.pushPose();
-		ms.translate(x + 32, y + 42, 120);
-		ms.mulPose(Axis.XP.rotationDegrees(-25f));
-		ms.mulPose(Axis.YP.rotationDegrees(-45f));
-		ms.scale(20, 20, 20);
-
-		BlockState state = zapper.getOrDefault(AllDataComponents.SHAPER_BLOCK_USED, Blocks.AIR.defaultBlockState());;
+	protected void renderBlock(GuiGraphicsExtractor graphics, int x, int y) {
+		BlockState state = zapper.getOrDefault(AllDataComponents.SHAPER_BLOCK_USED, Blocks.AIR.defaultBlockState());
 
 		GuiGameElement.of(state)
-			.render(graphics);
-		ms.popPose();
+			.rotate(-25, -45, 0)
+			.scale(20)
+			.at(x + 32, y + 42)
+			.submit(graphics);
 	}
 
 	protected abstract ConfigureZapperPacket getConfigurationPacket();

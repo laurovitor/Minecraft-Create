@@ -1,16 +1,16 @@
 package com.simibubi.create.foundation.blockEntity.behaviour;
 
+import net.neoforged.neoforge.client.gui.GuiLayer;
+import net.createmod.catnip.api.client.network.ClientNetworkHelper;
 import java.util.List;
 
 import com.simibubi.create.AllBlocks;
 
-import net.createmod.catnip.gui.ScreenOpener;
-import net.createmod.catnip.platform.CatnipServices;
-import net.createmod.catnip.theme.Color;
+import net.createmod.catnip.api.client.gui.ScreenOpener;
+import net.createmod.catnip.api.theme.Color;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.LayeredDraw;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.MutableComponent;
@@ -21,7 +21,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 
-public class ValueSettingsClient implements LayeredDraw.Layer {
+public class ValueSettingsClient implements GuiLayer {
 	private Minecraft mc;
 
 	public int interactHeldTicks = -1;
@@ -35,7 +35,14 @@ public class ValueSettingsClient implements LayeredDraw.Layer {
 	public int hoverWarmup;
 
 	public ValueSettingsClient() {
-		mc = Minecraft.getInstance();
+		// 26.2 constructs mods before the Minecraft instance exists, so this is resolved on first use
+		// rather than cached here - see CreateClient, which holds this as a static field.
+	}
+
+	private Minecraft mc() {
+		if (mc == null)
+			mc = Minecraft.getInstance();
+		return mc;
 	}
 
 	public void cancelIfWarmupAlreadyStarted(PlayerInteractEvent.RightClickBlock event) {
@@ -66,27 +73,27 @@ public class ValueSettingsClient implements LayeredDraw.Layer {
 			hoverTicks--;
 		if (interactHeldTicks == -1)
 			return;
-		Player player = mc.player;
+		Player player = mc().player;
 
 		if (!ValueSettingsInputHandler.canInteract(player) || AllBlocks.CLIPBOARD.isIn(player.getMainHandItem())) {
 			cancelInteraction();
 			return;
 		}
-		HitResult hitResult = mc.hitResult;
+		HitResult hitResult = mc().hitResult;
 		if (!(hitResult instanceof BlockHitResult blockHitResult) || !blockHitResult.getBlockPos()
 			.equals(interactHeldPos)) {
 			cancelInteraction();
 			return;
 		}
-		BlockEntityBehaviour behaviour = BlockEntityBehaviour.get(mc.level, interactHeldPos, interactHeldBehaviour);
+		BlockEntityBehaviour behaviour = BlockEntityBehaviour.get(mc().level, interactHeldPos, interactHeldBehaviour);
 		if (!(behaviour instanceof ValueSettingsBehaviour valueSettingBehaviour)
 			|| valueSettingBehaviour.bypassesInput(player.getMainHandItem())
 			|| !valueSettingBehaviour.testHit(blockHitResult.getLocation())) {
 			cancelInteraction();
 			return;
 		}
-		if (!mc.options.keyUse.isDown()) {
-			CatnipServices.NETWORK.sendToServer(new ValueSettingsPacket(interactHeldPos, 0, 0, interactHeldHand, blockHitResult,
+		if (!mc().options.keyUse.isDown()) {
+			ClientNetworkHelper.INSTANCE.sendToServer(new ValueSettingsPacket(interactHeldPos, 0, 0, interactHeldHand, blockHitResult,
 					interactHeldFace, false, valueSettingBehaviour.netId()));
 			valueSettingBehaviour.onShortInteract(player, interactHeldHand, interactHeldFace, blockHitResult);
 			cancelInteraction();
@@ -104,7 +111,7 @@ public class ValueSettingsClient implements LayeredDraw.Layer {
 	}
 
 	public void showHoverTip(List<MutableComponent> tip) {
-		if (mc.screen != null)
+		if (mc().gui.screen() != null)
 			return;
 		if (hoverWarmup < 6) {
 			hoverWarmup += 2;
@@ -116,9 +123,8 @@ public class ValueSettingsClient implements LayeredDraw.Layer {
 	}
 
 	@Override
-	public void render(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
-		Minecraft mc = Minecraft.getInstance();
-		if (mc.options.hideGui || !ValueSettingsInputHandler.canInteract(mc.player))
+	public void render(GuiGraphicsExtractor guiGraphics, DeltaTracker deltaTracker) {
+		if (mc().gui.hud.isHidden() || !ValueSettingsInputHandler.canInteract(mc().player))
 			return;
 		if (hoverTicks == 0 || lastHoverTip == null)
 			return;
@@ -134,7 +140,7 @@ public class ValueSettingsClient implements LayeredDraw.Layer {
 
 		for (int i = 0; i < lastHoverTip.size(); i++) {
 			MutableComponent mutableComponent = lastHoverTip.get(i);
-			guiGraphics.drawString(mc.font, mutableComponent, x - mc.font.width(mutableComponent) / 2, y,
+			guiGraphics.text(mc().font, mutableComponent, x - mc().font.width(mutableComponent) / 2, y,
 				(i == 0 ? titleColor : color).getRGB());
 			y += 12;
 		}

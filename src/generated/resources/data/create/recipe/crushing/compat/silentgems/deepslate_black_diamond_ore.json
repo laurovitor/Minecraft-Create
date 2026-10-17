@@ -8,7 +8,10 @@
   "type": "create:crushing",
   "ingredients": [
     {
-      "item": "silentgems:deepslate_black_diamond_ore"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "silentgems:deepslate_black_diamond_ore"
+      ]
     }
   ],
   "processing_time": 350,

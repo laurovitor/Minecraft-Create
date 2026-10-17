@@ -1,5 +1,6 @@
 package com.simibubi.create.content.contraptions;
 
+import net.createmod.catnip.api.client.network.ClientNetworkHelper;
 import java.lang.ref.WeakReference;
 import java.util.Collection;
 
@@ -13,10 +14,9 @@ import com.simibubi.create.content.trains.entity.TrainRelocator;
 import com.simibubi.create.foundation.utility.RaycastHelper;
 import com.simibubi.create.foundation.utility.RaycastHelper.PredicateTraceResult;
 
-import net.createmod.catnip.data.Couple;
-import net.createmod.catnip.data.Iterate;
-import net.createmod.catnip.math.VecHelper;
-import net.createmod.catnip.platform.CatnipServices;
+import net.createmod.catnip.api.data.Couple;
+import net.createmod.catnip.api.data.Iterate;
+import net.createmod.catnip.api.math.VecHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.player.RemotePlayer;
@@ -33,7 +33,6 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.InputEvent;
@@ -43,7 +42,6 @@ import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 public class ContraptionHandlerClient {
 
 	@SubscribeEvent
-	@OnlyIn(Dist.CLIENT)
 	public static void preventRemotePlayersWalkingAnimations(PlayerTickEvent.Post event) {
 		if (!(event.getEntity() instanceof RemotePlayer remotePlayer))
 			return;
@@ -52,7 +50,7 @@ public class ContraptionHandlerClient {
 		if (!data.contains("LastOverrideLimbSwingUpdate"))
 			return;
 
-		int lastOverride = data.getInt("LastOverrideLimbSwingUpdate");
+		int lastOverride = data.getIntOr("LastOverrideLimbSwingUpdate", 0);
 		data.putInt("LastOverrideLimbSwingUpdate", lastOverride + 1);
 		if (lastOverride > 5) {
 			data.remove("LastOverrideLimbSwingUpdate");
@@ -60,13 +58,12 @@ public class ContraptionHandlerClient {
 			return;
 		}
 
-		float limbSwing = data.getFloat("OverrideLimbSwing");
+		float limbSwing = data.getFloatOr("OverrideLimbSwing", 0);
 		remotePlayer.xo = remotePlayer.getX() - (limbSwing / 4);
 		remotePlayer.zo = remotePlayer.getZ();
 	}
 
 	@SubscribeEvent
-	@OnlyIn(Dist.CLIENT)
 	public static void rightClickingOnContraptionsGetsHandledLocally(InputEvent.InteractionKeyMappingTriggered event) {
 		Minecraft mc = Minecraft.getInstance();
 		LocalPlayer player = mc.player;
@@ -122,7 +119,7 @@ public class ContraptionHandlerClient {
 		BlockPos pos = bestResult.getBlockPos();
 
 		if (bestEntity.handlePlayerInteraction(player, pos, face, hand)) {
-			CatnipServices.NETWORK.sendToServer(new ContraptionInteractionPacket(bestEntity, hand, pos, face));
+			ClientNetworkHelper.INSTANCE.sendToServer(new ContraptionInteractionPacket(bestEntity, hand, pos, face));
 		} else
 			handleSpecialInteractions(bestEntity, player, pos, face, hand);
 
@@ -138,7 +135,6 @@ public class ContraptionHandlerClient {
 		return false;
 	}
 
-	@OnlyIn(Dist.CLIENT)
 	public static Couple<Vec3> getRayInputs(LocalPlayer player) {
 		Minecraft mc = Minecraft.getInstance();
 		Vec3 origin = player.getEyePosition();

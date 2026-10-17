@@ -1,16 +1,20 @@
 package com.simibubi.create.infrastructure.ponder.scenes.highLogistics;
 
+import net.neoforged.neoforge.transfer.transaction.Transaction;
+import net.neoforged.neoforge.transfer.ResourceHandlerUtil;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
 import java.util.List;
 
 import com.simibubi.create.content.kinetics.crafter.MechanicalCrafterBlockEntity;
 import com.simibubi.create.content.logistics.box.PackageItem;
 import com.simibubi.create.foundation.ponder.CreateSceneBuilder;
 
-import net.createmod.catnip.math.Pointing;
-import net.createmod.ponder.api.PonderPalette;
-import net.createmod.ponder.api.scene.SceneBuilder;
-import net.createmod.ponder.api.scene.SceneBuildingUtil;
-import net.createmod.ponder.api.scene.Selection;
+import net.createmod.catnip.api.math.Pointing;
+import net.createmod.ponder.api.client.PonderPalette;
+import net.createmod.ponder.api.client.scene.SceneBuilder;
+import net.createmod.ponder.api.client.scene.SceneBuildingUtil;
+import net.createmod.ponder.api.client.scene.Selection;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
@@ -19,10 +23,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.AABB;
 
-import net.neoforged.neoforge.capabilities.Capabilities.ItemHandler;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
-
+import net.neoforged.neoforge.capabilities.Capabilities;
 public class RepackagerScenes {
 
 	public static void repackager(SceneBuilder builder, SceneBuildingUtil util) {
@@ -384,10 +385,14 @@ public class RepackagerScenes {
 		scene.world()
 			.modifyBlockEntity(util.grid()
 				.at(3, 2, 5), BlockEntity.class, be -> {
-					IItemHandler handler = be.getLevel().getCapability(ItemHandler.BLOCK, be.getBlockPos(), null);
+					ResourceHandler<ItemResource> handler = be.getLevel().getCapability(Capabilities.Item.BLOCK, be.getBlockPos(), null);
 					if (handler == null)
 						return;
-					ItemHandlerHelper.insertItemStacked(handler, stack, false);
+					try (Transaction transaction = Transaction.openRoot()) {
+						if (!stack.isEmpty())
+							ResourceHandlerUtil.insertStacking(handler, ItemResource.of(stack), stack.getCount(), transaction);
+						transaction.commit();
+					}
 				});
 	}
 

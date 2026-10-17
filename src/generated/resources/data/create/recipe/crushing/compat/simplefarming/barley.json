@@ -8,7 +8,10 @@
   "type": "create:crushing",
   "ingredients": [
     {
-      "item": "simplefarming:barley"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "simplefarming:barley"
+      ]
     }
   ],
   "processing_time": 150,

@@ -1,5 +1,8 @@
 package com.simibubi.create.content.contraptions.actors.contraptionControls;
 
+import net.minecraft.tags.BlockItemTags;
+import net.createmod.catnip.api.client.network.ClientNetworkHelper;
+import net.createmod.catnip.api.network.NetworkHelper;
 import java.util.Iterator;
 import java.util.List;
 
@@ -18,7 +21,6 @@ import com.simibubi.create.content.trains.entity.Carriage;
 import com.simibubi.create.content.trains.entity.CarriageContraptionEntity;
 import com.simibubi.create.content.trains.entity.Train;
 
-import net.createmod.catnip.platform.CatnipServices;
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.InteractionHand;
@@ -101,7 +103,7 @@ public class ContraptionControlsMovingInteraction extends MovingInteractionBehav
 
 		if (!(contraptionEntity instanceof CarriageContraptionEntity cce))
 			return true;
-		if (!filter.is(ItemTags.DOORS))
+		if (!filter.is(BlockItemTags.DOORS.item()))
 			return true;
 
 		// Special case: Doors are toggled on all carriages of a train
@@ -121,7 +123,7 @@ public class ContraptionControlsMovingInteraction extends MovingInteractionBehav
 	}
 
 	private void send(AbstractContraptionEntity contraptionEntity, ItemStack filter, boolean disable) {
-		CatnipServices.NETWORK.sendToClientsTrackingEntity(contraptionEntity,
+		NetworkHelper.INSTANCE.sendToClientsTrackingEntity(contraptionEntity,
 			new ContraptionDisableActorPacket(contraptionEntity.getId(), filter, !disable));
 	}
 
@@ -139,7 +141,7 @@ public class ContraptionControlsMovingInteraction extends MovingInteractionBehav
 		if (efs.currentTargetY == contraption.clientYTarget)
 			return true;
 
-		CatnipServices.NETWORK.sendToServer(new ElevatorTargetFloorPacket(contraptionEntity, efs.currentTargetY));
+		ClientNetworkHelper.INSTANCE.sendToServer(new ElevatorTargetFloorPacket(contraptionEntity, efs.currentTargetY));
 		if (contraption.getBlockEntityClientSide(ctx.localPos) instanceof ContraptionControlsBlockEntity cbe)
 			cbe.pressButton();
 		return true;

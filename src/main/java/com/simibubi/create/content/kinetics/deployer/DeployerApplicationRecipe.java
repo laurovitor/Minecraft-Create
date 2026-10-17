@@ -1,5 +1,9 @@
 package com.simibubi.create.content.kinetics.deployer;
 
+import com.simibubi.create.foundation.utility.ClientAccess;
+
+import com.simibubi.create.foundation.item.ItemHelper;
+import com.simibubi.create.foundation.recipe.RecipeAccessors;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -11,16 +15,14 @@ import com.simibubi.create.compat.jei.category.sequencedAssembly.SequencedAssemb
 import com.simibubi.create.content.processing.sequenced.IAssemblyRecipe;
 import com.simibubi.create.foundation.utility.CreateLang;
 
-import net.minecraft.client.Minecraft;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.ItemLike;
-
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 public class DeployerApplicationRecipe extends ItemApplicationRecipe implements IAssemblyRecipe {
 
@@ -34,18 +36,17 @@ public class DeployerApplicationRecipe extends ItemApplicationRecipe implements 
 	}
 
 	public static RecipeHolder<DeployerApplicationRecipe> convert(RecipeHolder<?> sandpaperRecipe) {
-		ResourceLocation id = ResourceLocation.fromNamespaceAndPath(
-				sandpaperRecipe.id().getNamespace(),
-				sandpaperRecipe.id().getPath() + "_using_deployer"
-		);
+		Identifier sourceId = sandpaperRecipe.id()
+			.identifier();
+		Identifier id = sourceId.withSuffix("_using_deployer");
 		DeployerApplicationRecipe recipe = new ItemApplicationRecipe.Builder<>(DeployerApplicationRecipe::new, id)
-				.require(sandpaperRecipe.value().getIngredients()
+				.require(RecipeAccessors.ingredients(sandpaperRecipe.value())
 						.get(0))
 						.require(AllItemTags.SANDPAPER.tag)
-						.output(sandpaperRecipe.value().getResultItem(Minecraft.getInstance().level.registryAccess()))
+						.output(RecipeAccessors.result(sandpaperRecipe.value(), ClientAccess.level()))
 						.build();
 
-		return new RecipeHolder<>(id, recipe);
+		return new RecipeHolder<>(ResourceKey.create(Registries.RECIPE, id), recipe);
 	}
 
 	@Override
@@ -54,15 +55,13 @@ public class DeployerApplicationRecipe extends ItemApplicationRecipe implements 
 	}
 
 	@Override
-	@OnlyIn(Dist.CLIENT)
 	public Component getDescriptionForAssembly() {
-		ItemStack[] matchingStacks = ingredients.get(1)
-			.getItems();
+		ItemStack[] matchingStacks = ItemHelper.getItems(ingredients.get(1));
 		if (matchingStacks.length == 0) {
             return Component.literal("Invalid");
         }
 		return CreateLang.translateDirect("recipe.assembly.deploying_item",
-			Component.translatable(matchingStacks[0].getDescriptionId()).getString());
+			matchingStacks[0].getHoverName().getString());
 	}
 
 	@Override

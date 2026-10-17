@@ -1,12 +1,15 @@
 package com.simibubi.create.content.logistics.packagerLink;
 
+import net.minecraft.world.level.saveddata.SavedDataType;
+import net.minecraft.resources.Identifier;
+import com.mojang.serialization.Codec;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 import com.simibubi.create.Create;
 
-import net.createmod.catnip.nbt.NBTHelper;
+import net.createmod.catnip.api.nbt.NBTHelper;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -17,11 +20,12 @@ public class LogisticsNetworkSavedData extends SavedData {
 
 	private Map<UUID, LogisticsNetwork> logisticsNetworks = new HashMap<>();
 
-	public static SavedData.Factory<LogisticsNetworkSavedData> factory() {
-		return new SavedData.Factory<>(LogisticsNetworkSavedData::new, LogisticsNetworkSavedData::load);
-	}
+	public static final SavedDataType<LogisticsNetworkSavedData> TYPE = new SavedDataType<>(
+		Identifier.parse("create:create_logistics"), level -> new LogisticsNetworkSavedData(),
+		level -> Codec.of(
+			CompoundTag.CODEC.comap(data -> data.save(new CompoundTag(), level.registryAccess())),
+			CompoundTag.CODEC.map(tag -> load(tag, level.registryAccess()))));
 
-	@Override
 	public CompoundTag save(CompoundTag nbt, HolderLookup.Provider registries) {
 		GlobalLogisticsManager logistics = Create.LOGISTICS;
 		nbt.put("LogisticsNetworks",
@@ -32,7 +36,7 @@ public class LogisticsNetworkSavedData extends SavedData {
 	private static LogisticsNetworkSavedData load(CompoundTag nbt, HolderLookup.Provider registries) {
 		LogisticsNetworkSavedData sd = new LogisticsNetworkSavedData();
 		sd.logisticsNetworks = new HashMap<>();
-		NBTHelper.iterateCompoundList(nbt.getList("LogisticsNetworks", Tag.TAG_COMPOUND), c -> {
+		NBTHelper.iterateCompoundList(nbt.getListOrEmpty("LogisticsNetworks"), c -> {
 			LogisticsNetwork network = LogisticsNetwork.read(c, registries);
 			sd.logisticsNetworks.put(network.id, network);
 		});
@@ -48,7 +52,7 @@ public class LogisticsNetworkSavedData extends SavedData {
 	public static LogisticsNetworkSavedData load(MinecraftServer server) {
 		return server.overworld()
 			.getDataStorage()
-			.computeIfAbsent(factory(), "create_logistics");
+			.computeIfAbsent(TYPE);
 	}
 
 }

@@ -1,5 +1,11 @@
 package com.simibubi.create.content.kinetics.belt;
 
+import net.neoforged.neoforge.transfer.transaction.Transaction;
+import net.minecraft.world.entity.InsideBlockEffectApplier;
+import net.minecraft.world.level.ScheduledTickAccess;
+import net.minecraft.util.RandomSource;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -35,9 +41,11 @@ import com.simibubi.create.foundation.block.render.MultiPosDestructionHandler;
 import com.simibubi.create.foundation.block.render.ReducedDestroyEffects;
 import com.simibubi.create.foundation.item.ItemHelper;
 
-import net.createmod.catnip.data.Iterate;
-import net.createmod.catnip.math.VecHelper;
+import net.createmod.catnip.api.data.Iterate;
+import net.createmod.catnip.api.math.VecHelper;
 import net.minecraft.client.multiplayer.ClientLevel;
+import com.simibubi.create.foundation.block.EntityRestingOnBlock;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -47,7 +55,6 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Mob;
@@ -83,7 +90,6 @@ import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.EntityCollisionContext;
@@ -92,10 +98,9 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.common.Tags;
-import net.neoforged.neoforge.items.IItemHandler;
-
 public class BeltBlock extends HorizontalKineticBlock
-	implements IBE<BeltBlockEntity>, SpecialBlockItemRequirement, TransformableBlock, ProperWaterloggedBlock {
+	implements IBE<BeltBlockEntity>, SpecialBlockItemRequirement, TransformableBlock, ProperWaterloggedBlock,
+	EntityRestingOnBlock {
 
 	public static final Property<BeltSlope> SLOPE = EnumProperty.create("slope", BeltSlope.class);
 	public static final Property<BeltPart> PART = EnumProperty.create("part", BeltPart.class);
@@ -133,8 +138,8 @@ public class BeltBlock extends HorizontalKineticBlock
 	}
 
 	@Override
-	public ItemStack getCloneItemStack(BlockState state, HitResult target, LevelReader level, BlockPos pos,
-									   Player player) {
+	public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state,
+		boolean includeData, Player player) {
 		return AllItems.BELT_CONNECTOR.asStack();
 	}
 
@@ -163,8 +168,7 @@ public class BeltBlock extends HorizontalKineticBlock
 	}
 
 	@Override
-	public void updateEntityAfterFallOn(BlockGetter worldIn, Entity entityIn) {
-		super.updateEntityAfterFallOn(worldIn, entityIn);
+	public void updateEntityAfterFallOn(Level worldIn, Entity entityIn) {
 		BlockPos entityPosition = entityIn.blockPosition();
 		BlockPos beltPos = null;
 
@@ -174,14 +178,16 @@ public class BeltBlock extends HorizontalKineticBlock
 			beltPos = entityPosition.below();
 		if (beltPos == null)
 			return;
-		if (!(worldIn instanceof Level))
-			return;
 
-		entityInside(worldIn.getBlockState(beltPos), (Level) worldIn, beltPos, entityIn);
+		// Landing on a belt is handled by the same path as walking into one; nothing in there applies
+		// inside-block effects, so the no-op applier stands in.
+		entityInside(worldIn.getBlockState(beltPos), worldIn, beltPos, entityIn, InsideBlockEffectApplier.NOOP,
+			false);
 	}
 
 	@Override
-	public void entityInside(BlockState state, Level worldIn, BlockPos pos, Entity entityIn) {
+	public void entityInside(BlockState state, Level worldIn, BlockPos pos, Entity entityIn,
+		InsideBlockEffectApplier effectApplier, boolean isPrecise) {
 		if (!canTransportObjects(state))
 			return;
 		if (entityIn instanceof Player player) {
@@ -199,7 +205,7 @@ public class BeltBlock extends HorizontalKineticBlock
 			return;
 		ItemStack asItem = ItemHelper.fromItemEntity(entityIn);
 		if (!asItem.isEmpty()) {
-			if (worldIn.isClientSide)
+			if (worldIn.isClientSide())
 				return;
 			if (entityIn.getDeltaMovement().y > 0)
 				return;
@@ -210,10 +216,15 @@ public class BeltBlock extends HorizontalKineticBlock
 			if (BeltTunnelInteractionHandler.getTunnelOnPosition(worldIn, pos) != null)
 				return;
 			withBlockEntityDo(worldIn, pos, be -> {
-				IItemHandler handler = worldIn.getCapability(Capabilities.ItemHandler.BLOCK, pos, state, be, null);
+				ResourceHandler<ItemResource> handler = worldIn.getCapability(Capabilities.Item.BLOCK, pos, state, be, null);
 				if (handler == null)
 					return;
-				ItemStack remainder = handler.insertItem(0, asItem, false);
+				ItemStack remainder;
+				try (Transaction transaction = Transaction.openRoot()) {
+					int transferred = asItem.isEmpty() ? 0 : handler.insert(0, ItemResource.of(asItem), asItem.getCount(), transaction);
+					remainder = transferred == asItem.getCount() ? ItemStack.EMPTY : asItem.copyWithCount(asItem.getCount() - transferred);
+					transaction.commit();
+				}
 				if (remainder.isEmpty())
 					entityIn.discard();
 				else if (entityIn instanceof ItemEntity itemEntity && remainder.getCount() != itemEntity.getItem().getCount())
@@ -243,9 +254,9 @@ public class BeltBlock extends HorizontalKineticBlock
 	}
 
 	@Override
-	protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
+	protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
 		if (player.isShiftKeyDown() || !player.mayBuild())
-			return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+			return InteractionResult.TRY_WITH_EMPTY_HAND;
 		boolean isWrench = AllItems.WRENCH.isIn(stack);
 		boolean isConnector = AllItems.BELT_CONNECTOR.isIn(stack);
 		boolean isShaft = AllBlocks.SHAFT.isIn(stack);
@@ -258,7 +269,7 @@ public class BeltBlock extends HorizontalKineticBlock
 
 		if (isDye || hasWater)
 			return onBlockEntityUseItemOn(level, pos,
-				be -> be.applyColor(DyeColor.getColor(stack)) ? ItemInteractionResult.SUCCESS : ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION);
+				be -> be.applyColor(DyeColor.getColor(stack)) ? InteractionResult.SUCCESS : InteractionResult.TRY_WITH_EMPTY_HAND);
 
 		if (isConnector)
 			return BeltSlicer.useConnector(state, level, pos, player, hand, hitResult, new Feedback());
@@ -267,26 +278,31 @@ public class BeltBlock extends HorizontalKineticBlock
 
 		BeltBlockEntity belt = BeltHelper.getSegmentBE(level, pos);
 		if (belt == null)
-			return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+			return InteractionResult.TRY_WITH_EMPTY_HAND;
 
 		if (PackageItem.isPackage(stack)) {
 			ItemStack toInsert = stack.copy();
-			IItemHandler handler = level.getCapability(Capabilities.ItemHandler.BLOCK, belt.getBlockPos(), null);
+			ResourceHandler<ItemResource> handler = level.getCapability(Capabilities.Item.BLOCK, belt.getBlockPos(), null);
 			if (handler == null)
-				return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
-			ItemStack remainder = handler.insertItem(0, toInsert, false);
+				return InteractionResult.TRY_WITH_EMPTY_HAND;
+			ItemStack remainder;
+			try (Transaction transaction = Transaction.openRoot()) {
+				int transferred2 = toInsert.isEmpty() ? 0 : handler.insert(0, ItemResource.of(toInsert), toInsert.getCount(), transaction);
+				remainder = transferred2 == toInsert.getCount() ? ItemStack.EMPTY : toInsert.copyWithCount(toInsert.getCount() - transferred2);
+				transaction.commit();
+			}
 			if (remainder.isEmpty()) {
 				stack.shrink(1);
-				return ItemInteractionResult.SUCCESS;
+				return InteractionResult.SUCCESS;
 			}
 		}
 
 		if (isHand) {
 			BeltBlockEntity controllerBelt = belt.getControllerBE();
 			if (controllerBelt == null)
-				return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
-			if (level.isClientSide)
-				return ItemInteractionResult.SUCCESS;
+				return InteractionResult.TRY_WITH_EMPTY_HAND;
+			if (level.isClientSide())
+				return InteractionResult.SUCCESS;
 			MutableBoolean success = new MutableBoolean(false);
 			controllerBelt.getInventory()
 				.applyToEachWithin(belt.index + .5f, .55f, (transportedItemStack) -> {
@@ -297,18 +313,18 @@ public class BeltBlock extends HorizontalKineticBlock
 				});
 			if (success.isTrue())
 				level.playSound(null, pos, SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, .2f,
-					1f + level.random.nextFloat());
+					1f + level.getRandom().nextFloat());
 		}
 
 		if (isShaft) {
 			if (state.getValue(PART) != BeltPart.MIDDLE)
-				return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
-			if (level.isClientSide)
-				return ItemInteractionResult.SUCCESS;
+				return InteractionResult.TRY_WITH_EMPTY_HAND;
+			if (level.isClientSide())
+				return InteractionResult.SUCCESS;
 			if (!player.isCreative())
 				stack.shrink(1);
 			KineticBlockEntity.switchToBlockState(level, pos, state.setValue(PART, BeltPart.PULLEY));
-			return ItemInteractionResult.SUCCESS;
+			return InteractionResult.SUCCESS;
 		}
 
 		if (AllBlocks.BRASS_CASING.isIn(stack)) {
@@ -320,7 +336,7 @@ public class BeltBlock extends HorizontalKineticBlock
 			level.playSound(null, pos, soundType.getPlaceSound(), SoundSource.BLOCKS,
 				(soundType.getVolume() + 1.0F) / 2.0F, soundType.getPitch() * 0.8F);
 
-			return ItemInteractionResult.SUCCESS;
+			return InteractionResult.SUCCESS;
 		}
 
 		if (AllBlocks.ANDESITE_CASING.isIn(stack)) {
@@ -332,10 +348,10 @@ public class BeltBlock extends HorizontalKineticBlock
 			level.playSound(null, pos, soundType.getPlaceSound(), SoundSource.BLOCKS,
 				(soundType.getVolume() + 1.0F) / 2.0F, soundType.getPitch() * 0.8F);
 
-			return ItemInteractionResult.SUCCESS;
+			return InteractionResult.SUCCESS;
 		}
 
-		return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+		return InteractionResult.TRY_WITH_EMPTY_HAND;
 	}
 
 	@Override
@@ -345,14 +361,14 @@ public class BeltBlock extends HorizontalKineticBlock
 		BlockPos pos = context.getClickedPos();
 
 		if (state.getValue(CASING)) {
-			if (world.isClientSide)
+			if (world.isClientSide())
 				return InteractionResult.SUCCESS;
 			withBlockEntityDo(world, pos, be -> be.setCasingType(CasingType.NONE));
 			return InteractionResult.SUCCESS;
 		}
 
 		if (state.getValue(PART) == BeltPart.PULLEY) {
-			if (world.isClientSide)
+			if (world.isClientSide())
 				return InteractionResult.SUCCESS;
 			KineticBlockEntity.switchToBlockState(world, pos, state.setValue(PART, BeltPart.MIDDLE));
 			if (player != null && !player.isCreative())
@@ -407,11 +423,11 @@ public class BeltBlock extends HorizontalKineticBlock
 
 	@Override
 	public RenderShape getRenderShape(BlockState state) {
-		return state.getValue(CASING) ? RenderShape.MODEL : RenderShape.ENTITYBLOCK_ANIMATED;
+		return state.getValue(CASING) ? RenderShape.MODEL : RenderShape.INVISIBLE;
 	}
 
 	public static void initBelt(Level world, BlockPos pos) {
-		if (world.isClientSide)
+		if (world.isClientSide())
 			return;
 		if (world instanceof ServerLevel && ((ServerLevel) world).getChunkSource()
 			.getGenerator() instanceof DebugLevelSource)
@@ -470,13 +486,10 @@ public class BeltBlock extends HorizontalKineticBlock
 	}
 
 	@Override
-	public void onRemove(BlockState state, Level world, BlockPos pos, BlockState newState, boolean isMoving) {
-		super.onRemove(state, world, pos, newState, isMoving);
+	public void affectNeighborsAfterRemoval(BlockState state, ServerLevel world, BlockPos pos,
+		boolean isMoving) {
+		super.affectNeighborsAfterRemoval(state, world, pos, isMoving);
 
-		if (world.isClientSide)
-			return;
-		if (state.getBlock() == newState.getBlock())
-			return;
 		if (isMoving)
 			return;
 
@@ -509,14 +522,16 @@ public class BeltBlock extends HorizontalKineticBlock
 	}
 
 	@Override
-	public BlockState updateShape(BlockState state, Direction side, BlockState p_196271_3_, LevelAccessor world,
-								  BlockPos pos, BlockPos p_196271_6_) {
-		updateWater(world, state, pos);
-		if (side.getAxis()
-			.isHorizontal())
-			updateTunnelConnections(world, pos.above());
-		if (side == Direction.UP)
-			updateCoverProperty(world, pos, state);
+	public BlockState updateShape(BlockState state, LevelReader world, ScheduledTickAccess ticks,
+		BlockPos pos, Direction side, BlockPos p_196271_6_, BlockState p_196271_3_, RandomSource random) {
+		updateWater(world, ticks, state, pos);
+		if (world instanceof LevelAccessor levelAccess) {
+			if (side.getAxis()
+				.isHorizontal())
+				updateTunnelConnections(levelAccess, pos.above());
+			if (side == Direction.UP)
+				updateCoverProperty(levelAccess, pos, state);
+		}
 		return state;
 	}
 

@@ -1,5 +1,6 @@
 package com.simibubi.create.content.contraptions.mounted;
 
+import net.minecraft.world.level.redstone.Orientation;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 import com.mojang.serialization.MapCodec;
+import com.simibubi.create.foundation.block.MinecartPassBlock;
 import com.simibubi.create.AllBlockEntityTypes;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllShapes;
@@ -26,12 +28,11 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.vehicle.AbstractMinecart;
-import net.minecraft.world.entity.vehicle.MinecartChest;
-import net.minecraft.world.entity.vehicle.MinecartFurnace;
+import net.minecraft.world.entity.vehicle.minecart.AbstractMinecart;
+import net.minecraft.world.entity.vehicle.minecart.MinecartChest;
+import net.minecraft.world.entity.vehicle.minecart.MinecartFurnace;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
@@ -63,7 +64,7 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class CartAssemblerBlock extends BaseRailBlock
-	implements IBE<CartAssemblerBlockEntity>, IWrenchable, SpecialBlockItemRequirement {
+	implements IBE<CartAssemblerBlockEntity>, IWrenchable, SpecialBlockItemRequirement, MinecartPassBlock {
 
 	public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
 	public static final BooleanProperty BACKWARDS = BooleanProperty.create("backwards");
@@ -122,7 +123,7 @@ public class CartAssemblerBlock extends BaseRailBlock
 		AbstractMinecart cart) {
 		if (!canAssembleTo(cart))
 			return;
-		if (world.isClientSide)
+		if (world.isClientSide())
 			return;
 
 		withBlockEntityDo(world, pos, be -> be.assembleNextTick(cart));
@@ -162,11 +163,11 @@ public class CartAssemblerBlock extends BaseRailBlock
 	}
 
 	public static boolean canAssembleTo(AbstractMinecart cart) {
-		return cart.canBeRidden() || cart instanceof MinecartFurnace || cart instanceof MinecartChest;
+		return cart.isRideable() || cart instanceof MinecartFurnace || cart instanceof MinecartChest;
 	}
 
 	@Override
-	protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
+	protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
 		Item previousItem = getRailItem(state);
 		Item heldItem = stack.getItem();
 		if (heldItem != previousItem) {
@@ -176,7 +177,7 @@ public class CartAssemblerBlock extends BaseRailBlock
 				if (heldItem == type.getItem())
 					newType = type;
 			if (newType == null)
-				return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+				return InteractionResult.TRY_WITH_EMPTY_HAND;
 			level.playSound(null, pos, SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, 1, 1);
 			level.setBlockAndUpdate(pos, state.setValue(RAIL_TYPE, newType));
 
@@ -185,21 +186,21 @@ public class CartAssemblerBlock extends BaseRailBlock
 				player.getInventory()
 					.placeItemBackInInventory(new ItemStack(previousItem));
 			}
-			return ItemInteractionResult.SUCCESS;
+			return InteractionResult.SUCCESS;
 		}
 
-		return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+		return InteractionResult.TRY_WITH_EMPTY_HAND;
 	}
 
 	@Override
 	public void neighborChanged(@NotNull BlockState state, @NotNull Level worldIn, @NotNull BlockPos pos,
-								@NotNull Block blockIn, @NotNull BlockPos fromPos, boolean isMoving) {
-		if (worldIn.isClientSide)
+								@NotNull Block blockIn, @Nullable Orientation orientation, boolean isMoving) {
+		if (worldIn.isClientSide())
 			return;
 		boolean previouslyPowered = state.getValue(POWERED);
 		if (previouslyPowered != worldIn.hasNeighborSignal(pos))
 			worldIn.setBlock(pos, state.cycle(POWERED), Block.UPDATE_CLIENTS);
-		super.neighborChanged(state, worldIn, pos, blockIn, fromPos, isMoving);
+		super.neighborChanged(state, worldIn, pos, blockIn, orientation, isMoving);
 	}
 
 	@Override
@@ -286,7 +287,7 @@ public class CartAssemblerBlock extends BaseRailBlock
 		Level world = context.getLevel();
 		BlockPos pos = context.getClickedPos();
 		Player player = context.getPlayer();
-		if (world.isClientSide)
+		if (world.isClientSide())
 			return InteractionResult.SUCCESS;
 		if (player != null && !player.isCreative())
 			getDropsNoRail(state, (ServerLevel) world, pos, world.getBlockEntity(pos), player, context.getItemInHand())
@@ -326,7 +327,7 @@ public class CartAssemblerBlock extends BaseRailBlock
 	@Override
 	public InteractionResult onWrenched(BlockState state, UseOnContext context) {
 		Level world = context.getLevel();
-		if (world.isClientSide)
+		if (world.isClientSide())
 			return InteractionResult.SUCCESS;
 		BlockPos pos = context.getClickedPos();
 		world.setBlock(pos, rotate(state, Rotation.CLOCKWISE_90), Block.UPDATE_ALL);

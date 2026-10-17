@@ -11,8 +11,6 @@ import net.minecraft.core.particles.ParticleType;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.fluids.FluidStack;
 
 public class FluidParticleData implements ParticleOptions, ICustomParticleData<FluidParticleData> {
@@ -30,10 +28,16 @@ public class FluidParticleData implements ParticleOptions, ICustomParticleData<F
 	}
 
 	@Override
-	@OnlyIn(Dist.CLIENT)
 	public ParticleProvider<FluidParticleData> getFactory() {
-		return (data, world, x, y, z, vx, vy, vz) -> FluidStackParticle.create(data.type, world, data.fluid, x, y, z,
-			vx, vy, vz);
+		return FluidStackParticle.provider();
+	}
+
+	ParticleType<FluidParticleData> getParticleType() {
+		return type;
+	}
+
+	FluidStack getFluid() {
+		return fluid;
 	}
 
 	@Override
@@ -48,7 +52,6 @@ public class FluidParticleData implements ParticleOptions, ICustomParticleData<F
 
 	public static final StreamCodec<RegistryFriendlyByteBuf, FluidParticleData> STREAM_CODEC = FluidStack.STREAM_CODEC
 		.map(fs -> new FluidParticleData(AllParticleTypes.FLUID_PARTICLE.get(), fs), p -> p.fluid);
-
 
 	public static final MapCodec<FluidParticleData> BASIN_CODEC = RecordCodecBuilder.mapCodec(i -> i
 		.group(FluidStack.CODEC.fieldOf("fluid")

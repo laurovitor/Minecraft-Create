@@ -8,7 +8,10 @@
   "type": "create:pressing",
   "ingredients": [
     {
-      "item": "regions_unexplored:silt_grass_block"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "regions_unexplored:silt_grass_block"
+      ]
     }
   ],
   "results": [

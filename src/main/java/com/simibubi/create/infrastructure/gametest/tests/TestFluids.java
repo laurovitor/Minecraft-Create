@@ -1,8 +1,13 @@
 package com.simibubi.create.infrastructure.gametest.tests;
 
+import net.neoforged.neoforge.transfer.ResourceHandlerUtil;
+import net.neoforged.neoforge.transfer.transaction.Transaction;
+import net.neoforged.neoforge.transfer.fluid.FluidResource;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.minecraft.world.entity.EntityTypes;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.mutable.MutableBoolean;
 
@@ -17,34 +22,28 @@ import com.simibubi.create.infrastructure.gametest.GameTestGroup;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
+import net.minecraft.network.chat.Component;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.gametest.framework.GameTest;
+import com.simibubi.create.infrastructure.gametest.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.monster.Zombie;
+import net.minecraft.world.entity.monster.zombie.Zombie;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.item.alchemy.Potions;
-import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.FarmBlock;
+import net.minecraft.world.level.block.FarmlandBlock;
 import net.minecraft.world.level.block.LeverBlock;
 import net.minecraft.world.level.block.RedstoneLampBlock;
 import net.minecraft.world.level.material.Fluids;
 
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.FluidType;
-import net.neoforged.neoforge.fluids.capability.IFluidHandler;
-import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
-
 @GameTestGroup(path = "fluids")
 public class TestFluids {
 	@GameTest(template = "hose_pulley_transfer", timeoutTicks = CreateGameTestHelper.TWENTY_SECONDS)
@@ -65,11 +64,14 @@ public class TestFluids {
 					.forEach(pos -> helper.assertBlockPresent(Blocks.AIR, pos));
 			// check nothing left in pulley
 			BlockPos pulleyPos = new BlockPos(4, 7, 3);
-			IFluidHandler storage = helper.fluidStorageAt(pulleyPos);
+			ResourceHandler<FluidResource> storage = helper.fluidStorageAt(pulleyPos);
 			if (storage instanceof HosePulleyFluidHandler hose) {
-				IFluidHandler internalTank = hose.getInternalTank();
-				if (!internalTank.drain(1, FluidAction.SIMULATE).isEmpty())
-					helper.fail("Pulley not empty");
+				ResourceHandler<FluidResource> internalTank = hose.getInternalTank();
+				try (Transaction transaction = Transaction.openRoot()) {
+					// never committed: this only asks whether anything is left in there
+					if (ResourceHandlerUtil.extractFirst(internalTank, resource -> true, 1, transaction) != null)
+						helper.fail("Pulley not empty");
+				}
 			} else {
 				helper.fail("Not a pulley");
 			}
@@ -217,12 +219,20 @@ public class TestFluids {
 
 	@GameTest(template = "waterwheel_materials", timeoutTicks = CreateGameTestHelper.FIFTEEN_SECONDS)
 	public static void waterwheelMaterials(CreateGameTestHelper helper) {
-		List<Item> planks = BuiltInRegistries.BLOCK.getOrCreateTag(BlockTags.PLANKS).stream()
-				.map(Holder::value).map(ItemLike::asItem).collect(Collectors.toCollection(ArrayList::new));
+		List<Item> planks = new ArrayList<>();
+
+		for (Holder<Block> plank : BuiltInRegistries.BLOCK.getTagOrEmpty(BlockTags.PLANKS))
+			planks.add(plank.value()
+				.asItem());
 		List<BlockPos> chests = List.of(new BlockPos(6, 4, 2), new BlockPos(6, 4, 3));
 		List<BlockPos> deployers = chests.stream().map(pos -> pos.below(2)).toList();
 		helper.runAfterDelay(3, () -> chests.forEach(chest ->
-				planks.forEach(plank -> ItemHandlerHelper.insertItem(helper.itemStorageAt(chest), new ItemStack(plank), false))
+				planks.forEach(plank -> {
+					try (Transaction transaction = Transaction.openRoot()) {
+						helper.itemStorageAt(chest).insert(ItemResource.of(new ItemStack(plank)), new ItemStack(plank).getCount(), transaction);
+						transaction.commit();
+					}
+				})
 		));
 
 		BlockPos smallWheel = new BlockPos(4, 2, 2);
@@ -233,7 +243,8 @@ public class TestFluids {
 		helper.succeedWhen(() -> {
 			Item plank = planks.get(0);
 			if (!(plank instanceof BlockItem blockItem))
-				throw new GameTestAssertException(BuiltInRegistries.ITEM.getKey(plank) + " is not a BlockItem");
+				throw new GameTestAssertException(
+					Component.literal(BuiltInRegistries.ITEM.getKey(plank) + " is not a BlockItem"), 0);
 			Block block = blockItem.getBlock();
 
 			WaterWheelBlockEntity smallWheelBe = helper.getBlockEntity(AllBlockEntityTypes.WATER_WHEEL.get(), smallWheel);
@@ -247,9 +258,12 @@ public class TestFluids {
 			// next item
 			planks.remove(0);
 			deployers.forEach(pos -> {
-				IItemHandler handler = helper.itemStorageAt(pos);
-				for (int i = 0; i < handler.getSlots(); i++) {
-					handler.extractItem(i, Integer.MAX_VALUE, false);
+				ResourceHandler<ItemResource> handler = helper.itemStorageAt(pos);
+				for (int i = 0; i < handler.size(); i++) {
+					try (Transaction transaction = Transaction.openRoot()) {
+						handler.extract(i, handler.getResource(i), Integer.MAX_VALUE, transaction);
+						transaction.commit();
+					}
 				}
 			});
 			if (!planks.isEmpty())
@@ -318,8 +332,14 @@ public class TestFluids {
 		BlockPos firstSeat = new BlockPos(4, 2, 1);
 		BlockPos secondSeat = firstSeat.south(2);
 
-		Zombie firstZombie = helper.spawn(EntityType.ZOMBIE, firstSeat);
-		Zombie secondZombie = helper.spawn(EntityType.ZOMBIE, secondSeat);
+		Zombie firstZombie = helper.spawn(EntityTypes.ZOMBIE, firstSeat);
+		Zombie secondZombie = helper.spawn(EntityTypes.ZOMBIE, secondSeat);
+
+		// An open pipe reaches exactly one column of blocks, and these two are only ever meant to stand
+		// under it and be rained on. Left to themselves they wander, and a zombie one block to the side
+		// is a zombie the pipe cannot reach - which reads as the pipe having failed.
+		firstZombie.setNoAi(true);
+		secondZombie.setNoAi(true);
 
 		helper.pullLever(effects);
 
@@ -353,7 +373,7 @@ public class TestFluids {
 			// lava
 			helper.assertBlockPresent(Blocks.LAVA_CAULDRON, 3, 2, 1);
 			// water
-			helper.assertBlockProperty(farmland, FarmBlock.MOISTURE, 7);
+			helper.assertBlockProperty(farmland, FarmlandBlock.MOISTURE, 7);
 			helper.assertBlockPresent(Blocks.MUD, farmland.east(1));
 			helper.assertBlockPresent(Blocks.MUD, farmland.east(2));
 			helper.assertBlockPresent(Blocks.MUD, farmland.east(3));

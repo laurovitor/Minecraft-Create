@@ -10,9 +10,14 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
-import net.neoforged.neoforge.client.event.RenderTooltipEvent;
-import net.neoforged.neoforge.client.event.ScreenEvent;
 
+/**
+ * Hooks into the minimap mods Create draws train positions on.
+ * <p>
+ * FTB Chunks and Xaero have no 26.2 builds yet, so the adapters they need are compiled out and the
+ * hooks they had - a tooltip cancel and a GUI render, both FTB's - are gone with them. JourneyMap is
+ * back, and Create's own train map is unaffected either way.
+ */
 @EventBusSubscriber(value = Dist.CLIENT)
 public class TrainMapEvents {
 
@@ -22,12 +27,8 @@ public class TrainMapEvents {
 		if (mc.level == null)
 			return;
 
-		if (Mods.FTBCHUNKS.isLoaded())
-			FTBChunksTrainMap.tick();
 		if (Mods.JOURNEYMAP.isLoaded())
 			JourneyTrainMap.tick();
-		if (Mods.XAEROWORLDMAP.isLoaded())
-			XaeroTrainMap.tick();
 	}
 
 	@SubscribeEvent
@@ -35,23 +36,7 @@ public class TrainMapEvents {
 		if (event.getAction() != InputConstants.PRESS)
 			return;
 
-		if (Mods.FTBCHUNKS.isLoaded())
-			FTBChunksTrainMap.mouseClick(event);
 		if (Mods.JOURNEYMAP.isLoaded())
 			JourneyTrainMap.mouseClick(event);
-		if (Mods.XAEROWORLDMAP.isLoaded())
-			XaeroTrainMap.mouseClick(event);
-	}
-
-	@SubscribeEvent
-	public static void cancelTooltips(RenderTooltipEvent.Pre event) {
-		if (Mods.FTBCHUNKS.isLoaded())
-			FTBChunksTrainMap.cancelTooltips(event);
-	}
-
-	@SubscribeEvent
-	public static void renderGui(ScreenEvent.Render.Post event) {
-		if (Mods.FTBCHUNKS.isLoaded())
-			FTBChunksTrainMap.renderGui(event);
 	}
 }

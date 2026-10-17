@@ -1,5 +1,8 @@
 package com.simibubi.create.infrastructure.gametest.tests;
 
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.entity.EntityTypes;
 import static com.simibubi.create.infrastructure.gametest.CreateGameTestHelper.FIFTEEN_SECONDS;
 
 import com.simibubi.create.AllBlockEntityTypes;
@@ -14,14 +17,13 @@ import com.simibubi.create.infrastructure.gametest.CreateGameTestHelper;
 import com.simibubi.create.infrastructure.gametest.GameTestGroup;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.gametest.framework.GameTest;
+import com.simibubi.create.infrastructure.gametest.GameTest;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.animal.Sheep;
+import net.minecraft.world.entity.animal.sheep.Sheep;
 import net.minecraft.world.entity.decoration.ArmorStand;
-import net.minecraft.world.entity.monster.Zombie;
+import net.minecraft.world.entity.monster.zombie.Zombie;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
@@ -48,7 +50,7 @@ public class TestMisc {
 		// setup cannon
 		BlockPos cannonPos = new BlockPos(3, 2, 6);
 		SchematicannonBlockEntity cannon = helper.getBlockEntity(AllBlockEntityTypes.SCHEMATICANNON.get(), cannonPos);
-		cannon.inventory.setStackInSlot(0, schematic);
+		cannon.inventory.set(0, ItemResource.of(schematic), schematic.getCount());
 		// run
 		cannon.state = State.RUNNING;
 		cannon.statusMsg = "running";
@@ -57,17 +59,17 @@ public class TestMisc {
 				helper.fail("Schematicannon not done");
 			}
 			BlockPos lastBlock = new BlockPos(1, 4, 7);
-			helper.assertBlockPresent(Blocks.RED_WOOL, lastBlock);
+			helper.assertBlockPresent(Blocks.WOOL.pick(DyeColor.RED), lastBlock);
 		});
 	}
 
 	@GameTest(template = "shearing")
 	public static void shearing(CreateGameTestHelper helper) {
 		BlockPos sheepPos = new BlockPos(2, 1, 2);
-		Sheep sheep = helper.getFirstEntity(EntityType.SHEEP, sheepPos);
-		sheep.shear(SoundSource.NEUTRAL);
+		Sheep sheep = helper.getFirstEntity(EntityTypes.SHEEP, sheepPos);
+		sheep.shear(helper.getLevel(), SoundSource.NEUTRAL, ItemStack.EMPTY);
 		helper.succeedWhen(() -> {
-			helper.assertItemEntityPresent(Items.WHITE_WOOL, sheepPos, 2);
+			helper.assertItemEntityPresent(Items.WOOL.pick(DyeColor.WHITE), sheepPos, 2);
 		});
 	}
 
@@ -104,15 +106,15 @@ public class TestMisc {
 		BlockPos zombieSpawn = lava.above(2);
 		BlockPos armorStandPos = new BlockPos(2, 2, 1);
 		helper.runAtTickTime(5, () -> {
-			Zombie zombie = helper.spawn(EntityType.ZOMBIE, zombieSpawn);
-			ArmorStand armorStand = helper.getFirstEntity(EntityType.ARMOR_STAND, armorStandPos);
+			Zombie zombie = helper.spawn(EntityTypes.ZOMBIE, zombieSpawn);
+			ArmorStand armorStand = helper.getFirstEntity(EntityTypes.ARMOR_STAND, armorStandPos);
 			for (EquipmentSlot slot : EquipmentSlot.values()) {
 				zombie.setItemSlot(slot, armorStand.getItemBySlot(slot).copy());
 			}
 		});
 		helper.succeedWhen(() -> {
 			helper.assertSecondsPassed(9);
-			helper.assertEntityPresent(EntityType.ZOMBIE, lava);
+			helper.assertEntityPresent(EntityTypes.ZOMBIE, lava);
 		});
 	}
 }

@@ -1,5 +1,8 @@
 package com.simibubi.create.content.logistics.stockTicker;
 
+import com.simibubi.create.foundation.utility.ClientAccess;
+
+import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
 import org.jetbrains.annotations.NotNull;
 
 import com.simibubi.create.AllBlocks;
@@ -7,7 +10,6 @@ import com.simibubi.create.AllMenuTypes;
 import com.simibubi.create.content.logistics.filter.FilterItem;
 import com.simibubi.create.foundation.gui.menu.MenuBase;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.Container;
@@ -18,13 +20,11 @@ import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemStackHandler;
-import net.neoforged.neoforge.items.SlotItemHandler;
+import net.neoforged.neoforge.transfer.item.ResourceHandlerSlot;
 
 public class StockKeeperCategoryMenu extends MenuBase<StockTickerBlockEntity> {
 	public boolean slotsActive = true;
-	public ItemStackHandler proxyInventory;
+	public ItemStacksResourceHandler proxyInventory;
 
 	public StockKeeperCategoryMenu(MenuType<?> type, int id, Inventory inv, RegistryFriendlyByteBuf extraData) {
 		super(type, id, inv, extraData);
@@ -42,14 +42,14 @@ public class StockKeeperCategoryMenu extends MenuBase<StockTickerBlockEntity> {
 
 	@Override
 	protected void initAndReadInventory(StockTickerBlockEntity contentHolder) {
-		proxyInventory = new ItemStackHandler(1);
+		proxyInventory = new ItemStacksResourceHandler(1);
 	}
 
 	@Override
 	protected StockTickerBlockEntity createOnClient(RegistryFriendlyByteBuf extraData) {
 		BlockPos blockPos = extraData.readBlockPos();
 		return AllBlocks.STOCK_TICKER.get()
-			.getBlockEntity(Minecraft.getInstance().level, blockPos);
+			.getBlockEntity(ClientAccess.level(), blockPos);
 	}
 
 	@Override
@@ -68,7 +68,7 @@ public class StockKeeperCategoryMenu extends MenuBase<StockTickerBlockEntity> {
 
 	@Override
 	public boolean stillValid(Player player) {
-		return !contentHolder.isRemoved() && player.canInteractWithBlock(contentHolder.getBlockPos(), 4);
+		return !contentHolder.isRemoved() && player.isWithinBlockInteractionRange(contentHolder.getBlockPos(), 4);
 	}
 
 	class InactiveSlot extends Slot {
@@ -82,9 +82,9 @@ public class StockKeeperCategoryMenu extends MenuBase<StockTickerBlockEntity> {
 		}
 	}
 
-	class InactiveItemHandlerSlot extends SlotItemHandler {
-		public InactiveItemHandlerSlot(IItemHandler itemHandler, int index, int xPosition, int yPosition) {
-			super(itemHandler, index, xPosition, yPosition);
+	class InactiveItemHandlerSlot extends ResourceHandlerSlot {
+		public InactiveItemHandlerSlot(ItemStacksResourceHandler itemHandler, int index, int xPosition, int yPosition) {
+			super(itemHandler, itemHandler::set, index, xPosition, yPosition);
 		}
 
 		@Override

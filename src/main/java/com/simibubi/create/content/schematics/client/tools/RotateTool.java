@@ -1,10 +1,10 @@
 package com.simibubi.create.content.schematics.client.tools;
 
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import com.mojang.blaze3d.vertex.PoseStack;
 
-import net.createmod.catnip.render.SuperRenderTypeBuffer;
-import net.createmod.catnip.animation.AnimationTickHolder;
-import net.createmod.catnip.outliner.LineOutline;
+import net.createmod.catnip.api.client.animation.AnimationTickHolder;
+import net.createmod.catnip.api.client.outliner.LineOutline;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -21,7 +21,7 @@ public class RotateTool extends PlacementToolBase {
 	}
 
 	@Override
-	public void renderOnSchematic(PoseStack ms, SuperRenderTypeBuffer buffer) {
+	public void submitOnSchematic(PoseStack ms, SubmitNodeCollector queue) {
 		AABB bounds = schematicHandler.getBounds();
 		double height = bounds.getYsize() + Math.max(20, bounds.getYsize());
 		Vec3 center = bounds.getCenter()
@@ -36,9 +36,9 @@ public class RotateTool extends PlacementToolBase {
 			.colored(0xdddddd)
 			.lineWidth(1 / 16f);
 		line.set(start, end)
-			.render(ms, buffer, Vec3.ZERO, AnimationTickHolder.getPartialTicks());
+			.submit(ms, queue, Vec3.ZERO, AnimationTickHolder.getPartialTicks());
 
-		super.renderOnSchematic(ms, buffer);
+		super.submitOnSchematic(ms, queue);
 	}
 
 }

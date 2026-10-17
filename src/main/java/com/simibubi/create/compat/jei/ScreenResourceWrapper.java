@@ -1,8 +1,9 @@
 package com.simibubi.create.compat.jei;
 
+import net.minecraft.client.renderer.RenderPipelines;
 import com.simibubi.create.foundation.gui.AllGuiTextures;
 import mezz.jei.api.gui.drawable.IDrawable;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 public class ScreenResourceWrapper implements IDrawable {
 
@@ -23,9 +24,8 @@ public class ScreenResourceWrapper implements IDrawable {
 	}
 
 	@Override
-	public void draw(GuiGraphics graphics, int xOffset, int yOffset) {
-		graphics.blit(resource.location, xOffset, yOffset, 0, resource.getStartX(), resource.getStartY(), resource.getWidth(),
-			resource.getHeight(), 256, 256);
+	public void draw(GuiGraphicsExtractor graphics, int xOffset, int yOffset) {
+		graphics.blit(RenderPipelines.GUI_TEXTURED, resource.location, xOffset, yOffset, resource.getStartX(), resource.getStartY(), resource.getWidth(), resource.getHeight(), 256, 256);
 	}
 
 }

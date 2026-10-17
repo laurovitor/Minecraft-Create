@@ -14,7 +14,7 @@ import dev.engine_room.flywheel.api.visualization.VisualizationContext;
 import dev.engine_room.flywheel.lib.instance.AbstractInstance;
 import dev.engine_room.flywheel.lib.instance.FlatLit;
 import dev.engine_room.flywheel.lib.model.Models;
-import net.createmod.catnip.data.Iterate;
+import net.createmod.catnip.api.data.Iterate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -65,7 +65,7 @@ public class GearboxVisual extends KineticBlockEntityVisual<GearboxBlockEntity> 
 	protected void updateSourceFacing() {
 		if (blockEntity.hasSource()) {
 			BlockPos source = blockEntity.source.subtract(pos);
-			sourceFacing = Direction.getNearest(source.getX(), source.getY(), source.getZ());
+			sourceFacing = Direction.getApproximateNearest(source.getX(), source.getY(), source.getZ());
 		} else {
 			sourceFacing = null;
 		}

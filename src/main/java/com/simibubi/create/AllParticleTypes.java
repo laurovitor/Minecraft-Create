@@ -1,5 +1,6 @@
 package com.simibubi.create;
 
+import com.simibubi.create.content.trains.CubeParticleGroup;
 import java.util.function.Supplier;
 
 import com.simibubi.create.content.equipment.bell.SoulBaseParticle;
@@ -13,13 +14,12 @@ import com.simibubi.create.content.trains.CubeParticleData;
 import com.simibubi.create.foundation.particle.AirParticleData;
 import com.simibubi.create.foundation.particle.ICustomParticleData;
 
-import net.createmod.catnip.lang.Lang;
+import net.createmod.catnip.api.lang.Lang;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.registries.Registries;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.client.event.RegisterParticleGroupsEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -53,10 +53,17 @@ public enum AllParticleTypes {
 		ParticleEntry.REGISTER.register(modEventBus);
 	}
 
-	@OnlyIn(Dist.CLIENT)
 	public static void registerFactories(RegisterParticleProvidersEvent event) {
 		for (AllParticleTypes particle : values())
 			particle.entry.registerFactory(event);
+	}
+
+	/**
+	 * 26.2 batches particles into groups that each extract a render state. Train smoke draws cubes
+	 * rather than the camera-facing quads the default group builds, so it brings its own.
+	 */
+	public static void registerGroups(RegisterParticleGroupsEvent event) {
+		event.register(CubeParticleGroup.TYPE, CubeParticleGroup::new);
 	}
 
 	public ParticleType<?> get() {
@@ -81,7 +88,6 @@ public enum AllParticleTypes {
 			object = REGISTER.register(name, () -> this.typeFactory.get().createType());
 		}
 
-		@OnlyIn(Dist.CLIENT)
 		public void registerFactory(RegisterParticleProvidersEvent event) {
 			typeFactory.get()
 				.register(object.get(), event);

@@ -35,21 +35,22 @@ import com.simibubi.create.foundation.CreateNBTProcessors;
 import com.simibubi.create.foundation.advancement.AllAdvancements;
 import com.simibubi.create.foundation.advancement.AllTriggers;
 import com.simibubi.create.foundation.data.CreateRegistrate;
+import com.simibubi.create.infrastructure.gametest.CreateGameTests;
+import com.simibubi.create.infrastructure.data.CreateDatagen;
 import com.simibubi.create.foundation.item.ItemDescription;
 import com.simibubi.create.foundation.item.KineticStats;
 import com.simibubi.create.foundation.item.TooltipModifier;
 import com.simibubi.create.foundation.recipe.AllIngredients;
 import com.simibubi.create.infrastructure.command.ServerLagger;
 import com.simibubi.create.infrastructure.config.AllConfigs;
-import com.simibubi.create.infrastructure.data.CreateDatagen;
 import com.simibubi.create.infrastructure.worldgen.AllFeatures;
 import com.simibubi.create.infrastructure.worldgen.AllPlacementModifiers;
 
-import net.createmod.catnip.lang.FontHelper;
-import net.createmod.catnip.lang.LangBuilder;
+import net.createmod.catnip.api.client.lang.FontHelper;
+import net.createmod.catnip.api.lang.LangBuilder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.level.Level;
@@ -61,6 +62,7 @@ import net.neoforged.fml.ModLoadingContext;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForgeMod;
+import net.neoforged.neoforge.data.event.GatherDataEvent;
 import net.neoforged.neoforge.registries.RegisterEvent;
 
 @Mod(Create.ID)
@@ -133,6 +135,7 @@ public class Create {
 		AllPlacementModifiers.register(modEventBus);
 		AllIngredients.register(modEventBus);
 		AllAttachmentTypes.register(modEventBus);
+		CreateGameTests.register(modEventBus);
 		AllDataComponents.register(modEventBus);
 		AllMapDecorationTypes.register(modEventBus);
 		AllMountedStorageTypes.register();
@@ -156,9 +159,16 @@ public class Create {
 		modEventBus.addListener(Create::init);
 		modEventBus.addListener(Create::onRegister);
 		modEventBus.addListener(AllEntityTypes::registerEntityAttributes);
-		modEventBus.addListener(EventPriority.HIGHEST, CreateDatagen::gatherDataHighPriority);
-		modEventBus.addListener(EventPriority.LOWEST, CreateDatagen::gatherData);
 		modEventBus.addListener(AllSoundEvents::register);
+
+		// 26.2 raises a separate gather event per side, so the providers are split across two
+		// listeners rather than filtered by include flags inside one.
+		modEventBus.addListener(EventPriority.HIGHEST,
+			(GatherDataEvent.Server e) -> CreateDatagen.gatherDataHighPriority());
+		modEventBus.addListener(EventPriority.HIGHEST,
+			(GatherDataEvent.Client e) -> CreateDatagen.gatherDataHighPriority());
+		modEventBus.addListener((GatherDataEvent.Server e) -> CreateDatagen.gatherData(e));
+		modEventBus.addListener((GatherDataEvent.Client e) -> CreateDatagen.gatherData(e));
 
 		// FIXME: this is not thread-safe
 		Mods.CURIOS.executeIfInstalled(() -> () -> Curios.init(modEventBus));
@@ -206,8 +216,8 @@ public class Create {
 		return new LangBuilder(ID);
 	}
 
-	public static ResourceLocation asResource(String path) {
-		return ResourceLocation.fromNamespaceAndPath(ID, path);
+	public static Identifier asResource(String path) {
+		return Identifier.fromNamespaceAndPath(ID, path);
 	}
 
 	public static CreateRegistrate registrate() {

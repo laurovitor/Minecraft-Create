@@ -1,5 +1,6 @@
 package com.simibubi.create.content.contraptions.minecart.capability;
 
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -7,19 +8,15 @@ import com.simibubi.create.AllAttachmentTypes;
 import com.simibubi.create.AllPackets;
 
 import io.netty.buffer.ByteBuf;
-import net.createmod.catnip.codecs.stream.CatnipStreamCodecBuilders;
-import net.createmod.catnip.net.base.ClientboundPacketPayload;
-import net.minecraft.client.player.LocalPlayer;
+import net.createmod.catnip.api.data.codec.stream.CatnipStreamCodecBuilders;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.entity.Entity;
 
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
-
-public record MinecartControllerUpdatePacket(int entityId, @Nullable CompoundTag nbt) implements ClientboundPacketPayload {
+public record MinecartControllerUpdatePacket(int entityId, @Nullable CompoundTag nbt) implements CustomPacketPayload {
 	public static final StreamCodec<ByteBuf, MinecartControllerUpdatePacket> STREAM_CODEC = StreamCodec.composite(
 			ByteBufCodecs.INT, MinecartControllerUpdatePacket::entityId,
 			CatnipStreamCodecBuilders.nullable(ByteBufCodecs.COMPOUND_TAG), MinecartControllerUpdatePacket::nbt,
@@ -30,10 +27,8 @@ public record MinecartControllerUpdatePacket(int entityId, @Nullable CompoundTag
 		this(controller.cart().getId(), controller.isEmpty() ? null : controller.serializeNBT(registries));
 	}
 
-	@Override
-	@OnlyIn(Dist.CLIENT)
-	public void handle(LocalPlayer player) {
-		Entity entityByID = player.clientLevel.getEntity(entityId);
+	public void handle(Player player) {
+		Entity entityByID = player.level().getEntity(entityId);
 		if (entityByID == null)
 			return;
 		if (entityByID.hasData(AllAttachmentTypes.MINECART_CONTROLLER)) {
@@ -47,7 +42,7 @@ public record MinecartControllerUpdatePacket(int entityId, @Nullable CompoundTag
 	}
 
 	@Override
-	public PacketTypeProvider getTypeProvider() {
-		return AllPackets.MINECART_CONTROLLER;
+	public Type<? extends CustomPacketPayload> type() {
+		return AllPackets.MINECART_CONTROLLER.getType();
 	}
 }

@@ -8,7 +8,10 @@
   "type": "create:crushing",
   "ingredients": [
     {
-      "item": "thermal:sulfur_ore"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "thermal:sulfur_ore"
+      ]
     }
   ],
   "processing_time": 350,

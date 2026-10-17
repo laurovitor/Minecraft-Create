@@ -1,5 +1,9 @@
 package com.simibubi.create.content.fluids;
 
+import net.neoforged.neoforge.transfer.transaction.Transaction;
+import net.neoforged.neoforge.transfer.fluid.FluidUtil;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.fluid.FluidResource;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,17 +23,14 @@ import com.simibubi.create.foundation.ICapabilityProvider;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.foundation.fluid.FluidHelper;
 
-import net.createmod.catnip.data.Iterate;
-import net.createmod.catnip.data.Pair;
-import net.createmod.catnip.math.BlockFace;
+import net.createmod.catnip.api.data.Iterate;
+import net.createmod.catnip.api.data.Pair;
+import net.createmod.catnip.api.math.BlockFace;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
 
 import net.neoforged.neoforge.fluids.FluidStack;
-import net.neoforged.neoforge.fluids.capability.IFluidHandler;
-import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
-
 public class FluidNetwork {
 
 	private static final int CYCLES_PER_TICK = 16;
@@ -37,8 +38,8 @@ public class FluidNetwork {
 	Level world;
 	BlockFace start;
 
-	Supplier<@Nullable ICapabilityProvider<IFluidHandler>> sourceSupplier;
-	@Nullable ICapabilityProvider<IFluidHandler> source = null;
+	Supplier<@Nullable ICapabilityProvider<ResourceHandler<FluidResource>>> sourceSupplier;
+	@Nullable ICapabilityProvider<ResourceHandler<FluidResource>> source = null;
 	int transferSpeed;
 
 	int pauseBeforePropagation;
@@ -49,7 +50,7 @@ public class FluidNetwork {
 	List<Pair<BlockFace, FlowSource>> targets;
 	Map<BlockPos, WeakReference<FluidTransportBehaviour>> cache;
 
-	public FluidNetwork(Level world, BlockFace location, Supplier<@Nullable ICapabilityProvider<IFluidHandler>> sourceSupplier) {
+	public FluidNetwork(Level world, BlockFace location, Supplier<@Nullable ICapabilityProvider<ResourceHandler<FluidResource>>> sourceSupplier) {
 		this.world = world;
 		this.start = location;
 		this.sourceSupplier = sourceSupplier;
@@ -182,31 +183,55 @@ public class FluidNetwork {
 		}
 
 		int flowSpeed = transferSpeed;
-		Map<IFluidHandler, Integer> accumulatedFill = new IdentityHashMap<>();
+		Map<ResourceHandler<FluidResource>, Integer> accumulatedFill = new IdentityHashMap<>();
 
 		for (boolean simulate : Iterate.trueAndFalse) {
-			FluidAction action = simulate ? FluidAction.SIMULATE : FluidAction.EXECUTE;
+			boolean action = simulate;
 
 			if (source == null)
 				return;
-			IFluidHandler sourceCap = source.getCapability();
+			ResourceHandler<FluidResource> sourceCap = source.getCapability();
 			if (sourceCap == null)
 				return;
 
 			FluidStack transfer = FluidStack.EMPTY;
-			for (int i = 0; i < sourceCap.getTanks(); i++) {
-				FluidStack contained = sourceCap.getFluidInTank(i);
+			for (int i = 0; i < sourceCap.size(); i++) {
+				FluidStack contained = FluidUtil.getStack(sourceCap, i);
 				if (contained.isEmpty())
 					continue;
 				if (!FluidStack.isSameFluidSameComponents(contained, fluid))
 					continue;
 				FluidStack toExtract = FluidHelper.copyStackWithAmount(contained, flowSpeed);
-				transfer = sourceCap.drain(toExtract, action);
+				try (Transaction transaction = Transaction.openRoot()) {
+					FluidResource wanted = FluidResource.of(toExtract);
+					int transferred = toExtract.isEmpty() ? 0
+						: sourceCap.extract(wanted, toExtract.getAmount(), transaction);
+					transfer = transferred <= 0 ? FluidStack.EMPTY : wanted.toStack(transferred);
+					if (!action)
+						transaction.commit();
+				}
 				break;
 			}
 
 			if (transfer.isEmpty()) {
-				FluidStack genericExtract = sourceCap.drain(flowSpeed, action);
+				FluidStack genericExtract = FluidStack.EMPTY;
+
+				for (int tank = 0; tank < sourceCap.size(); tank++) {
+					FluidResource held = sourceCap.getResource(tank);
+					if (held.isEmpty())
+						continue;
+
+					try (Transaction transaction = Transaction.openRoot()) {
+						int drained = sourceCap.extract(held, flowSpeed, transaction);
+						if (drained <= 0)
+							continue;
+						if (!action)
+							transaction.commit();
+						genericExtract = held.toStack(drained);
+					}
+
+					break;
+				}
 				if (!genericExtract.isEmpty() && FluidStack.isSameFluidSameComponents(genericExtract, fluid))
 					transfer = genericExtract;
 			}
@@ -231,12 +256,12 @@ public class FluidNetwork {
 
 					if (transfer.isEmpty())
 						break;
-					@Nullable ICapabilityProvider<IFluidHandler> targetHandlerProvider = pair.getSecond().provideHandler();
+					@Nullable ICapabilityProvider<ResourceHandler<FluidResource>> targetHandlerProvider = pair.getSecond().provideHandler();
 					if (targetHandlerProvider == null) {
 						iterator.remove();
 						continue;
 					}
-					IFluidHandler targetHandler = targetHandlerProvider.getCapability();
+					ResourceHandler<FluidResource> targetHandler = targetHandlerProvider.getCapability();
 					if (targetHandler == null) {
 						iterator.remove();
 						continue;
@@ -248,7 +273,13 @@ public class FluidNetwork {
 
 					FluidStack divided = transfer.copy();
 					divided.setAmount(simulatedTransfer);
-					int fill = targetHandler.fill(divided, action);
+					int fill;
+					try (Transaction transaction = Transaction.openRoot()) {
+						int transferred3 = divided.isEmpty() ? 0 : targetHandler.insert(FluidResource.of(divided), divided.getAmount(), transaction);
+						fill = transferred3;
+						if (!action)
+							transaction.commit();
+					}
 
 					if (simulate) {
 						accumulatedFill.put(targetHandler, Integer.valueOf(fill));
@@ -271,7 +302,7 @@ public class FluidNetwork {
 //		FluidPropagator.showBlockFace(start)
 //			.lineWidth(1 / 8f)
 //			.colored(0xff0000);
-//		for (Pair<BlockFace, LazyOptional<IFluidHandler>> pair : targets)
+//		for (Pair<BlockFace, LazyOptional<ResourceHandler<FluidResource>>> pair : targets)
 //			FluidPropagator.showBlockFace(pair.getFirst())
 //				.lineWidth(1 / 8f)
 //				.colored(0x00ff00);

@@ -1,5 +1,10 @@
 package com.simibubi.create.content.logistics.depot.storage;
 
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import com.simibubi.create.foundation.utility.NbtValueIO;
+import net.neoforged.neoforge.transfer.item.ItemUtil;
+import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
+
 import org.jetbrains.annotations.Nullable;
 
 import com.mojang.serialization.MapCodec;
@@ -21,8 +26,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate.StructureBlockInfo;
 
-import net.neoforged.neoforge.items.ItemStackHandler;
-
 public class DepotMountedStorage extends WrapperMountedItemStorage<Handler> implements SyncedMountedStorage {
 	public static final MapCodec<DepotMountedStorage> CODEC = ItemStack.OPTIONAL_CODEC.xmap(
 		DepotMountedStorage::new, DepotMountedStorage::getItem
@@ -42,7 +45,7 @@ public class DepotMountedStorage extends WrapperMountedItemStorage<Handler> impl
 	@Override
 	public void unmount(Level level, BlockState state, BlockPos pos, @Nullable BlockEntity be) {
 		if (be instanceof DepotBlockEntity depot) {
-			depot.setHeldItem(this.getStackInSlot(0));
+			depot.setHeldItem(ItemUtil.getStack(this, 0));
 		}
 	}
 
@@ -71,11 +74,11 @@ public class DepotMountedStorage extends WrapperMountedItemStorage<Handler> impl
 	}
 
 	public void setItem(ItemStack stack) {
-		this.setStackInSlot(0, stack);
+		this.set(0, ItemResource.of(stack), stack.getCount());
 	}
 
 	public ItemStack getItem() {
-		return this.getStackInSlot(0);
+		return ItemUtil.getStack(this, 0);
 	}
 
 	public static DepotMountedStorage fromDepot(DepotBlockEntity depot) {
@@ -84,26 +87,26 @@ public class DepotMountedStorage extends WrapperMountedItemStorage<Handler> impl
 	}
 
 	public static DepotMountedStorage fromLegacy(HolderLookup.Provider registries, CompoundTag nbt) {
-		ItemStackHandler handler = new ItemStackHandler();
-		handler.deserializeNBT(registries, nbt);
-		if (handler.getSlots() == 1) {
-			ItemStack stack = handler.getStackInSlot(0);
+		ItemStacksResourceHandler handler = new ItemStacksResourceHandler(0);
+		NbtValueIO.deserialize(handler, nbt, registries);
+		if (handler.size() == 1) {
+			ItemStack stack = ItemUtil.getStack(handler, 0);
 			return new DepotMountedStorage(stack);
 		} else {
 			return new DepotMountedStorage(ItemStack.EMPTY);
 		}
 	}
 
-	public static final class Handler extends ItemStackHandler {
+	public static final class Handler extends ItemStacksResourceHandler {
 		private Runnable onChange = () -> {};
 
 		private Handler(ItemStack stack) {
 			super(1);
-			this.setStackInSlot(0, stack);
+			this.set(0, ItemResource.of(stack), stack.getCount());
 		}
 
 		@Override
-		protected void onContentsChanged(int slot) {
+		protected void onContentsChanged(int slot, ItemStack previousContents) {
 			this.onChange.run();
 		}
 	}

@@ -1,5 +1,19 @@
 package com.simibubi.create.content.logistics.stockTicker;
 
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.Level;
+import net.createmod.catnip.api.client.gui.ILightingSettings;
+import net.createmod.catnip.api.client.gui.render.pip.GuiElementTransform;
+import com.simibubi.create.foundation.gui.render.GuiCustomGeometryRenderState;
+import org.joml.Matrix3x2f;
+import net.minecraft.client.renderer.RenderPipelines;
+import com.simibubi.create.foundation.render.CachedBufferer;
+import org.joml.Matrix3x2fStack;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.createmod.catnip.api.client.network.ClientNetworkHelper;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -14,12 +28,9 @@ import java.util.function.Function;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
-import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllPartialModels;
 import com.simibubi.create.AllSoundEvents;
@@ -45,28 +56,26 @@ import com.simibubi.create.infrastructure.config.AllConfigs;
 
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
 import mezz.jei.api.runtime.IIngredientFilter;
-import net.createmod.catnip.animation.AnimationTickHolder;
-import net.createmod.catnip.animation.LerpedFloat;
-import net.createmod.catnip.animation.LerpedFloat.Chaser;
-import net.createmod.catnip.config.ConfigBase.ConfigEnum;
-import net.createmod.catnip.data.Couple;
-import net.createmod.catnip.data.Iterate;
-import net.createmod.catnip.data.Pair;
-import net.createmod.catnip.gui.UIRenderHelper;
-import net.createmod.catnip.gui.element.GuiGameElement;
-import net.createmod.catnip.lang.Lang;
-import net.createmod.catnip.math.AngleHelper;
-import net.createmod.catnip.platform.CatnipServices;
-import net.createmod.catnip.render.CachedBuffers;
-import net.createmod.catnip.theme.Color;
+import net.createmod.catnip.api.client.animation.AnimationTickHolder;
+import net.createmod.catnip.api.animation.LerpedFloat;
+import net.createmod.catnip.api.animation.LerpedFloat.Chaser;
+import net.createmod.catnip.api.config.ConfigBase.ConfigEnum;
+import net.createmod.catnip.api.data.Couple;
+import net.createmod.catnip.api.data.Iterate;
+import net.createmod.catnip.api.data.Pair;
+import net.createmod.catnip.api.client.gui.UIRenderHelper;
+import net.createmod.catnip.api.client.gui.element.GuiGameElement;
+import net.createmod.catnip.api.lang.Lang;
+import net.createmod.catnip.api.math.AngleHelper;
+import net.createmod.catnip.api.theme.Color;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
-import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.client.renderer.Rect2i;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -231,7 +240,7 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 		searchBox = new EditBox(new NoShadowFontWrapper(font), x + 71, y + 22, 100, 9, searchLabel);
 		searchBox.setMaxLength(50);
 		searchBox.setBordered(false);
-		searchBox.setTextColor(0x4A2D31);
+		searchBox.setTextColor(0xFF4A2D31);
 		addWidget(searchBox);
 
 		refreshSearchNextTick = true;
@@ -242,7 +251,7 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 		String previouslyUsedAddress = initial ? blockEntity.previouslyUsedAddress : addressBox.getValue();
 		addressBox =
 			new AddressEditBox(this, new NoShadowFontWrapper(font), x + 27, y + windowHeight - 36, 92, 10, true);
-		addressBox.setTextColor(0x714A40);
+		addressBox.setTextColor(0xFF714A40);
 		addressBox.setValue(previouslyUsedAddress);
 		addRenderableWidget(addressBox);
 
@@ -359,7 +368,8 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 				}
 
 				if (tagSearch) {
-					if (stack.getTags()
+					if (stack.typeHolder()
+						.tags()
 						.anyMatch(key -> key.location()
 							.toString()
 							.contains(value)))
@@ -460,20 +470,11 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 	}
 
 	@Override
-	public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
-		PoseStack ms = guiGraphics.pose();
-		ms.pushPose();
-		ms.translate(0, 0, -300);
-		super.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
-		ms.popPose();
-	}
-
-	@Override
-	protected void renderBg(GuiGraphics graphics, float partialTicks, int mouseX, int mouseY) {
-		if (this != minecraft.screen)
+	protected void renderBg(GuiGraphicsExtractor graphics, float partialTicks, int mouseX, int mouseY) {
+		if (this != minecraft.gui.screen())
 			return; // stencil buffer does not cooperate with ponders gui fade out
 
-		PoseStack ms = graphics.pose();
+		Matrix3x2fStack ms = graphics.pose();
 		float currentScroll = itemScroll.getValue(partialTicks);
 		Couple<Integer> hoveredSlot = getHoveredSlot(mouseX, mouseY);
 
@@ -493,7 +494,7 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 		// Render text input hints
 		if (addressBox.getValue()
 			.isBlank() && !addressBox.isFocused()) {
-			graphics.drawString(Minecraft.getInstance().font, CreateLang.translate("gui.stock_keeper.package_address")
+			graphics.text(Minecraft.getInstance().font, CreateLang.translate("gui.stock_keeper.package_address")
 				.style(ChatFormatting.ITALIC)
 				.component(), addressBox.getX(), addressBox.getY(), 0xff_CDBCA8, false);
 		}
@@ -502,28 +503,23 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 		int entitySizeOffset = 0;
 		LivingEntity keeper = stockKeeper.get();
 		if (keeper != null && keeper.isAlive()) {
-			ms.pushPose();
-			ms.translate(0, 0, 50);
+			ms.pushMatrix();
+			ms.translate((float) (0), (float) (0));
 			entitySizeOffset = (int) (Math.max(0, keeper.getBoundingBox()
 				.getXsize() - 1) * 50);
 			int entitySizeOffsetY = (int) (Math.max(0, keeper.getBoundingBox()
 				.getYsize() - 1) * 25);
 			int entityX = x - 35 - entitySizeOffset;
 			int entityY = y + windowHeight - 47 - entitySizeOffsetY;
-			InventoryScreen.renderEntityInInventoryFollowsMouse(graphics, entityX - 100, entityY - 100, entityX + 100,
+			InventoryScreen.extractEntityInInventoryFollowsMouse(graphics, entityX - 100, entityY - 100, entityX + 100,
 				entityY + 100, 50, 0, mouseX, Mth.clamp(mouseY, entityY - 50, entityY + 10), keeper);
-			ms.popPose();
+			ms.popMatrix();
 		}
 
 		BlazeBurnerBlockEntity keeperBE = blaze.get();
 		if (keeperBE != null && !keeperBE.isRemoved()) {
-			ms.pushPose();
 			int entityX = x - 35;
 			int entityY = y + windowHeight - 43;
-			ms.translate(entityX, entityY, -0);
-			ms.mulPose(Axis.XP.rotationDegrees(-22.5f));
-			ms.mulPose(Axis.YP.rotationDegrees(-45));
-			ms.scale(48, -48, 48);
 			float animation = keeperBE.headAnimation.getValue(AnimationTickHolder.getPartialTicks()) * .175f;
 			float horizontalAngle = AngleHelper.rad(270);
 			HeatLevel heatLevel = keeperBE.getHeatLevelForRender();
@@ -531,29 +527,39 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 			boolean drawGoggles = keeperBE.goggles;
 			PartialModel drawHat = AllPartialModels.LOGISTICS_HAT;
 			int hashCode = keeperBE.hashCode();
-			Lighting.setupForEntityInInventory();
+			BlockState burnerState = keeperBE.getBlockState();
+			Level burnerLevel = minecraft.level;
 
-			VertexConsumer cutout = graphics.bufferSource().getBuffer(RenderType.cutoutMipped());
-			CachedBuffers.partial(AllPartialModels.BLAZE_CAGE, keeperBE.getBlockState())
-				.rotateCentered(horizontalAngle + Mth.PI, Direction.UP)
-				.light(LightTexture.FULL_BRIGHT)
-				.renderInto(ms, cutout);
-
-			BlazeBurnerRenderer.renderShared(ms, null, graphics.bufferSource(), minecraft.level,
-				keeperBE.getBlockState(), heatLevel, animation, horizontalAngle, canDrawFlame, drawGoggles, drawHat,
-				hashCode);
-			Lighting.setupFor3DItems();
-			ms.popPose();
+			// A block of world geometry is 16 units wide inside a picture-in-picture texture, so the
+			// 48-pixel burner is drawn at three times that.
+			ms.pushMatrix();
+			ms.translate((float) (entityX), (float) (entityY));
+			// 48 pixels to the block: what scaling a sixteen-unit box by three used to come to.
+			float burnerScale = 48;
+			float burnerUnit = GuiElementTransform.unitsPerBlock(burnerScale);
+			ms.scale(burnerScale / burnerUnit, burnerScale / burnerUnit);
+			graphics.guiRenderState.addPicturesInPictureState(new GuiCustomGeometryRenderState((poseStack, queue) -> {
+				CachedBufferer.partial(AllPartialModels.BLAZE_CAGE, burnerState)
+					.rotateCentered(horizontalAngle + Mth.PI, Direction.UP)
+					.light(LightCoordsUtil.FULL_BRIGHT)
+					.submit(poseStack, RenderTypes.cutoutMovingBlock(), queue);
+				BlazeBurnerRenderer.submitShared(poseStack, null, queue, burnerLevel, burnerState, heatLevel,
+					animation, horizontalAngle, canDrawFlame, drawGoggles, drawHat, hashCode);
+			}, new Matrix3x2f(ms), new GuiElementTransform(0, 0, 0, -22.5f, -45, 0, 0, 0, 0, 0, 0, 0,
+				ILightingSettings.ITEMS_3D), GuiElementTransform.boxMin(burnerScale), GuiElementTransform.boxMin(burnerScale),
+				GuiElementTransform.boxMax(burnerScale), GuiElementTransform.boxMax(burnerScale),
+				burnerUnit, false, null, null));
+			ms.popMatrix();
 		}
 
 		// Render static item icons
 		if (encodeRequester) {
-			ms.pushPose();
-			ms.translate(x + windowWidth + 5, y + windowHeight - 70, 0);
-			ms.scale(3.5f, 3.5f, 3.5f);
+			ms.pushMatrix();
+			ms.translate((float) (x + windowWidth + 5), (float) (y + windowHeight - 70));
+			ms.scale((float) (3.5f), (float) (3.5f));
 			GuiGameElement.of(itemToProgram)
-				.render(graphics);
-			ms.popPose();
+				.submit(graphics);
+			ms.popMatrix();
 		}
 
 		// Render ordered items
@@ -564,15 +570,15 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 			BigItemStack entry = itemsToOrder.get(index);
 			boolean isStackHovered = index == hoveredSlot.getSecond() && hoveredSlot.getFirst() == -1;
 
-			ms.pushPose();
-			ms.translate(itemsX + index * colWidth, orderY, 0);
+			ms.pushMatrix();
+			ms.translate((float) (itemsX + index * colWidth), (float) (orderY));
 			renderItemEntry(graphics, 1, entry, isStackHovered, true);
-			ms.popPose();
+			ms.popMatrix();
 		}
 
 		if (itemsToOrder.size() > 9) {
-			graphics.drawString(font, Component.literal("[+" + (itemsToOrder.size() - 9) + "]"), x + windowWidth - 40,
-				orderY + 21, 0xF8F8EC);
+			graphics.text(font, Component.literal("[+" + (itemsToOrder.size() - 9) + "]"), x + windowWidth - 40,
+				orderY + 21, 0xFFF8F8EC);
 		}
 
 		boolean justSent = itemsToOrder.isEmpty() && successTicks > 0;
@@ -582,7 +588,7 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 
 		MutableComponent headerTitle = CreateLang.translate("gui.stock_keeper.title")
 			.component();
-		graphics.drawString(font, headerTitle, x + windowWidth / 2 - font.width(headerTitle) / 2, y + 4, 0x714A40,
+		graphics.text(font, headerTitle, x + windowWidth / 2 - font.width(headerTitle) / 2, y + 4, 0xFF714A40,
 			false);
 		MutableComponent component =
 			CreateLang.translate(encodeRequester ? "gui.stock_keeper.configure" : "gui.stock_keeper.send")
@@ -590,18 +596,18 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 
 		if (justSent) {
 			float alpha = Mth.clamp((successTicks + partialTicks - 5f) / 5f, 0f, 1f);
-			ms.pushPose();
-			ms.translate(alpha * alpha * 50, 0, 0);
+			ms.pushMatrix();
+			ms.translate((float) (alpha * alpha * 50), (float) (0));
 			if (successTicks < 10)
-				graphics.drawString(font, component, x + windowWidth - 42 - font.width(component) / 2,
-					y + windowHeight - 35, new Color(0x252525).setAlpha(1 - alpha * alpha)
+				graphics.text(font, component, x + windowWidth - 42 - font.width(component) / 2,
+					y + windowHeight - 35, new Color(0xFF252525).setAlpha(1 - alpha * alpha)
 						.getRGB(),
 					false);
-			ms.popPose();
+			ms.popMatrix();
 
 		} else {
-			graphics.drawString(font, component, x + windowWidth - 42 - font.width(component) / 2,
-				y + windowHeight - 35, 0x252525, false);
+			graphics.text(font, component, x + windowWidth - 42 - font.width(component) / 2,
+				y + windowHeight - 35, 0xFF252525, false);
 		}
 
 		// Request just sent
@@ -615,10 +621,9 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 					.getRGB();
 				int w = font.width(msg) + 14;
 				AllGuiTextures.STOCK_KEEPER_REQUEST_BANNER_L.render(graphics, msgX - 8, msgY - 4);
-				UIRenderHelper.drawStretched(graphics, msgX, msgY - 4, w, 16, 0,
-					AllGuiTextures.STOCK_KEEPER_REQUEST_BANNER_M);
+				UIRenderHelper.drawStretched(graphics, msgX, msgY - 4, w, 16, AllGuiTextures.STOCK_KEEPER_REQUEST_BANNER_M);
 				AllGuiTextures.STOCK_KEEPER_REQUEST_BANNER_R.render(graphics, msgX + font.width(msg) + 10, msgY - 4);
-				graphics.drawString(font, msg, msgX + 5, msgY, c3, false);
+				graphics.text(font, msg, msgX + 5, msgY, c3, false);
 			}
 		}
 
@@ -629,8 +634,8 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 
 		graphics.enableScissor(itemWindowX - 5, itemWindowY, itemWindowX2 + 10, itemWindowY2);
 
-		ms.pushPose();
-		ms.translate(0, -currentScroll * rowHeight, 0);
+		ms.pushMatrix();
+		ms.translate((float) (0), (float) (-currentScroll * rowHeight));
 
 		// BG
 		for (int sliceY = -2; sliceY < getMaxScroll() * rowHeight + windowHeight - 72; sliceY +=
@@ -644,10 +649,10 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 
 		// Search bar
 		AllGuiTextures.STOCK_KEEPER_REQUEST_SEARCH.render(graphics, x + 42, searchBox.getY() - 5);
-		searchBox.render(graphics, mouseX, mouseY, partialTicks);
+		searchBox.extractRenderState(graphics, mouseX, mouseY, partialTicks);
 		if (searchBox.getValue()
 			.isBlank() && !searchBox.isFocused())
-			graphics.drawString(font, searchBox.getMessage(),
+			graphics.text(font, searchBox.getMessage(),
 				x + windowWidth / 2 - font.width(searchBox.getMessage()) / 2, searchBox.getY(), 0xff4A2D31, false);
 
 		// Something isnt right
@@ -662,12 +667,12 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 				for (int i = 0; i < split.size(); i++) {
 					FormattedCharSequence sequence = split.get(i);
 					int lineWidth = font.width(sequence);
-					graphics.drawString(font, sequence, x + windowWidth / 2 - lineWidth / 2 + 1,
-						itemsY + 20 + 1 + i * (font.lineHeight + 1), new Color(0x4A2D31).setAlpha(alpha)
+					graphics.text(font, sequence, x + windowWidth / 2 - lineWidth / 2 + 1,
+						itemsY + 20 + 1 + i * (font.lineHeight + 1), new Color(0xFF4A2D31).setAlpha(alpha)
 							.getRGB(),
 						false);
-					graphics.drawString(font, sequence, x + windowWidth / 2 - lineWidth / 2,
-						itemsY + 20 + i * (font.lineHeight + 1), new Color(0xF8F8EC).setAlpha(alpha)
+					graphics.text(font, sequence, x + windowWidth / 2 - lineWidth / 2,
+						itemsY + 20 + i * (font.lineHeight + 1), new Color(0xFFF8F8EC).setAlpha(alpha)
 							.getRGB(),
 						false);
 				}
@@ -685,8 +690,8 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 			if (!categories.isEmpty()) {
 				(categoryEntry.hidden ? AllGuiTextures.STOCK_KEEPER_CATEGORY_HIDDEN
 					: AllGuiTextures.STOCK_KEEPER_CATEGORY_SHOWN).render(graphics, itemsX, itemsY + categoryY + 6);
-				graphics.drawString(font, categoryEntry.name, itemsX + 10, itemsY + categoryY + 8, 0x4A2D31, false);
-				graphics.drawString(font, categoryEntry.name, itemsX + 9, itemsY + categoryY + 7, 0xF8F8EC, false);
+				graphics.text(font, categoryEntry.name, itemsX + 10, itemsY + categoryY + 8, 0xFF4A2D31, false);
+				graphics.text(font, categoryEntry.name, itemsX + 9, itemsY + categoryY + 7, 0xFFF8F8EC, false);
 				if (categoryEntry.hidden)
 					continue;
 			}
@@ -703,10 +708,10 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 				boolean isStackHovered = index == hoveredSlot.getSecond() && categoryIndex == hoveredSlot.getFirst();
 				BigItemStack entry = category.get(index);
 
-				ms.pushPose();
-				ms.translate(itemsX + (index % cols) * colWidth, pY, 0);
+				ms.pushMatrix();
+				ms.translate(itemsX + (index % cols) * colWidth, pY);
 				renderItemEntry(graphics, 1, entry, isStackHovered, false);
-				ms.popPose();
+				ms.popMatrix();
 			}
 		}
 
@@ -721,7 +726,7 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 			(isLocked ? AllGuiTextures.STOCK_KEEPER_REQUEST_LOCKED : AllGuiTextures.STOCK_KEEPER_REQUEST_UNLOCKED)
 				.render(graphics, lockX, besideSearchButtonY);
 
-		ms.popPose();
+		ms.popMatrix();
 		graphics.disableScissor();
 
 		// Scroll bar
@@ -731,24 +736,24 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 		if (barSize < windowH - 2) {
 			int barX = itemsX + cols * colWidth;
 			int barY = y + 15;
-			ms.pushPose();
-			ms.translate(0, (currentScroll * rowHeight) / totalH * (windowH - 2), 0);
+			ms.pushMatrix();
+			ms.translate(0, (currentScroll * rowHeight) / totalH * (windowH - 2));
 			AllGuiTextures pad = AllGuiTextures.STOCK_KEEPER_REQUEST_SCROLL_PAD;
-			graphics.blit(pad.location, barX, barY, pad.getWidth(), barSize, pad.getStartX(), pad.getStartY(),
-				pad.getWidth(), pad.getHeight(), 256, 256);
+			graphics.blit(RenderPipelines.GUI_TEXTURED, pad.location, barX, barY, pad.getStartX(), pad.getStartY(),
+				pad.getWidth(), barSize, pad.getWidth(), pad.getHeight(), 256, 256);
 			AllGuiTextures.STOCK_KEEPER_REQUEST_SCROLL_TOP.render(graphics, barX, barY);
 			if (barSize > 16)
 				AllGuiTextures.STOCK_KEEPER_REQUEST_SCROLL_MID.render(graphics, barX, barY + barSize / 2 - 4);
 			AllGuiTextures.STOCK_KEEPER_REQUEST_SCROLL_BOT.render(graphics, barX, barY + barSize - 5);
-			ms.popPose();
+			ms.popMatrix();
 		}
 
 		// Render JEI imported
 		if (recipesToOrder.size() > 0) {
 			int jeiX = x + (windowWidth - colWidth * recipesToOrder.size()) / 2 + 1;
 			int jeiY = orderY - 31;
-			ms.pushPose();
-			ms.translate(jeiX, jeiY, 200);
+			ms.pushMatrix();
+			ms.translate((float) (jeiX), (float) (jeiY));
 			int xoffset = -3;
 			AllGuiTextures.STOCK_KEEPER_REQUEST_BLUEPRINT_LEFT.render(graphics, xoffset, -3);
 			xoffset += 10;
@@ -761,18 +766,18 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 			for (int index = 0; index < recipesToOrder.size(); index++) {
 				CraftableBigItemStack craftableBigItemStack = recipesToOrder.get(index);
 				boolean isStackHovered = index == hoveredSlot.getSecond() && -2 == hoveredSlot.getFirst();
-				ms.pushPose();
-				ms.translate(index * colWidth, 0, 0);
+				ms.pushMatrix();
+				ms.translate((float) (index * colWidth), (float) (0));
 				renderItemEntry(graphics, 1, craftableBigItemStack, isStackHovered, true);
-				ms.popPose();
+				ms.popMatrix();
 			}
 
-			ms.popPose();
+			ms.popMatrix();
 		}
 	}
 
 	@Override
-	protected void renderForeground(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+	protected void renderForeground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks) {
 		super.renderForeground(graphics, mouseX, mouseY, partialTicks);
 		float currentScroll = itemScroll.getValue(partialTicks);
 		Couple<Integer> hoveredSlot = getHoveredSlot(mouseX, mouseY);
@@ -793,9 +798,9 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 				if (lines.size() > 0)
 					lines.set(0, CreateLang.translateDirect("gui.stock_keeper.craft", lines.get(0)
 						.copy()));
-				graphics.renderComponentTooltip(font, lines, mouseX, mouseY);
+				graphics.setComponentTooltipForNextFrame(font, lines, mouseX, mouseY);
 			} else
-				graphics.renderTooltip(font, entry.stack, mouseX, mouseY);
+				graphics.setTooltipForNextFrame(font, entry.stack, mouseX, mouseY);
 		}
 
 		if (currentScroll < 1 && mouseY > besideSearchButtonY && mouseY <= besideSearchButtonY + 15) {
@@ -803,7 +808,7 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 			if (Mods.JEI.isLoaded() && mouseX > jeiSyncX && mouseX <= jeiSyncX + 15) {
 				SearchSyncMode mode = AllConfigs.client().syncRecipeViewerSearch.get();
 				String langKey = "gui.stock_keeper.jei_sync." + mode.getSerializedName();
-				graphics.renderComponentTooltip(font,
+				graphics.setComponentTooltipForNextFrame(font,
 					List.of(
 						CreateLang.translate(langKey)
 							.component(),
@@ -819,7 +824,7 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 
 			// Render tooltip of lock option
 			if (isAdmin && mouseX > lockX && mouseX <= lockX + 15) {
-				graphics.renderComponentTooltip(font,
+				graphics.setComponentTooltipForNextFrame(font,
 					List.of(
 						CreateLang.translate(isLocked ? "gui.stock_keeper.network_locked" : "gui.stock_keeper.network_open")
 							.component(),
@@ -840,7 +845,7 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 		// Render tooltip of address input
 		if (addressBox.getValue()
 			.isBlank() && !addressBox.isFocused() && addressBox.isHovered()) {
-			graphics.renderComponentTooltip(font, List.of(CreateLang.translate("gui.factory_panel.restocker_address")
+			graphics.setComponentTooltipForNextFrame(font, List.of(CreateLang.translate("gui.factory_panel.restocker_address")
 						.color(ScrollInput.HEADER_RGB)
 						.component(),
 					CreateLang.translate("gui.schedule.lmb_edit")
@@ -851,7 +856,7 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 		}
 	}
 
-	private void renderItemEntry(GuiGraphics graphics, float scale, BigItemStack entry, boolean isStackHovered,
+	private void renderItemEntry(GuiGraphicsExtractor graphics, float scale, BigItemStack entry, boolean isStackHovered,
 								 boolean isRenderingOrders) {
 		int customCount = entry.count;
 		ItemStack stackWithCount = entry.stack.copyWithCount(customCount);
@@ -870,34 +875,34 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 		}
 
 		boolean craftable = entry instanceof CraftableBigItemStack;
-		PoseStack ms = graphics.pose();
-		ms.pushPose();
+		Matrix3x2fStack ms = graphics.pose();
+		ms.pushMatrix();
 
 		float scaleFromHover = 1;
 		if (isStackHovered)
 			scaleFromHover += .075f;
 
-		ms.translate((colWidth - 18) / 2.0, (rowHeight - 18) / 2.0, 0);
-		ms.translate(18 / 2.0, 18 / 2.0, 0);
-		ms.scale(scale, scale, scale);
-		ms.scale(scaleFromHover, scaleFromHover, scaleFromHover);
-		ms.translate(-18 / 2.0, -18 / 2.0, 0);
+		ms.translate((colWidth - 18) / 2.0f, (rowHeight - 18) / 2.0f);
+		ms.translate((float) (18 / 2.0), (float) (18 / 2.0));
+		ms.scale((float) (scale), (float) (scale));
+		ms.scale((float) (scaleFromHover), (float) (scaleFromHover));
+		ms.translate((float) (-18 / 2.0), (float) (-18 / 2.0));
 		if (customCount != 0 || craftable)
 			GuiGameElement.of(stackWithCount)
-				.render(graphics);
-		ms.popPose();
+				.submit(graphics);
+		ms.popMatrix();
 
-		ms.pushPose();
-		ms.translate(0, 0, 190);
+		ms.pushMatrix();
+		ms.translate((float) (0), (float) (0));
 		if (customCount != 0 || craftable)
-			graphics.renderItemDecorations(font, stackWithCount, 1, 1, "");
-		ms.translate(0, 0, 10);
+			graphics.itemDecorations(font, stackWithCount, 1, 1, "");
+		ms.translate((float) (0), (float) (0));
 		if (customCount > 1 || craftable)
 			drawItemCount(graphics, entry.count, customCount);
-		ms.popPose();
+		ms.popMatrix();
 	}
 
-	private void drawItemCount(GuiGraphics graphics, int count, int customCount) {
+	private void drawItemCount(GuiGraphicsExtractor graphics, int count, int customCount) {
 		count = customCount;
 		String text = count >= 1000000 ? (count / 1000000) + "m"
 			: count >= 10000 ? (count / 1000) + "k"
@@ -936,9 +941,7 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 					break;
 			}
 
-			RenderSystem.enableBlend();
-			graphics.blit(NUMBERS.location, 14 + x, 10, 0, NUMBERS.getStartX() + xOffset, NUMBERS.getStartY(),
-				spriteWidth, NUMBERS.getHeight(), 256, 256);
+			graphics.blit(RenderPipelines.GUI_TEXTURED, NUMBERS.location, 14 + x, 10, NUMBERS.getStartX() + xOffset, NUMBERS.getStartY(), spriteWidth, NUMBERS.getHeight(), 256, 256);
 			x += spriteWidth - 1;
 		}
 
@@ -1094,7 +1097,10 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 	}
 
 	@Override
-	public boolean mouseClicked(double pMouseX, double pMouseY, int pButton) {
+	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+		double pMouseX = event.x();
+		double pMouseY = event.y();
+		int pButton = event.button();
 		boolean lmb = pButton == GLFW.GLFW_MOUSE_BUTTON_LEFT;
 		boolean rmb = pButton == GLFW.GLFW_MOUSE_BUTTON_RIGHT;
 
@@ -1109,14 +1115,14 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 		}
 
 		if (addressBox.isFocused()) {
-			boolean result = addressBox.mouseClicked(pMouseX, pMouseY, pButton);
+			boolean result = addressBox.mouseClicked(event, doubleClick);
 			if (addressBox.isHovered() || result)
 				return result;
 			addressBox.setFocused(false);
 		}
 		if (searchBox.isFocused()) {
 			if (searchBox.isHovered())
-				return searchBox.mouseClicked(pMouseX, pMouseY, pButton);
+				return searchBox.mouseClicked(event, doubleClick);
 			searchBox.setFocused(false);
 		}
 
@@ -1127,7 +1133,7 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 			scrollHandleActive = true;
 			if (minecraft.isWindowActive())
 				GLFW.glfwSetInputMode(minecraft.getWindow()
-					.getWindow(), 208897, GLFW.GLFW_CURSOR_HIDDEN);
+					.handle(), 208897, GLFW.GLFW_CURSOR_HIDDEN);
 			return true;
 		}
 
@@ -1149,7 +1155,7 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 			// Lock
 			if (isAdmin && pMouseX > lockX && pMouseX <= lockX + 15) {
 				isLocked = !isLocked;
-				CatnipServices.NETWORK.sendToServer(new StockKeeperLockPacket(blockEntity.getBlockPos(), isLocked));
+				ClientNetworkHelper.INSTANCE.sendToServer(new StockKeeperLockPacket(blockEntity.getBlockPos(), isLocked));
 				playUiSound(SoundEvents.UI_BUTTON_CLICK.value(), 1, 1);
 				return true;
 			}
@@ -1193,7 +1199,7 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 		}
 
 		if (hoveredSlot == noneHovered || !lmb && !rmb)
-			return super.mouseClicked(pMouseX, pMouseY, pButton);
+			return super.mouseClicked(event, doubleClick);
 
 		// Items
 		boolean orderClicked = hoveredSlot.getFirst() == -1;
@@ -1204,7 +1210,7 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 			.get(hoveredSlot.getSecond());
 
 		ItemStack itemStack = entry.stack;
-		int transfer = hasShiftDown() ? itemStack.getMaxStackSize() : hasControlDown() ? 10 : 1;
+		int transfer = Minecraft.getInstance().hasShiftDown() ? itemStack.getMaxStackSize() : Minecraft.getInstance().hasControlDown() ? 10 : 1;
 
 		if (recipeClicked && entry instanceof CraftableBigItemStack cbis) {
 			if (rmb && cbis.count == 0) {
@@ -1241,14 +1247,17 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 	}
 
 	@Override
-	public boolean mouseReleased(double pMouseX, double pMouseY, int pButton) {
+	public boolean mouseReleased(MouseButtonEvent event) {
+		double pMouseX = event.x();
+		double pMouseY = event.y();
+		int pButton = event.button();
 		if (pButton == GLFW.GLFW_MOUSE_BUTTON_LEFT && scrollHandleActive) {
 			scrollHandleActive = false;
 			if (minecraft.isWindowActive())
 				GLFW.glfwSetInputMode(minecraft.getWindow()
-					.getWindow(), 208897, GLFW.GLFW_CURSOR_NORMAL);
+					.handle(), 208897, GLFW.GLFW_CURSOR_NORMAL);
 		}
-		return super.mouseReleased(pMouseX, pMouseY, pButton);
+		return super.mouseReleased(event);
 	}
 
 	@Override
@@ -1259,7 +1268,7 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 		Couple<Integer> hoveredSlot = getHoveredSlot((int) mouseX, (int) mouseY);
 		boolean noHover = hoveredSlot == noneHovered;
 
-		if (noHover || hoveredSlot.getFirst() >= 0 && !hasShiftDown() && getMaxScroll() != 0) {
+		if (noHover || hoveredSlot.getFirst() >= 0 && !Minecraft.getInstance().hasShiftDown() && getMaxScroll() != 0) {
 			int maxScroll = getMaxScroll();
 			int direction = (int) (Math.ceil(Math.abs(scrollY)) * -Math.signum(scrollY));
 			float newTarget = Mth.clamp(Math.round(itemScroll.getChaseTarget() + direction), 0, maxScroll);
@@ -1275,7 +1284,7 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 			.get(hoveredSlot.getSecond());
 
 		boolean remove = scrollY < 0;
-		int transfer = Mth.ceil(Math.abs(scrollY)) * (hasControlDown() ? 10 : 1);
+		int transfer = Mth.ceil(Math.abs(scrollY)) * (Minecraft.getInstance().hasControlDown() ? 10 : 1);
 
 		if (recipeClicked && entry instanceof CraftableBigItemStack cbis) {
 			requestCraftable(cbis, remove ? -transfer : transfer);
@@ -1338,9 +1347,12 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 	}
 
 	@Override
-	public boolean mouseDragged(double pMouseX, double pMouseY, int pButton, double pDragX, double pDragY) {
+	public boolean mouseDragged(MouseButtonEvent event, double pDragX, double pDragY) {
+		double pMouseX = event.x();
+		double pMouseY = event.y();
+		int pButton = event.button();
 		if (pButton != GLFW.GLFW_MOUSE_BUTTON_LEFT || !scrollHandleActive)
-			return super.mouseDragged(pMouseX, pMouseY, pButton, pDragX, pDragY);
+			return super.mouseDragged(event, pDragX, pDragY);
 
 		Window window = minecraft.getWindow();
 		double scaleX = window.getGuiScaledWidth() / (double) window.getScreenWidth();
@@ -1363,20 +1375,22 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 		if (minecraft.isWindowActive()) {
 			double forceX = (barX + 2) / scaleX;
 			double forceY = Mth.clamp(pMouseY, minY, maxY) / scaleY;
-			GLFW.glfwSetCursorPos(window.getWindow(), forceX, forceY);
+			GLFW.glfwSetCursorPos(window.handle(), forceX, forceY);
 		}
 
 		return true;
 	}
 
 	@Override
-	public boolean charTyped(char pCodePoint, int pModifiers) {
+	public boolean charTyped(CharacterEvent event) {
+		char pCodePoint = (char) event.codepoint();
+		int pModifiers = 0;
 		if (ignoreTextInput)
 			return false;
-		if (addressBox.isFocused() && addressBox.charTyped(pCodePoint, pModifiers))
+		if (addressBox.isFocused() && addressBox.charTyped(event))
 			return true;
 		String s = searchBox.getValue();
-		if (!searchBox.charTyped(pCodePoint, pModifiers))
+		if (!searchBox.charTyped(event))
 			return false;
 		if (!Objects.equals(s, searchBox.getValue())) {
 			refreshSearchNextTick = true;
@@ -1387,9 +1401,12 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 	}
 
 	@Override
-	public boolean keyPressed(int pKeyCode, int pScanCode, int pModifiers) {
+	public boolean keyPressed(KeyEvent event) {
+		int pKeyCode = event.key();
+		int pScanCode = event.scancode();
+		int pModifiers = event.modifiers();
 		ignoreTextInput = false;
-		if (!addressBox.isFocused() && !searchBox.isFocused() && minecraft.options.keyChat.matches(pKeyCode, pScanCode)) {
+		if (!addressBox.isFocused() && !searchBox.isFocused() && minecraft.options.keyChat.matches(event)) {
 			ignoreTextInput = true;
 			searchBox.setFocused(true);
 			return true;
@@ -1400,18 +1417,18 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 			return true;
 		}
 
-		if (pKeyCode == GLFW.GLFW_KEY_ENTER && hasShiftDown()) {
+		if (pKeyCode == GLFW.GLFW_KEY_ENTER && Minecraft.getInstance().hasShiftDown()) {
 			sendIt();
 			return true;
 		}
 
-		if (addressBox.isFocused() && addressBox.keyPressed(pKeyCode, pScanCode, pModifiers))
+		if (addressBox.isFocused() && addressBox.keyPressed(event))
 			return true;
 
 		String s = searchBox.getValue();
-		if (!searchBox.keyPressed(pKeyCode, pScanCode, pModifiers)) {
+		if (!searchBox.keyPressed(event)) {
 			return searchBox.isFocused() && searchBox.isVisible() && pKeyCode != 256
-				|| super.keyPressed(pKeyCode, pScanCode, pModifiers);
+				|| super.keyPressed(event);
 		}
 		if (!Objects.equals(s, searchBox.getValue())) {
 			refreshSearchNextTick = true;
@@ -1424,9 +1441,9 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 	@Override
 	public void removed() {
 		BlockPos pos = blockEntity.getBlockPos();
-		CatnipServices.NETWORK.sendToServer(
+		ClientNetworkHelper.INSTANCE.sendToServer(
 			new PackageOrderRequestPacket(pos, PackageOrderWithCrafts.empty(), addressBox.getValue(), false));
-		CatnipServices.NETWORK
+		ClientNetworkHelper.INSTANCE
 			.sendToServer(new StockKeeperCategoryHidingPacket(pos, new ArrayList<>(hiddenCategories)));
 		super.removed();
 	}
@@ -1498,7 +1515,7 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 			order = new PackageOrderWithCrafts(order.orderedStacks(), craftList);
 		}
 
-		CatnipServices.NETWORK.sendToServer(
+		ClientNetworkHelper.INSTANCE.sendToServer(
 			new PackageOrderRequestPacket(blockEntity.getBlockPos(), order, addressBox.getValue(), encodeRequester));
 
 		itemsToOrder = new ArrayList<>();
@@ -1511,9 +1528,12 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 	}
 
 	@Override
-	public boolean keyReleased(int pKeyCode, int pScanCode, int pModifiers) {
+	public boolean keyReleased(KeyEvent event) {
+		int pKeyCode = event.key();
+		int pScanCode = event.scancode();
+		int pModifiers = event.modifiers();
 		ignoreTextInput = false;
-		return super.keyReleased(pKeyCode, pScanCode, pModifiers);
+		return super.keyReleased(event);
 	}
 
 	@Override

@@ -1,6 +1,15 @@
 package com.simibubi.create;
 
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.simibubi.create.content.equipment.hats.HatRenderData;
+import com.simibubi.create.content.equipment.clipboard.ClipboardTypeProperty;
+import com.simibubi.create.content.legacy.ChromaticCompoundColor;
+import com.simibubi.create.foundation.gui.render.GuiCustomGeometryRenderer;
+import com.simibubi.create.AllFluids;
+import com.simibubi.create.foundation.render.CachedBufferer;
+import net.createmod.catnip.api.client.event.LevelRenderCallback;
+import com.simibubi.create.foundation.events.ClientEvents;
+import com.simibubi.create.foundation.networking.CreateClientPayloadHandlers;
+import com.mojang.blaze3d.opengl.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.simibubi.create.compat.Mods;
 import com.simibubi.create.compat.ftb.FTBIntegration;
@@ -21,19 +30,19 @@ import com.simibubi.create.content.schematics.client.SchematicHandler;
 import com.simibubi.create.content.trains.GlobalRailwayManager;
 import com.simibubi.create.foundation.ClientResourceReloadListener;
 import com.simibubi.create.foundation.blockEntity.behaviour.ValueSettingsClient;
+import com.simibubi.create.foundation.item.render.AllCustomItemRenderers;
 import com.simibubi.create.foundation.model.ModelSwapper;
 import com.simibubi.create.foundation.ponder.CreatePonderPlugin;
 import com.simibubi.create.foundation.render.AllInstanceTypes;
 import com.simibubi.create.infrastructure.config.AllConfigs;
-import com.simibubi.create.infrastructure.gui.CreateMainMenuScreen;
+import com.simibubi.create.infrastructure.gui.CreatePanorama;
 
-import net.createmod.catnip.config.ui.BaseConfigScreen;
-import net.createmod.catnip.config.ui.ConfigScreen;
-import net.createmod.catnip.render.CachedBuffers;
-import net.createmod.catnip.render.SuperByteBufferCache;
-import net.createmod.ponder.foundation.PonderIndex;
+import net.createmod.catnip.api.client.config.BaseConfigScreen;
+import net.createmod.catnip.api.client.config.ConfigScreen;
+import net.createmod.catnip.api.client.render.SuperByteBufferCache;
+import net.createmod.ponder.api.client.PonderIndex;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.GraphicsStatus;
+import net.minecraft.client.GraphicsPreset;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.ClickEvent;
@@ -76,6 +85,11 @@ public class CreateClient {
 
 		modEventBus.addListener(CreateClient::clientInit);
 		modEventBus.addListener(AllParticleTypes::registerFactories);
+		modEventBus.addListener(AllParticleTypes::registerGroups);
+		modEventBus.addListener(HatRenderData::registerModifier);
+		modEventBus.addListener(GuiCustomGeometryRenderer::register);
+		modEventBus.addListener(ChromaticCompoundColor::register);
+		modEventBus.addListener(ClipboardTypeProperty::register);
 
 		AllInstanceTypes.init();
 
@@ -90,6 +104,13 @@ public class CreateClient {
 	}
 
 	public static void clientInit(final FMLClientSetupEvent event) {
+		// Clientbound payload handlers cannot be registered from the common side; see
+		// CreateClientPayloadHandlers.
+		CreateClientPayloadHandlers.register();
+
+		// 26.2 submits render nodes ahead of drawing them; see ClientEvents#onSubmitFeatures.
+		LevelRenderCallback.SUBMIT_FEATURES.subscribe(ClientEvents::onSubmitFeatures);
+
 		//BUFFER_CACHE.registerCompartment(CachedBufferer.GENERIC_BLOCK);
 		//BUFFER_CACHE.registerCompartment(CachedPartialBuffers.partial);
 		//BUFFER_CACHE.registerCompartment(CachedBufferer.DIRECTIONAL_PARTIAL);
@@ -98,13 +119,19 @@ public class CreateClient {
 		//BUFFER_CACHE.registerCompartment(ContraptionRenderInfo.CONTRAPTION, 20);
 		//BUFFER_CACHE.registerCompartment(WorldSectionElement.DOC_WORLD_SECTION, 20);
 
-		SuperByteBufferCache.getInstance().registerCompartment(CachedBuffers.PARTIAL);
-		SuperByteBufferCache.getInstance().registerCompartment(CachedBuffers.DIRECTIONAL_PARTIAL);
+		SuperByteBufferCache.getInstance().registerCompartment(CachedBufferer.PARTIAL);
+		SuperByteBufferCache.getInstance().registerCompartment(CachedBufferer.DIRECTIONAL_PARTIAL);
 		SuperByteBufferCache.getInstance().registerCompartment(KineticBlockEntityRenderer.KINETIC_BLOCK);
 		SuperByteBufferCache.getInstance().registerCompartment(WaterWheelRenderer.WATER_WHEEL);
 		SuperByteBufferCache.getInstance().registerCompartment(ContraptionEntityRenderer.CONTRAPTION, 20);
 
+		// Must happen before models are baked: ModelSwapper wraps each of these items' baked models so
+		// the renderer is reached through the item's render state.
+		AllCustomItemRenderers.register();
+
 		AllPartialModels.init();
+
+
 
 
 		//AllPonderTags.register();
@@ -116,13 +143,7 @@ public class CreateClient {
 
 	private static void setupConfigUIBackground() {
 		ConfigScreen.backgrounds.put(Create.ID, (screen, graphics, partialTicks) -> {
-			CreateMainMenuScreen.PANORAMA.render(graphics, screen.width, screen.height, 1, partialTicks);
-
-			//RenderSystem.setShaderTexture(0, CreateMainMenuScreen.PANORAMA_OVERLAY_TEXTURES);
-			RenderSystem.enableBlend();
-			RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
-			graphics.blit(CreateMainMenuScreen.PANORAMA_OVERLAY_TEXTURES, 0, 0, screen.width, screen.height, 0.0F, 0.0F, 16, 128, 16, 128);
-
+			CreatePanorama.extract(graphics, screen.width, screen.height);
 			graphics.fill(0, 0, screen.width, screen.height, 0x90_282c34);
 		});
 
@@ -143,7 +164,7 @@ public class CreateClient {
 		if (mc.player == null)
 			return;
 
-		if (mc.options.graphicsMode().get() != GraphicsStatus.FABULOUS)
+		if (mc.options.graphicsPreset().get() != GraphicsPreset.FABULOUS)
 			return;
 
 		if (AllConfigs.client().ignoreFabulousWarning.get())
@@ -154,12 +175,11 @@ public class CreateClient {
 			.append(Component.literal(" Some of Create's visual features will not be available while Fabulous graphics are enabled!"))
 			.withStyle(style -> {
                 return style
-                    .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/create dismissFabulousWarning"))
-                    .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                            Component.literal("Click here to disable this warning")));
+                    .withClickEvent(new ClickEvent.RunCommand("/create dismissFabulousWarning"))
+                    .withHoverEvent(new HoverEvent.ShowText(Component.literal("Click here to disable this warning")));
             });
 
-		mc.player.displayClientMessage(text, false);
+		mc.player.sendSystemMessage(text);
 	}
 
 }

@@ -1,10 +1,12 @@
 package com.simibubi.create.content.schematics.cannon;
 
+import net.minecraft.world.level.Level;
+
+import com.simibubi.create.foundation.utility.ClientAccess;
+
 import com.simibubi.create.AllMenuTypes;
 import com.simibubi.create.foundation.gui.menu.MenuBase;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -13,7 +15,7 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
-import net.neoforged.neoforge.items.SlotItemHandler;
+import net.neoforged.neoforge.transfer.item.ResourceHandlerSlot;
 
 public class SchematicannonMenu extends MenuBase<SchematicannonBlockEntity> {
 
@@ -31,7 +33,7 @@ public class SchematicannonMenu extends MenuBase<SchematicannonBlockEntity> {
 
 	@Override
 	protected SchematicannonBlockEntity createOnClient(RegistryFriendlyByteBuf extraData) {
-		ClientLevel world = Minecraft.getInstance().level;
+		Level world = ClientAccess.level();
 		BlockEntity blockEntity = world.getBlockEntity(extraData.readBlockPos());
 		if (blockEntity instanceof SchematicannonBlockEntity schematicannon) {
 			schematicannon.readClient(extraData.readNbt(), extraData.registryAccess());
@@ -49,11 +51,11 @@ public class SchematicannonMenu extends MenuBase<SchematicannonBlockEntity> {
 		int x = 0;
 		int y = 0;
 
-		addSlot(new SlotItemHandler(contentHolder.inventory, 0, x + 15, y + 65));
-		addSlot(new SlotItemHandler(contentHolder.inventory, 1, x + 171, y + 65));
-		addSlot(new SlotItemHandler(contentHolder.inventory, 2, x + 134, y + 19));
-		addSlot(new SlotItemHandler(contentHolder.inventory, 3, x + 174, y + 19));
-		addSlot(new SlotItemHandler(contentHolder.inventory, 4, x + 15, y + 19));
+		addSlot(new ResourceHandlerSlot(contentHolder.inventory, contentHolder.inventory::set, 0, x + 15, y + 65));
+		addSlot(new ResourceHandlerSlot(contentHolder.inventory, contentHolder.inventory::set, 1, x + 171, y + 65));
+		addSlot(new ResourceHandlerSlot(contentHolder.inventory, contentHolder.inventory::set, 2, x + 134, y + 19));
+		addSlot(new ResourceHandlerSlot(contentHolder.inventory, contentHolder.inventory::set, 3, x + 174, y + 19));
+		addSlot(new ResourceHandlerSlot(contentHolder.inventory, contentHolder.inventory::set, 4, x + 15, y + 19));
 
 		addPlayerSlots(37, 161);
 	}

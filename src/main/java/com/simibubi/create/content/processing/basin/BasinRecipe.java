@@ -1,5 +1,15 @@
 package com.simibubi.create.content.processing.basin;
 
+import com.simibubi.create.foundation.utility.ClientAccess;
+
+import net.neoforged.neoforge.transfer.transaction.Transaction;
+import net.neoforged.neoforge.transfer.item.ItemUtil;
+import net.neoforged.neoforge.transfer.fluid.FluidUtil;
+import com.simibubi.create.foundation.item.ItemHelper;
+import com.simibubi.create.foundation.recipe.RecipeAccessors;
+import net.neoforged.neoforge.transfer.fluid.FluidResource;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -17,8 +27,7 @@ import com.simibubi.create.foundation.blockEntity.behaviour.fluid.SmartFluidTank
 import com.simibubi.create.foundation.recipe.DummyCraftingContainer;
 import com.simibubi.create.foundation.recipe.IRecipeTypeInfo;
 
-import net.createmod.catnip.data.Iterate;
-import net.minecraft.client.Minecraft;
+import net.createmod.catnip.api.data.Iterate;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CraftingRecipe;
@@ -30,10 +39,7 @@ import net.minecraft.world.level.Level;
 
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.fluids.FluidStack;
-import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
-import net.neoforged.neoforge.items.IItemHandler;
-
 public class BasinRecipe extends StandardProcessingRecipe<RecipeInput> {
 
 	public static boolean match(BasinBlockEntity basin, Recipe<?> recipe) {
@@ -41,8 +47,7 @@ public class BasinRecipe extends StandardProcessingRecipe<RecipeInput> {
 		if (filter == null)
 			return false;
 
-		boolean filterTest = filter.test(recipe.getResultItem(basin.getLevel()
-			.registryAccess()));
+		boolean filterTest = filter.test(RecipeAccessors.result(recipe, basin.getLevel()));
 		if (recipe instanceof BasinRecipe basinRecipe) {
 			if (basinRecipe.getRollableResults()
 				.isEmpty()
@@ -64,8 +69,8 @@ public class BasinRecipe extends StandardProcessingRecipe<RecipeInput> {
 
 	private static boolean apply(BasinBlockEntity basin, Recipe<?> recipe, boolean test) {
 		boolean isBasinRecipe = recipe instanceof BasinRecipe;
-		IItemHandler availableItems = basin.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, basin.getBlockPos(), null);
-		IFluidHandler availableFluids = basin.getLevel().getCapability(Capabilities.FluidHandler.BLOCK, basin.getBlockPos(), null);
+		ResourceHandler<ItemResource> availableItems = basin.getLevel().getCapability(Capabilities.Item.BLOCK, basin.getBlockPos(), null);
+		ResourceHandler<FluidResource> availableFluids = basin.getLevel().getCapability(Capabilities.Fluid.BLOCK, basin.getBlockPos(), null);
 
 		if (availableItems == null || availableFluids == null)
 			return false;
@@ -78,7 +83,7 @@ public class BasinRecipe extends StandardProcessingRecipe<RecipeInput> {
 		List<ItemStack> recipeOutputItems = new ArrayList<>();
 		List<FluidStack> recipeOutputFluids = new ArrayList<>();
 
-		List<Ingredient> ingredients = new LinkedList<>(recipe.getIngredients());
+		List<Ingredient> ingredients = new LinkedList<>(RecipeAccessors.ingredients(recipe));
 		List<SizedFluidIngredient> fluidIngredients =
 			isBasinRecipe ? ((BasinRecipe) recipe).getFluidIngredients() : Collections.emptyList();
 
@@ -87,20 +92,29 @@ public class BasinRecipe extends StandardProcessingRecipe<RecipeInput> {
 			if (!simulate && test)
 				return true;
 
-			int[] extractedItemsFromSlot = new int[availableItems.getSlots()];
-			int[] extractedFluidsFromTank = new int[availableFluids.getTanks()];
+			int[] extractedItemsFromSlot = new int[availableItems.size()];
+			int[] extractedFluidsFromTank = new int[availableFluids.size()];
 
 			Ingredients:
 			for (Ingredient ingredient : ingredients) {
-				for (int slot = 0; slot < availableItems.getSlots(); slot++) {
-					if (simulate && availableItems.getStackInSlot(slot)
+				for (int slot = 0; slot < availableItems.size(); slot++) {
+					if (simulate && ItemUtil.getStack(availableItems, slot)
 						.getCount() <= extractedItemsFromSlot[slot])
 						continue;
-					ItemStack extracted = availableItems.extractItem(slot, 1, true);
+					ItemStack extracted;
+					try (Transaction transaction = Transaction.openRoot()) {
+						ItemResource transferredResource = availableItems.getResource(slot);
+						int transferred = transferredResource.isEmpty() ? 0 : availableItems.extract(slot, transferredResource, 1, transaction);
+						extracted = transferred <= 0 ? ItemStack.EMPTY : transferredResource.toStack(transferred);
+					}
 					if (!ingredient.test(extracted))
 						continue;
 					if (!simulate)
-						availableItems.extractItem(slot, 1, false);
+						try (Transaction transaction = Transaction.openRoot()) {
+							ItemResource transferredResource = availableItems.getResource(slot);
+							int transferred = transferredResource.isEmpty() ? 0 : availableItems.extract(slot, transferredResource, 1, transaction);
+							transaction.commit();
+						}
 					extractedItemsFromSlot[slot]++;
 					continue Ingredients;
 				}
@@ -114,15 +128,18 @@ public class BasinRecipe extends StandardProcessingRecipe<RecipeInput> {
 			for (SizedFluidIngredient fluidIngredient : fluidIngredients) {
 				int amountRequired = fluidIngredient.amount();
 
-				for (int tank = 0; tank < availableFluids.getTanks(); tank++) {
-					FluidStack fluidStack = availableFluids.getFluidInTank(tank);
+				for (int tank = 0; tank < availableFluids.size(); tank++) {
+					FluidStack fluidStack = FluidUtil.getStack(availableFluids, tank);
 					if (simulate && fluidStack.getAmount() <= extractedFluidsFromTank[tank])
 						continue;
 					if (!fluidIngredient.test(fluidStack))
 						continue;
 					int drainedAmount = Math.min(amountRequired, fluidStack.getAmount());
 					if (!simulate) {
-						fluidStack.shrink(drainedAmount);
+						try (Transaction transaction = Transaction.openRoot()) {
+							availableFluids.extract(tank, FluidResource.of(fluidStack), drainedAmount, transaction);
+							transaction.commit();
+						}
 						fluidsAffected = true;
 					}
 					amountRequired -= drainedAmount;
@@ -148,18 +165,23 @@ public class BasinRecipe extends StandardProcessingRecipe<RecipeInput> {
 					.asCraftInput();
 
 				if (recipe instanceof BasinRecipe basinRecipe) {
-					recipeOutputItems.addAll(basinRecipe.rollResults(basin.getLevel().random));
+					recipeOutputItems.addAll(basinRecipe.rollResults(basin.getLevel()
+						.getRandom()));
 
 					for (FluidStack fluidStack : basinRecipe.getFluidResults())
 						if (!fluidStack.isEmpty())
 							recipeOutputFluids.add(fluidStack);
-					for (ItemStack stack : basinRecipe.getRemainingItems(remainderInput))
-						if (!stack.isEmpty())
-							recipeOutputItems.add(stack);
+					for (int i = 0; i < remainderInput.size(); i++) {
+						ItemStack stack = remainderInput.getItem(i);
+						if (!ItemHelper.hasCraftingRemainder(stack))
+							continue;
+						ItemStack remainder = ItemHelper.getCraftingRemainder(stack);
+						if (!remainder.isEmpty())
+							recipeOutputItems.add(remainder);
+					}
 
 				} else {
-					recipeOutputItems.add(recipe.getResultItem(basin.getLevel()
-						.registryAccess()));
+					recipeOutputItems.add(RecipeAccessors.result(recipe, basin.getLevel()));
 
 					if (recipe instanceof CraftingRecipe craftingRecipe) {
 						for (ItemStack stack : craftingRecipe.getRemainingItems(remainderInput))
@@ -177,9 +199,9 @@ public class BasinRecipe extends StandardProcessingRecipe<RecipeInput> {
 	}
 
 	public static RecipeHolder<BasinRecipe> convertShapeless(RecipeHolder<?> recipe) {
-		BasinRecipe basinRecipe =
-			new Builder<>(BasinRecipe::new, recipe.id()).withItemIngredients(recipe.value().getIngredients())
-				.withSingleItemOutput(recipe.value().getResultItem(Minecraft.getInstance().level.registryAccess()))
+		BasinRecipe basinRecipe = new Builder<>(BasinRecipe::new, recipe.id()
+			.identifier()).withItemIngredients(RecipeAccessors.ingredients(recipe.value()))
+				.withSingleItemOutput(RecipeAccessors.result(recipe.value(), ClientAccess.level()))
 				.build();
 		return new RecipeHolder<>(recipe.id(), basinRecipe);
 	}

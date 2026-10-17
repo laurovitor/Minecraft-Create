@@ -1,8 +1,11 @@
 package com.simibubi.create.content.decoration.palettes;
 
+import net.minecraft.tags.BlockItemTags;
+import net.minecraft.core.registries.BuiltInRegistries;
 import static com.simibubi.create.foundation.data.TagGen.pickaxeOnly;
 
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.simibubi.create.Create;
@@ -10,17 +13,25 @@ import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.tterrag.registrate.builders.BlockBuilder;
 import com.tterrag.registrate.builders.ItemBuilder;
 import com.tterrag.registrate.providers.DataGenContext;
-import com.tterrag.registrate.providers.RegistrateBlockstateProvider;
-import com.tterrag.registrate.providers.RegistrateRecipeProvider;
+import com.tterrag.registrate.providers.generators.RegistrateRecipeProvider;
 import com.tterrag.registrate.util.DataIngredient;
 import com.tterrag.registrate.util.entry.BlockEntry;
-import com.tterrag.registrate.util.nullness.NonnullType;
 
-import net.createmod.catnip.lang.Lang;
+import com.tterrag.registrate.providers.generators.RegistrateBlockModelGenerator;
+import com.tterrag.registrate.providers.generators.RegistrateItemModelGenerator;
+
+import net.createmod.catnip.api.lang.Lang;
+import net.minecraft.client.data.models.BlockModelGenerators;
+import net.minecraft.client.data.models.MultiVariant;
+import net.minecraft.client.data.models.model.ModelTemplate;
+import net.minecraft.client.data.models.model.ModelTemplates;
+import net.minecraft.client.data.models.model.TextureMapping;
+import net.minecraft.client.data.models.model.TextureSlot;
+import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.data.recipes.ShapelessRecipeBuilder;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
@@ -32,7 +43,6 @@ import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.WallBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour.Properties;
 
-import net.neoforged.neoforge.client.model.generators.ModelFile;
 
 public abstract class PaletteBlockPartial<B extends Block> {
 
@@ -50,14 +60,14 @@ public abstract class PaletteBlockPartial<B extends Block> {
 		this.name = name;
 	}
 
-	public @NonnullType BlockBuilder<B, CreateRegistrate> create(String variantName, PaletteBlockPattern pattern,
+	public BlockBuilder<B, CreateRegistrate> create(String variantName, PaletteBlockPattern pattern,
 																 BlockEntry<? extends Block> block, AllPaletteStoneTypes variant) {
 		String patternName = Lang.nonPluralId(pattern.createName(variantName));
 		String blockName = patternName + "_" + this.name;
 
 		BlockBuilder<B, CreateRegistrate> blockBuilder = Create.registrate()
-			.block(blockName, p -> createBlock(block))
-			.blockstate((c, p) -> generateBlockState(c, p, variantName, pattern, block))
+			.block(blockName, p -> createBlock(block, p))
+			.blockstate(() -> (c, p) -> generateBlockState(c, p, variantName, pattern, block))
 			.recipe((c, p) -> createRecipes(variant, block, c, p))
 			.transform(b -> transformBlock(b, variantName, pattern));
 
@@ -70,7 +80,7 @@ public abstract class PaletteBlockPartial<B extends Block> {
 		return itemBuilder.build();
 	}
 
-	protected ResourceLocation getTexture(String variantName, PaletteBlockPattern pattern, int index) {
+	protected Identifier getTexture(String variantName, PaletteBlockPattern pattern, int index) {
 		return PaletteBlockPattern.toLocation(variantName, pattern.getTexture(index));
 	}
 
@@ -95,13 +105,25 @@ public abstract class PaletteBlockPartial<B extends Block> {
 
 	protected abstract Iterable<TagKey<Item>> getItemTags();
 
-	protected abstract B createBlock(Supplier<? extends Block> block);
+	/**
+	 * @param properties the properties Registrate prepared for this partial - only its registry id is
+	 *                   kept, since the rest of the block's character is copied from the base block.
+	 *                   26.2 refuses to construct a block whose properties carry no id.
+	 */
+	protected abstract B createBlock(Supplier<? extends Block> block, Properties properties);
 
 	protected abstract void createRecipes(AllPaletteStoneTypes type, BlockEntry<? extends Block> patternBlock,
 										  DataGenContext<Block, ? extends Block> c, RegistrateRecipeProvider p);
 
-	protected abstract void generateBlockState(DataGenContext<Block, B> ctx, RegistrateBlockstateProvider prov,
-											   String variantName, PaletteBlockPattern pattern, Supplier<? extends Block> block);
+	protected abstract void generateBlockState(DataGenContext<Block, B> ctx, RegistrateBlockModelGenerator prov,
+											   String variantName, PaletteBlockPattern pattern,
+											   Supplier<? extends Block> block);
+
+	protected static Properties copyOf(Block block, Properties properties) {
+		return Properties.ofFullCopy(block).setId(properties.id);
+	}
+
+
 
 	private static class Stairs extends PaletteBlockPartial<StairBlock> {
 
@@ -110,24 +132,25 @@ public abstract class PaletteBlockPartial<B extends Block> {
 		}
 
 		@Override
-		protected StairBlock createBlock(Supplier<? extends Block> block) {
-			return new StairBlock(block.get().defaultBlockState(), Properties.ofFullCopy(block.get()));
+		protected StairBlock createBlock(Supplier<? extends Block> block, Properties properties) {
+			return new StairBlock(block.get().defaultBlockState(), copyOf(block.get(), properties));
 		}
 
 		@Override
-		protected void generateBlockState(DataGenContext<Block, StairBlock> ctx, RegistrateBlockstateProvider prov,
-										  String variantName, PaletteBlockPattern pattern, Supplier<? extends Block> block) {
-			prov.stairsBlock(ctx.get(), getTexture(variantName, pattern, 0));
+		protected void generateBlockState(DataGenContext<Block, StairBlock> ctx, RegistrateBlockModelGenerator prov,
+										  String variantName, PaletteBlockPattern pattern,
+										  Supplier<? extends Block> block) {
+			prov.generateStairsBlock(ctx.get(), new Material(getTexture(variantName, pattern, 0)));
 		}
 
 		@Override
 		protected Iterable<TagKey<Block>> getBlockTags() {
-			return Arrays.asList(BlockTags.STAIRS);
+			return Arrays.asList(BlockItemTags.STAIRS.block());
 		}
 
 		@Override
 		protected Iterable<TagKey<Item>> getItemTags() {
-			return Arrays.asList(ItemTags.STAIRS);
+			return Arrays.asList(BlockItemTags.STAIRS.item());
 		}
 
 		@Override
@@ -135,8 +158,10 @@ public abstract class PaletteBlockPartial<B extends Block> {
 									 DataGenContext<Block, ? extends Block> c, RegistrateRecipeProvider p) {
 			RecipeCategory category = RecipeCategory.BUILDING_BLOCKS;
 			p.stairs(DataIngredient.items(patternBlock.get()), category, c::get, c.getName(), false);
-			p.stonecutting(DataIngredient.tag(type.materialTag), category, c::get, 1);
+			p.stonecutting(DataIngredient.tag(p.itemLookup()
+				.getOrThrow(type.materialTag)), category, c::get, 1);
 		}
+
 
 	}
 
@@ -150,8 +175,8 @@ public abstract class PaletteBlockPartial<B extends Block> {
 		}
 
 		@Override
-		protected SlabBlock createBlock(Supplier<? extends Block> block) {
-			return new SlabBlock(Properties.ofFullCopy(block.get()));
+		protected SlabBlock createBlock(Supplier<? extends Block> block, Properties properties) {
+			return new SlabBlock(copyOf(block.get(), properties));
 		}
 
 		@Override
@@ -160,37 +185,31 @@ public abstract class PaletteBlockPartial<B extends Block> {
 		}
 
 		@Override
-		protected void generateBlockState(DataGenContext<Block, SlabBlock> ctx, RegistrateBlockstateProvider prov,
-										  String variantName, PaletteBlockPattern pattern, Supplier<? extends Block> block) {
-			String name = ctx.getName();
-			ResourceLocation mainTexture = getTexture(variantName, pattern, 0);
-			ResourceLocation sideTexture = customSide ? getTexture(variantName, pattern, 1) : mainTexture;
+		protected void generateBlockState(DataGenContext<Block, SlabBlock> ctx, RegistrateBlockModelGenerator prov,
+										  String variantName, PaletteBlockPattern pattern,
+										  Supplier<? extends Block> block) {
+			Material mainTexture = new Material(getTexture(variantName, pattern, 0));
+			Material sideTexture = customSide ? new Material(getTexture(variantName, pattern, 1)) : mainTexture;
 
-			ModelFile bottom = prov.models()
-				.slab(name, sideTexture, mainTexture, mainTexture);
-			ModelFile top = prov.models()
-				.slabTop(name + "_top", sideTexture, mainTexture, mainTexture);
-			ModelFile doubleSlab;
+			// The plain slabs borrow the pattern's own full block as their double model; the ones with a
+			// side of their own need a column model built for it.
+			MultiVariant doubleSlab = customSide
+				? BlockModelGenerators.plainVariant(ModelTemplates.CUBE_COLUMN.create(
+					prov.modLoc("block/" + ctx.getName() + "_double"),
+					TextureMapping.column(sideTexture, mainTexture), prov.modelOutput))
+				: BlockModelGenerators.plainVariant(prov.modLoc("block/" + pattern.createName(variantName)));
 
-			if (customSide) {
-				doubleSlab = prov.models()
-					.cubeColumn(name + "_double", sideTexture, mainTexture);
-			} else {
-				doubleSlab = prov.models()
-					.getExistingFile(prov.modLoc(pattern.createName(variantName)));
-			}
-
-			prov.slabBlock(ctx.get(), bottom, top, doubleSlab);
+			prov.generateSlabBlock(ctx.get(), doubleSlab, sideTexture, mainTexture, mainTexture);
 		}
 
 		@Override
 		protected Iterable<TagKey<Block>> getBlockTags() {
-			return Arrays.asList(BlockTags.SLABS);
+			return Arrays.asList(BlockItemTags.SLABS.block());
 		}
 
 		@Override
 		protected Iterable<TagKey<Item>> getItemTags() {
-			return Arrays.asList(ItemTags.SLABS);
+			return Arrays.asList(BlockItemTags.SLABS.item());
 		}
 
 		@Override
@@ -198,14 +217,16 @@ public abstract class PaletteBlockPartial<B extends Block> {
 									 DataGenContext<Block, ? extends Block> c, RegistrateRecipeProvider p) {
 			RecipeCategory category = RecipeCategory.BUILDING_BLOCKS;
 			p.slab(DataIngredient.items(patternBlock.get()), category, c::get, c.getName(), false);
-			p.stonecutting(DataIngredient.tag(type.materialTag), category, c::get, 2);
+			p.stonecutting(DataIngredient.tag(p.itemLookup()
+				.getOrThrow(type.materialTag)), category, c::get, 2);
 			DataIngredient ingredient = DataIngredient.items(c.get());
-			ShapelessRecipeBuilder.shapeless(category, patternBlock.get())
+			p.shapeless(category, patternBlock.get())
 				.requires(ingredient.toVanilla())
 				.requires(ingredient.toVanilla())
 				.unlockedBy("has_" + c.getName(), ingredient.getCriterion(p))
 				.save(p, Create.ID + ":" + c.getName() + "_recycling");
 		}
+
 
 		@Override
 		protected BlockBuilder<SlabBlock, CreateRegistrate> transformBlock(
@@ -223,47 +244,61 @@ public abstract class PaletteBlockPartial<B extends Block> {
 		}
 
 		@Override
-		protected WallBlock createBlock(Supplier<? extends Block> block) {
-			return new WallBlock(Properties.ofFullCopy(block.get()).forceSolidOn());
+		protected WallBlock createBlock(Supplier<? extends Block> block, Properties properties) {
+			return new WallBlock(copyOf(block.get(), properties).forceSolidOn());
 		}
 
 		@Override
 		protected ItemBuilder<BlockItem, BlockBuilder<WallBlock, CreateRegistrate>> transformItem(
 			ItemBuilder<BlockItem, BlockBuilder<WallBlock, CreateRegistrate>> builder, String variantName,
 			PaletteBlockPattern pattern) {
-			builder.model((c, p) -> p.wallInventory(c.getName(), getTexture(variantName, pattern, 0)));
+			builder.model(() -> (c, p) -> wallInventory(c.getEntry(), p, variantName, pattern));
 			return super.transformItem(builder, variantName, pattern);
 		}
 
-		@Override
-		protected void generateBlockState(DataGenContext<Block, WallBlock> ctx, RegistrateBlockstateProvider prov,
-										  String variantName, PaletteBlockPattern pattern, Supplier<? extends Block> block) {
-			prov.wallBlock(ctx.get(), pattern.createName(variantName), getTexture(variantName, pattern, 0));
+		private void wallInventory(net.minecraft.world.item.Item item, RegistrateItemModelGenerator prov,
+								   String variantName, PaletteBlockPattern pattern) {
+			prov.generateWithTemplate(item,
+				new ModelTemplate(Optional.of(prov.mcLoc("block/wall_inventory")), Optional.empty(), TextureSlot.WALL),
+				TextureMapping.singleSlot(TextureSlot.WALL, new Material(getTexture(variantName, pattern, 0))));
 		}
 
 		@Override
+		protected void generateBlockState(DataGenContext<Block, WallBlock> ctx, RegistrateBlockModelGenerator prov,
+										  String variantName, PaletteBlockPattern pattern,
+										  Supplier<? extends Block> block) {
+			prov.generateWallBlock(ctx.get(), pattern.createName(variantName),
+				new Material(getTexture(variantName, pattern, 0)));
+		}
+
+
+		@Override
 		protected Iterable<TagKey<Block>> getBlockTags() {
-			return Arrays.asList(BlockTags.WALLS);
+			return Arrays.asList(BlockItemTags.WALLS.block());
 		}
 
 		@Override
 		protected Iterable<TagKey<Item>> getItemTags() {
-			return Arrays.asList(ItemTags.WALLS);
+			return Arrays.asList(BlockItemTags.WALLS.item());
 		}
 
 		@Override
 		protected void createRecipes(AllPaletteStoneTypes type, BlockEntry<? extends Block> patternBlock,
 									 DataGenContext<Block, ? extends Block> c, RegistrateRecipeProvider p) {
 			RecipeCategory category = RecipeCategory.BUILDING_BLOCKS;
-			p.stonecutting(DataIngredient.tag(type.materialTag), category, c::get, 1);
+			p.stonecutting(DataIngredient.tag(p.itemLookup()
+				.getOrThrow(type.materialTag)), category, c::get, 1);
 			DataIngredient ingredient = DataIngredient.items(patternBlock.get());
-			ShapedRecipeBuilder.shaped(category, c.get(), 6)
+			p.shaped(category, c.get(), 6)
 				.pattern("XXX")
 				.pattern("XXX")
 				.define('X', ingredient.toVanilla())
 				.unlockedBy("has_" + p.safeName(ingredient), ingredient.getCriterion(p))
-				.save(p, p.safeId(c.get()));
+				// 26.2 refuses an explicit id that matches the default one, and this recipe's is the
+				// block's own name either way.
+				.save(p);
 		}
+
 
 	}
 

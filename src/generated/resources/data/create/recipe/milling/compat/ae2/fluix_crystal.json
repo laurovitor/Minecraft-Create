@@ -8,7 +8,10 @@
   "type": "create:milling",
   "ingredients": [
     {
-      "item": "ae2:fluix_crystal"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "ae2:fluix_crystal"
+      ]
     }
   ],
   "processing_time": 200,

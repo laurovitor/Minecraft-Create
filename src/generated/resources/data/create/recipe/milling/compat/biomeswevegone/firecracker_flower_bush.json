@@ -8,7 +8,10 @@
   "type": "create:milling",
   "ingredients": [
     {
-      "item": "biomeswevegone:firecracker_flower_bush"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "biomeswevegone:firecracker_flower_bush"
+      ]
     }
   ],
   "processing_time": 50,

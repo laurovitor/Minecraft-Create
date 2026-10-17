@@ -1,11 +1,11 @@
 package com.simibubi.create.infrastructure.command;
 
+import net.createmod.catnip.api.platform.services.PlatformHelper;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 
-import net.createmod.catnip.command.CatnipCommands;
-import net.createmod.catnip.platform.CatnipServices;
+import net.createmod.catnip.impl.command.CatnipCommands;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 
@@ -16,7 +16,7 @@ public class AllCommands {
 		LiteralCommandNode<CommandSourceStack> util = buildClientUtilityCommands();
 
 		LiteralArgumentBuilder<CommandSourceStack> root = Commands.literal("create")
-			.requires(cs -> cs.hasPermission(0))
+			.requires(Commands.hasPermission(Commands.LEVEL_ALL))
 			// general purpose
 			.then(ToggleDebugCommand.register())
 			.then(FabulousWarningCommand.register())
@@ -45,7 +45,7 @@ public class AllCommands {
 		LiteralCommandNode<CommandSourceStack> util = buildUtilityCommands();
 
 		LiteralArgumentBuilder<CommandSourceStack> root = Commands.literal("create")
-			.requires(cs -> cs.hasPermission(0))
+			.requires(Commands.hasPermission(Commands.LEVEL_ALL))
 			// general purpose
 			.then(DumpRailwaysCommand.register())
 			.then(DebugInfoCommand.register())
@@ -59,7 +59,7 @@ public class AllCommands {
 			// utility
 			.then(util);
 
-		if (CatnipServices.PLATFORM.isDevelopmentEnvironment() && CatnipServices.PLATFORM.getEnv().isClient())
+		if (PlatformHelper.INSTANCE.isDevelopmentEnvironment() && PlatformHelper.INSTANCE.getEnv().isClient())
 			root.then(CreateTestCommand.register());
 
 		LiteralCommandNode<CommandSourceStack> createRoot = dispatcher.register(root);

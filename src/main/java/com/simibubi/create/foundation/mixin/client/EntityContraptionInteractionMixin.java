@@ -93,10 +93,15 @@ public abstract class EntityContraptionInteractionMixin {
 	}
 
 	// involves block step sounds on contraptions
-	// injecting before `!blockstate1.isAir(this.world, blockpos)`
-	// `if (this.moveDist > this.nextStep && !blockstate1.isAir())
-	@Inject(method = "move", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/state/BlockState;isAir()Z", ordinal = 0))
-	private void create$contraptionStepSounds(MoverType mover, Vec3 movement, CallbackInfo ci) {
+	// injecting before `!supportingState.isAir()`
+	// `if (this.moveDist > this.nextStep && !supportingState.isAir())
+	//
+	// 26.2 moved the step sounds out of move() and into a method of their own; the condition they hang
+	// off is unchanged, so the injection point is the same call in its new home.
+	@Inject(method = "applyMovementEmissionAndPlaySound", at = @At(value = "INVOKE",
+		target = "Lnet/minecraft/world/level/block/state/BlockState;isAir()Z", ordinal = 0))
+	private void create$contraptionStepSounds(Entity.MovementEmission emission, Vec3 clippedMovement,
+		BlockPos effectPos, BlockState effectState, CallbackInfo ci) {
 		Vec3 worldPos = position.add(0, -0.2, 0);
 		MutableBoolean stepped = new MutableBoolean(false);
 
@@ -112,7 +117,7 @@ public abstract class EntityContraptionInteractionMixin {
 	// involves client-side view bobbing animation on contraptions
 	@Inject(method = "move", at = @At(value = "TAIL"))
 	private void create$onMove(MoverType mover, Vec3 movement, CallbackInfo ci) {
-		if (!level.isClientSide)
+		if (!level.isClientSide())
 			return;
 		Entity self = (Entity) (Object) this;
 		if (self.onGround())
@@ -155,7 +160,7 @@ public abstract class EntityContraptionInteractionMixin {
 				&& state.getRenderShape() != RenderShape.INVISIBLE) {
 				Vec3 speed = self.getDeltaMovement();
 				level.addParticle(
-					new BlockParticleOption(ParticleTypes.BLOCK, state).setPos(particlePos),
+					new BlockParticleOption(ParticleTypes.BLOCK, state, particlePos),
 					self.getX() + ((double) random.nextFloat() - 0.5D) * (double) dimensions.width(),
 					self.getY() + 0.1D,
 					self.getZ() + ((double) random.nextFloat() - 0.5D) * (double) dimensions.height(),

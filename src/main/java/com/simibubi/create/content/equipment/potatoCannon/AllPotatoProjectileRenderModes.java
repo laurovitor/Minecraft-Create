@@ -1,5 +1,6 @@
 package com.simibubi.create.content.equipment.potatoCannon;
 
+import com.simibubi.create.api.equipment.potatoCannon.PotatoProjectileRenderMode.Context;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
@@ -9,15 +10,12 @@ import com.simibubi.create.api.equipment.potatoCannon.PotatoProjectileRenderMode
 import com.simibubi.create.api.registry.CreateBuiltInRegistries;
 
 import dev.engine_room.flywheel.lib.transform.TransformStack;
-import net.createmod.catnip.math.AngleHelper;
+import net.createmod.catnip.api.math.AngleHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Registry;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
-
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 public class AllPotatoProjectileRenderModes {
 	
@@ -41,14 +39,8 @@ public class AllPotatoProjectileRenderModes {
 		public static final MapCodec<Billboard> CODEC = MapCodec.unit(INSTANCE);
 
 		@Override
-		@OnlyIn(Dist.CLIENT)
-		public void transform(PoseStack ms, PotatoProjectileEntity entity, float pt) {
-			Minecraft mc = Minecraft.getInstance();
-			Vec3 p1 = mc.getCameraEntity()
-				.getEyePosition(pt);
-			Vec3 diff = entity.getBoundingBox()
-				.getCenter()
-				.subtract(p1);
+		public void transform(PoseStack ms, Context context) {
+			Vec3 diff = context.toCamera();
 
 			TransformStack.of(ms)
 				.rotateYDegrees(AngleHelper.deg(Mth.atan2(diff.x, diff.z)) + 180)
@@ -67,12 +59,11 @@ public class AllPotatoProjectileRenderModes {
 		public static final MapCodec<Tumble> CODEC = MapCodec.unit(INSTANCE);
 
 		@Override
-		@OnlyIn(Dist.CLIENT)
-		public void transform(PoseStack ms, PotatoProjectileEntity entity, float pt) {
-			Billboard.INSTANCE.transform(ms, entity, pt);
+		public void transform(PoseStack ms, Context context) {
+			Billboard.INSTANCE.transform(ms, context);
 			TransformStack.of(ms)
-				.rotateZDegrees((entity.tickCount + pt) * 2 * entityRandom(entity, 16))
-				.rotateXDegrees((entity.tickCount + pt) * entityRandom(entity, 32));
+				.rotateZDegrees(context.age() * 2 * context.random(16))
+				.rotateXDegrees(context.age() * context.random(32));
 		}
 
 		@Override
@@ -88,15 +79,14 @@ public class AllPotatoProjectileRenderModes {
 		).apply(instance, TowardMotion::new));
 
 		@Override
-		@OnlyIn(Dist.CLIENT)
-		public void transform(PoseStack ms, PotatoProjectileEntity entity, float pt) {
-			Vec3 diff = entity.getDeltaMovement();
+		public void transform(PoseStack ms, Context context) {
+			Vec3 diff = context.deltaMovement();
 			TransformStack.of(ms)
 				.rotateYDegrees(AngleHelper.deg(Mth.atan2(diff.x, diff.z)))
 				.rotateXDegrees(270
 					+ AngleHelper.deg(Mth.atan2(diff.y, -Mth.sqrt((float) (diff.x * diff.x + diff.z * diff.z)))));
 			TransformStack.of(ms)
-				.rotateYDegrees((entity.tickCount + pt) * 20 * spin + entityRandom(entity, 360))
+				.rotateYDegrees(context.age() * 20 * spin + context.random(360))
 				.rotateZDegrees(-spriteAngleOffset);
 		}
 
@@ -112,8 +102,7 @@ public class AllPotatoProjectileRenderModes {
 		).apply(instance, StuckToEntity::new));
 
 		@Override
-		@OnlyIn(Dist.CLIENT)
-		public void transform(PoseStack ms, PotatoProjectileEntity entity, float pt) {
+		public void transform(PoseStack ms, Context context) {
 			TransformStack.of(ms).rotateYDegrees(AngleHelper.deg(Mth.atan2(offset.x, offset.z)));
 		}
 
@@ -123,7 +112,4 @@ public class AllPotatoProjectileRenderModes {
 		}
 	}
 
-	private static int entityRandom(Entity entity, int maxValue) {
-		return (System.identityHashCode(entity) * 31) % maxValue;
-	}
 }

@@ -1,20 +1,20 @@
 package com.simibubi.create.content.equipment.potatoCannon;
 
+import org.joml.Matrix3x2fStack;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.simibubi.create.AllItems;
 import com.simibubi.create.Create;
 import com.simibubi.create.CreateClient;
 import com.simibubi.create.content.equipment.potatoCannon.PotatoCannonItem.Ammo;
-import com.simibubi.create.foundation.item.render.CustomRenderedItemModel;
 import com.simibubi.create.foundation.item.render.CustomRenderedItemModelRenderer;
 import com.simibubi.create.foundation.item.render.PartialItemModelRenderer;
 
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
-import net.createmod.catnip.animation.AnimationTickHolder;
+import net.createmod.catnip.api.client.animation.AnimationTickHolder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.item.ItemDisplayContext;
@@ -34,21 +34,21 @@ public class PotatoCannonItemRenderer extends CustomRenderedItemModelRenderer {
 			return false;
 		}
 
-		PoseStack poseStack = guiGraphics.pose();
-		poseStack.pushPose();
-		poseStack.translate(xOffset, yOffset + 8, 100);
-		poseStack.scale(.5f, .5f, .5f);
-		guiGraphics.renderItem(ammo.stack(), 0, 0);
-		poseStack.popPose();
+		Matrix3x2fStack poseStack = guiGraphics.pose();
+		poseStack.pushMatrix();
+		poseStack.translate(xOffset, yOffset + 8);
+		poseStack.scale(.5f, .5f);
+		guiGraphics.item(ammo.stack(), 0, 0);
+		poseStack.popMatrix();
 		return false;
 	};
 
 	protected static final PartialModel COG = PartialModel.of(Create.asResource("item/potato_cannon/cog"));
 
 	@Override
-	protected void render(ItemStack stack, CustomRenderedItemModel model, PartialItemModelRenderer renderer,
-						  ItemDisplayContext transformType, PoseStack ms, MultiBufferSource buffer, int light, int overlay) {
-		renderer.render(model.getOriginalModel(), light);
+	protected void render(ItemStack stack, PartialItemModelRenderer renderer, ItemDisplayContext transformType,
+		PoseStack ms, SubmitNodeCollector buffer, int light, int overlay) {
+		renderer.renderBase(light);
 		Minecraft mc = Minecraft.getInstance();
 		LocalPlayer player = mc.player;
 

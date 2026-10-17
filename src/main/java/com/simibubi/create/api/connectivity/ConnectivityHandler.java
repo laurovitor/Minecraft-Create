@@ -1,5 +1,10 @@
 package com.simibubi.create.api.connectivity;
 
+import net.neoforged.neoforge.transfer.transaction.Transaction;
+import net.neoforged.neoforge.transfer.resource.ResourceStack;
+import net.neoforged.neoforge.transfer.ResourceHandlerUtil;
+import net.neoforged.neoforge.transfer.fluid.FluidResource;
+import net.neoforged.neoforge.transfer.fluid.FluidStacksResourceHandler;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,7 +21,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import com.simibubi.create.content.fluids.tank.CreativeFluidTankBlockEntity;
 import com.simibubi.create.foundation.blockEntity.IMultiBlockEntityContainer;
 
-import net.createmod.catnip.data.Iterate;
+import net.createmod.catnip.api.data.Iterate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockGetter;
@@ -25,9 +30,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 
 import net.neoforged.neoforge.fluids.FluidStack;
-import net.neoforged.neoforge.fluids.IFluidTank;
-import net.neoforged.neoforge.fluids.capability.IFluidHandler;
-
+import com.simibubi.create.foundation.fluid.SmartFluidTank;
 public class ConnectivityHandler {
 
 	public static <T extends BlockEntity & IMultiBlockEntityContainer> void formMulti(T be) {
@@ -155,7 +158,7 @@ public class ConnectivityHandler {
 		BlockPos origin = be.getBlockPos();
 
 		// optional fluid handling
-		IFluidTank beTank = null;
+		SmartFluidTank beTank = null;
 		FluidStack fluid = FluidStack.EMPTY;
 		if (be instanceof IMultiBlockEntityContainer.Fluid ifluid && ifluid.hasTank()) {
 			beTank = ifluid.getTank(0);
@@ -189,7 +192,7 @@ public class ConnectivityHandler {
 
 					BlockPos conPos = controller.getBlockPos();
 					if (!conPos.equals(origin)) {
-						if (axis == Direction.Axis.Y) { // vertical multi, like a FluidTank
+						if (axis == Direction.Axis.Y) { // vertical multi, like a FluidStacksResourceHandler
 							if (conPos.getX() < origin.getX())
 								break Search;
 							if (conPos.getZ() < origin.getZ())
@@ -246,7 +249,7 @@ public class ConnectivityHandler {
 					extraData = be.modifyExtraData(extraData);
 
 					if (part instanceof IMultiBlockEntityContainer.Fluid ifluidPart && ifluidPart.hasTank()) {
-						IFluidTank tankAt = ifluidPart.getTank(0);
+						SmartFluidTank tankAt = ifluidPart.getTank(0);
 						FluidStack fluidAt = tankAt.getFluid();
 						if (!fluidAt.isEmpty()) {
 							// making this generic would be a rather large mess, unfortunately
@@ -257,10 +260,16 @@ public class ConnectivityHandler {
 							}
 							if (be instanceof IMultiBlockEntityContainer.Fluid ifluidBE && ifluidBE.hasTank()
 								&& beTank != null) {
-								beTank.fill(fluidAt, IFluidHandler.FluidAction.EXECUTE);
+								try (Transaction transaction = Transaction.openRoot()) {
+									int transferred = fluidAt.isEmpty() ? 0 : beTank.insert(FluidResource.of(fluidAt), fluidAt.getAmount(), transaction);
+									transaction.commit();
+								}
 							}
 						}
-						tankAt.drain(tankAt.getCapacity(), IFluidHandler.FluidAction.EXECUTE);
+						try (Transaction transaction = Transaction.openRoot()) {
+							ResourceStack<FluidResource> transferred2 = ResourceHandlerUtil.extractFirst(tankAt, resource -> true, tankAt.getCapacity(), transaction);
+							transaction.commit();
+						}
 					}
 
 					splitMultiAndInvalidate(part, cache, false);
@@ -335,7 +344,7 @@ public class ConnectivityHandler {
 
 					if (!toDistribute.isEmpty() && partAt != be) {
 						FluidStack copy = toDistribute.copy();
-						IFluidTank tank =
+						SmartFluidTank tank =
 							(partAt instanceof IMultiBlockEntityContainer.Fluid ifluidPart ? ifluidPart.getTank(0) : null);
 						// making this generic would be a rather large mess, unfortunately
 						if (tank instanceof CreativeFluidTankBlockEntity.CreativeSmartFluidTank creativeTank) {
@@ -346,7 +355,10 @@ public class ConnectivityHandler {
 							copy.setAmount(split);
 							toDistribute.shrink(split);
 							if (tank != null)
-								tank.fill(copy, IFluidHandler.FluidAction.EXECUTE);
+								try (Transaction transaction = Transaction.openRoot()) {
+									int transferred3 = copy.isEmpty() ? 0 : tank.insert(FluidResource.of(copy), copy.getAmount(), transaction);
+									transaction.commit();
+								}
 						}
 					}
 					if (tryReconnect) {

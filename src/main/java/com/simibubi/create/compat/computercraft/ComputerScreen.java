@@ -1,15 +1,16 @@
 package com.simibubi.create.compat.computercraft;
 
+import net.minecraft.client.Minecraft;
 import com.simibubi.create.compat.Mods;
 import com.simibubi.create.foundation.gui.AllGuiTextures;
 import com.simibubi.create.foundation.gui.AllIcons;
 import com.simibubi.create.foundation.gui.widget.IconButton;
 import com.simibubi.create.foundation.utility.CreateLang;
-import net.createmod.catnip.gui.AbstractSimiScreen;
-import net.createmod.catnip.gui.element.GuiGameElement;
-import net.createmod.catnip.gui.widget.AbstractSimiWidget;
-import net.createmod.catnip.gui.widget.ElementWidget;
-import net.minecraft.client.gui.GuiGraphics;
+import net.createmod.catnip.api.client.gui.AbstractSimiScreen;
+import net.createmod.catnip.api.client.gui.element.GuiGameElement;
+import net.createmod.catnip.api.client.gui.widget.AbstractSimiWidget;
+import net.createmod.catnip.api.client.gui.widget.ElementWidget;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -43,7 +44,7 @@ public class ComputerScreen extends AbstractSimiScreen {
 	@Override
 	public void tick() {
 		if (!hasAttachedComputer.get())
-			minecraft.setScreen(previousScreen);
+			minecraft.gui.setScreen(previousScreen);
 
 		super.tick();
 	}
@@ -71,16 +72,16 @@ public class ComputerScreen extends AbstractSimiScreen {
 
 
 	@Override
-	protected void renderWindow(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+	protected void renderWindow(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks) {
 		int x = guiLeft;
 		int y = guiTop;
 
 		background.render(graphics, x, y);
 
-		graphics.drawString(font, displayTitle.get(),
-			Math.round(x + background.getWidth() / 2.0F - font.width(displayTitle.get()) / 2.0F), y + 4, 0x442000, false);
-		graphics.drawWordWrap(font, CreateLang.translate("gui.attached_computer.controlled")
-			.component(), x + 55, y + 32, 111, 0x7A7A7A);
+		graphics.text(font, displayTitle.get(),
+			Math.round(x + background.getWidth() / 2.0F - font.width(displayTitle.get()) / 2.0F), y + 4, 0xFF442000, false);
+		graphics.textWithWordWrap(font, CreateLang.translate("gui.attached_computer.controlled")
+			.component(), x + 55, y + 32, 111, 0xFF7A7A7A);
 
 		if (additional != null)
 			additional.render(graphics, mouseX, mouseY, partialTicks, x, y, background);
@@ -89,7 +90,7 @@ public class ComputerScreen extends AbstractSimiScreen {
 	@FunctionalInterface
 	public interface RenderWindowFunction {
 
-		void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks, int guiLeft, int guiTop, AllGuiTextures background);
+		void render(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks, int guiLeft, int guiTop, AllGuiTextures background);
 
 	}
 

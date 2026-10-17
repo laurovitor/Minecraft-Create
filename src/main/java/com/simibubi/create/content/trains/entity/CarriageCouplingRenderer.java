@@ -1,20 +1,19 @@
 package com.simibubi.create.content.trains.entity;
 
+import com.simibubi.create.foundation.render.CachedBufferer;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import java.util.Collection;
 import java.util.List;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.simibubi.create.AllPartialModels;
 import com.simibubi.create.CreateClient;
 
-import net.createmod.catnip.render.CachedBuffers;
-import net.createmod.catnip.animation.AnimationTickHolder;
-import net.createmod.catnip.math.AngleHelper;
+import net.createmod.catnip.api.client.animation.AnimationTickHolder;
+import net.createmod.catnip.api.math.AngleHelper;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -26,9 +25,8 @@ import net.minecraft.world.phys.Vec3;
 
 public class CarriageCouplingRenderer {
 
-	public static void renderAll(PoseStack ms, MultiBufferSource buffer, Vec3 camera) {
+	public static void submitAll(PoseStack ms, SubmitNodeCollector queue, Vec3 camera) {
 		Collection<Train> trains = CreateClient.RAILWAYS.trains.values();
-		VertexConsumer vb = buffer.getBuffer(RenderType.solid());
 		BlockState air = Blocks.AIR.defaultBlockState();
 		float partialTicks = AnimationTickHolder.getPartialTicks();
 		Level level = Minecraft.getInstance().level;
@@ -71,11 +69,11 @@ public class CarriageCouplingRenderer {
 				{
 					ms.pushPose();
 					ms.translate(anchor.x - camera.x, anchor.y - camera.y, anchor.z - camera.z);
-					CachedBuffers.partial(AllPartialModels.TRAIN_COUPLING_HEAD, air)
+					CachedBufferer.partial(AllPartialModels.TRAIN_COUPLING_HEAD, air)
 						.rotateYDegrees(-yRot)
 						.rotateXDegrees(xRot)
 						.light(lightCoords)
-						.renderInto(ms, vb);
+						.submit(ms, RenderTypes.solidMovingBlock(), queue);
 
 					float margin = 3 / 16f;
 					double couplingDistance = train.carriageSpacing.get(i) - 2 * margin
@@ -83,14 +81,14 @@ public class CarriageCouplingRenderer {
 					int couplingSegments = (int) Math.round(couplingDistance * 4);
 					double stretch = ((anchor2.distanceTo(anchor) - 2 * margin) * 4) / couplingSegments;
 					for (int j = 0; j < couplingSegments; j++) {
-						CachedBuffers.partial(AllPartialModels.TRAIN_COUPLING_CABLE, air)
+						CachedBufferer.partial(AllPartialModels.TRAIN_COUPLING_CABLE, air)
 							.rotateYDegrees(-yRot + 180)
 							.rotateXDegrees(-xRot)
 							.translate(0, 0, margin + 2 / 16f)
 							.scale(1, 1, (float) stretch)
 							.translate(0, 0, j / 4f)
 							.light(lightCoords)
-							.renderInto(ms, vb);
+							.submit(ms, RenderTypes.solidMovingBlock(), queue);
 					}
 					ms.popPose();
 				}
@@ -101,11 +99,11 @@ public class CarriageCouplingRenderer {
 						.add(anchor2)
 						.subtract(camera);
 					ms.translate(translation.x, translation.y, translation.z);
-					CachedBuffers.partial(AllPartialModels.TRAIN_COUPLING_HEAD, air)
+					CachedBufferer.partial(AllPartialModels.TRAIN_COUPLING_HEAD, air)
 						.rotateYDegrees(-yRot + 180)
 						.rotateXDegrees(-xRot)
 						.light(lightCoords2)
-						.renderInto(ms, vb);
+						.submit(ms, RenderTypes.solidMovingBlock(), queue);
 					ms.popPose();
 				}
 
@@ -117,7 +115,7 @@ public class CarriageCouplingRenderer {
 
 	public static int getPackedLightCoords(Entity pEntity, float pPartialTicks) {
 		BlockPos blockpos = BlockPos.containing(pEntity.getLightProbePosition(pPartialTicks));
-		return LightTexture.pack(getBlockLightLevel(pEntity, blockpos), getSkyLightLevel(pEntity, blockpos));
+		return LightCoordsUtil.pack(getBlockLightLevel(pEntity, blockpos), getSkyLightLevel(pEntity, blockpos));
 	}
 
 	protected static int getSkyLightLevel(Entity pEntity, BlockPos pPos) {

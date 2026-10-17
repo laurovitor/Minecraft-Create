@@ -1,5 +1,6 @@
 package com.simibubi.create.compat.curios;
 
+import net.createmod.catnip.api.platform.services.PlatformHelper;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -11,7 +12,6 @@ import com.simibubi.create.AllTags;
 import com.simibubi.create.content.equipment.armor.BacktankUtil;
 import com.simibubi.create.content.equipment.goggles.GogglesItem;
 
-import net.createmod.catnip.platform.CatnipServices;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import top.theillusivec4.curios.api.CuriosCapability;
@@ -35,6 +35,9 @@ public class Curios {
 		return Optional.ofNullable(entity.getCapability(CuriosCapability.INVENTORY)).map(ICuriosItemHandler::getCurios);
 	}
 
+	// Curios 16 still exposes its slots through NeoForge's legacy IItemHandlerModifiable rather than
+	// the new ResourceHandler, so these read the stacks directly instead of going through ItemUtil
+	// like the rest of Create does.
 	public static void init(IEventBus modEventBus) {
 		modEventBus.addListener(Curios::onClientSetup);
 
@@ -70,7 +73,7 @@ public class Curios {
 				return stacks;
 			}).orElse(Collections.emptyList()));
 
-		CatnipServices.PLATFORM.executeOnClientOnly(() -> () -> modEventBus.addListener(CuriosRenderers::onLayerRegister));
+		PlatformHelper.INSTANCE.executeOnClientOnly(() -> () -> modEventBus.addListener(CuriosRenderers::onLayerRegister));
 	}
 
 	private static void onClientSetup(final FMLClientSetupEvent event) {

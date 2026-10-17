@@ -1,11 +1,14 @@
 package com.simibubi.create.foundation.utility;
 
+import com.simibubi.create.foundation.utility.ComponentJson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.simibubi.create.Create;
 
+import net.minecraft.server.permissions.LevelBasedPermissionSet;
+import net.minecraft.network.chat.ResolutionContext;
 import net.minecraft.commands.CommandSource;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
@@ -51,9 +54,9 @@ public class DynamicComponent {
 	}
 
 	public void read(BlockPos pos, CompoundTag nbt, HolderLookup.Provider registries) {
-		rawCustomText = getJsonFromString(nbt.getString("RawCustomText"));
+		rawCustomText = getJsonFromString(nbt.getStringOr("RawCustomText", ""));
 		try {
-			parsedCustomText = Component.Serializer.fromJson(nbt.getString("CustomText"), registries);
+			parsedCustomText = ComponentJson.fromJson(nbt.getStringOr("CustomText", ""), registries);
 		} catch (JsonParseException e) {
 			parsedCustomText = null;
 		}
@@ -64,7 +67,7 @@ public class DynamicComponent {
 			return;
 
 		nbt.putString("RawCustomText", rawCustomText.toString());
-		nbt.putString("CustomText", Component.Serializer.toJson(parsedCustomText, registries));
+		nbt.putString("CustomText", ComponentJson.toJson(parsedCustomText, registries));
 	}
 
 	public static JsonElement getJsonFromString(String string) {
@@ -79,8 +82,8 @@ public class DynamicComponent {
 		if (!(level instanceof ServerLevel serverLevel))
 			return null;
 		try {
-			return ComponentUtils.updateForEntity(getCommandSource(serverLevel, pos),
-				Component.Serializer.fromJson(customText, level.registryAccess()), null, 0);
+			return ComponentUtils.resolve(ResolutionContext.create(getCommandSource(serverLevel, pos)),
+				ComponentJson.fromJson(customText, level.registryAccess()));
 		} catch (JsonParseException | CommandSyntaxException e) {
 			return null;
 		}
@@ -91,15 +94,15 @@ public class DynamicComponent {
 		if (!(level instanceof ServerLevel serverLevel))
 			return null;
 		try {
-			return ComponentUtils.updateForEntity(getCommandSource(serverLevel, pos), customText, null, 0);
+			return ComponentUtils.resolve(ResolutionContext.create(getCommandSource(serverLevel, pos)), customText);
 		} catch (JsonParseException | CommandSyntaxException e) {
 			return null;
 		}
 	}
 
 	public static CommandSourceStack getCommandSource(ServerLevel level, BlockPos pos) {
-		return new CommandSourceStack(CommandSource.NULL, Vec3.atCenterOf(pos), Vec2.ZERO, level, 2, Create.ID,
-			Component.literal(Create.ID), level.getServer(), null);
+		return new CommandSourceStack(CommandSource.NULL, Vec3.atCenterOf(pos), Vec2.ZERO, level,
+			LevelBasedPermissionSet.GAMEMASTER, Create.ID, Component.literal(Create.ID), level.getServer(), null);
 	}
 
 }

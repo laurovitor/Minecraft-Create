@@ -8,7 +8,10 @@
   "type": "create:crushing",
   "ingredients": [
     {
-      "item": "silentgems:nether_alexandrite_ore"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "silentgems:nether_alexandrite_ore"
+      ]
     }
   ],
   "processing_time": 350,

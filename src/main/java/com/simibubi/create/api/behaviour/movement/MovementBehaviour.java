@@ -1,27 +1,21 @@
 package com.simibubi.create.api.behaviour.movement;
 
+import net.neoforged.neoforge.transfer.transaction.Transaction;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import java.util.List;
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.Nullable;
 
 import com.simibubi.create.api.registry.SimpleRegistry;
 import com.simibubi.create.content.contraptions.behaviour.MovementContext;
-import com.simibubi.create.content.contraptions.render.ActorVisual;
-import com.simibubi.create.content.contraptions.render.ContraptionMatrices;
-import com.simibubi.create.foundation.virtualWorld.VirtualRenderWorld;
 import com.simibubi.create.infrastructure.config.AllConfigs;
 import com.tterrag.registrate.util.nullness.NonNullConsumer;
 
-import dev.engine_room.flywheel.api.visualization.VisualizationContext;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.Vec3;
-
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
 
 /**
  * MovementBehaviors, also known as Actors, provide behavior to blocks mounted on contraptions.
@@ -81,7 +75,11 @@ public interface MovementBehaviour {
 	default void collectOrDropItem(MovementContext context, ItemStack stack) {
 		ItemStack remainder;
 		if (AllConfigs.server().kinetics.moveItemsToStorage.get())
-			remainder = ItemHandlerHelper.insertItem(context.contraption.getStorage().getAllItems(), stack, false);
+			try (Transaction transaction = Transaction.openRoot()) {
+				int transferred = stack.isEmpty() ? 0 : context.contraption.getStorage().getAllItems().insert(ItemResource.of(stack), stack.getCount(), transaction);
+				remainder = transferred == stack.getCount() ? ItemStack.EMPTY : stack.copyWithCount(stack.getCount() - transferred);
+				transaction.commit();
+			}
 		else
 			remainder = stack;
 		if (remainder.isEmpty())
@@ -94,7 +92,7 @@ public interface MovementBehaviour {
 
 		ItemEntity itemEntity = new ItemEntity(context.world, vec.x, vec.y, vec.z, remainder);
 		itemEntity.setDeltaMovement(context.motion.add(0, 0.5f, 0)
-			.scale(context.world.random.nextFloat() * .3f));
+			.scale(context.world.getRandom().nextFloat() * .3f));
 		context.world.addFreshEntity(itemEntity);
 	}
 
@@ -112,14 +110,4 @@ public interface MovementBehaviour {
 		return false;
 	}
 
-	@OnlyIn(Dist.CLIENT)
-	default void renderInContraption(MovementContext context, VirtualRenderWorld renderWorld,
-		ContraptionMatrices matrices, MultiBufferSource buffer) {}
-
-	@OnlyIn(Dist.CLIENT)
-	@Nullable
-	default ActorVisual createVisual(VisualizationContext visualizationContext, VirtualRenderWorld simulationWorld,
-		MovementContext movementContext) {
-		return null;
-	}
 }

@@ -1,5 +1,8 @@
 package com.simibubi.create.content.trains.station;
 
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.mojang.serialization.Codec;
+import com.simibubi.create.foundation.utility.ComponentJson;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -8,7 +11,8 @@ import com.simibubi.create.AllMapDecorationTypes;
 import com.simibubi.create.content.trains.track.TrackTargetingBehaviour;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 
-import net.createmod.catnip.nbt.NBTHelper;
+import net.createmod.catnip.api.nbt.NBTHelper;
+import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -19,6 +23,20 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.saveddata.maps.MapDecoration;
 
 public class StationMarker {
+	/**
+	 * 26.2 saves map data through a codec instead of reading and writing tags, so the marker needs one
+	 * of its own to be stored alongside it.
+	 */
+	public static final Codec<StationMarker> CODEC = RecordCodecBuilder.create(i -> i.group(
+		BlockPos.CODEC.fieldOf("source")
+			.forGetter(StationMarker::getSource),
+		BlockPos.CODEC.fieldOf("target")
+			.forGetter(StationMarker::getTarget),
+		ComponentSerialization.CODEC.optionalFieldOf("name", CommonComponents.EMPTY)
+			.forGetter(StationMarker::getName)
+	)
+		.apply(i, StationMarker::new));
+
 	private final BlockPos source;
 	private final BlockPos target;
 	private final Component name;
@@ -34,7 +52,7 @@ public class StationMarker {
 	public static StationMarker load(CompoundTag tag, HolderLookup.Provider registries) {
 		BlockPos source = NBTHelper.readBlockPos(tag, "source");
 		BlockPos target = NBTHelper.readBlockPos(tag, "target");
-		Component name = Component.Serializer.fromJson(tag.getString("name"), registries);
+		Component name = ComponentJson.fromJson(tag.getStringOr("name", ""), registries);
 		if (name == null) name = CommonComponents.EMPTY;
 
 		return new StationMarker(source, target, name);
@@ -54,9 +72,9 @@ public class StationMarker {
 
 	public CompoundTag save(HolderLookup.Provider registries) {
 		CompoundTag tag = new CompoundTag();
-		tag.put("source", NbtUtils.writeBlockPos(source));
-		tag.put("target", NbtUtils.writeBlockPos(target));
-		tag.putString("name", Component.Serializer.toJson(name, registries));
+		tag.store("source", BlockPos.CODEC, source);
+		tag.store("target", BlockPos.CODEC, target);
+		tag.putString("name", ComponentJson.toJson(name, registries));
 
 		return tag;
 	}

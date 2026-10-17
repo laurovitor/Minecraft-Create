@@ -1,5 +1,6 @@
 package com.simibubi.create.infrastructure.command;
 
+import com.mojang.brigadier.context.CommandContext;
 import org.apache.commons.lang3.mutable.MutableInt;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -21,7 +22,7 @@ public class ReplaceInCommandBlocksCommand {
 
 	public static ArgumentBuilder<CommandSourceStack, ?> register() {
 		return Commands.literal("replaceInCommandBlocks")
-			.requires(cs -> cs.hasPermission(2))
+			.requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
 			.then(Commands.argument("begin", BlockPosArgument.blockPos())
 				.then(Commands.argument("end", BlockPosArgument.blockPos())
 					.then(Commands.argument("toReplace", StringArgumentType.string())
@@ -29,8 +30,8 @@ public class ReplaceInCommandBlocksCommand {
 							.executes(ctx -> {
 								doReplace(ctx.getSource(), BlockPosArgument.getLoadedBlockPos(ctx, "begin"),
 									BlockPosArgument.getLoadedBlockPos(ctx, "end"),
-									StringArgumentType.getString(ctx, "toReplace"),
-									StringArgumentType.getString(ctx, "replaceWith"));
+									getStringOrEmpty(ctx, "toReplace"),
+									getStringOrEmpty(ctx, "replaceWith"));
 								return 1;
 							})))));
 
@@ -66,6 +67,19 @@ public class ReplaceInCommandBlocksCommand {
 		source.sendSuccess(() -> {
 			return Component.literal("Replaced occurrences in " + intValue + " blocks.");
 		}, true);
+	}
+
+
+	/**
+	 * Brigadier's defaulting getter is gone in 26.2; an argument that was never given simply is not in
+	 * the context.
+	 */
+	private static String getStringOrEmpty(CommandContext<CommandSourceStack> ctx, String name) {
+		try {
+			return StringArgumentType.getString(ctx, name);
+		} catch (IllegalArgumentException e) {
+			return "";
+		}
 	}
 
 }

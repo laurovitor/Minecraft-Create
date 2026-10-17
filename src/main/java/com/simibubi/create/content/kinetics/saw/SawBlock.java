@@ -1,9 +1,10 @@
 package com.simibubi.create.content.kinetics.saw;
 
+import net.neoforged.neoforge.transfer.item.ItemUtil;
+import net.minecraft.world.entity.InsideBlockEffectApplier;
+import org.jspecify.annotations.NullMarked;
 import java.util.List;
 import java.util.function.Predicate;
-
-import javax.annotation.ParametersAreNonnullByDefault;
 
 import com.simibubi.create.AllBlockEntityTypes;
 import com.simibubi.create.AllBlocks;
@@ -13,17 +14,17 @@ import com.simibubi.create.content.kinetics.drill.DrillBlock;
 import com.simibubi.create.foundation.block.IBE;
 import com.simibubi.create.foundation.damageTypes.CreateDamageSources;
 
-import net.createmod.catnip.placement.IPlacementHelper;
-import net.createmod.catnip.placement.PlacementHelpers;
-import net.createmod.catnip.placement.PlacementOffset;
-import net.minecraft.MethodsReturnNonnullByDefault;
+import net.createmod.catnip.api.placement.IPlacementHelper;
+import net.createmod.catnip.api.placement.PlacementHelpers;
+import net.createmod.catnip.api.placement.PlacementOffset;
+import com.simibubi.create.foundation.block.EntityRestingOnBlock;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.core.Direction.AxisDirection;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
@@ -47,12 +48,11 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-@ParametersAreNonnullByDefault
-@MethodsReturnNonnullByDefault
-public class SawBlock extends DirectionalAxisKineticBlock implements IBE<SawBlockEntity> {
+@NullMarked
+public class SawBlock extends DirectionalAxisKineticBlock implements EntityRestingOnBlock, IBE<SawBlockEntity> {
 	public static final BooleanProperty FLIPPED = BooleanProperty.create("flipped");
 
-	private static final int placementHelperId = PlacementHelpers.register(new PlacementHelper());
+	private static final IPlacementHelper placementHelper = PlacementHelpers.register(new PlacementHelper());
 
 	public SawBlock(Properties properties) {
 		super(properties);
@@ -121,36 +121,36 @@ public class SawBlock extends DirectionalAxisKineticBlock implements IBE<SawBloc
 	}
 
 	@Override
-	protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
-		IPlacementHelper placementHelper = PlacementHelpers.get(placementHelperId);
+	protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
 		if (!player.isShiftKeyDown() && player.mayBuild()) {
 			if (placementHelper.matchesItem(stack) && placementHelper.getOffset(player, level, state, pos, hitResult)
 				.placeInWorld(level, (BlockItem) stack.getItem(), player, hand, hitResult)
 				.consumesAction())
-				return ItemInteractionResult.SUCCESS;
+				return InteractionResult.SUCCESS;
 		}
 
 		if (player.isSpectator() || !stack.isEmpty())
-			return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+			return InteractionResult.TRY_WITH_EMPTY_HAND;
 		if (state.getOptionalValue(FACING)
 			.orElse(Direction.WEST) != Direction.UP)
-			return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+			return InteractionResult.TRY_WITH_EMPTY_HAND;
 
 		return onBlockEntityUseItemOn(level, pos, be -> {
-			for (int i = 0; i < be.inventory.getSlots(); i++) {
-				ItemStack heldItemStack = be.inventory.getStackInSlot(i);
-				if (!level.isClientSide && !heldItemStack.isEmpty())
+			for (int i = 0; i < be.inventory.size(); i++) {
+				ItemStack heldItemStack = ItemUtil.getStack(be.inventory, i);
+				if (!level.isClientSide() && !heldItemStack.isEmpty())
 					player.getInventory()
 						.placeItemBackInInventory(heldItemStack);
 			}
 			be.inventory.clear();
 			be.notifyUpdate();
-			return ItemInteractionResult.SUCCESS;
+			return InteractionResult.SUCCESS;
 		});
 	}
 
 	@Override
-	public void entityInside(BlockState state, Level worldIn, BlockPos pos, Entity entityIn) {
+	public void entityInside(BlockState state, Level worldIn, BlockPos pos, Entity entityIn,
+		InsideBlockEffectApplier effectApplier, boolean isPrecise) {
 		if (entityIn instanceof ItemEntity)
 			return;
 		if (!new AABB(pos).deflate(.1f)
@@ -164,11 +164,10 @@ public class SawBlock extends DirectionalAxisKineticBlock implements IBE<SawBloc
 	}
 
 	@Override
-	public void updateEntityAfterFallOn(BlockGetter worldIn, Entity entityIn) {
-		super.updateEntityAfterFallOn(worldIn, entityIn);
+	public void updateEntityAfterFallOn(Level worldIn, Entity entityIn) {
 		if (!(entityIn instanceof ItemEntity))
 			return;
-		if (entityIn.level().isClientSide)
+		if (entityIn.level().isClientSide())
 			return;
 
 		BlockPos pos = entityIn.blockPosition();
@@ -217,7 +216,6 @@ public class SawBlock extends DirectionalAxisKineticBlock implements IBE<SawBloc
 		return false;
 	}
 
-	@MethodsReturnNonnullByDefault
 	private static class PlacementHelper implements IPlacementHelper {
 
 		@Override

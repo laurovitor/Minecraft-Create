@@ -1,5 +1,8 @@
 package com.simibubi.create.content.trains.schedule.destination;
 
+import net.neoforged.neoforge.transfer.item.ItemUtil;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
@@ -20,16 +23,14 @@ import com.simibubi.create.content.trains.station.GlobalPackagePort;
 import com.simibubi.create.content.trains.station.GlobalStation;
 import com.simibubi.create.foundation.utility.CreateLang;
 
-import net.createmod.catnip.data.Pair;
+import net.createmod.catnip.api.data.Pair;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-
-import net.neoforged.neoforge.items.IItemHandlerModifiable;
 
 public class DeliverPackagesInstruction extends ScheduleInstruction {
 
@@ -56,7 +57,7 @@ public class DeliverPackagesInstruction extends ScheduleInstruction {
 	}
 
 	@Override
-	public ResourceLocation getId() {
+	public Identifier getId() {
 		return Create.asResource("package_delivery");
 	}
 
@@ -80,13 +81,13 @@ public class DeliverPackagesInstruction extends ScheduleInstruction {
 		}
 
 		for (Carriage carriage : train.carriages) {
-			IItemHandlerModifiable carriageInventory = carriage.storage.getAllItems();
+			ResourceHandler<ItemResource> carriageInventory = carriage.storage.getAllItems();
 			if (carriageInventory == null)
 				continue;
 
 			// Export to station
-			for (int slot = 0; slot < carriageInventory.getSlots(); slot++) {
-				ItemStack stack = carriageInventory.getStackInSlot(slot);
+			for (int slot = 0; slot < carriageInventory.size(); slot++) {
+				ItemStack stack = ItemUtil.getStack(carriageInventory, slot);
 				if (!PackageItem.isPackage(stack))
 					continue;
 				if (firstPackage == null)

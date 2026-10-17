@@ -1,5 +1,6 @@
 package com.simibubi.create.compat.jei.category;
 
+import org.jspecify.annotations.NullMarked;
 import com.simibubi.create.compat.jei.category.animations.AnimatedBlazeBurner;
 import com.simibubi.create.compat.jei.category.animations.AnimatedPress;
 import com.simibubi.create.content.processing.basin.BasinRecipe;
@@ -9,13 +10,12 @@ import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
 import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
 import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.RecipeIngredientRole;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.core.NonNullList;
 import net.minecraft.world.item.crafting.Ingredient;
 
-import javax.annotation.ParametersAreNonnullByDefault;
 
-@ParametersAreNonnullByDefault
+@NullMarked
 public class PackingCategory extends BasinCategory {
 
 	private final AnimatedPress press = new AnimatedPress(true);
@@ -67,7 +67,7 @@ public class PackingCategory extends BasinCategory {
 	}
 
 	@Override
-	public void draw(BasinRecipe recipe, IRecipeSlotsView iRecipeSlotsView, GuiGraphics graphics, double mouseX, double mouseY) {
+	public void draw(BasinRecipe recipe, IRecipeSlotsView iRecipeSlotsView, GuiGraphicsExtractor graphics, double mouseX, double mouseY) {
 		if (type == PackingType.COMPACTING) {
 			super.draw(recipe, iRecipeSlotsView, graphics, mouseX, mouseY);
 		} else {
@@ -79,8 +79,8 @@ public class PackingCategory extends BasinCategory {
 		HeatCondition requiredHeat = recipe.getRequiredHeat();
 		if (requiredHeat != HeatCondition.NONE)
 			heater.withHeat(requiredHeat.visualizeAsBlazeBurner())
-				.draw(graphics, getBackground().getWidth() / 2 + 3, 55);
-		press.draw(graphics, getBackground().getWidth() / 2 + 3, 34);
+				.draw(graphics, getWidth() / 2 + 3, 55);
+		press.draw(graphics, getWidth() / 2 + 3, 34);
 
 
 	}

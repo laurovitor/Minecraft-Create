@@ -1,19 +1,19 @@
 package com.simibubi.create.content.equipment.symmetryWand.mirror;
 
+import net.minecraft.world.level.block.state.properties.EnumProperty;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 import com.google.common.collect.ImmutableList;
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.simibubi.create.foundation.utility.CreateLang;
 
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
 import io.netty.buffer.ByteBuf;
-import net.createmod.catnip.codecs.stream.CatnipStreamCodecs;
+import net.createmod.catnip.api.data.codec.stream.CatnipStreamCodecs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -24,12 +24,8 @@ import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.phys.Vec3;
-
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 public abstract class SymmetryMirror {
 	public static final String EMPTY = "empty";
@@ -115,10 +111,21 @@ public abstract class SymmetryMirror {
 
 	public abstract String typeName();
 
-	@OnlyIn(Dist.CLIENT)
 	public abstract PartialModel getModel();
 
-	public void applyModelTransform(PoseStack ms) {}
+	/**
+	 * How far the model is turned about its own Y axis when it is drawn.
+	 * <p>
+	 * An angle rather than a transform, and that is the whole of the fix it represents: a mirror
+	 * travels in a data component, and NeoForge validates one by reflecting over the class -- which
+	 * resolves every method's parameter types at once. A {@code PoseStack} in any signature here was
+	 * therefore loaded on a dedicated server the moment a wand was used, and brought the server down
+	 * in its tick loop. Both subclasses that turned their model were turning it by exactly this
+	 * angle, so the caller applies it and the client type stays on the client.
+	 */
+	public float getModelYRotation() {
+		return 0;
+	}
 
 	protected Vec3 getDiff(BlockPos position) {
 		return this.position.scale(-1)
@@ -140,11 +147,13 @@ public abstract class SymmetryMirror {
 			if (property == BlockStateProperties.HALF)
 				return in.cycle(property);
 			// Directional Blocks
-			if (property instanceof DirectionProperty) {
-				if (in.getValue(property) == Direction.DOWN) {
-					return in.setValue((DirectionProperty) property, Direction.UP);
-				} else if (in.getValue(property) == Direction.UP) {
-					return in.setValue((DirectionProperty) property, Direction.DOWN);
+			if (property.getValueClass() == Direction.class) {
+				@SuppressWarnings("unchecked")
+				EnumProperty<Direction> directional = (EnumProperty<Direction>) property;
+				if (in.getValue(directional) == Direction.DOWN) {
+					return in.setValue(directional, Direction.UP);
+				} else if (in.getValue(directional) == Direction.UP) {
+					return in.setValue(directional, Direction.DOWN);
 				}
 			}
 		}

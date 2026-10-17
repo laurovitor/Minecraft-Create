@@ -8,7 +8,10 @@
   "type": "create:crushing",
   "ingredients": [
     {
-      "item": "elementaryores:ore_coal_end"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "elementaryores:ore_coal_end"
+      ]
     }
   ],
   "processing_time": 350,

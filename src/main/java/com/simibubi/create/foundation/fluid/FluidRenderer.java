@@ -6,41 +6,47 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 
 import dev.engine_room.flywheel.lib.transform.TransformStack;
-import net.createmod.catnip.math.AngleHelper;
-import net.createmod.catnip.render.FluidRenderHelper;
+import net.createmod.catnip.api.math.AngleHelper;
+import net.createmod.catnip.api.client.render.FluidRenderHelper;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.OrderedSubmitNodeCollector;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.level.material.Fluid;
 
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.FluidType;
 
-@OnlyIn(Dist.CLIENT)
 public class FluidRenderer {
-	public static void renderFluidStream(FluidStack fluidStack, Direction direction, float radius, float progress,
-		boolean inbound, MultiBufferSource buffer, PoseStack ms, int light) {
-		renderFluidStream(fluidStack, direction, radius, progress, inbound, FluidRenderHelper.getFluidBuilder(buffer), ms, light);
+	/**
+	 * Queue a fluid stream for drawing. The vertex work still happens in
+	 * {@link #renderFluidStream(FluidStack, Direction, float, float, boolean, VertexConsumer, PoseStack, int)},
+	 * just later, once the queue hands back a consumer.
+	 */
+	public static void submitFluidStream(FluidStack fluidStack, Direction direction, float radius, float progress,
+		boolean inbound, OrderedSubmitNodeCollector queue, PoseStack ms, int light) {
+		queue.submitCustomGeometry(ms, RenderTypes.translucentMovingBlock(), (pose, consumer) -> {
+			// The callback hands back a resolved Pose, while the vertex code walks a stack of its own.
+			PoseStack local = new PoseStack();
+			local.last()
+				.set(pose);
+			renderFluidStream(fluidStack, direction, radius, progress, inbound, consumer, local, light);
+		});
 	}
 
 	public static void renderFluidStream(FluidStack fluidStack, Direction direction, float radius, float progress,
 		boolean inbound, VertexConsumer builder, PoseStack ms, int light) {
 		Fluid fluid = fluidStack.getFluid();
-		IClientFluidTypeExtensions clientFluid = IClientFluidTypeExtensions.of(fluid);
 		FluidType fluidAttributes = fluid.getFluidType();
-		Function<ResourceLocation, TextureAtlasSprite> spriteAtlas = Minecraft.getInstance()
-			.getTextureAtlas(InventoryMenu.BLOCK_ATLAS);
-		TextureAtlasSprite flowTexture = spriteAtlas.apply(clientFluid.getFlowingTexture(fluidStack));
-		TextureAtlasSprite stillTexture = spriteAtlas.apply(clientFluid.getStillTexture(fluidStack));
+		TextureAtlasSprite flowTexture = FluidAppearance.flowingTexture(fluidStack);
+		TextureAtlasSprite stillTexture = FluidAppearance.stillTexture(fluidStack);
 
-		int color = clientFluid.getTintColor(fluidStack);
+		int color = FluidAppearance.tintColor(fluidStack);
 		int blockLightIn = (light >> 4) & 0xF;
 		int luminosity = Math.max(blockLightIn, fluidAttributes.getLightLevel(fluidStack));
 		light = (light & 0xF00000) | luminosity << 4;
@@ -71,14 +77,14 @@ public class FluidRenderer {
 		}
 
 		if (progress != 1)
-			FluidRenderHelper.renderStillTiledFace(Direction.DOWN, hMin, hMin, hMax, hMax, yMin, builder, ms, light, color, stillTexture);
+			FluidRenderHelper.renderStillTiledFace(Direction.DOWN, hMin, hMin, hMax, hMax, yMin, builder, ms.last(), light, color, stillTexture);
 
 		ms.popPose();
 	}
 
 	public static void renderFlowingTiledFace(Direction dir, float left, float down, float right, float up,
 		float depth, VertexConsumer builder, PoseStack ms, int light, int color, TextureAtlasSprite texture) {
-		FluidRenderHelper.renderTiledFace(dir, left, down, right, up, depth, builder, ms, light, color, texture, 0.5f);
+		FluidRenderHelper.renderTiledFace(dir, left, down, right, up, depth, builder, ms.last(), light, color, texture, 0.5f);
 	}
 
 }

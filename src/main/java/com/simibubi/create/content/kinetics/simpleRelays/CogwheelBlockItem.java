@@ -1,5 +1,6 @@
 package com.simibubi.create.content.kinetics.simpleRelays;
 
+import org.jspecify.annotations.NullMarked;
 import static com.simibubi.create.content.kinetics.base.RotatedPillarKineticBlock.AXIS;
 
 import java.util.List;
@@ -11,11 +12,10 @@ import com.simibubi.create.content.kinetics.base.HorizontalKineticBlock;
 import com.simibubi.create.content.kinetics.base.IRotate;
 import com.simibubi.create.content.kinetics.base.RotatedPillarKineticBlock;
 
-import net.createmod.catnip.data.Iterate;
-import net.createmod.catnip.placement.IPlacementHelper;
-import net.createmod.catnip.placement.PlacementHelpers;
-import net.createmod.catnip.placement.PlacementOffset;
-import net.minecraft.MethodsReturnNonnullByDefault;
+import net.createmod.catnip.api.data.Iterate;
+import net.createmod.catnip.api.placement.IPlacementHelper;
+import net.createmod.catnip.api.placement.PlacementHelpers;
+import net.createmod.catnip.api.placement.PlacementOffset;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -28,19 +28,20 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 
+@NullMarked
 public class CogwheelBlockItem extends BlockItem {
 
 	boolean large;
 
-	private final int placementHelperId;
-	private final int integratedCogHelperId;
+	private final IPlacementHelper placementHelper;
+	private final IPlacementHelper integratedCogHelper;
 
 	public CogwheelBlockItem(CogWheelBlock block, Properties builder) {
 		super(block, builder);
 		large = block.isLarge;
 
-		placementHelperId = PlacementHelpers.register(large ? new LargeCogHelper() : new SmallCogHelper());
-		integratedCogHelperId =
+		placementHelper = PlacementHelpers.register(large ? new LargeCogHelper() : new SmallCogHelper());
+		integratedCogHelper =
 			PlacementHelpers.register(large ? new IntegratedLargeCogHelper() : new IntegratedSmallCogHelper());
 	}
 
@@ -50,27 +51,26 @@ public class CogwheelBlockItem extends BlockItem {
 		BlockPos pos = context.getClickedPos();
 		BlockState state = world.getBlockState(pos);
 
-		IPlacementHelper helper = PlacementHelpers.get(placementHelperId);
+		IPlacementHelper helper = placementHelper;
 		Player player = context.getPlayer();
 		BlockHitResult ray = new BlockHitResult(context.getClickLocation(), context.getClickedFace(), pos, true);
 		if (helper.matchesState(state) && player != null && !player.isShiftKeyDown()) {
 			return helper.getOffset(player, world, state, pos, ray)
-				.placeInWorld(world, this, player, context.getHand(), ray).result();
+				.placeInWorld(world, this, player, context.getHand(), ray);
 		}
 
-		if (integratedCogHelperId != -1) {
-			helper = PlacementHelpers.get(integratedCogHelperId);
+		{
+			helper = integratedCogHelper;
 
 			if (helper.matchesState(state) && player != null && !player.isShiftKeyDown()) {
 				return helper.getOffset(player, world, state, pos, ray)
-					.placeInWorld(world, this, player, context.getHand(), ray).result();
+					.placeInWorld(world, this, player, context.getHand(), ray);
 			}
 		}
 
 		return super.onItemUseFirst(stack, context);
 	}
 
-	@MethodsReturnNonnullByDefault
 	private static class SmallCogHelper extends DiagonalCogHelper {
 
 		@Override
@@ -109,7 +109,6 @@ public class CogwheelBlockItem extends BlockItem {
 		}
 	}
 
-	@MethodsReturnNonnullByDefault
 	private static class LargeCogHelper extends DiagonalCogHelper {
 
 		@Override
@@ -149,7 +148,6 @@ public class CogwheelBlockItem extends BlockItem {
 		}
 	}
 
-	@MethodsReturnNonnullByDefault
 	public abstract static class DiagonalCogHelper implements IPlacementHelper {
 
 		@Override
@@ -193,7 +191,6 @@ public class CogwheelBlockItem extends BlockItem {
 		}
 	}
 
-	@MethodsReturnNonnullByDefault
 	public static class IntegratedLargeCogHelper implements IPlacementHelper {
 
 		@Override
@@ -248,7 +245,6 @@ public class CogwheelBlockItem extends BlockItem {
 
 	}
 
-	@MethodsReturnNonnullByDefault
 	public static class IntegratedSmallCogHelper implements IPlacementHelper {
 
 		@Override

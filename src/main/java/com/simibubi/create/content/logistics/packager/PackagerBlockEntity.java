@@ -1,5 +1,13 @@
 package com.simibubi.create.content.logistics.packager;
 
+import net.neoforged.neoforge.transfer.transaction.TransactionContext;
+import net.neoforged.neoforge.transfer.ResourceHandlerUtil;
+import net.neoforged.neoforge.transfer.transaction.Transaction;
+import net.neoforged.neoforge.transfer.item.ItemUtil;
+import com.simibubi.create.foundation.utility.RegistryNbt;
+import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -42,15 +50,14 @@ import com.simibubi.create.foundation.blockEntity.behaviour.inventory.VersionedI
 import com.simibubi.create.foundation.item.ItemHelper;
 
 import dan200.computercraft.api.peripheral.PeripheralCapability;
-import net.createmod.catnip.codecs.CatnipCodecUtils;
-import net.createmod.catnip.data.Iterate;
-import net.createmod.catnip.math.BlockFace;
-import net.createmod.catnip.nbt.NBTHelper;
+import net.createmod.catnip.api.data.codec.CatnipCodecUtils;
+import net.createmod.catnip.api.data.Iterate;
+import net.createmod.catnip.api.math.BlockFace;
+import net.createmod.catnip.api.nbt.NBTHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -66,10 +73,6 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
-import net.neoforged.neoforge.items.ItemStackHandler;
-
 public class PackagerBlockEntity extends SmartBlockEntity implements Clearable {
 	public boolean redstonePowered;
 	public int buttonCooldown;
@@ -116,7 +119,7 @@ public class PackagerBlockEntity extends SmartBlockEntity implements Clearable {
 
 	public static void registerCapabilities(RegisterCapabilitiesEvent event) {
 		event.registerBlockEntity(
-			Capabilities.ItemHandler.BLOCK,
+			Capabilities.Item.BLOCK,
 			AllBlockEntityTypes.PACKAGER.get(),
 			(be, context) -> be.inventory
 		);
@@ -181,7 +184,7 @@ public class PackagerBlockEntity extends SmartBlockEntity implements Clearable {
 			return;
 		}
 
-		if (level.isClientSide) {
+		if (level.isClientSide()) {
 			if (animationTicks == CYCLE - (animationInward ? 5 : 1))
 				AllSoundEvents.PACKAGER.playAt(level, worldPosition, 1, 1, true);
 			if (animationTicks == (animationInward ? 1 : 5))
@@ -207,20 +210,20 @@ public class PackagerBlockEntity extends SmartBlockEntity implements Clearable {
 
 		InventorySummary availableItems = new InventorySummary();
 
-		IItemHandler targetInv = targetInventory.getInventory();
+		ResourceHandler<ItemResource> targetInv = targetInventory.getInventory();
 		if (targetInv == null || targetInv instanceof PackagerItemHandler) {
 			this.availableItems = availableItems;
 			return availableItems;
 		}
 
 		if (targetInv instanceof BottomlessItemHandler bih) {
-			availableItems.add(bih.getStackInSlot(0), BigItemStack.INF);
+			availableItems.add(ItemUtil.getStack(bih, 0), BigItemStack.INF);
 			this.availableItems = availableItems;
 			return availableItems;
 		}
 
-		for (int slot = 0; slot < targetInv.getSlots(); slot++) {
-			availableItems.add(targetInv.getStackInSlot(slot));
+		for (int slot = 0; slot < targetInv.size(); slot++) {
+			availableItems.add(ItemUtil.getStack(targetInv, slot));
 		}
 
 		invVersionTracker.awaitNewVersion(targetInventory.getInventory());
@@ -361,13 +364,13 @@ public class PackagerBlockEntity extends SmartBlockEntity implements Clearable {
 		}
 	}
 
-	public boolean unwrapBox(ItemStack box, boolean simulate) {
+	public boolean unwrapBox(ItemStack box, boolean simulate, @Nullable TransactionContext parent) {
 		if (animationTicks > 0)
 			return false;
 
 		Objects.requireNonNull(this.level);
 
-		ItemStackHandler contents = PackageItem.getContents(box);
+		ItemStacksResourceHandler contents = PackageItem.getContents(box);
 		List<ItemStack> items = ItemHelper.getNonEmptyStacks(contents);
 		if (items.isEmpty())
 			return true;
@@ -380,7 +383,7 @@ public class PackagerBlockEntity extends SmartBlockEntity implements Clearable {
 		UnpackingHandler handler = UnpackingHandler.REGISTRY.get(targetState);
 		UnpackingHandler toUse = handler != null ? handler : UnpackingHandler.DEFAULT;
 		// note: handler may modify the passed items
-		boolean unpacked = toUse.unpack(level, target, targetState, facing, items, orderContext, simulate);
+		boolean unpacked = toUse.unpack(level, target, targetState, facing, items, orderContext, simulate, parent);
 
 		if (unpacked && !simulate) {
 			computerBehaviour.prepareComputerEvent(new PackageEvent(box, "package_received"));
@@ -397,12 +400,12 @@ public class PackagerBlockEntity extends SmartBlockEntity implements Clearable {
 		if (queuedRequests == null && (!heldBox.isEmpty() || animationTicks != 0 || buttonCooldown > 0))
 			return;
 
-		IItemHandler targetInv = targetInventory.getInventory();
+		ResourceHandler<ItemResource> targetInv = targetInventory.getInventory();
 		if (targetInv == null || targetInv instanceof PackagerItemHandler)
 			return;
 
 		boolean anyItemPresent = false;
-		ItemStackHandler extractedItems = new ItemStackHandler(PackageItem.SLOTS);
+		ItemStacksResourceHandler extractedItems = new ItemStacksResourceHandler(PackageItem.SLOTS);
 		ItemStack extractedPackageItem = ItemStack.EMPTY;
 		PackagingRequest nextRequest = null;
 		String fixedAddress = null;
@@ -435,9 +438,14 @@ public class PackagerBlockEntity extends SmartBlockEntity implements Clearable {
 			while (continuePacking) {
 				continuePacking = false;
 
-				for (int slot = 0; slot < targetInv.getSlots(); slot++) {
+				for (int slot = 0; slot < targetInv.size(); slot++) {
 					int initialCount = requestQueue ? Math.min(64, nextRequest.getCount()) : 64;
-					ItemStack extracted = targetInv.extractItem(slot, initialCount, true);
+					ItemStack extracted;
+					try (Transaction transaction = Transaction.openRoot()) {
+						ItemResource transferredResource = targetInv.getResource(slot);
+						int transferred = transferredResource.isEmpty() ? 0 : targetInv.extract(slot, transferredResource, initialCount, transaction);
+						extracted = transferred <= 0 ? ItemStack.EMPTY : transferredResource.toStack(transferred);
+					}
 					if (extracted.isEmpty())
 						continue;
 					if (requestQueue && !ItemStack.isSameItemSameComponents(extracted, nextRequest.item()))
@@ -449,10 +457,15 @@ public class PackagerBlockEntity extends SmartBlockEntity implements Clearable {
 						continue;
 
 					anyItemPresent = true;
-					int leftovers = ItemHandlerHelper.insertItemStacked(extractedItems, extracted.copy(), false)
-						.getCount();
-					int transferred = extracted.getCount() - leftovers;
-					targetInv.extractItem(slot, transferred, false);
+					int transferred;
+
+					try (Transaction transaction = Transaction.openRoot()) {
+						transferred = ResourceHandlerUtil.insertStacking(extractedItems, ItemResource.of(extracted),
+							extracted.getCount(), transaction);
+						if (transferred > 0)
+							targetInv.extract(slot, targetInv.getResource(slot), transferred, transaction);
+						transaction.commit();
+					}
 
 					if (extracted.getItem() instanceof PackageItem)
 						extractedPackageItem = extracted;
@@ -576,21 +589,21 @@ public class PackagerBlockEntity extends SmartBlockEntity implements Clearable {
 	@Override
 	protected void read(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
 		super.read(compound, registries, clientPacket);
-		redstonePowered = compound.getBoolean("Active");
-		animationInward = compound.getBoolean("AnimationInward");
-		animationTicks = compound.getInt("AnimationTicks");
-		signBasedAddress = compound.getString("SignAddress");
-		customComputerAddress = compound.getString("ComputerAddress");
-		hasCustomComputerAddress = compound.getBoolean("HasComputerAddress");
-		heldBox = ItemStack.parseOptional(registries, compound.getCompound("HeldBox"));
-		previouslyUnwrapped = ItemStack.parseOptional(registries, compound.getCompound("InsertedBox"));
+		redstonePowered = compound.getBooleanOr("Active", false);
+		animationInward = compound.getBooleanOr("AnimationInward", false);
+		animationTicks = compound.getIntOr("AnimationTicks", 0);
+		signBasedAddress = compound.getStringOr("SignAddress", "");
+		customComputerAddress = compound.getStringOr("ComputerAddress", "");
+		hasCustomComputerAddress = compound.getBooleanOr("HasComputerAddress", false);
+		heldBox = compound.read("HeldBox", ItemStack.OPTIONAL_CODEC, RegistryNbt.ops(registries)).orElse(ItemStack.EMPTY);
+		previouslyUnwrapped = compound.read("InsertedBox", ItemStack.OPTIONAL_CODEC, RegistryNbt.ops(registries)).orElse(ItemStack.EMPTY);
 		if (clientPacket)
 			return;
-		queuedExitingPackages = NBTHelper.readCompoundList(compound.getList("QueuedExitingPackages", Tag.TAG_COMPOUND),
+		queuedExitingPackages = NBTHelper.readCompoundList(compound.getListOrEmpty("QueuedExitingPackages"),
 			c -> CatnipCodecUtils.decode(BigItemStack.CODEC, registries, c)
 				.orElseThrow());
 		if (compound.contains("LastSummary"))
-			availableItems = CatnipCodecUtils.decodeOrNull(InventorySummary.CODEC, registries, compound.getCompound("LastSummary"));
+			availableItems = CatnipCodecUtils.decodeOrNull(InventorySummary.CODEC, registries, compound.getCompoundOrEmpty("LastSummary"));
 	}
 
 	@Override
@@ -602,8 +615,8 @@ public class PackagerBlockEntity extends SmartBlockEntity implements Clearable {
 		compound.putString("SignAddress", signBasedAddress);
 		compound.putString("ComputerAddress", customComputerAddress);
 		compound.putBoolean("HasComputerAddress", hasCustomComputerAddress);
-		compound.put("HeldBox", heldBox.saveOptional(registries));
-		compound.put("InsertedBox", previouslyUnwrapped.saveOptional(registries));
+		compound.store("HeldBox", ItemStack.OPTIONAL_CODEC, RegistryNbt.ops(registries), heldBox);
+		compound.store("InsertedBox", ItemStack.OPTIONAL_CODEC, RegistryNbt.ops(registries), previouslyUnwrapped);
 		if (clientPacket)
 			return;
 		compound.put("QueuedExitingPackages", NBTHelper.writeCompoundList(queuedExitingPackages, bis -> {
@@ -619,7 +632,7 @@ public class PackagerBlockEntity extends SmartBlockEntity implements Clearable {
 
 	@Override
 	public void clearContent() {
-		inventory.setStackInSlot(0, ItemStack.EMPTY);
+		inventory.set(0, ItemResource.EMPTY, 0);
 		queuedExitingPackages.clear();
 	}
 
@@ -652,7 +665,7 @@ public class PackagerBlockEntity extends SmartBlockEntity implements Clearable {
 		if (inventory == null)
 			return false;
 
-		IItemHandler targetHandler = this.targetInventory.getInventory();
+		ResourceHandler<ItemResource> targetHandler = this.targetInventory.getInventory();
 		if (targetHandler == null)
 			return false;
 
@@ -664,18 +677,18 @@ public class PackagerBlockEntity extends SmartBlockEntity implements Clearable {
 		}
 	}
 
-	private static boolean isSameInventoryFallback(IItemHandler first, IItemHandler second) {
+	private static boolean isSameInventoryFallback(ResourceHandler<ItemResource> first, ResourceHandler<ItemResource> second) {
 		if (first == second)
 			return true;
 
 		// If a contained ItemStack instance is the same, we can be pretty sure these
 		// inventories are the same (works for compound inventories)
-		for (int i = 0; i < second.getSlots(); i++) {
-			ItemStack stackInSlot = second.getStackInSlot(i);
+		for (int i = 0; i < second.size(); i++) {
+			ItemStack stackInSlot = ItemUtil.getStack(second, i);
 			if (stackInSlot.isEmpty())
 				continue;
-			for (int j = 0; j < first.getSlots(); j++)
-				if (stackInSlot == first.getStackInSlot(j))
+			for (int j = 0; j < first.size(); j++)
+				if (stackInSlot == ItemUtil.getStack(first, j))
 					return true;
 			break;
 		}

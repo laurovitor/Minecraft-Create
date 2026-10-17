@@ -1,8 +1,18 @@
 package com.simibubi.create.compat.jei.category;
 
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.transfer.access.ItemAccess;
+import net.neoforged.neoforge.transfer.item.ItemUtil;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
+import net.neoforged.neoforge.transfer.transaction.Transaction;
+import net.neoforged.neoforge.transfer.resource.ResourceStack;
+import net.neoforged.neoforge.transfer.ResourceHandlerUtil;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.fluid.FluidResource;
+import org.jspecify.annotations.NullMarked;
 import java.util.function.Consumer;
 
-import javax.annotation.ParametersAreNonnullByDefault;
 
 import com.simibubi.create.Create;
 import com.simibubi.create.compat.jei.category.animations.AnimatedItemDrain;
@@ -20,21 +30,20 @@ import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
 import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.runtime.IIngredientManager;
-import net.createmod.catnip.registry.RegisteredObjectsHelper;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.resources.ResourceLocation;
+import net.createmod.catnip.api.registry.RegisteredObjectsHelper;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ItemStackLinkedSet;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 
-import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.fluids.FluidStack;
-import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
-import net.neoforged.neoforge.fluids.capability.IFluidHandlerItem;
-
-@ParametersAreNonnullByDefault
+@NullMarked
 public class ItemDrainCategory extends CreateRecipeCategory<EmptyingRecipe> {
 
 	private final AnimatedItemDrain drain = new AnimatedItemDrain();
@@ -48,25 +57,37 @@ public class ItemDrainCategory extends CreateRecipeCategory<EmptyingRecipe> {
 		for (ItemStack stack : ingredientManager.getAllIngredients(VanillaTypes.ITEM_STACK)) {
 			if (PotionFluidHandler.isPotionItem(stack)) {
 				FluidStack fluidFromPotionItem = PotionFluidHandler.getFluidFromPotionItem(stack);
-				Ingredient potion = Ingredient.of(stack);
-				ResourceLocation id = Create.asResource("potions");
+				// An ingredient is a flat set of items now and cannot carry the potion's components,
+				// so every potion collapses onto one entry keyed by the bottle item.
+				Ingredient potion = Ingredient.of(stack.getItem());
+				Identifier id = Create.asResource("potions");
 				EmptyingRecipe recipe = new StandardProcessingRecipe.Builder<>(EmptyingRecipe::new, id)
 						.withItemIngredients(potion)
 						.withFluidOutputs(fluidFromPotionItem)
 						.withSingleItemOutput(new ItemStack(Items.GLASS_BOTTLE))
 						.build();
-				consumer.accept(new RecipeHolder<>(id, recipe));
+				consumer.accept(new RecipeHolder<>(recipeKey(id), recipe));
 				continue;
 			}
 
-			IFluidHandlerItem capability = stack.getCapability(Capabilities.FluidHandler.ITEM);
+			// A fluid handler no longer hands back a container item of its own; it writes the emptied
+			// item through the access it was opened on, which is read back once the drain is done.
+			// One slot the fluid handler is allowed to swap the item inside: filling a bucket
+			// changes which item is held, and an access over a bare stack refuses that.
+			ItemStacksResourceHandler carrier = new ItemStacksResourceHandler(1);
+			carrier.set(0, ItemResource.of(stack.copy()), stack.copy().getCount());
+			ItemAccess access = ItemAccess.forHandlerIndex(carrier, 0);
+			ResourceHandler<FluidResource> capability = access.getCapability(Capabilities.Fluid.ITEM);
 			if (capability == null)
 				continue;
 
-			ItemStack copy = stack.copy();
-			capability = copy.getCapability(Capabilities.FluidHandler.ITEM);
-			FluidStack extracted = capability.drain(1000, FluidAction.EXECUTE);
-			ItemStack result = capability.getContainer();
+			FluidStack extracted;
+			try (Transaction transaction = Transaction.openRoot()) {
+				ResourceStack<FluidResource> transferred = ResourceHandlerUtil.extractFirst(capability, resource -> true, 1000, transaction);
+				extracted = transferred == null ? FluidStack.EMPTY : transferred.resource().toStack(transferred.amount());
+				transaction.commit();
+			}
+			ItemStack result = ItemUtil.getStack(carrier, 0);
 			if (extracted.isEmpty())
 				continue;
 			if (result.isEmpty())
@@ -77,19 +98,27 @@ public class ItemDrainCategory extends CreateRecipeCategory<EmptyingRecipe> {
 			// instead of the copy.
 			result = ItemHelper.sameItem(stack, result) ? stack : emptiedItems.addOrGet(result);
 
-			Ingredient ingredient = Ingredient.of(stack);
-			ResourceLocation itemName = RegisteredObjectsHelper.getKeyOrThrow(stack.getItem());
-			ResourceLocation fluidName = RegisteredObjectsHelper.getKeyOrThrow(extracted.getFluid());
+			Ingredient ingredient = Ingredient.of(stack.getItem());
+			Identifier itemName = RegisteredObjectsHelper.getKeyOrThrow(stack.getItem());
+			Identifier fluidName = RegisteredObjectsHelper.getKeyOrThrow(extracted.getFluid());
 
-			ResourceLocation id = Create.asResource("empty_" + itemName.getNamespace() + "_" + itemName.getPath() + "_of_"
+			Identifier id = Create.asResource("empty_" + itemName.getNamespace() + "_" + itemName.getPath() + "_of_"
 					+ fluidName.getNamespace() + "_" + fluidName.getPath());
 			EmptyingRecipe recipe = new StandardProcessingRecipe.Builder<>(EmptyingRecipe::new, id)
 					.withItemIngredients(ingredient)
 					.withFluidOutputs(extracted)
 					.withSingleItemOutput(result)
 					.build();
-			consumer.accept(new RecipeHolder<>(id, recipe));
+			consumer.accept(new RecipeHolder<>(recipeKey(id), recipe));
 		}
+	}
+
+	/**
+	 * A recipe is held under a registry key rather than a bare id in 26.2. These recipes only exist
+	 * in JEI, so the key names something the recipe manager has never heard of.
+	 */
+	private static ResourceKey<Recipe<?>> recipeKey(Identifier id) {
+		return ResourceKey.create(Registries.RECIPE, id);
 	}
 
 	@Override
@@ -108,11 +137,11 @@ public class ItemDrainCategory extends CreateRecipeCategory<EmptyingRecipe> {
 	}
 
 	@Override
-	public void draw(EmptyingRecipe recipe, IRecipeSlotsView iRecipeSlotsView, GuiGraphics graphics, double mouseX, double mouseY) {
+	public void draw(EmptyingRecipe recipe, IRecipeSlotsView iRecipeSlotsView, GuiGraphicsExtractor graphics, double mouseX, double mouseY) {
 		AllGuiTextures.JEI_SHADOW.render(graphics, 62, 37);
 		AllGuiTextures.JEI_DOWN_ARROW.render(graphics, 73, 4);
 		drain.withFluid(recipe.getResultingFluid())
-			.draw(graphics, getBackground().getWidth() / 2 - 13, 40);
+			.draw(graphics, getWidth() / 2 - 13, 40);
 	}
 
 }

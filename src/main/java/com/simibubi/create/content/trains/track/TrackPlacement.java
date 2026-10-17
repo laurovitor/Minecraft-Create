@@ -1,39 +1,25 @@
 package com.simibubi.create.content.trains.track;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.simibubi.create.AllDataComponents;
-import com.simibubi.create.AllSpecialTextures;
 import com.simibubi.create.AllTags;
 import com.simibubi.create.AllTags.AllItemTags;
-import com.simibubi.create.content.equipment.blueprint.BlueprintOverlayRenderer;
 import com.simibubi.create.foundation.block.ProperWaterloggedBlock;
 import com.simibubi.create.foundation.utility.BlockHelper;
-import com.simibubi.create.foundation.utility.CreateLang;
 import com.simibubi.create.infrastructure.config.AllConfigs;
 
 import io.netty.buffer.ByteBuf;
-import net.createmod.catnip.animation.LerpedFloat;
-import net.createmod.catnip.animation.LerpedFloat.Chaser;
-import net.createmod.catnip.codecs.stream.CatnipStreamCodecs;
-import net.createmod.catnip.data.Couple;
-import net.createmod.catnip.data.Iterate;
-import net.createmod.catnip.data.Pair;
-import net.createmod.catnip.math.AngleHelper;
-import net.createmod.catnip.math.VecHelper;
-import net.createmod.catnip.outliner.Outliner;
-import net.createmod.catnip.theme.Color;
-import net.minecraft.ChatFormatting;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
+import net.createmod.catnip.api.data.codec.stream.CatnipStreamCodecs;
+import net.createmod.catnip.api.data.Couple;
+import net.createmod.catnip.api.data.Iterate;
+import net.createmod.catnip.api.data.Pair;
+import net.createmod.catnip.api.math.AngleHelper;
+import net.createmod.catnip.api.math.VecHelper;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.core.Direction.AxisDirection;
 import net.minecraft.network.codec.StreamCodec;
@@ -44,19 +30,12 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.HitResult.Type;
 import net.minecraft.world.phys.Vec3;
-
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 public class TrackPlacement {
 	public record ConnectingFrom(BlockPos pos, Vec3 axis, Vec3 normal, Vec3 end) {
@@ -131,7 +110,7 @@ public class TrackPlacement {
 		int lookAngle = (int) (22.5 + AngleHelper.deg(Mth.atan2(lookVec.z, lookVec.x)) % 360) / 8;
 		int maxLength = AllConfigs.server().trains.maxTrackPlacementLength.get();
 
-		if (level.isClientSide && cached != null && pos2.equals(hoveringPos) && stack.equals(lastItem)
+		if (level.isClientSide() && cached != null && pos2.equals(hoveringPos) && stack.equals(lastItem)
 			&& hoveringMaxed == maximiseTurn && lookAngle == hoveringAngle)
 			return cached;
 
@@ -160,7 +139,7 @@ public class TrackPlacement {
 		Vec3 normal1 = connectingFrom.normal();
 		BlockState state1 = level.getBlockState(pos1);
 
-		if (level.isClientSide) {
+		if (level.isClientSide()) {
 			info.end1 = end1;
 			info.end2 = end2;
 			info.normal1 = normal1;
@@ -183,7 +162,7 @@ public class TrackPlacement {
 			axis1 = axis1.scale(-1);
 			normedAxis1 = normedAxis1.scale(-1);
 			end1 = track.getCurveStart(level, pos1, state1, axis1);
-			if (level.isClientSide) {
+			if (level.isClientSide()) {
 				info.end1 = end1;
 				info.axis1 = axis1;
 			}
@@ -197,7 +176,7 @@ public class TrackPlacement {
 			axis2 = axis2.scale(-1);
 			normedAxis2 = normedAxis2.scale(-1);
 			end2 = track.getCurveStart(level, pos2, state2, axis2);
-			if (level.isClientSide) {
+			if (level.isClientSide()) {
 				info.end2 = end2;
 				info.axis2 = axis2;
 			}
@@ -212,7 +191,7 @@ public class TrackPlacement {
 		double absAscend = Math.abs(ascend);
 		boolean slope = !normal1.equals(normal2);
 
-		if (level.isClientSide) {
+		if (level.isClientSide()) {
 			Vec3 offset1 = axis1.scale(info.end1Extent);
 			Vec3 offset2 = axis2.scale(info.end2Extent);
 			BlockPos targetPos1 = pos1.offset(BlockPos.containing(offset1));
@@ -403,7 +382,7 @@ public class TrackPlacement {
 
 		if (!player.isCreative()) {
 			for (boolean simulate : Iterate.trueAndFalse) {
-				if (level.isClientSide && !simulate)
+				if (level.isClientSide() && !simulate)
 					break;
 
 				int tracks = info.requiredTracks;
@@ -412,18 +391,20 @@ public class TrackPlacement {
 				int foundPavement = 0;
 
 				Inventory inv = player.getInventory();
-				int size = inv.items.size();
+				int size = inv.getNonEquipmentItems().size();
 				for (int j = 0; j <= size + 1; j++) {
 					int i = j;
 					boolean offhand = j == size + 1;
 					if (j == size)
-						i = inv.selected;
+						i = inv.getSelectedSlot();
 					else if (offhand)
 						i = 0;
-					else if (j == inv.selected)
+					else if (j == inv.getSelectedSlot())
 						continue;
 
-					ItemStack stackInSlot = (offhand ? inv.offhand : inv.items).get(i);
+					// The offhand slot moved out of the inventory lists and into the player's equipment.
+					ItemStack stackInSlot =
+						offhand ? player.getOffhandItem() : inv.getNonEquipmentItems().get(i);
 					boolean isTrack = AllTags.AllBlockTags.TRACKS.matches(stackInSlot) && stackInSlot.is(stack.getItem());
 					if (!isTrack && (!shouldPave || offhandItem.getItem() != stackInSlot.getItem()))
 						continue;
@@ -435,7 +416,7 @@ public class TrackPlacement {
 					if (!simulate) {
 						int remainingItems =
 							count - Math.min(isTrack ? tracks - foundTracks : pavement - foundPavement, count);
-						if (i == inv.selected)
+						if (i == inv.getSelectedSlot())
 							stackInSlot.remove(AllDataComponents.TRACK_CONNECTING_FROM);
 						ItemStack newItem = stackInSlot.copyWithCount(remainingItems);
 						if (offhand)
@@ -581,210 +562,4 @@ public class TrackPlacement {
 		tte2.tilt.tryApplySmoothing();
 		return info;
 	}
-
-	static LerpedFloat animation = LerpedFloat.linear()
-		.startWithValue(0);
-	static int lastLineCount = 0;
-
-	static BlockPos hintPos;
-	static int hintAngle;
-	static Couple<List<BlockPos>> hints;
-
-	@OnlyIn(Dist.CLIENT)
-	public static void clientTick() {
-		LocalPlayer player = Minecraft.getInstance().player;
-		ItemStack stack = player.getMainHandItem();
-		HitResult hitResult = Minecraft.getInstance().hitResult;
-		int restoreWarmup = extraTipWarmup;
-		extraTipWarmup = 0;
-
-		if (hitResult == null)
-			return;
-		if (hitResult.getType() != Type.BLOCK)
-			return;
-
-		InteractionHand hand = InteractionHand.MAIN_HAND;
-		if (!AllTags.AllBlockTags.TRACKS.matches(stack)) {
-			stack = player.getOffhandItem();
-			hand = InteractionHand.OFF_HAND;
-			if (!AllTags.AllBlockTags.TRACKS.matches(stack))
-				return;
-		}
-
-		if (!stack.hasFoil())
-			return;
-
-		TrackBlockItem blockItem = (TrackBlockItem) stack.getItem();
-		Level level = player.level();
-		BlockHitResult bhr = (BlockHitResult) hitResult;
-		BlockPos pos = bhr.getBlockPos();
-		BlockState hitState = level.getBlockState(pos);
-		if (!(hitState.getBlock() instanceof TrackBlock) && !hitState.canBeReplaced()) {
-			pos = pos.relative(bhr.getDirection());
-			hitState = blockItem.getPlacementState(new UseOnContext(player, hand, bhr));
-			if (hitState == null)
-				return;
-		}
-
-		if (!(hitState.getBlock() instanceof TrackBlock))
-			return;
-
-		extraTipWarmup = restoreWarmup;
-		boolean maxTurns = Minecraft.getInstance().options.keySprint.isDown();
-		PlacementInfo info = tryConnect(level, player, pos, hitState, stack, false, maxTurns);
-		if (extraTipWarmup < 20)
-			extraTipWarmup++;
-		if (!info.valid || !hoveringMaxed && (info.end1Extent == 0 || info.end2Extent == 0))
-			extraTipWarmup = 0;
-
-		if (!player.isCreative() && (info.valid || !info.hasRequiredTracks || !info.hasRequiredPavement))
-			BlueprintOverlayRenderer.displayTrackRequirements(info, player.getOffhandItem());
-
-		if (info.valid)
-			player.displayClientMessage(CreateLang.translateDirect("track.valid_connection")
-				.withStyle(ChatFormatting.GREEN), true);
-		else if (info.message != null)
-			player.displayClientMessage(CreateLang.translateDirect(info.message)
-					.withStyle(info.message.equals("track.second_point") ? ChatFormatting.WHITE : ChatFormatting.RED),
-				true);
-
-		if (bhr.getDirection() == Direction.UP) {
-			Vec3 lookVec = player.getLookAngle();
-			int lookAngle = (int) (22.5 + AngleHelper.deg(Mth.atan2(lookVec.z, lookVec.x)) % 360) / 8;
-
-			if (!pos.equals(hintPos) || lookAngle != hintAngle) {
-				hints = Couple.create(ArrayList::new);
-				hintAngle = lookAngle;
-				hintPos = pos;
-
-				for (int xOffset = -2; xOffset <= 2; xOffset++) {
-					for (int zOffset = -2; zOffset <= 2; zOffset++) {
-						BlockPos offset = pos.offset(xOffset, 0, zOffset);
-						PlacementInfo adjInfo = tryConnect(level, player, offset, hitState, stack, false, maxTurns);
-						hints.get(adjInfo.valid)
-							.add(offset.below());
-					}
-				}
-			}
-
-			if (hints != null && !hints.either(Collection::isEmpty)) {
-				Outliner.getInstance().showCluster("track_valid", hints.getFirst())
-					.withFaceTexture(AllSpecialTextures.THIN_CHECKERED)
-					.colored(0x95CD41)
-					.lineWidth(0);
-				Outliner.getInstance().showCluster("track_invalid", hints.getSecond())
-					.withFaceTexture(AllSpecialTextures.THIN_CHECKERED)
-					.colored(0xEA5C2B)
-					.lineWidth(0);
-			}
-		}
-
-		animation.chase(info.valid ? 1 : 0, 0.25, Chaser.EXP);
-		animation.tickChaser();
-
-		if (!info.valid) {
-			info.end1Extent = 0;
-			info.end2Extent = 0;
-		}
-
-		int color = Color.mixColors(0xEA5C2B, 0x95CD41, animation.getValue());
-		Vec3 up = new Vec3(0, 4 / 16f, 0);
-
-		{
-			Vec3 v1 = info.end1;
-			Vec3 a1 = info.axis1.normalize();
-			Vec3 n1 = info.normal1.cross(a1)
-				.scale(15 / 16f);
-			Vec3 o1 = a1.scale(0.125f);
-			Vec3 ex1 =
-				a1.scale((info.end1Extent - (info.curve == null && info.end1Extent > 0 ? 2 : 0)) * info.axis1.length());
-			line(1, v1.add(n1)
-				.add(up), o1, ex1);
-			line(2, v1.subtract(n1)
-				.add(up), o1, ex1);
-
-			Vec3 v2 = info.end2;
-			Vec3 a2 = info.axis2.normalize();
-			Vec3 n2 = info.normal2.cross(a2)
-				.scale(15 / 16f);
-			Vec3 o2 = a2.scale(0.125f);
-			Vec3 ex2 = a2.scale(info.end2Extent * info.axis2.length());
-			line(3, v2.add(n2)
-				.add(up), o2, ex2);
-			line(4, v2.subtract(n2)
-				.add(up), o2, ex2);
-		}
-
-		BezierConnection bc = info.curve;
-		if (bc == null)
-			return;
-
-		Vec3 previous1 = null;
-		Vec3 previous2 = null;
-		int railcolor = color;
-		int segCount = bc.getSegmentCount();
-
-		float s = animation.getValue() * 7 / 8f + 1 / 8f;
-		float lw = animation.getValue() * 1 / 16f + 1 / 16f;
-		Vec3 end1 = bc.starts.getFirst();
-		Vec3 end2 = bc.starts.getSecond();
-		Vec3 finish1 = end1.add(bc.axes.getFirst()
-			.scale(bc.getHandleLength()));
-		Vec3 finish2 = end2.add(bc.axes.getSecond()
-			.scale(bc.getHandleLength()));
-		String key = "curve";
-
-		for (int i = 0; i <= segCount; i++) {
-			float t = i / (float) segCount;
-			Vec3 result = VecHelper.bezier(end1, end2, finish1, finish2, t);
-			Vec3 derivative = VecHelper.bezierDerivative(end1, end2, finish1, finish2, t)
-				.normalize();
-			Vec3 normal = bc.getNormal(t)
-				.cross(derivative)
-				.scale(15 / 16f);
-			Vec3 rail1 = result.add(normal)
-				.add(up);
-			Vec3 rail2 = result.subtract(normal)
-				.add(up);
-
-			if (previous1 != null) {
-				Vec3 middle1 = rail1.add(previous1)
-					.scale(0.5f);
-				Vec3 middle2 = rail2.add(previous2)
-					.scale(0.5f);
-				Outliner.getInstance()
-					.showLine(Pair.of(key, i * 2), VecHelper.lerp(s, middle1, previous1),
-						VecHelper.lerp(s, middle1, rail1))
-					.colored(railcolor)
-					.disableLineNormals()
-					.lineWidth(lw);
-				Outliner.getInstance()
-					.showLine(Pair.of(key, i * 2 + 1), VecHelper.lerp(s, middle2, previous2),
-						VecHelper.lerp(s, middle2, rail2))
-					.colored(railcolor)
-					.disableLineNormals()
-					.lineWidth(lw);
-			}
-
-			previous1 = rail1;
-			previous2 = rail2;
-		}
-
-		for (int i = segCount + 1; i <= lastLineCount; i++) {
-			Outliner.getInstance().remove(Pair.of(key, i * 2));
-			Outliner.getInstance().remove(Pair.of(key, i * 2 + 1));
-		}
-
-		lastLineCount = segCount;
-	}
-
-	@OnlyIn(Dist.CLIENT)
-	private static void line(int id, Vec3 v1, Vec3 o1, Vec3 ex) {
-		int color = Color.mixColors(0xEA5C2B, 0x95CD41, animation.getValue());
-		Outliner.getInstance().showLine(Pair.of("start", id), v1.subtract(o1), v1.add(ex))
-			.lineWidth(1 / 8f)
-			.disableLineNormals()
-			.colored(color);
-	}
-
 }

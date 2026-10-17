@@ -1,5 +1,8 @@
 package com.simibubi.create.content.fluids.tank;
 
+import net.neoforged.neoforge.transfer.fluid.FluidResource;
+import net.neoforged.neoforge.transfer.transaction.TransactionContext;
+import net.neoforged.neoforge.transfer.fluid.FluidStacksResourceHandler;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -17,8 +20,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.fluids.FluidStack;
-import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
-
 public class CreativeFluidTankBlockEntity extends FluidTankBlockEntity {
 
 	public CreativeFluidTankBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
@@ -27,7 +28,7 @@ public class CreativeFluidTankBlockEntity extends FluidTankBlockEntity {
 
 	public static void registerCapabilities(RegisterCapabilitiesEvent event) {
 		event.registerBlockEntity(
-				Capabilities.FluidHandler.BLOCK,
+				Capabilities.Fluid.BLOCK,
 				AllBlockEntityTypes.CREATIVE_FLUID_TANK.get(),
 				(be, context) -> {
 					if (be.fluidCapability == null)
@@ -49,8 +50,8 @@ public class CreativeFluidTankBlockEntity extends FluidTankBlockEntity {
 
 	public static class CreativeSmartFluidTank extends SmartFluidTank {
 		public static final Codec<CreativeSmartFluidTank> CODEC = RecordCodecBuilder.create(i -> i.group(
-			FluidStack.OPTIONAL_CODEC.fieldOf("fluid").forGetter(FluidTank::getFluid),
-			ExtraCodecs.NON_NEGATIVE_INT.fieldOf("capacity").forGetter(FluidTank::getCapacity)
+			FluidStack.OPTIONAL_CODEC.fieldOf("fluid").forGetter(CreativeSmartFluidTank::getFluid),
+			ExtraCodecs.NON_NEGATIVE_INT.fieldOf("capacity").forGetter(CreativeSmartFluidTank::getCapacity)
 		).apply(i, (fluid, capacity) -> {
 			CreativeSmartFluidTank tank = new CreativeSmartFluidTank(capacity, $ -> {
 			});
@@ -64,29 +65,28 @@ public class CreativeFluidTankBlockEntity extends FluidTankBlockEntity {
 
 		@Override
 		public int getFluidAmount() {
-			return getFluid().isEmpty() ? 0 : getTankCapacity(0);
+			return getFluid().isEmpty() ? 0 : getCapacity();
 		}
 
 		public void setContainedFluid(FluidStack fluidStack) {
-			fluid = fluidStack.copy();
-			if (!fluidStack.isEmpty())
-				fluid.setAmount(getTankCapacity(0));
-			onContentsChanged();
+			FluidStack contained = fluidStack.copy();
+			if (!contained.isEmpty())
+				contained.setAmount(getCapacity());
+			setFluid(contained);
+		}
+
+		/**
+		 * Creative tanks swallow anything and never run dry, so neither direction changes state and
+		 * neither needs to join the transaction.
+		 */
+		@Override
+		public int insert(int tank, FluidResource resource, int amount, TransactionContext transaction) {
+			return amount;
 		}
 
 		@Override
-		public int fill(FluidStack resource, FluidAction action) {
-			return resource.getAmount();
-		}
-
-		@Override
-		public FluidStack drain(FluidStack resource, FluidAction action) {
-			return super.drain(resource, FluidAction.SIMULATE);
-		}
-
-		@Override
-		public FluidStack drain(int maxDrain, FluidAction action) {
-			return super.drain(maxDrain, FluidAction.SIMULATE);
+		public int extract(int tank, FluidResource resource, int amount, TransactionContext transaction) {
+			return resource.equals(getResource(tank)) ? amount : 0;
 		}
 
 	}

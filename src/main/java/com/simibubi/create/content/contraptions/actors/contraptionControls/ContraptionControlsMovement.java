@@ -1,5 +1,8 @@
 package com.simibubi.create.content.contraptions.actors.contraptionControls;
 
+import com.simibubi.create.foundation.utility.RegistryNbt;
+import com.simibubi.create.content.contraptions.render.ActorGeometry;
+import java.util.List;
 import com.simibubi.create.api.behaviour.movement.MovementBehaviour;
 import com.simibubi.create.content.contraptions.Contraption;
 import com.simibubi.create.content.contraptions.behaviour.MovementContext;
@@ -8,17 +11,13 @@ import com.simibubi.create.content.contraptions.render.ContraptionMatrices;
 import com.simibubi.create.foundation.utility.CreateLang;
 import com.simibubi.create.foundation.virtualWorld.VirtualRenderWorld;
 
-import net.createmod.catnip.animation.LerpedFloat;
-import net.createmod.catnip.animation.LerpedFloat.Chaser;
-import net.createmod.catnip.data.Couple;
-import net.createmod.catnip.data.IntAttached;
-import net.minecraft.client.renderer.MultiBufferSource;
+import net.createmod.catnip.api.animation.LerpedFloat;
+import net.createmod.catnip.api.animation.LerpedFloat.Chaser;
+import net.createmod.catnip.api.data.Couple;
+import net.createmod.catnip.api.data.IntAttached;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
-
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 public class ContraptionControlsMovement implements MovementBehaviour {
 
@@ -51,11 +50,12 @@ public class ContraptionControlsMovement implements MovementBehaviour {
 		CompoundTag blockEntityData = ctx.blockEntityData;
 		if (blockEntityData == null)
 			return null;
-		return ItemStack.parseOptional(ctx.world.registryAccess(), blockEntityData.getCompound("Filter"));
+		return blockEntityData.read("Filter", ItemStack.OPTIONAL_CODEC, RegistryNbt.ops(ctx.world.registryAccess()))
+			.orElse(ItemStack.EMPTY);
 	}
 
 	public static boolean isDisabledInitially(MovementContext ctx) {
-		return ctx.blockEntityData != null && ctx.blockEntityData.getBoolean("Disabled");
+		return ctx.blockEntityData != null && ctx.blockEntityData.getBooleanOr("Disabled", false);
 	}
 
 	@Override
@@ -140,12 +140,6 @@ public class ContraptionControlsMovement implements MovementBehaviour {
 				.string();
 	}
 
-	@Override
-	@OnlyIn(Dist.CLIENT)
-	public void renderInContraption(MovementContext ctx, VirtualRenderWorld renderWorld, ContraptionMatrices matrices,
-		MultiBufferSource buffer) {
-		ContraptionControlsRenderer.renderInContraption(ctx, renderWorld, matrices, buffer);
-	}
 
 	public static class ElevatorFloorSelection {
 		public int currentIndex = 0;

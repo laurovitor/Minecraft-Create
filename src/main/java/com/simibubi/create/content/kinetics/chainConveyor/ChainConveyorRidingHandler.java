@@ -1,12 +1,12 @@
 package com.simibubi.create.content.kinetics.chainConveyor;
 
+import net.createmod.catnip.api.client.network.ClientNetworkHelper;
 import com.simibubi.create.AllTags.AllItemTags;
 import com.simibubi.create.content.kinetics.chainConveyor.ChainConveyorBlockEntity.ConnectionStats;
 import com.simibubi.create.foundation.utility.ServerSpeedProvider;
 
-import net.createmod.catnip.animation.AnimationTickHolder;
-import net.createmod.catnip.math.VecHelper;
-import net.createmod.catnip.platform.CatnipServices;
+import net.createmod.catnip.api.client.animation.AnimationTickHolder;
+import net.createmod.catnip.api.math.VecHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.BlockPos;
@@ -35,7 +35,7 @@ public class ChainConveyorRidingHandler {
 			flipped = clbe.getSpeed() < 0;
 
 		Component component = Component.translatable("mount.onboard", mc.options.keyShift.getTranslatedKeyMessage());
-		mc.gui.setOverlayMessage(component, false);
+		mc.gui.hud.setOverlayMessage(component, false);
 		mc.getSoundManager()
 			.play(SimpleSoundInstance.forUI(SoundEvents.CHAIN_HIT, 1f, 0.5f));
 	}
@@ -102,12 +102,12 @@ public class ChainConveyorRidingHandler {
 			.scale(0.75)
 			.add(diff.scale(0.25)));
 		if (AnimationTickHolder.getTicks() % 10 == 0)
-			CatnipServices.NETWORK.sendToServer(new ServerboundChainConveyorRidingPacket(ridingChainConveyor, false));
+			ClientNetworkHelper.INSTANCE.sendToServer(new ServerboundChainConveyorRidingPacket(ridingChainConveyor, false));
 	}
 
 	private static void stopRiding() {
 		if (ridingChainConveyor != null)
-			CatnipServices.NETWORK.sendToServer(new ServerboundChainConveyorRidingPacket(ridingChainConveyor, true));
+			ClientNetworkHelper.INSTANCE.sendToServer(new ServerboundChainConveyorRidingPacket(ridingChainConveyor, true));
 		ridingChainConveyor = null;
 		ridingConnection = null;
 		Minecraft.getInstance()

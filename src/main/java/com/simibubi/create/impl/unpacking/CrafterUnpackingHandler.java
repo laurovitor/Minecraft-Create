@@ -1,5 +1,9 @@
 package com.simibubi.create.impl.unpacking;
 
+import net.neoforged.neoforge.transfer.transaction.TransactionContext;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.neoforged.neoforge.transfer.transaction.Transaction;
+import net.neoforged.neoforge.transfer.item.ItemUtil;
 import java.util.List;
 
 import org.jetbrains.annotations.Nullable;
@@ -22,9 +26,9 @@ public enum CrafterUnpackingHandler implements UnpackingHandler {
 	INSTANCE;
 
 	@Override
-	public boolean unpack(Level level, BlockPos pos, BlockState state, Direction side, List<ItemStack> items, @Nullable PackageOrderWithCrafts orderContext, boolean simulate) {
+	public boolean unpack(Level level, BlockPos pos, BlockState state, Direction side, List<ItemStack> items, @Nullable PackageOrderWithCrafts orderContext, boolean simulate, @Nullable TransactionContext parent) {
 		if (!PackageOrderWithCrafts.hasCraftingInformation(orderContext))
-			return DEFAULT.unpack(level, pos, state, side, items, null, simulate);
+			return DEFAULT.unpack(level, pos, state, side, items, null, simulate, parent);
 
 		// Get item placement
 		List<BigItemStack> craftingContext = orderContext.getCraftingInformation();
@@ -47,14 +51,22 @@ public enum CrafterUnpackingHandler implements UnpackingHandler {
 
 			Inventory inventory = inventories.get(i);
 			// if there's already an item here, no point in trying
-			if (!inventory.getStackInSlot(0).isEmpty())
+			if (!ItemUtil.getStack(inventory, 0).isEmpty())
 				continue;
 
 			// go through each item in the box and try insert if it matches the target
 			for (ItemStack stack : items) {
 				if (ItemStack.isSameItemSameComponents(stack, targetStack.stack)) {
 					ItemStack toInsert = stack.copyWithCount(1);
-					if (inventory.insertItem(0, toInsert, simulate).isEmpty()) {
+					int inserted;
+
+					try (Transaction transaction = Transaction.open(parent)) {
+						inserted = inventory.insert(0, ItemResource.of(toInsert), toInsert.getCount(), transaction);
+						if (!simulate)
+							transaction.commit();
+					}
+
+					if (inserted == toInsert.getCount()) {
 						stack.shrink(1);
 						// one item per crafter, move to next once successful
 						continue outer;

@@ -1,21 +1,23 @@
 package com.simibubi.create.content.contraptions.actors.psi;
 
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
+import net.neoforged.neoforge.transfer.transaction.RootCommitJournal;
+import net.neoforged.neoforge.transfer.transaction.TransactionContext;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+
 import com.simibubi.create.AllBlockEntityTypes;
 import com.simibubi.create.content.contraptions.Contraption;
 import com.simibubi.create.foundation.item.ItemHandlerWrapper;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
-import net.neoforged.neoforge.items.IItemHandlerModifiable;
-import net.neoforged.neoforge.items.ItemStackHandler;
-
 public class PortableItemInterfaceBlockEntity extends PortableStorageInterfaceBlockEntity {
 
-	protected IItemHandlerModifiable capability;
+	protected ResourceHandler<ItemResource> capability;
 
 	public PortableItemInterfaceBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
 		super(type, pos, state);
@@ -24,7 +26,7 @@ public class PortableItemInterfaceBlockEntity extends PortableStorageInterfaceBl
 
 	public static void registerCapabilities(RegisterCapabilitiesEvent event) {
 		event.registerBlockEntity(
-				Capabilities.ItemHandler.BLOCK,
+				Capabilities.Item.BLOCK,
 				AllBlockEntityTypes.PORTABLE_STORAGE_INTERFACE.get(),
 				(be, context) -> be.capability
 		);
@@ -34,7 +36,7 @@ public class PortableItemInterfaceBlockEntity extends PortableStorageInterfaceBl
 	public void startTransferringTo(Contraption contraption, float distance) {
 		capability = new InterfaceItemHandler(contraption.getStorage().getAllItems());
 		invalidateCapability();
-        if (level != null && !level.isClientSide)
+        if (level != null && !level.isClientSide())
             level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
 		super.startTransferringTo(contraption, distance);
 	}
@@ -43,13 +45,13 @@ public class PortableItemInterfaceBlockEntity extends PortableStorageInterfaceBl
 	protected void stopTransferring() {
 		capability = createEmptyHandler();
 		invalidateCapability();
-        if (level != null && !level.isClientSide)
+        if (level != null && !level.isClientSide())
             level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
 		super.stopTransferring();
 	}
 
-	private IItemHandlerModifiable createEmptyHandler() {
-		return new InterfaceItemHandler(new ItemStackHandler(0));
+	private ResourceHandler<ItemResource> createEmptyHandler() {
+		return new InterfaceItemHandler(new ItemStacksResourceHandler(0));
 	}
 
 	@Override
@@ -59,28 +61,39 @@ public class PortableItemInterfaceBlockEntity extends PortableStorageInterfaceBl
 
 	class InterfaceItemHandler extends ItemHandlerWrapper {
 
-		public InterfaceItemHandler(IItemHandlerModifiable wrapped) {
+		private final RootCommitJournal transferred =
+			new RootCommitJournal(PortableItemInterfaceBlockEntity.this::onContentTransferred);
+
+		public InterfaceItemHandler(ResourceHandler<ItemResource> wrapped) {
 			super(wrapped);
 		}
 
 		@Override
-		public ItemStack extractItem(int slot, int amount, boolean simulate) {
+		public int extract(int index, ItemResource resource, int amount, TransactionContext transaction) {
 			if (!canTransfer())
-				return ItemStack.EMPTY;
-			ItemStack extractItem = super.extractItem(slot, amount, simulate);
-			if (!simulate && !extractItem.isEmpty())
-				onContentTransferred();
-			return extractItem;
+				return 0;
+			int extracted = resource.isEmpty() ? 0 : super.extract(index, resource, amount, transaction);
+			if (extracted > 0)
+				afterTransfer(transaction);
+			return extracted;
 		}
 
 		@Override
-		public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
+		public int insert(int index, ItemResource resource, int amount, TransactionContext transaction) {
 			if (!canTransfer())
-				return stack;
-			ItemStack insertItem = super.insertItem(slot, stack, simulate);
-			if (!simulate && !ItemStack.matches(insertItem, stack))
-				onContentTransferred();
-			return insertItem;
+				return 0;
+			int inserted = super.insert(index, resource, amount, transaction);
+			if (inserted > 0)
+				afterTransfer(transaction);
+			return inserted;
+		}
+
+		/**
+		 * The interface keeps itself open for a while after a transfer, which only counts once the
+		 * transaction is actually kept.
+		 */
+		private void afterTransfer(TransactionContext transaction) {
+			transferred.updateSnapshots(transaction);
 		}
 
 	}

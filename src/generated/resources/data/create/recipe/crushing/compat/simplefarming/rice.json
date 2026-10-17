@@ -8,7 +8,10 @@
   "type": "create:crushing",
   "ingredients": [
     {
-      "item": "simplefarming:rice"
+      "neoforge:ingredient_type": "neoforge:compound",
+      "ingredients": [
+        "simplefarming:rice"
+      ]
     }
   ],
   "processing_time": 150,

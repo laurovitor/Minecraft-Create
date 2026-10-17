@@ -1,11 +1,13 @@
 package com.simibubi.create.content.trains.schedule.destination;
 
+import net.neoforged.neoforge.transfer.item.ItemUtil;
+import com.simibubi.create.foundation.gui.widget.FilteredEditBox;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.regex.PatternSyntaxException;
-
-import org.apache.commons.lang3.StringUtils;
 
 import com.google.common.collect.ImmutableList;
 import com.simibubi.create.Create;
@@ -21,21 +23,16 @@ import com.simibubi.create.content.trains.station.GlobalPackagePort;
 import com.simibubi.create.content.trains.station.GlobalStation;
 import com.simibubi.create.foundation.utility.CreateLang;
 
-import net.createmod.catnip.data.Glob;
-import net.createmod.catnip.data.Pair;
+import net.createmod.catnip.api.data.Glob;
+import net.createmod.catnip.api.data.Pair;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.neoforge.items.IItemHandlerModifiable;
 
 public class FetchPackagesInstruction extends TextScheduleInstruction {
 
@@ -82,13 +79,18 @@ public class FetchPackagesInstruction extends TextScheduleInstruction {
 	}
 
 	@Override
-	@OnlyIn(Dist.CLIENT)
-	protected void modifyEditBox(EditBox box) {
-		box.setFilter(s -> StringUtils.countMatches(s, '*') <= 3);
+	protected void modifyEditBox(FilteredEditBox box) {
+		box.setFilter(s -> {
+			int wildcards = 0;
+			for (int i = 0; i < s.length(); i++)
+				if (s.charAt(i) == '*')
+					wildcards++;
+			return wildcards <= 3;
+		});
 	}
 
 	@Override
-	public ResourceLocation getId() {
+	public Identifier getId() {
 		return Create.asResource("package_retrieval");
 	}
 
@@ -123,12 +125,12 @@ public class FetchPackagesInstruction extends TextScheduleInstruction {
 				GlobalPackagePort port = entry.getValue();
 				BlockPos pos = entry.getKey();
 
-				IItemHandlerModifiable postboxInventory = port.offlineBuffer;
+				ResourceHandler<ItemResource> postboxInventory = port.offlineBuffer;
 				if (dimLevel.isLoaded(pos) && dimLevel.getBlockEntity(pos) instanceof PostboxBlockEntity ppbe)
 					postboxInventory = ppbe.inventory;
 
-				for (int slot = 0; slot < postboxInventory.getSlots(); slot++) {
-					ItemStack stack = postboxInventory.getStackInSlot(slot);
+				for (int slot = 0; slot < postboxInventory.size(); slot++) {
+					ItemStack stack = ItemUtil.getStack(postboxInventory, slot);
 					if (!PackageItem.isPackage(stack))
 						continue;
 					if (PackageItem.matchAddress(stack, port.address))
