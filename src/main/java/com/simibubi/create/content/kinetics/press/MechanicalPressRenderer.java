@@ -13,7 +13,7 @@ import com.simibubi.create.content.kinetics.press.PressingBehaviour;
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import net.createmod.catnip.api.client.render.SuperByteBuffer;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
@@ -61,8 +61,7 @@ public class MechanicalPressRenderer
 			blockState.getValue(HORIZONTAL_FACING));
 		TransformStack.of(headRender.getTransforms())
 			.translate(0, -renderedHeadOffset, 0);
-		state.head = headRender.light(state.lightCoords)
-			.extractRenderState();
+		state.head = SuperByteBufferRenderState.capture(headRender.light(state.lightCoords));
 	}
 
 	@Override

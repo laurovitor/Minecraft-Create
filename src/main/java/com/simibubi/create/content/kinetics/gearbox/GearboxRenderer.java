@@ -11,7 +11,7 @@ import com.simibubi.create.content.kinetics.base.KineticBlockEntityRenderer;
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import net.createmod.catnip.api.client.animation.AnimationTickHolder;
 import net.createmod.catnip.api.client.render.SuperByteBuffer;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import net.createmod.catnip.api.data.Iterate;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -78,7 +78,7 @@ public class GearboxRenderer
 			angle = angle / 180f * (float) Math.PI;
 
 			kineticRotationTransform(shaft, be, axis, angle, state.lightCoords);
-			state.shafts.add(shaft.extractRenderState());
+			state.shafts.add(SuperByteBufferRenderState.capture(shaft));
 		}
 	}
 

@@ -13,7 +13,7 @@ import com.simibubi.create.content.kinetics.simpleRelays.SimpleKineticBlockEntit
 
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import net.createmod.catnip.api.client.render.SuperByteBuffer;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import net.createmod.catnip.api.data.Iterate;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -80,7 +80,7 @@ public class EncasedCogRenderer
 				continue;
 			SuperByteBuffer shaft = CachedBufferer.partialFacing(AllPartialModels.SHAFT_HALF, blockState, d);
 			kineticRotationTransform(shaft, be, axis, angle, state.lightCoords);
-			state.shafts.add(shaft.extractRenderState());
+			state.shafts.add(SuperByteBufferRenderState.capture(shaft));
 		}
 	}
 

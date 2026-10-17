@@ -8,7 +8,7 @@ import com.simibubi.create.content.kinetics.base.KineticBlockEntityRenderer;
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import net.createmod.catnip.api.client.render.CachedBuffers;
 import net.createmod.catnip.api.client.render.SuperByteBuffer;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import net.createmod.catnip.api.math.AngleHelper;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -50,7 +50,7 @@ public class FlywheelRenderer
 
 		SuperByteBuffer wheel = CachedBuffers.block(blockState);
 		kineticRotationTransform(wheel, be, getRotationAxisOf(be), AngleHelper.rad(angle), state.lightCoords);
-		state.wheel = wheel.extractRenderState();
+		state.wheel = SuperByteBufferRenderState.capture(wheel);
 	}
 
 	@Override

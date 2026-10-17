@@ -12,7 +12,7 @@ import com.simibubi.create.content.kinetics.base.KineticBlockEntityRenderer;
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import net.createmod.catnip.api.client.animation.AnimationTickHolder;
 import net.createmod.catnip.api.client.render.SuperByteBuffer;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
@@ -74,9 +74,10 @@ public class EncasedFanRenderer
 		float angle = (time * speed * 3 / 10f) % 360;
 		angle = angle / 180f * (float) Math.PI;
 
-		state.shaftHalf = standardKineticRotationTransform(shaftHalf, be, lightBehind).extractRenderState();
-		state.fanInner = kineticRotationTransform(fanInner, be, direction.getAxis(), angle, lightInFront)
-			.extractRenderState();
+		state.shaftHalf = SuperByteBufferRenderState.capture(
+			standardKineticRotationTransform(shaftHalf, be, lightBehind));
+		state.fanInner = SuperByteBufferRenderState.capture(
+			kineticRotationTransform(fanInner, be, direction.getAxis(), angle, lightInFront));
 	}
 
 	@Override

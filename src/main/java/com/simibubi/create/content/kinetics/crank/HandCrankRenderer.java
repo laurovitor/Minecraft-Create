@@ -8,7 +8,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntityRenderer;
 
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import net.createmod.catnip.api.math.AngleHelper;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -50,8 +50,8 @@ public class HandCrankRenderer
 
 		Direction facing = be.getBlockState()
 			.getValue(FACING);
-		state.handle = kineticRotationTransform(be.getRenderedHandle(), be, facing.getAxis(),
-			AngleHelper.rad(be.getIndependentAngle(partialTicks)), state.lightCoords).extractRenderState();
+		state.handle = SuperByteBufferRenderState.capture(kineticRotationTransform(be.getRenderedHandle(), be,
+			facing.getAxis(), AngleHelper.rad(be.getIndependentAngle(partialTicks)), state.lightCoords));
 	}
 
 	@Override

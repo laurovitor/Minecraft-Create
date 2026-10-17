@@ -12,7 +12,7 @@ import com.simibubi.create.content.kinetics.base.KineticBlockEntityVisual;
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import net.createmod.catnip.api.client.animation.AnimationTickHolder;
 import net.createmod.catnip.api.client.render.SuperByteBuffer;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider.Context;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
@@ -59,14 +59,15 @@ public class BracketedKineticBlockEntityRenderer
 		state.renderType = RenderTypes.solidMovingBlock();
 		Axis axis = getRotationAxisOf(be);
 		Direction facing = Direction.fromAxisAndDirection(axis, AxisDirection.POSITIVE);
-		state.cog = standardKineticRotationTransform(
+		state.cog = SuperByteBufferRenderState.capture(standardKineticRotationTransform(
 			CachedBufferer.partialFacingVertical(AllPartialModels.SHAFTLESS_LARGE_COGWHEEL, be.getBlockState(), facing),
-			be, state.lightCoords).extractRenderState();
+			be, state.lightCoords));
 
 		float angle = getAngleForLargeCogShaft(be, axis);
 		SuperByteBuffer shaft =
 			CachedBufferer.partialFacingVertical(AllPartialModels.COGWHEEL_SHAFT, be.getBlockState(), facing);
-		state.shaft = kineticRotationTransform(shaft, be, axis, angle, state.lightCoords).extractRenderState();
+		state.shaft = SuperByteBufferRenderState.capture(
+			kineticRotationTransform(shaft, be, axis, angle, state.lightCoords));
 	}
 
 	@Override

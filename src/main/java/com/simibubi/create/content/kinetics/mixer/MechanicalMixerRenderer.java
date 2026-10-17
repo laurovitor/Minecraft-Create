@@ -11,7 +11,7 @@ import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import net.createmod.catnip.api.client.animation.AnimationTickHolder;
 import net.createmod.catnip.api.client.render.SuperByteBuffer;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
@@ -60,7 +60,8 @@ public class MechanicalMixerRenderer
 		BlockState blockState = be.getBlockState();
 
 		SuperByteBuffer superBuffer = CachedBufferer.partial(AllPartialModels.SHAFTLESS_COGWHEEL, blockState);
-		state.cogwheel = standardKineticRotationTransform(superBuffer, be, state.lightCoords).extractRenderState();
+		state.cogwheel = SuperByteBufferRenderState.capture(
+			standardKineticRotationTransform(superBuffer, be, state.lightCoords));
 
 		float renderedHeadOffset = be.getRenderedHeadOffset(partialTicks);
 		float speed = be.getRenderedHeadRotationSpeed(partialTicks);
@@ -70,15 +71,13 @@ public class MechanicalMixerRenderer
 		SuperByteBuffer poleRender = CachedBufferer.partial(AllPartialModels.MECHANICAL_MIXER_POLE, blockState);
 		TransformStack.of(poleRender.getTransforms())
 			.translate(0, -renderedHeadOffset, 0);
-		state.pole = poleRender.light(state.lightCoords)
-			.extractRenderState();
+		state.pole = SuperByteBufferRenderState.capture(poleRender.light(state.lightCoords));
 
 		SuperByteBuffer headRender = CachedBufferer.partial(AllPartialModels.MECHANICAL_MIXER_HEAD, blockState);
 		TransformStack.of(headRender.getTransforms())
 			.rotateCentered(angle, Direction.UP)
 			.translate(0, -renderedHeadOffset, 0);
-		state.head = headRender.light(state.lightCoords)
-			.extractRenderState();
+		state.head = SuperByteBufferRenderState.capture(headRender.light(state.lightCoords));
 	}
 
 	@Override

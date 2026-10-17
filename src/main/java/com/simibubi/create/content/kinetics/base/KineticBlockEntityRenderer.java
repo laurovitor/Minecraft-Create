@@ -13,7 +13,7 @@ import net.createmod.catnip.api.client.animation.AnimationTickHolder;
 import net.createmod.catnip.api.client.render.CachedBuffers;
 import net.createmod.catnip.api.client.render.SuperByteBuffer;
 import net.createmod.catnip.api.client.render.SuperByteBufferCache;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import net.createmod.catnip.api.theme.Color;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -59,8 +59,8 @@ public class KineticBlockEntityRenderer<T extends KineticBlockEntity, S extends 
 
 		BlockState renderedState = getRenderedBlockState(be);
 		state.renderType = getRenderType(be, renderedState);
-		state.model = standardKineticRotationTransform(getRotatedModel(be, renderedState), be, state.lightCoords)
-			.extractRenderState();
+		state.model = SuperByteBufferRenderState.capture(
+			standardKineticRotationTransform(getRotatedModel(be, renderedState), be, state.lightCoords));
 	}
 
 	@Override
@@ -90,7 +90,7 @@ public class KineticBlockEntityRenderer<T extends KineticBlockEntity, S extends 
 	public static SuperByteBufferRenderState extractRotatingKineticBlock(KineticBlockEntity be,
 		BlockState renderedState, int light) {
 		SuperByteBuffer superByteBuffer = CachedBuffers.block(KINETIC_BLOCK, renderedState);
-		return standardKineticRotationTransform(superByteBuffer, be, light).extractRenderState();
+		return SuperByteBufferRenderState.capture(standardKineticRotationTransform(superByteBuffer, be, light));
 	}
 
 	public static float getAngleForBe(KineticBlockEntity be, final BlockPos pos, Axis axis) {
