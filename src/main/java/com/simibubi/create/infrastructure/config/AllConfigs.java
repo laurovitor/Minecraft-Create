@@ -59,8 +59,8 @@ public class AllConfigs {
 
 	public static void register(ModLoadingContext context, ModContainer container) {
 		client = register(CClient::new, ModConfig.Type.CLIENT);
-		common = register(CCommon::new, ModConfig.Type.COMMON);
-		server = register(CServer::new, ModConfig.Type.SERVER);
+		common = register(CCommon::new, ModConfig.Type.LOCAL);
+		server = register(CServer::new, ModConfig.Type.SYNCED);
 
 		for (Entry<ModConfig.Type, ConfigBase> pair : CONFIGS.entrySet())
 			container.registerConfig(pair.getKey(), pair.getValue().specification);
