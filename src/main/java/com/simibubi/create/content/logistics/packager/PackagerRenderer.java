@@ -1,10 +1,10 @@
 package com.simibubi.create.content.logistics.packager;
 
 import com.simibubi.create.foundation.render.CachedBufferer;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
 import com.simibubi.create.content.logistics.depot.DepotRenderer;
 import com.simibubi.create.content.logistics.depot.DepotRenderer.ItemState;
 import org.jspecify.annotations.Nullable;
@@ -70,16 +70,14 @@ public class PackagerRenderer
 					.scale(.49999f))
 				.rotateYCenteredDegrees(AngleHelper.horizontalAngle(facing))
 				.rotateXCenteredDegrees(AngleHelper.verticalAngle(facing));
-			state.hatch = hatch.light(state.lightCoords)
-				.extractRenderState();
+			state.hatch = SuperByteBufferRenderState.capture(hatch.light(state.lightCoords));
 
 			SuperByteBuffer tray = CachedBufferer.partial(getTrayModel(blockState), blockState);
 			TransformStack.of(tray.getTransforms())
 				.translate(Vec3.atLowerCornerOf(facing.getUnitVec3i())
 					.scale(state.trayOffset))
 				.rotateYCenteredDegrees(facing.toYRot());
-			state.tray = tray.light(state.lightCoords)
-				.extractRenderState();
+			state.tray = SuperByteBufferRenderState.capture(tray.light(state.lightCoords));
 		}
 
 		if (!renderedBox.isEmpty())

@@ -1,12 +1,12 @@
 package com.simibubi.create.content.logistics.depot;
 
 import com.simibubi.create.foundation.render.CachedBufferer;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import net.minecraft.core.Direction;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.item.ItemModelResolver;
 import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
 import org.jspecify.annotations.Nullable;
 import java.util.List;
 import java.util.ArrayList;
@@ -86,8 +86,7 @@ public class EjectorRenderer extends ShaftRenderer<EjectorBlockEntity, EjectorRe
 		if (!VisualizationManager.supportsVisualization(be.getLevel())) {
 			SuperByteBuffer model = CachedBufferer.partial(AllPartialModels.EJECTOR_TOP, be.getBlockState());
 			applyLidAngle(be, state.lidAngle, TransformStack.of(model.getTransforms()));
-			state.lid = model.light(state.lightCoords)
-				.extractRenderState();
+			state.lid = SuperByteBufferRenderState.capture(model.light(state.lightCoords));
 		}
 
 		float maxTime = (float) (be.earlyTarget != null ? be.earlyTargetTime : be.launcher.getTotalFlyingTicks());

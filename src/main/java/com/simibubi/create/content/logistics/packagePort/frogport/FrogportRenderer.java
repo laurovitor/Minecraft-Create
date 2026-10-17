@@ -1,9 +1,9 @@
 package com.simibubi.create.content.logistics.packagePort.frogport;
 
 import com.simibubi.create.foundation.render.CachedBufferer;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import java.util.List;
 import java.util.ArrayList;
@@ -114,8 +114,7 @@ public class FrogportRenderer
 			.center()
 			.rotateYDegrees(yaw)
 			.uncenter();
-		state.parts.add(body.light(state.lightCoords)
-			.extractRenderState());
+		state.parts.add(SuperByteBufferRenderState.capture(body.light(state.lightCoords)));
 
 		SuperByteBuffer head = CachedBufferer.partial(
 			be.goggles ? AllPartialModels.FROGPORT_HEAD_GOGGLES : AllPartialModels.FROGPORT_HEAD, be.getBlockState());
@@ -126,8 +125,7 @@ public class FrogportRenderer
 			.translate(8 / 16f, 10 / 16f, 11 / 16f)
 			.rotateXDegrees(headPitch)
 			.translateBack(8 / 16f, 10 / 16f, 11 / 16f);
-		state.parts.add(head.light(state.lightCoords)
-			.extractRenderState());
+		state.parts.add(SuperByteBufferRenderState.capture(head.light(state.lightCoords)));
 
 		SuperByteBuffer tongue = CachedBufferer.partial(AllPartialModels.FROGPORT_TONGUE, be.getBlockState());
 		TransformStack.of(tongue.getTransforms())
@@ -138,8 +136,7 @@ public class FrogportRenderer
 			.rotateXDegrees(tonguePitch)
 			.scale(1f, 1f, tongueLength / (7 / 16f))
 			.translateBack(8 / 16f, 10 / 16f, 11 / 16f);
-		state.parts.add(tongue.light(state.lightCoords)
-			.extractRenderState());
+		state.parts.add(SuperByteBufferRenderState.capture(tongue.light(state.lightCoords)));
 	}
 
 	@Override
@@ -175,8 +172,7 @@ public class FrogportRenderer
 				.center()
 				.scale(scale)
 				.uncenter();
-			state.parts.add(buf.light(state.lightCoords)
-				.extractRenderState());
+			state.parts.add(SuperByteBufferRenderState.capture(buf.light(state.lightCoords)));
 			if (!be.currentlyDepositing)
 				break;
 		}

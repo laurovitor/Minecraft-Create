@@ -1,6 +1,7 @@
 package com.simibubi.create.content.logistics.packagePort.postbox;
 
 import com.simibubi.create.foundation.render.CachedBufferer;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import org.jspecify.annotations.Nullable;
 
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -11,7 +12,6 @@ import com.simibubi.create.foundation.blockEntity.renderer.SmartBlockEntityRende
 import dev.engine_room.flywheel.lib.transform.Transform;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import net.createmod.catnip.api.client.render.SuperByteBuffer;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider.Context;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
@@ -54,8 +54,7 @@ public class PostboxRenderer extends SmartBlockEntityRenderer<PostboxBlockEntity
 
 		transformFlag(msr, be, partialTicks);
 
-		state.flag = sbb.light(state.lightCoords)
-			.extractRenderState();
+		state.flag = SuperByteBufferRenderState.capture(sbb.light(state.lightCoords));
 	}
 
 	@Override
