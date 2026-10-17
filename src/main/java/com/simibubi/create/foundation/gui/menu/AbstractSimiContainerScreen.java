@@ -7,7 +7,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import com.simibubi.create.foundation.gui.AllGuiTextures;
 
@@ -153,9 +153,7 @@ public abstract class AbstractSimiContainerScreen<T extends AbstractContainerMen
 	@Override
 	public boolean keyPressed(KeyEvent event) {
 		int pKeyCode = event.key();
-		int pScanCode = event.scancode();
-		int pModifiers = event.modifiers();
-		if (getFocused() instanceof EditBox && pKeyCode != GLFW.GLFW_KEY_ESCAPE)
+		if (getFocused() instanceof EditBox && pKeyCode != InputConstants.KEY_ESCAPE)
 			return getFocused().keyPressed(event);
 		return super.keyPressed(event);
 	}

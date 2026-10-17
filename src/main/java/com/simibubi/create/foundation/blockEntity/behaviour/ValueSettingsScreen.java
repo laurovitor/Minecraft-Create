@@ -7,7 +7,7 @@ import net.createmod.catnip.api.client.network.ClientNetworkHelper;
 import java.util.function.Consumer;
 
 import org.jetbrains.annotations.NotNull;
-import org.lwjgl.glfw.GLFW;
+import org.lwjgl.sdl.SDLMouse;
 
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -84,8 +84,8 @@ public class ValueSettingsScreen extends AbstractSimiScreen {
 	private void setCursor(Vec2 coordinateOfValue) {
 		double guiScale = minecraft.getWindow()
 			.getGuiScale();
-		GLFW.glfwSetCursorPos(minecraft.getWindow()
-			.handle(), coordinateOfValue.x * guiScale, coordinateOfValue.y * guiScale);
+		SDLMouse.SDL_WarpMouseInWindow(minecraft.getWindow()
+			.handle(), (float) (coordinateOfValue.x * guiScale), (float) (coordinateOfValue.y * guiScale));
 	}
 
 	public ValueSettings getClosestCoordinate(int mouseX, int mouseY) {

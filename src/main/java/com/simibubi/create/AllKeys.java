@@ -2,7 +2,7 @@ package com.simibubi.create;
 
 import java.util.function.BiConsumer;
 
-import org.lwjgl.glfw.GLFW;
+import org.lwjgl.sdl.SDLMouse;
 
 import com.mojang.blaze3d.platform.InputConstants;
 
@@ -19,14 +19,14 @@ import net.neoforged.neoforge.client.settings.KeyModifier;
 @EventBusSubscriber(Dist.CLIENT)
 public enum AllKeys {
 
-	TOOL_MENU("toolmenu", GLFW.GLFW_KEY_LEFT_ALT, "Focus Schematic Overlay"),
-	ACTIVATE_TOOL(GLFW.GLFW_KEY_LEFT_CONTROL),
-	TOOLBELT("toolbelt", GLFW.GLFW_KEY_LEFT_ALT, "Access Nearby Toolboxes"),
-	ROTATE_MENU("rotate_menu", GLFW.GLFW_KEY_UNKNOWN, "Open Block Rotation Menu"),
+	TOOL_MENU("toolmenu", InputConstants.KEY_LALT, "Focus Schematic Overlay"),
+	ACTIVATE_TOOL(InputConstants.KEY_LCONTROL),
+	TOOLBELT("toolbelt", InputConstants.KEY_LALT, "Access Nearby Toolboxes"),
+	ROTATE_MENU("rotate_menu", InputConstants.UNKNOWN.getValue(), "Open Block Rotation Menu"),
 
-	SHIFT_MODIFIER("shift_modifier", GLFW.GLFW_KEY_LEFT_SHIFT, "Shift Modifier", true),
-	CTRL_MODIFIER("ctrl_modifier", GLFW.GLFW_KEY_LEFT_CONTROL, "Ctrl Modifier", true),
-	ALT_MODIFIER("alt_modifier", GLFW.GLFW_KEY_LEFT_ALT, "Alt Modifier", true),
+	SHIFT_MODIFIER("shift_modifier", InputConstants.KEY_LSHIFT, "Shift Modifier", true),
+	CTRL_MODIFIER("ctrl_modifier", InputConstants.KEY_LCONTROL, "Ctrl Modifier", true),
+	ALT_MODIFIER("alt_modifier", InputConstants.KEY_LALT, "Alt Modifier", true),
 	;
 
 	private KeyMapping keybind;
@@ -107,14 +107,11 @@ public enum AllKeys {
 	}
 
 	public static boolean isKeyDown(int key) {
-		return InputConstants.isKeyDown(Minecraft.getInstance()
-			.getWindow(), key);
+		return InputConstants.isKeyDown(key);
 	}
 
 	public static boolean isMouseButtonDown(int button) {
-		return GLFW.glfwGetMouseButton(Minecraft.getInstance()
-			.getWindow()
-			.handle(), button) == 1;
+		return (SDLMouse.SDL_GetMouseState(null, null) & (1 << (button - 1))) != 0;
 	}
 
 	public static boolean ctrlDown() {

@@ -30,7 +30,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.AbstractBannerBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.DirtPathBlock;
+import net.minecraft.world.level.block.PathBlock;
 import net.minecraft.world.level.block.FarmlandBlock;
 import net.minecraft.world.level.block.SeaPickleBlock;
 import net.minecraft.world.level.block.SnowLayerBlock;
@@ -121,7 +121,7 @@ public class ItemRequirement {
 		// FD's rich soil extends FarmlandBlock so this is to make sure the cost is correct (it should be rich soil not dirt)
 		if (block == BuiltInRegistries.BLOCK.getValue(Mods.FD.asResource("rich_soil_farmland")))
 			return new ItemRequirement(ItemUseType.CONSUME, BuiltInRegistries.ITEM.getValue(Mods.FD.asResource("rich_soil")));
-		if (block instanceof FarmlandBlock || block instanceof DirtPathBlock)
+		if (block instanceof FarmlandBlock || block instanceof PathBlock)
 			return new ItemRequirement(ItemUseType.CONSUME, Items.DIRT);
 		if (block instanceof AbstractBannerBlock && be instanceof BannerBlockEntity bannerBE)
 			return new ItemRequirement(new StrictNbtStackRequirement(bannerBE.getItem(), ItemUseType.CONSUME));

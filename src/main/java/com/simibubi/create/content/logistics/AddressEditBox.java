@@ -6,7 +6,7 @@ import net.minecraft.client.input.KeyEvent;
 import java.util.List;
 import java.util.function.Consumer;
 
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.AllBlocks;
@@ -53,11 +53,9 @@ public class AddressEditBox extends EditBox {
 	@Override
 	public boolean keyPressed(KeyEvent event) {
 		int pKeyCode = event.key();
-		int pScanCode = event.scancode();
-		int pModifiers = event.modifiers();
 		if (destinationSuggestions.keyPressed(event))
 			return true;
-		if (isFocused() && pKeyCode == GLFW.GLFW_KEY_ENTER) {
+		if (isFocused() && pKeyCode == InputConstants.KEY_RETURN) {
 			setFocused(false);
 			moveCursorToEnd(false);
 			setFocused(true);
@@ -78,7 +76,7 @@ public class AddressEditBox extends EditBox {
 		double pMouseX = event.x();
 		double pMouseY = event.y();
 		int pButton = event.button();
-		if (pButton == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+		if (pButton == InputConstants.MOUSE_BUTTON_RIGHT) {
 			if (isMouseOver(pMouseX, pMouseY)) {
 				setValue("");
 				return true;

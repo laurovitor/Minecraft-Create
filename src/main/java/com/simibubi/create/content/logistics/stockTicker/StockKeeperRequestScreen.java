@@ -26,8 +26,9 @@ import java.util.Set;
 import java.util.function.Function;
 
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
+import org.lwjgl.sdl.SDLMouse;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -1101,8 +1102,8 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 		double pMouseX = event.x();
 		double pMouseY = event.y();
 		int pButton = event.button();
-		boolean lmb = pButton == GLFW.GLFW_MOUSE_BUTTON_LEFT;
-		boolean rmb = pButton == GLFW.GLFW_MOUSE_BUTTON_RIGHT;
+		boolean lmb = pButton == InputConstants.MOUSE_BUTTON_LEFT;
+		boolean rmb = pButton == InputConstants.MOUSE_BUTTON_RIGHT;
 
 		// Search
 		if (rmb && searchBox.isMouseOver(pMouseX, pMouseY)) {
@@ -1132,8 +1133,7 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 			&& pMouseY < getGuiTop() + windowHeight - 82) {
 			scrollHandleActive = true;
 			if (minecraft.isWindowActive())
-				GLFW.glfwSetInputMode(minecraft.getWindow()
-					.handle(), 208897, GLFW.GLFW_CURSOR_HIDDEN);
+				SDLMouse.SDL_HideCursor();
 			return true;
 		}
 
@@ -1251,11 +1251,10 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 		double pMouseX = event.x();
 		double pMouseY = event.y();
 		int pButton = event.button();
-		if (pButton == GLFW.GLFW_MOUSE_BUTTON_LEFT && scrollHandleActive) {
+		if (pButton == InputConstants.MOUSE_BUTTON_LEFT && scrollHandleActive) {
 			scrollHandleActive = false;
 			if (minecraft.isWindowActive())
-				GLFW.glfwSetInputMode(minecraft.getWindow()
-					.handle(), 208897, GLFW.GLFW_CURSOR_NORMAL);
+				SDLMouse.SDL_ShowCursor();
 		}
 		return super.mouseReleased(event);
 	}
@@ -1351,7 +1350,7 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 		double pMouseX = event.x();
 		double pMouseY = event.y();
 		int pButton = event.button();
-		if (pButton != GLFW.GLFW_MOUSE_BUTTON_LEFT || !scrollHandleActive)
+		if (pButton != InputConstants.MOUSE_BUTTON_LEFT || !scrollHandleActive)
 			return super.mouseDragged(event, pDragX, pDragY);
 
 		Window window = minecraft.getWindow();
@@ -1375,7 +1374,7 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 		if (minecraft.isWindowActive()) {
 			double forceX = (barX + 2) / scaleX;
 			double forceY = Mth.clamp(pMouseY, minY, maxY) / scaleY;
-			GLFW.glfwSetCursorPos(window.handle(), forceX, forceY);
+			SDLMouse.SDL_WarpMouseInWindow(window.handle(), (float) forceX, (float) forceY);
 		}
 
 		return true;
@@ -1403,8 +1402,6 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 	@Override
 	public boolean keyPressed(KeyEvent event) {
 		int pKeyCode = event.key();
-		int pScanCode = event.scancode();
-		int pModifiers = event.modifiers();
 		ignoreTextInput = false;
 		if (!addressBox.isFocused() && !searchBox.isFocused() && minecraft.options.keyChat.matches(event)) {
 			ignoreTextInput = true;
@@ -1412,12 +1409,12 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 			return true;
 		}
 
-		if (pKeyCode == GLFW.GLFW_KEY_ENTER && searchBox.isFocused()) {
+		if (pKeyCode == InputConstants.KEY_RETURN && searchBox.isFocused()) {
 			searchBox.setFocused(false);
 			return true;
 		}
 
-		if (pKeyCode == GLFW.GLFW_KEY_ENTER && Minecraft.getInstance().hasShiftDown()) {
+		if (pKeyCode == InputConstants.KEY_RETURN && Minecraft.getInstance().hasShiftDown()) {
 			sendIt();
 			return true;
 		}
