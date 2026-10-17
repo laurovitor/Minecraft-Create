@@ -6,12 +6,12 @@ import org.jspecify.annotations.Nullable;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.AllPartialModels;
 import com.simibubi.create.foundation.blockEntity.renderer.SafeBlockEntityRenderer;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import net.createmod.catnip.api.client.animation.AnimationTickHolder;
 import net.createmod.catnip.api.client.render.SuperByteBuffer;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
 import net.createmod.catnip.api.math.AngleHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -60,8 +60,8 @@ public class StickerRenderer extends SafeBlockEntityRenderer<StickerBlockEntity,
 			.uncenter()
 			.translate(0, (offset * offset) * 4 / 16f, 0);
 
-		state.head = head.light(state.lightCoords)
-			.extractRenderState();
+		head.light(state.lightCoords);
+		state.head = SuperByteBufferRenderState.capture(head);
 	}
 
 	@Override

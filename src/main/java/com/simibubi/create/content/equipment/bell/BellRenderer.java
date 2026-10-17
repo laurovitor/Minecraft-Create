@@ -1,6 +1,7 @@
 package com.simibubi.create.content.equipment.bell;
 
 import com.simibubi.create.foundation.render.CachedBufferer;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import org.jspecify.annotations.Nullable;
 
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -8,7 +9,6 @@ import com.simibubi.create.foundation.blockEntity.renderer.SafeBlockEntityRender
 
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import net.createmod.catnip.api.client.render.SuperByteBuffer;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
 import net.createmod.catnip.api.math.AngleHelper;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -54,8 +54,8 @@ public class BellRenderer<BE extends AbstractBellBlockEntity>
 			rY += 90;
 		msr.rotateCentered(AngleHelper.rad(rY), Direction.UP);
 
-		state.bell = bell.light(state.lightCoords)
-			.extractRenderState();
+		bell.light(state.lightCoords);
+		state.bell = SuperByteBufferRenderState.capture(bell);
 	}
 
 	@Override
