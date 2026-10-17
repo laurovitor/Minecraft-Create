@@ -57,7 +57,7 @@ public class PistonExtensionPoleBlock extends WrenchableDirectionalBlock impleme
 
 	@Override
 	public PushReaction getPistonPushReaction(BlockState state) {
-		return PushReaction.NORMAL;
+		return PushReaction.PUSH_PULL;
 	}
 
 	@Override

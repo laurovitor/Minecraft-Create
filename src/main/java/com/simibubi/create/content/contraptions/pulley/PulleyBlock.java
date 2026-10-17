@@ -94,7 +94,7 @@ public class PulleyBlock extends HorizontalAxisKineticBlock implements IBE<Pulle
 
 		@Override
 		public PushReaction getPistonPushReaction(BlockState state) {
-			return PushReaction.BLOCK;
+			return PushReaction.IMMOVEABLE;
 		}
 
 		@Override

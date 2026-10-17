@@ -419,8 +419,8 @@ public abstract class Contraption {
 			boolean brittle = BlockMovementChecks.isBrittle(blockState);
 			boolean canStick = !brittle && state.canStickTo(blockState) && blockState.canStickTo(state);
 			if (canStick) {
-				if (state.getPistonPushReaction() == PushReaction.PUSH_ONLY
-					|| blockState.getPistonPushReaction() == PushReaction.PUSH_ONLY) {
+				if (state.getPistonPushReaction() == PushReaction.PUSH
+					|| blockState.getPistonPushReaction() == PushReaction.PUSH) {
 					canStick = false;
 				}
 				if (BlockMovementChecks.isNotSupportive(state, offset)) {

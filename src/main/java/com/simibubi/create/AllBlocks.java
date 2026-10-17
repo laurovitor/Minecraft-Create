@@ -720,7 +720,7 @@ public class AllBlocks {
 				.noLootTable()
 				.noCollision()
 				.explosionResistance(3_600_000f)
-				.pushReaction(PushReaction.BLOCK))
+				.pushReaction(PushReaction.IMMOVEABLE))
 			.blockstate(() -> (c, p) -> BlockStateGen.forAllStates(c, p, BlockStateGen.mapToAir(p), BlockStateProperties.FACING))
 			.register();
 

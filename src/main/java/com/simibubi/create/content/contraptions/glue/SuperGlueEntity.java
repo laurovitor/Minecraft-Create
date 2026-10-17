@@ -311,7 +311,7 @@ public class SuperGlueEntity extends Entity implements IEntityWithComplexSpawn, 
 
 	@Override
 	public PushReaction getPistonPushReaction() {
-		return PushReaction.IGNORE;
+		return PushReaction.IGNORE_ENTITY;
 	}
 
 	public void spawnParticles() {

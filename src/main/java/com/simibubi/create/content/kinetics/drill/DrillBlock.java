@@ -98,7 +98,7 @@ public class DrillBlock extends DirectionalKineticBlock implements IBE<DrillBloc
 
 	@Override
 	public PushReaction getPistonPushReaction(BlockState state) {
-		return PushReaction.NORMAL;
+		return PushReaction.PUSH_PULL;
 	}
 
 	@Override

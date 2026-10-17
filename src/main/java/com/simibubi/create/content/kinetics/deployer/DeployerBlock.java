@@ -52,7 +52,7 @@ public class DeployerBlock extends DirectionalAxisKineticBlock implements IBE<De
 
 	@Override
 	public PushReaction getPistonPushReaction(BlockState state) {
-		return PushReaction.NORMAL;
+		return PushReaction.PUSH_PULL;
 	}
 
 	@Override

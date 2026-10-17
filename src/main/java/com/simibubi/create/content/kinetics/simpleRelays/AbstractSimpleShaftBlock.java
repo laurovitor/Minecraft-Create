@@ -33,7 +33,7 @@ public abstract class AbstractSimpleShaftBlock extends AbstractShaftBlock implem
 
 	@Override
 	public PushReaction getPistonPushReaction(BlockState state) {
-		return PushReaction.NORMAL;
+		return PushReaction.PUSH_PULL;
 	}
 
 	@Override

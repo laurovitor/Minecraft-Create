@@ -188,7 +188,7 @@ public class TrackBlock extends Block
 
 	@Override
 	public PushReaction getPistonPushReaction(BlockState pState) {
-		return PushReaction.BLOCK;
+		return PushReaction.IMMOVEABLE;
 	}
 
 	@Override

@@ -213,7 +213,7 @@ public class BlockMovementChecksImpl {
 			return false;
 		if (state.getBlock() instanceof StationBlock)
 			return false;
-		return state.getPistonPushReaction() != PushReaction.BLOCK;
+		return state.getPistonPushReaction() != PushReaction.IMMOVEABLE;
 	}
 
 	private static boolean isBrittleFallback(BlockState state) {

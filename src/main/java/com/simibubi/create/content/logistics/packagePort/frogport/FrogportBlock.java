@@ -43,7 +43,7 @@ public class FrogportBlock extends Block implements IBE<FrogportBlockEntity>, IW
 
 	@Override
 	public @Nullable PushReaction getPistonPushReaction(BlockState state) {
-		return PushReaction.NORMAL;
+		return PushReaction.PUSH_PULL;
 	}
 
 	@Override

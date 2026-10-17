@@ -30,7 +30,7 @@ public class GearboxBlock extends RotatedPillarKineticBlock implements IBE<Gearb
 
 	@Override
 	public PushReaction getPistonPushReaction(BlockState state) {
-		return PushReaction.PUSH_ONLY;
+		return PushReaction.PUSH;
 	}
 
 	@SuppressWarnings("deprecation")

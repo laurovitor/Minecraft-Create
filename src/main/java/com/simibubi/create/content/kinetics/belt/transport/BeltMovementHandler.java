@@ -204,7 +204,7 @@ public class BeltMovementHandler {
 	public static boolean shouldIgnoreBlocking(Entity me, Entity other) {
 		if (other instanceof HangingEntity)
 			return true;
-		if (other.getPistonPushReaction() == PushReaction.IGNORE)
+		if (other.getPistonPushReaction() == PushReaction.IGNORE_ENTITY)
 			return true;
 		return isRidingOrBeingRiddenBy(me, other);
 	}

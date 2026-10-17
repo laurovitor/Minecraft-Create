@@ -181,7 +181,7 @@ public class SawBlock extends DirectionalAxisKineticBlock implements EntityResti
 
 	@Override
 	public PushReaction getPistonPushReaction(BlockState state) {
-		return PushReaction.NORMAL;
+		return PushReaction.PUSH_PULL;
 	}
 
 	public static boolean isHorizontal(BlockState state) {

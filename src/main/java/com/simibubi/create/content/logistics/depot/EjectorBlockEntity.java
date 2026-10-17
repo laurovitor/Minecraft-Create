@@ -164,7 +164,7 @@ public class EjectorBlockEntity extends KineticBlockEntity {
 				continue;
 			if (entity instanceof PackageEntity)
 				continue;
-			if (entity.getPistonPushReaction() == PushReaction.IGNORE)
+			if (entity.getPistonPushReaction() == PushReaction.IGNORE_ENTITY)
 				continue;
 
 			entity.setOnGround(false);
@@ -411,7 +411,7 @@ public class EjectorBlockEntity extends KineticBlockEntity {
 			new AABB(worldPosition).inflate(-1 / 16f, 0, -1 / 16f))) {
 			if (!entity.isAlive())
 				continue;
-			if (entity.getPistonPushReaction() == PushReaction.IGNORE)
+			if (entity.getPistonPushReaction() == PushReaction.IGNORE_ENTITY)
 				continue;
 			if (!(entity instanceof Player))
 				entity.setPos(entity.getX(), entity.getY() + .125f, entity.getZ());

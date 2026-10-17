@@ -31,7 +31,7 @@ public abstract class AbstractEncasedShaftBlock extends RotatedPillarKineticBloc
 
 	@Override
     public PushReaction getPistonPushReaction(@Nullable BlockState state) {
-        return PushReaction.NORMAL;
+        return PushReaction.PUSH_PULL;
     }
 
     @Override

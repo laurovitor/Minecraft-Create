@@ -60,7 +60,7 @@ public class WaterWheelStructuralBlock extends DirectionalBlock implements IWren
 
 	@Override
 	public PushReaction getPistonPushReaction(BlockState pState) {
-		return PushReaction.BLOCK;
+		return PushReaction.IMMOVEABLE;
 	}
 
 	@Override
