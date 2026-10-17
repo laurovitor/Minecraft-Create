@@ -1,5 +1,6 @@
 package com.simibubi.create.content.kinetics.millstone;
 
+import net.minecraft.util.Prediction;
 import net.neoforged.neoforge.transfer.transaction.Transaction;
 import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
 import net.neoforged.neoforge.transfer.item.ItemUtil;
@@ -66,7 +67,7 @@ public class MillstoneBlock extends KineticBlock implements EntityRestingOnBlock
 				if (!stackInSlot.isEmpty())
 					emptyOutput = false;
 				player.getInventory()
-					.placeItemBackInInventory(stackInSlot);
+					.placeItemBackInInventory(stackInSlot, Prediction.SERVER_ONLY);
 				inv.set(slot, ItemResource.EMPTY, 0);
 			}
 
@@ -74,7 +75,7 @@ public class MillstoneBlock extends KineticBlock implements EntityRestingOnBlock
 				inv = millstone.inputInv;
 				for (int slot = 0; slot < inv.size(); slot++) {
 					player.getInventory()
-						.placeItemBackInInventory(ItemUtil.getStack(inv, slot));
+						.placeItemBackInInventory(ItemUtil.getStack(inv, slot), Prediction.SERVER_ONLY);
 					inv.set(slot, ItemResource.EMPTY, 0);
 				}
 			}

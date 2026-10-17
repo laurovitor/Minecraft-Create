@@ -1,5 +1,6 @@
 package com.simibubi.create.content.contraptions.minecart;
 
+import net.minecraft.util.Prediction;
 import net.createmod.catnip.api.platform.services.PlatformHelper;
 import com.simibubi.create.AllAttachmentTypes;
 import com.simibubi.create.AllItems;
@@ -84,7 +85,7 @@ public class MinecartCouplingItem extends Item {
 		controller.decouple();
 		if (!player.isCreative())
 			player.getInventory()
-				.placeItemBackInInventory(new ItemStack(AllItems.MINECART_COUPLING.get(), couplings));
+				.placeItemBackInInventory(new ItemStack(AllItems.MINECART_COUPLING.get(), couplings), Prediction.SERVER_ONLY);
 		return true;
 	}
 

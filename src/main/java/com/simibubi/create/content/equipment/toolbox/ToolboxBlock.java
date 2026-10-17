@@ -1,5 +1,6 @@
 package com.simibubi.create.content.equipment.toolbox;
 
+import net.minecraft.util.Prediction;
 import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.util.RandomSource;
 import static net.minecraft.world.level.block.state.properties.BlockStateProperties.WATERLOGGED;
@@ -100,7 +101,7 @@ public class ToolboxBlock extends HorizontalDirectionalBlock implements SimpleWa
 			});
 			world.destroyBlock(pos, false);
 			if (world.getBlockState(pos) != state)
-				player.getInventory().placeItemBackInInventory(cloneItemStack);
+				player.getInventory().placeItemBackInInventory(cloneItemStack, Prediction.SERVER_ONLY);
 		}
 	}
 

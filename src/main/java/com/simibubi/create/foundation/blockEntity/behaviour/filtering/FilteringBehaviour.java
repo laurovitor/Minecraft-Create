@@ -1,5 +1,6 @@
 package com.simibubi.create.foundation.blockEntity.behaviour.filtering;
 
+import net.minecraft.util.Prediction;
 import net.neoforged.neoforge.transfer.item.ItemResource;
 import net.neoforged.neoforge.transfer.ResourceHandler;
 import com.simibubi.create.foundation.utility.RegistryNbt;
@@ -302,7 +303,7 @@ public class FilteringBehaviour extends BlockEntityBehaviour implements ValueSet
 					stack -> ItemStack.isSameItemSameComponents(stack, getFilter(side)), true)
 				.isEmpty())
 				player.getInventory()
-					.placeItemBackInInventory(getFilter(side).copy());
+					.placeItemBackInInventory(getFilter(side).copy(), Prediction.SERVER_ONLY);
 		}
 
 		if (toApply.getItem() instanceof FilterItem)
@@ -399,7 +400,7 @@ public class FilteringBehaviour extends BlockEntityBehaviour implements ValueSet
 
 				if (!refund.isEmpty() && refund.getItem() != filterType)
 					player.getInventory()
-						.placeItemBackInInventory(refund);
+						.placeItemBackInInventory(refund, Prediction.SERVER_ONLY);
 
 				setFilter(side, copied);
 				return true;
@@ -417,7 +418,7 @@ public class FilteringBehaviour extends BlockEntityBehaviour implements ValueSet
 
 		if (!refund.isEmpty())
 			player.getInventory()
-				.placeItemBackInInventory(refund);
+				.placeItemBackInInventory(refund, Prediction.SERVER_ONLY);
 
 		return setFilter(side, copied);
 	}

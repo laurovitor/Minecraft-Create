@@ -1,5 +1,6 @@
 package com.simibubi.create.content.trains.schedule;
 
+import net.minecraft.util.Prediction;
 import com.simibubi.create.AllItems;
 import com.simibubi.create.AllSoundEvents;
 import com.simibubi.create.content.contraptions.Contraption;
@@ -115,7 +116,7 @@ public class ScheduleItemEntityInteraction {
 					train.runtime.isAutoSchedule ? "schedule.auto_removed_from_train" : "schedule.removed_from_train"));
 
 			player.getInventory()
-				.placeItemBackInInventory(train.runtime.returnSchedule(player.registryAccess()));
+				.placeItemBackInInventory(train.runtime.returnSchedule(player.registryAccess()), Prediction.SERVER_ONLY);
 		}
 
 		player.getCooldowns()

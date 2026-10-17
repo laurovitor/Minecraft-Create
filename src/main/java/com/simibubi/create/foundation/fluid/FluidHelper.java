@@ -1,5 +1,6 @@
 package com.simibubi.create.foundation.fluid;
 
+import net.minecraft.util.Prediction;
 import net.neoforged.neoforge.fluids.crafting.display.FluidStackContentsFactory;
 import net.neoforged.neoforge.fluids.crafting.SizedFluidIngredient;
 import net.minecraft.world.item.crafting.display.SlotDisplayContext;
@@ -194,7 +195,7 @@ public class FluidHelper {
 			else {
 				player.setItemInHand(handIn, copyOfHeld);
 				player.getInventory()
-					.placeItemBackInInventory(emptyingResult.getSecond());
+					.placeItemBackInInventory(emptyingResult.getSecond(), Prediction.SERVER_ONLY);
 			}
 		}
 		return true;
@@ -237,7 +238,7 @@ public class FluidHelper {
 
 			if (!player.isCreative())
 				player.getInventory()
-					.placeItemBackInInventory(out);
+					.placeItemBackInInventory(out, Prediction.SERVER_ONLY);
 			be.notifyUpdate();
 			return true;
 		}

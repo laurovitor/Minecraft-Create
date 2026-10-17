@@ -1,5 +1,6 @@
 package com.simibubi.create.content.logistics.tunnel;
 
+import net.minecraft.util.Prediction;
 import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.util.RandomSource;
@@ -40,7 +41,7 @@ public class BrassTunnelBlock extends BeltTunnelBlock {
 			if (level.isClientSide())
 				return InteractionResult.SUCCESS;
 			for (ItemStack itemStack : stacksOfGroup)
-				player.getInventory().placeItemBackInInventory(itemStack.copy());
+				player.getInventory().placeItemBackInInventory(itemStack.copy(), Prediction.SERVER_ONLY);
 			level.playSound(null, pos, SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, .2f,
 				1f + level.getRandom().nextFloat());
 			return InteractionResult.SUCCESS;

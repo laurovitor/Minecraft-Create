@@ -1,5 +1,6 @@
 package com.simibubi.create.content.equipment.wrench;
 
+import net.minecraft.util.Prediction;
 import net.neoforged.neoforge.event.level.block.BreakBlockEvent;
 import com.simibubi.create.AllSoundEvents;
 import com.simibubi.create.Create;
@@ -63,7 +64,7 @@ public interface IWrenchable {
 			Block.getDrops(state, serverLevel, pos, world.getBlockEntity(pos), player, context.getItemInHand())
 				.forEach(itemStack -> {
 					player.getInventory()
-						.placeItemBackInInventory(itemStack);
+						.placeItemBackInInventory(itemStack, Prediction.SERVER_ONLY);
 				});
 		}
 

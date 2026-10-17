@@ -1,5 +1,6 @@
 package com.simibubi.create.content.kinetics.belt;
 
+import net.minecraft.util.Prediction;
 import net.neoforged.neoforge.transfer.transaction.Transaction;
 import net.minecraft.world.entity.InsideBlockEffectApplier;
 import net.minecraft.world.level.ScheduledTickAccess;
@@ -307,7 +308,7 @@ public class BeltBlock extends HorizontalKineticBlock
 			controllerBelt.getInventory()
 				.applyToEachWithin(belt.index + .5f, .55f, (transportedItemStack) -> {
 					player.getInventory()
-						.placeItemBackInInventory(transportedItemStack.stack);
+						.placeItemBackInInventory(transportedItemStack.stack, Prediction.SERVER_ONLY);
 					success.setTrue();
 					return TransportedResult.removeItem();
 				});
@@ -373,7 +374,7 @@ public class BeltBlock extends HorizontalKineticBlock
 			KineticBlockEntity.switchToBlockState(world, pos, state.setValue(PART, BeltPart.MIDDLE));
 			if (player != null && !player.isCreative())
 				player.getInventory()
-					.placeItemBackInInventory(AllBlocks.SHAFT.asStack());
+					.placeItemBackInInventory(AllBlocks.SHAFT.asStack(), Prediction.SERVER_ONLY);
 			return InteractionResult.SUCCESS;
 		}
 

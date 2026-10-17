@@ -1,5 +1,6 @@
 package com.simibubi.create.content.decoration.bracket;
 
+import net.minecraft.util.Prediction;
 import java.util.Optional;
 
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
@@ -65,7 +66,7 @@ public class BracketBlockItem extends BlockItem {
 				if (player == null)
 					Block.popResource(world, pos, returnedStack);
 				else
-					player.getInventory().placeItemBackInInventory(returnedStack);
+					player.getInventory().placeItemBackInInventory(returnedStack, Prediction.SERVER_ONLY);
 			}
 		}
 		return InteractionResult.SUCCESS;

@@ -1,5 +1,6 @@
 package com.simibubi.create.content.kinetics.belt;
 
+import net.minecraft.util.Prediction;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -98,7 +99,7 @@ public class BeltSlicer {
 
 			if (!creative && AllBlocks.BELT.has(replacedState)
 				&& replacedState.getValue(BeltBlock.PART) == BeltPart.PULLEY)
-				player.getInventory().placeItemBackInInventory(AllBlocks.SHAFT.asStack());
+				player.getInventory().placeItemBackInInventory(AllBlocks.SHAFT.asStack(), Prediction.SERVER_ONLY);
 
 			// Eject overshooting items
 			if (part == BeltPart.END && inventory != null) {
@@ -191,8 +192,8 @@ public class BeltSlicer {
 				}
 
 				if (!world.isClientSide()){
-					player.getInventory().placeItemBackInInventory(AllBlocks.SHAFT.asStack(amountRetrieved));
-					if (beltFound) player.getInventory().placeItemBackInInventory(AllItems.BELT_CONNECTOR.asStack());
+					player.getInventory().placeItemBackInInventory(AllBlocks.SHAFT.asStack(amountRetrieved), Prediction.SERVER_ONLY);
+					if (beltFound) player.getInventory().placeItemBackInInventory(AllItems.BELT_CONNECTOR.asStack(), Prediction.SERVER_ONLY);
 				}
 				return InteractionResult.FAIL;
 			}
@@ -351,8 +352,8 @@ public class BeltSlicer {
 						.setValue(BeltBlock.PART, BeltPart.MIDDLE));
 
 				if (!creative) {
-					player.getInventory().placeItemBackInInventory(AllBlocks.SHAFT.asStack(2));
-					player.getInventory().placeItemBackInInventory(AllItems.BELT_CONNECTOR.asStack());
+					player.getInventory().placeItemBackInInventory(AllBlocks.SHAFT.asStack(2), Prediction.SERVER_ONLY);
+					player.getInventory().placeItemBackInInventory(AllItems.BELT_CONNECTOR.asStack(), Prediction.SERVER_ONLY);
 				}
 
 				for (BlockPos blockPos : BeltBlock.getBeltChain(world, controllerBE.getBlockPos())) {

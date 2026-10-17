@@ -1,5 +1,6 @@
 package com.simibubi.create.content.processing.basin;
 
+import net.minecraft.util.Prediction;
 import com.simibubi.create.foundation.item.SmartInventory;
 import net.neoforged.neoforge.transfer.transaction.Transaction;
 import net.neoforged.neoforge.transfer.resource.ResourceStack;
@@ -126,7 +127,7 @@ public class BasinBlock extends Block implements EntityRestingOnBlock, IBE<Basin
 					if (stackInSlot.isEmpty())
 						continue;
 					player.getInventory()
-						.placeItemBackInInventory(stackInSlot);
+						.placeItemBackInInventory(stackInSlot, Prediction.SERVER_ONLY);
 					inv.set(slot, ItemResource.EMPTY, 0);
 					success = true;
 				}

@@ -1,5 +1,6 @@
 package com.simibubi.create.content.logistics.stockTicker;
 
+import net.minecraft.util.Prediction;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import com.simibubi.create.AllPackets;
 import com.simibubi.create.content.logistics.filter.FilterItem;
@@ -34,7 +35,7 @@ public class StockKeeperCategoryRefundPacket extends BlockEntityConfigurationPac
 	protected void applySettings(ServerPlayer player, StockTickerBlockEntity be) {
 		if (!filter.isEmpty() && filter.getItem() instanceof FilterItem)
 			player.getInventory()
-				.placeItemBackInInventory(filter);
+				.placeItemBackInInventory(filter, Prediction.SERVER_ONLY);
 	}
 
 }

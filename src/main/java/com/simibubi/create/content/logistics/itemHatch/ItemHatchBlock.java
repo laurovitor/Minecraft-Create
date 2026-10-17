@@ -1,5 +1,6 @@
 package com.simibubi.create.content.logistics.itemHatch;
 
+import net.minecraft.util.Prediction;
 import net.neoforged.neoforge.transfer.transaction.Transaction;
 import net.neoforged.neoforge.transfer.ResourceHandlerUtil;
 import net.minecraft.world.level.ScheduledTickAccess;
@@ -155,7 +156,7 @@ public class ItemHatchBlock extends HorizontalDirectionalBlock
 				failedInsertions.add(remainder);
 		}
 
-		failedInsertions.forEach(inventory::placeItemBackInInventory);
+		failedInsertions.forEach(item -> inventory.placeItemBackInInventory(item, Prediction.SERVER_ONLY));
 
 		if (!anyInserted)
 			return InteractionResult.SUCCESS;

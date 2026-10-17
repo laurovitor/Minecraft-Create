@@ -1,5 +1,6 @@
 package com.simibubi.create.content.fluids.drain;
 
+import net.minecraft.util.Prediction;
 import net.neoforged.neoforge.transfer.access.ItemAccess;
 import com.simibubi.create.AllBlockEntityTypes;
 import com.simibubi.create.AllShapes;
@@ -60,7 +61,7 @@ public class ItemDrainBlock extends Block implements EntityRestingOnBlock, IWren
 			ItemStack heldItemStack = be.getHeldItemStack();
 			if (!level.isClientSide() && !heldItemStack.isEmpty()) {
 				player.getInventory()
-					.placeItemBackInInventory(heldItemStack);
+					.placeItemBackInInventory(heldItemStack, Prediction.SERVER_ONLY);
 				be.heldItem = null;
 				be.notifyUpdate();
 			}

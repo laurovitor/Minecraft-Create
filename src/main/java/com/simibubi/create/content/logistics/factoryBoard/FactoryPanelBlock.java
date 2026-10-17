@@ -1,5 +1,6 @@
 package com.simibubi.create.content.logistics.factoryBoard;
 
+import net.minecraft.util.Prediction;
 import net.neoforged.neoforge.event.level.block.BreakBlockEvent;
 import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.util.RandomSource;
@@ -189,7 +190,7 @@ public class FactoryPanelBlock extends FaceAttachedHorizontalDirectionalBlock
 
 			if (!player.isCreative())
 				player.getInventory()
-					.placeItemBackInInventory(AllBlocks.FACTORY_GAUGE.asStack());
+					.placeItemBackInInventory(AllBlocks.FACTORY_GAUGE.asStack(), Prediction.SERVER_ONLY);
 
 			IWrenchable.playRemoveSound(world, pos);
 			if (be.activePanels() == 0)

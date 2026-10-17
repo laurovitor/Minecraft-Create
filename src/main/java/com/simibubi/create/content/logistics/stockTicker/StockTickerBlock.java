@@ -1,5 +1,6 @@
 package com.simibubi.create.content.logistics.stockTicker;
 
+import net.minecraft.util.Prediction;
 import net.neoforged.neoforge.transfer.item.ItemResource;
 import net.neoforged.neoforge.transfer.transaction.Transaction;
 import net.neoforged.neoforge.transfer.item.ItemUtil;
@@ -81,7 +82,7 @@ public class StockTickerBlock extends HorizontalDirectionalBlock implements IBE<
 					}
 
 					player.getInventory()
-						.placeItemBackInInventory(payment);
+						.placeItemBackInInventory(payment, Prediction.SERVER_ONLY);
 				}
 				AllSoundEvents.playItemPickup(player);
 				return InteractionResult.SUCCESS;

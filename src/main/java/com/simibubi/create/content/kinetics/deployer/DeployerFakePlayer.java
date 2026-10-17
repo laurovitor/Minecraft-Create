@@ -1,5 +1,6 @@
 package com.simibubi.create.content.kinetics.deployer;
 
+import net.minecraft.util.Prediction;
 import java.util.Objects;
 import java.util.OptionalInt;
 import java.util.UUID;
@@ -108,7 +109,7 @@ public class DeployerFakePlayer extends FakePlayer {
 		if (trueSource != null && trueSource instanceof DeployerFakePlayer fakePlayer) {
 			event.getDrops()
 				.forEach(stack -> fakePlayer.getInventory()
-					.placeItemBackInInventory(stack.getItem()));
+					.placeItemBackInInventory(stack.getItem(), Prediction.SERVER_ONLY));
 			event.setCanceled(true);
 		}
 	}

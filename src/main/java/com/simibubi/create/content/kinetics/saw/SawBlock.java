@@ -1,5 +1,6 @@
 package com.simibubi.create.content.kinetics.saw;
 
+import net.minecraft.util.Prediction;
 import net.neoforged.neoforge.transfer.item.ItemUtil;
 import net.minecraft.world.entity.InsideBlockEffectApplier;
 import org.jspecify.annotations.NullMarked;
@@ -140,7 +141,7 @@ public class SawBlock extends DirectionalAxisKineticBlock implements EntityResti
 				ItemStack heldItemStack = ItemUtil.getStack(be.inventory, i);
 				if (!level.isClientSide() && !heldItemStack.isEmpty())
 					player.getInventory()
-						.placeItemBackInInventory(heldItemStack);
+						.placeItemBackInInventory(heldItemStack, Prediction.SERVER_ONLY);
 			}
 			be.inventory.clear();
 			be.notifyUpdate();

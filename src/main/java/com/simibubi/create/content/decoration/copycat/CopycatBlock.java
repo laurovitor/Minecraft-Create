@@ -1,5 +1,6 @@
 package com.simibubi.create.content.decoration.copycat;
 
+import net.minecraft.util.Prediction;
 import net.minecraft.world.level.BlockAndLightGetter;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import java.util.List;
@@ -79,7 +80,7 @@ public abstract class CopycatBlock extends Block implements IBE<CopycatBlockEnti
 			Player player = context.getPlayer();
 			if (!player.isCreative())
 				player.getInventory()
-					.placeItemBackInInventory(consumedItem);
+					.placeItemBackInInventory(consumedItem, Prediction.SERVER_ONLY);
 			context.getLevel()
 				.levelEvent(LevelEvent.PARTICLES_DESTROY_BLOCK, context.getClickedPos(), Block.getId(ufte.getBlockState()));
 			ufte.setMaterial(AllBlocks.COPYCAT_BASE.getDefaultState());

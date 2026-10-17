@@ -1,5 +1,6 @@
 package com.simibubi.create.content.kinetics.chainConveyor;
 
+import net.minecraft.util.Prediction;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import com.simibubi.create.AllPackets;
 import com.simibubi.create.foundation.networking.BlockEntityConfigurationPacket;
@@ -67,7 +68,7 @@ public class ChainConveyorConnectionPacket extends BlockEntityConfigurationPacke
 				int chainCost = ChainConveyorBlockEntity.getChainCost(targetPos.subtract(pos));
 				while (chainCost > 0) {
 					player.getInventory()
-						.placeItemBackInInventory(new ItemStack(Items.IRON_CHAIN, Math.min(chainCost, 64)));
+						.placeItemBackInInventory(new ItemStack(Items.IRON_CHAIN, Math.min(chainCost, 64)), Prediction.SERVER_ONLY);
 					chainCost -= 64;
 				}
 			}

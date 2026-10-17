@@ -1,5 +1,6 @@
 package com.simibubi.create.content.decoration.girder;
 
+import net.minecraft.util.Prediction;
 import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.util.RandomSource;
@@ -86,7 +87,7 @@ public class GirderEncasedShaftBlock extends HorizontalAxisKineticBlock
 		Player player = context.getPlayer();
 		if (onWrenched == InteractionResult.SUCCESS && player != null && !player.isCreative())
 			player.getInventory()
-				.placeItemBackInInventory(AllBlocks.SHAFT.asStack());
+				.placeItemBackInInventory(AllBlocks.SHAFT.asStack(), Prediction.SERVER_ONLY);
 		return onWrenched;
 	}
 

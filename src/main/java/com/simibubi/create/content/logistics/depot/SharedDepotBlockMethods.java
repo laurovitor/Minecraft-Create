@@ -1,5 +1,6 @@
 package com.simibubi.create.content.logistics.depot;
 
+import net.minecraft.util.Prediction;
 import net.neoforged.neoforge.transfer.item.ItemResource;
 import net.neoforged.neoforge.transfer.transaction.Transaction;
 import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
@@ -53,7 +54,7 @@ public class SharedDepotBlockMethods {
 		ItemStack mainItemStack = behaviour.getHeldItemStack();
 		if (!mainItemStack.isEmpty()) {
 			player.getInventory()
-				.placeItemBackInInventory(mainItemStack);
+				.placeItemBackInInventory(mainItemStack, Prediction.SERVER_ONLY);
 			behaviour.removeHeldItem();
 			level.playSound(null, pos, SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS, .2f,
 				1f + level.getRandom().nextFloat());
@@ -70,7 +71,7 @@ public class SharedDepotBlockMethods {
 			}
 
 			player.getInventory()
-				.placeItemBackInInventory(taken);
+				.placeItemBackInInventory(taken, Prediction.SERVER_ONLY);
 		}
 
 		if (!wasEmptyHanded && !shouldntPlaceItem) {

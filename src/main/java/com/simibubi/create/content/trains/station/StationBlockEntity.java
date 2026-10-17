@@ -1,5 +1,6 @@
 package com.simibubi.create.content.trains.station;
 
+import net.minecraft.util.Prediction;
 import com.simibubi.create.foundation.utility.ComponentJson;
 import net.createmod.catnip.api.network.NetworkHelper;
 import net.minecraft.core.UUIDUtil;
@@ -506,7 +507,7 @@ public class StationBlockEntity extends SmartBlockEntity implements Transformabl
 		if (sender != null && sender.getMainHandItem()
 			.isEmpty()) {
 			sender.getInventory()
-				.placeItemBackInInventory(schedule);
+				.placeItemBackInInventory(schedule, Prediction.SERVER_ONLY);
 			return;
 		}
 

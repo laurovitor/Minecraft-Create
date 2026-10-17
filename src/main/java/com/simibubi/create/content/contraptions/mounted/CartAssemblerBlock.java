@@ -1,5 +1,6 @@
 package com.simibubi.create.content.contraptions.mounted;
 
+import net.minecraft.util.Prediction;
 import net.minecraft.world.level.redstone.Orientation;
 import java.util.ArrayList;
 import java.util.List;
@@ -184,7 +185,7 @@ public class CartAssemblerBlock extends BaseRailBlock
 			if (!player.isCreative()) {
 				stack.shrink(1);
 				player.getInventory()
-					.placeItemBackInInventory(new ItemStack(previousItem));
+					.placeItemBackInInventory(new ItemStack(previousItem), Prediction.SERVER_ONLY);
 			}
 			return InteractionResult.SUCCESS;
 		}
@@ -292,7 +293,7 @@ public class CartAssemblerBlock extends BaseRailBlock
 		if (player != null && !player.isCreative())
 			getDropsNoRail(state, (ServerLevel) world, pos, world.getBlockEntity(pos), player, context.getItemInHand())
 				.forEach(itemStack -> player.getInventory()
-					.placeItemBackInInventory(itemStack));
+					.placeItemBackInInventory(itemStack, Prediction.SERVER_ONLY));
 		if (world instanceof ServerLevel)
 			state.spawnAfterBreak((ServerLevel) world, pos, ItemStack.EMPTY, true);
 		world.setBlockAndUpdate(pos, getRailBlock(state));

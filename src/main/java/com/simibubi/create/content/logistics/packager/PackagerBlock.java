@@ -1,5 +1,6 @@
 package com.simibubi.create.content.logistics.packager;
 
+import net.minecraft.util.Prediction;
 import net.neoforged.neoforge.transfer.item.ItemUtil;
 import org.jspecify.annotations.Nullable;
 import net.minecraft.world.level.redstone.Orientation;
@@ -130,7 +131,7 @@ public class PackagerBlock extends WrenchableDirectionalBlock implements IBE<Pac
 				return InteractionResult.SUCCESS;
 			if (!level.isClientSide()) {
 				player.getInventory()
-					.placeItemBackInInventory(be.heldBox.copy());
+					.placeItemBackInInventory(be.heldBox.copy(), Prediction.SERVER_ONLY);
 				AllSoundEvents.playItemPickup(player);
 				be.heldBox = ItemStack.EMPTY;
 				be.notifyUpdate();

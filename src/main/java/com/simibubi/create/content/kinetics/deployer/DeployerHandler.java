@@ -1,5 +1,6 @@
 package com.simibubi.create.content.kinetics.deployer;
 
+import net.minecraft.util.Prediction;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.util.TriState;
 import java.util.ArrayList;
@@ -228,7 +229,7 @@ public class DeployerHandler {
 
 			entity.captureDrops(null);
 			capturedDrops.forEach(e -> player.getInventory()
-				.placeItemBackInInventory(e.getItem()));
+				.placeItemBackInInventory(e.getItem(), Prediction.SERVER_ONLY));
 			if (success)
 				return;
 		}
@@ -426,7 +427,7 @@ public class DeployerHandler {
 			return true;
 
 		Block.getDrops(blockstate, world, pos, blockEntity, player, prevHeldItem)
-			.forEach(item -> player.getInventory().placeItemBackInInventory(item));
+			.forEach(item -> player.getInventory().placeItemBackInInventory(item, Prediction.SERVER_ONLY));
 		blockstate.spawnAfterBreak(world, pos, prevHeldItem, true);
 		return true;
 	}
@@ -438,7 +439,7 @@ public class DeployerHandler {
 		try {
 			InteractionResult result = BlockHelper.invokeUse(state, world, player, hand, ray);
 			for (ItemEntity itemEntity : drops)
-				player.getInventory().placeItemBackInInventory(itemEntity.getItem());
+				player.getInventory().placeItemBackInInventory(itemEntity.getItem(), Prediction.SERVER_ONLY);
 			return result;
 		} finally {
 			CAPTURED_BLOCK_DROPS.remove(pos);

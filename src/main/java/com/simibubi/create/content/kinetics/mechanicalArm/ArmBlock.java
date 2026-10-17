@@ -1,5 +1,6 @@
 package com.simibubi.create.content.kinetics.mechanicalArm;
 
+import net.minecraft.util.Prediction;
 import org.jspecify.annotations.Nullable;
 import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.world.InteractionResult;
@@ -105,7 +106,7 @@ public class ArmBlock extends KineticBlock implements IBE<ArmBlockEntity>, ICogW
 			success.setTrue();
 			if (level.isClientSide())
 				return;
-			player.getInventory().placeItemBackInInventory(be.heldItem);
+			player.getInventory().placeItemBackInInventory(be.heldItem, Prediction.SERVER_ONLY);
 			be.heldItem = ItemStack.EMPTY;
 			be.phase = Phase.SEARCH_INPUTS;
 			be.setChanged();

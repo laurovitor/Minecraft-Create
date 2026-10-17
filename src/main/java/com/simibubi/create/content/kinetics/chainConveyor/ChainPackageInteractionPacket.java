@@ -1,5 +1,6 @@
 package com.simibubi.create.content.kinetics.chainConveyor;
 
+import net.minecraft.util.Prediction;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import java.util.List;
 
@@ -71,7 +72,7 @@ public class ChainPackageInteractionPacket extends BlockEntityConfigurationPacke
 			if (player.getMainHandItem().isEmpty()) {
 				player.setItemInHand(InteractionHand.MAIN_HAND, best.item.copy());
 			} else {
-				player.getInventory().placeItemBackInInventory(best.item.copy());
+				player.getInventory().placeItemBackInInventory(best.item.copy(), Prediction.SERVER_ONLY);
 			}
 
 			list.remove(best);

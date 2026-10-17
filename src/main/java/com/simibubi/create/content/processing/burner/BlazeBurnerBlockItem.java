@@ -1,5 +1,6 @@
 package com.simibubi.create.content.processing.burner;
 
+import net.minecraft.util.Prediction;
 import com.simibubi.create.foundation.utility.NbtValueIO;
 import org.jspecify.annotations.NullMarked;
 import java.util.ArrayList;
@@ -128,7 +129,7 @@ public class BlazeBurnerBlockItem extends BlockItem {
 			return;
 		}
 		player.getInventory()
-			.placeItemBackInInventory(filled);
+			.placeItemBackInInventory(filled, Prediction.SERVER_ONLY);
 	}
 
 	private void spawnCaptureEffects(Level world, Vec3 vec) {

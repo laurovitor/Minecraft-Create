@@ -1,5 +1,6 @@
 package com.simibubi.create.content.logistics.chute;
 
+import net.minecraft.util.Prediction;
 import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.redstone.Orientation;
@@ -200,7 +201,7 @@ public abstract class AbstractChuteBlock extends Block implements EntityRestingO
 			if (be.item.isEmpty())
 				return InteractionResult.TRY_WITH_EMPTY_HAND;
 			player.getInventory()
-				.placeItemBackInInventory(be.item);
+				.placeItemBackInInventory(be.item, Prediction.SERVER_ONLY);
 			be.setItem(ItemStack.EMPTY);
 			return InteractionResult.SUCCESS;
 		});

@@ -1,5 +1,6 @@
 package com.simibubi.create.content.logistics.tableCloth;
 
+import net.minecraft.util.Prediction;
 import net.createmod.catnip.api.network.NetworkHelper;
 import net.minecraft.core.UUIDUtil;
 import java.util.ArrayList;
@@ -248,7 +249,7 @@ public class TableClothBlockEntity extends SmartBlockEntity implements Transform
 					player.setItemInHand(InteractionHand.MAIN_HAND, prevListItem);
 				else
 					player.getInventory()
-						.placeItemBackInInventory(prevListItem);
+						.placeItemBackInInventory(prevListItem, Prediction.SERVER_ONLY);
 			}
 
 			return InteractionResult.SUCCESS;
@@ -295,7 +296,7 @@ public class TableClothBlockEntity extends SmartBlockEntity implements Transform
 			player.setItemInHand(InteractionHand.MAIN_HAND, newListItem);
 		else
 			player.getInventory()
-				.placeItemBackInInventory(newListItem);
+				.placeItemBackInInventory(newListItem, Prediction.SERVER_ONLY);
 
 		return InteractionResult.SUCCESS;
 	}

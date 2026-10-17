@@ -1,5 +1,6 @@
 package com.simibubi.create.content.equipment.clipboard;
 
+import net.minecraft.util.Prediction;
 import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.util.RandomSource;
 import net.createmod.catnip.api.platform.services.PlatformHelper;
@@ -135,7 +136,7 @@ public class ClipboardBlock extends FaceAttachedHorizontalDirectionalBlock
 			if (selected.isEmpty()) {
 				inv.setItem(inv.getSelectedSlot(), cloneItemStack);
 			} else {
-				inv.placeItemBackInInventory(cloneItemStack);
+				inv.placeItemBackInInventory(cloneItemStack, Prediction.SERVER_ONLY);
 			}
 		}
 	}

@@ -1,5 +1,6 @@
 package com.simibubi.create.content.equipment.blueprint;
 
+import net.minecraft.util.Prediction;
 import net.neoforged.neoforge.transfer.transaction.Transaction;
 import net.neoforged.neoforge.transfer.item.ItemUtil;
 import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
@@ -433,10 +434,10 @@ public class BlueprintEntity extends HangingEntity
 							level().playSound(null, player.blockPosition(), SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS,
 								.2f, 1f + level().getRandom().nextFloat());
 						player.getInventory()
-							.placeItemBackInInventory(result);
+							.placeItemBackInInventory(result, Prediction.SERVER_ONLY);
 						for (ItemStack itemStack : nonnulllist)
 							player.getInventory()
-								.placeItemBackInInventory(itemStack);
+								.placeItemBackInInventory(itemStack, Prediction.SERVER_ONLY);
 						firstPass = false;
 					}
 				}

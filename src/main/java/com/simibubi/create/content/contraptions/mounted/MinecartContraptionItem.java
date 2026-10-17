@@ -1,5 +1,6 @@
 package com.simibubi.create.content.contraptions.mounted;
 
+import net.minecraft.util.Prediction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.EntityType;
@@ -276,7 +277,7 @@ public class MinecartContraptionItem extends Item {
 			AllAdvancements.CART_PICKUP.awardTo(player);
 
 		player.getInventory()
-			.placeItemBackInInventory(generatedStack);
+			.placeItemBackInInventory(generatedStack, Prediction.SERVER_ONLY);
 		oce.discard();
 		entity.discard();
 		event.setCancellationResult(InteractionResult.SUCCESS);

@@ -1,5 +1,6 @@
 package com.simibubi.create.content.logistics.box;
 
+import net.minecraft.util.Prediction;
 import net.neoforged.neoforge.transfer.item.ItemResource;
 import net.neoforged.neoforge.transfer.ResourceHandlerUtil;
 import net.neoforged.neoforge.transfer.transaction.Transaction;
@@ -314,7 +315,7 @@ public class PackageItem extends Item {
 				}
 
 				playerIn.getInventory()
-					.placeItemBackInInventory(itemstack.copy());
+					.placeItemBackInInventory(itemstack.copy(), Prediction.SERVER_ONLY);
 			}
 		}
 

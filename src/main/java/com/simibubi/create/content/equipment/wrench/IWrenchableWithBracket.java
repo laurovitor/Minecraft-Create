@@ -1,5 +1,6 @@
 package com.simibubi.create.content.equipment.wrench;
 
+import net.minecraft.util.Prediction;
 import java.util.Optional;
 
 import com.simibubi.create.AllBlocks;
@@ -36,7 +37,7 @@ public interface IWrenchableWithBracket extends IWrenchable {
 		if (bracket.isPresent()) {
 			Player player = context.getPlayer();
 			if (!world.isClientSide() && !player.isCreative())
-				player.getInventory().placeItemBackInInventory(bracket.get());
+				player.getInventory().placeItemBackInInventory(bracket.get(), Prediction.SERVER_ONLY);
 			if (!world.isClientSide() && AllBlocks.FLUID_PIPE.has(blockState)) {
 				Axis preferred = FluidPropagator.getStraightPipeAxis(blockState);
 				Direction preferredDirection =

@@ -1,5 +1,6 @@
 package com.simibubi.create.content.decoration.placard;
 
+import net.minecraft.util.Prediction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.util.RandomSource;
@@ -193,7 +194,7 @@ public class PlacardBlock extends FaceAttachedHorizontalDirectionalBlock
 			if (heldItem.isEmpty())
 				return;
 			pPlayer.getInventory()
-				.placeItemBackInInventory(heldItem);
+				.placeItemBackInInventory(heldItem, Prediction.SERVER_ONLY);
 			pLevel.playSound(null, pPos, SoundEvents.ITEM_FRAME_REMOVE_ITEM, SoundSource.BLOCKS, 1, 1);
 			pte.setHeldItem(ItemStack.EMPTY);
 		});

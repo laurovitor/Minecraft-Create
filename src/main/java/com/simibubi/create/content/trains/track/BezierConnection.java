@@ -1,5 +1,6 @@
 package com.simibubi.create.content.trains.track;
 
+import net.minecraft.util.Prediction;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -261,12 +262,12 @@ public class BezierConnection implements Iterable<BezierConnection.Segment> {
 		Inventory inv = player.getInventory();
 		int tracks = getTrackItemCost();
 		while (tracks > 0) {
-			inv.placeItemBackInInventory(new ItemStack(getMaterial().getBlock(), Math.min(64, tracks)));
+			inv.placeItemBackInInventory(new ItemStack(getMaterial().getBlock(), Math.min(64, tracks)), Prediction.SERVER_ONLY);
 			tracks -= 64;
 		}
 		int girders = getGirderItemCost();
 		while (girders > 0) {
-			inv.placeItemBackInInventory(AllBlocks.METAL_GIRDER.asStack(Math.min(64, girders)));
+			inv.placeItemBackInInventory(AllBlocks.METAL_GIRDER.asStack(Math.min(64, girders)), Prediction.SERVER_ONLY);
 			girders -= 64;
 		}
 	}

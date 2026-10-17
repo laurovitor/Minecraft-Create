@@ -1,5 +1,6 @@
 package com.simibubi.create.content.equipment.sandPaper;
 
+import net.minecraft.util.Prediction;
 import net.minecraft.world.item.ItemInstance;
 import com.simibubi.create.foundation.item.ItemHelper;
 import net.minecraft.world.item.ItemStackTemplate;
@@ -126,11 +127,11 @@ public class SandPaperItem extends Item {
 
 			Inventory playerInv = player.getInventory();
 			if (!polished.isEmpty()) {
-				playerInv.placeItemBackInInventory(polished);
+				playerInv.placeItemBackInInventory(polished, Prediction.SERVER_ONLY);
 			}
 
 			if (ItemHelper.hasCraftingRemainder(toPolish)) {
-				playerInv.placeItemBackInInventory(ItemHelper.getCraftingRemainder(toPolish));
+				playerInv.placeItemBackInInventory(ItemHelper.getCraftingRemainder(toPolish), Prediction.SERVER_ONLY);
 			}
 
 			stack.remove(AllDataComponents.SAND_PAPER_POLISHING);
@@ -156,7 +157,7 @@ public class SandPaperItem extends Item {
 			ItemStack toPolish = stack.get(AllDataComponents.SAND_PAPER_POLISHING).item();
 			//noinspection DataFlowIssue - toPolish won't be null as we do call .has before calling .get
 			player.getInventory()
-				.placeItemBackInInventory(toPolish);
+				.placeItemBackInInventory(toPolish, Prediction.SERVER_ONLY);
 			stack.remove(AllDataComponents.SAND_PAPER_POLISHING);
 		}
 		return true;

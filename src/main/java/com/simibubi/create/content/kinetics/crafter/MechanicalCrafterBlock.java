@@ -1,5 +1,6 @@
 package com.simibubi.create.content.kinetics.crafter;
 
+import net.minecraft.util.Prediction;
 import net.neoforged.neoforge.transfer.transaction.Transaction;
 import net.minecraft.server.level.ServerLevel;
 import org.jspecify.annotations.Nullable;
@@ -203,7 +204,7 @@ public class MechanicalCrafterBlock extends HorizontalKineticBlock
 					crafter.sendData();
 					if (!player.isCreative())
 						player.getInventory()
-							.placeItemBackInInventory(AllItems.CRAFTER_SLOT_COVER.asStack());
+							.placeItemBackInInventory(AllItems.CRAFTER_SLOT_COVER.asStack(), Prediction.SERVER_ONLY);
 					return InteractionResult.SUCCESS;
 				}
 				return InteractionResult.TRY_WITH_EMPTY_HAND;
@@ -213,7 +214,7 @@ public class MechanicalCrafterBlock extends HorizontalKineticBlock
 			if (level.isClientSide())
 				return InteractionResult.SUCCESS;
 			player.getInventory()
-				.placeItemBackInInventory(inSlot);
+				.placeItemBackInInventory(inSlot, Prediction.SERVER_ONLY);
 			crafter.getInventory().set(0, ItemResource.EMPTY, 0);
 			return InteractionResult.SUCCESS;
 		}

@@ -1,5 +1,6 @@
 package com.simibubi.create.content.trains.station;
 
+import net.minecraft.util.Prediction;
 import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.util.RandomSource;
@@ -130,7 +131,7 @@ public class StationBlock extends Block implements EntityRestingOnBlock, IBE<Sta
 			if (level.isClientSide())
 				return InteractionResult.SUCCESS;
 			player.getInventory()
-				.placeItemBackInInventory(autoSchedule.copy());
+				.placeItemBackInInventory(autoSchedule.copy(), Prediction.SERVER_ONLY);
 			station.depotBehaviour.removeHeldItem();
 			station.notifyUpdate();
 			AllSoundEvents.playItemPickup(player);
