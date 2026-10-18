@@ -59,7 +59,7 @@ import net.minecraft.world.level.block.FlowerPotBlock;
 import net.minecraft.world.level.block.GrindstoneBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.LadderBlock;
-import net.minecraft.world.level.block.RedStoneWireBlock;
+import net.minecraft.world.level.block.RedstoneWireBlock;
 import net.minecraft.world.level.block.RedstoneWallTorchBlock;
 import net.minecraft.world.level.block.SignBlock;
 import net.minecraft.world.level.block.StandingSignBlock;
@@ -238,7 +238,7 @@ public class BlockMovementChecksImpl {
 			return true;
 		if (block instanceof DiodeBlock)
 			return true;
-		if (block instanceof RedStoneWireBlock)
+		if (block instanceof RedstoneWireBlock)
 			return true;
 		if (block instanceof WoolCarpetBlock)
 			return true;
@@ -280,7 +280,7 @@ public class BlockMovementChecksImpl {
 			return direction == Direction.DOWN;
 		if (block instanceof DiodeBlock)
 			return direction == Direction.DOWN;
-		if (block instanceof RedStoneWireBlock)
+		if (block instanceof RedstoneWireBlock)
 			return direction == Direction.DOWN;
 		if (block instanceof WoolCarpetBlock)
 			return direction == Direction.DOWN;

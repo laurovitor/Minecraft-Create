@@ -11,7 +11,7 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.RedStoneWireBlock;
+import net.minecraft.world.level.block.RedstoneWireBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition.Builder;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
@@ -62,7 +62,7 @@ public class PoweredLatchBlock extends ToggleLatchBlock {
 			if (i > 0)
 				return true;
 			BlockState blockstate = worldIn.getBlockState(blockpos);
-			if (blockstate.getBlock() == Blocks.REDSTONE_WIRE && blockstate.getValue(RedStoneWireBlock.POWER) > 0)
+			if (blockstate.getBlock() == Blocks.REDSTONE_WIRE && blockstate.getValue(RedstoneWireBlock.POWER) > 0)
 				return true;
 		}
 		return false;

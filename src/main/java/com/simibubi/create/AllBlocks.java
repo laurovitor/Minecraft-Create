@@ -317,7 +317,7 @@ import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.IronBarsBlock;
-import net.minecraft.world.level.block.RedStoneWireBlock;
+import net.minecraft.world.level.block.RedstoneWireBlock;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -1262,7 +1262,7 @@ public class AllBlocks {
 			.initialProperties(() -> Blocks.POWERED_RAIL)
 			.transform(pickaxeOnly())
 			.blockstate(() -> new ControllerRailGenerator()::generate)
-			.color(() -> () -> List.of((BlockTintSource) state -> RedStoneWireBlock
+			.color(() -> () -> List.of((BlockTintSource) state -> RedstoneWireBlock
 				.getColorForPower(state.getValue(BlockStateProperties.POWER))))
 			.tag(BlockTags.RAILS)
 			.item()

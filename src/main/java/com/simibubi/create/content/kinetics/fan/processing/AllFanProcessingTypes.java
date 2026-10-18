@@ -49,7 +49,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.animal.equine.Horse;
 import net.minecraft.world.entity.animal.equine.SkeletonHorse;
-import net.minecraft.world.entity.monster.EnderMan;
+import net.minecraft.world.entity.monster.Enderman;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.AbstractCookingRecipe;
 import net.minecraft.world.item.crafting.BlastingRecipe;
@@ -449,7 +449,7 @@ public class AllFanProcessingTypes {
 			if (level.isClientSide())
 				return;
 
-			if (entity instanceof EnderMan || entity.getType() == EntityTypes.SNOW_GOLEM
+			if (entity instanceof Enderman || entity.getType() == EntityTypes.SNOW_GOLEM
 				|| entity.getType() == EntityTypes.BLAZE) {
 				entity.hurt(entity.damageSources().drown(), 2);
 			}
