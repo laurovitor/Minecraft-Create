@@ -15,7 +15,7 @@ import com.simibubi.create.content.kinetics.base.KineticBlockEntityRenderer;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import net.createmod.catnip.api.client.render.SpriteShiftEntry;
 import net.createmod.catnip.api.client.render.SuperByteBuffer;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import net.createmod.catnip.api.math.AngleHelper;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -71,14 +71,12 @@ public class ElevatorPulleyRenderer
 
 		SuperByteBuffer rotatedCoil = getRotatedCoil(be);
 		if (offset == 0) {
-			state.parts.add(rotatedCoil.light(state.lightCoords)
-				.extractRenderState());
+			state.parts.add(SuperByteBufferRenderState.capture(rotatedCoil.light(state.lightCoords)));
 			return;
 		}
 
-		state.parts.add(AbstractPulleyRenderer.scrollCoil(rotatedCoil, coilShift, offset, 2)
-			.light(state.lightCoords)
-			.extractRenderState());
+		state.parts.add(SuperByteBufferRenderState.capture(
+			AbstractPulleyRenderer.scrollCoil(rotatedCoil, coilShift, offset, 2).light(state.lightCoords)));
 
 		float spriteSize = beltShift.getTarget()
 			.getV1()

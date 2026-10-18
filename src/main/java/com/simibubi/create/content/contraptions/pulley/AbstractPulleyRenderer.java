@@ -14,7 +14,7 @@ import dev.engine_room.flywheel.lib.model.baked.PartialModel;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import net.createmod.catnip.api.client.render.SpriteShiftEntry;
 import net.createmod.catnip.api.client.render.SuperByteBuffer;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import net.minecraft.world.level.BlockAndLightGetter;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -72,8 +72,8 @@ public abstract class AbstractPulleyRenderer<T extends KineticBlockEntity, S ext
 		float offset = getOffset(be, partialTicks);
 		boolean running = isRunning(be);
 
-		state.parts.add(scrollCoil(getRotatedCoil(be), getCoilShift(), offset, 1).light(state.lightCoords)
-			.extractRenderState());
+		state.parts.add(SuperByteBufferRenderState.capture(
+			scrollCoil(getRotatedCoil(be), getCoilShift(), offset, 1).light(state.lightCoords)));
 
 		Level world = be.getLevel();
 		BlockState blockState = be.getBlockState();
@@ -112,8 +112,7 @@ public abstract class AbstractPulleyRenderer<T extends KineticBlockEntity, S ext
 		int light = LightCoordsUtil.getLightCoords(world, actualPos);
 		TransformStack.of(partial.getTransforms())
 			.translate(0, -offset, 0);
-		return partial.light(light)
-			.extractRenderState();
+		return SuperByteBufferRenderState.capture(partial.light(light));
 	}
 
 	protected abstract Axis getShaftAxis(T be);

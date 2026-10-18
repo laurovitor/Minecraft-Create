@@ -12,7 +12,7 @@ import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import net.createmod.catnip.api.client.animation.AnimationTickHolder;
 import net.createmod.catnip.api.client.render.SuperByteBuffer;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import net.createmod.catnip.api.data.Iterate;
 import net.createmod.catnip.api.math.AngleHelper;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -85,8 +85,7 @@ public class GantryCarriageRenderer
 			.translate(0, 9 / 16f, 0)
 			.uncenter();
 
-		state.cogs = cogs.light(state.lightCoords)
-			.extractRenderState();
+		state.cogs = SuperByteBufferRenderState.capture(cogs.light(state.lightCoords));
 	}
 
 	@Override
