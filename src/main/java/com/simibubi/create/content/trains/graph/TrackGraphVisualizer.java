@@ -1,11 +1,11 @@
 package com.simibubi.create.content.trains.graph;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 
-import org.lwjgl.glfw.GLFW;
 
 import com.simibubi.create.AllKeys;
 import com.simibubi.create.Create;
@@ -259,7 +259,7 @@ public class TrackGraphVisualizer {
 						.lineWidth(1 / 4f);
 					continue;
 				}
-				if (other.hashCode() > hashCode && !AllKeys.isKeyDown(GLFW.GLFW_KEY_LEFT_CONTROL))
+				if (other.hashCode() > hashCode && !AllKeys.isKeyDown(InputConstants.KEY_LCONTROL))
 					continue;
 
 				yOffset = new Vec3(0, (other.hashCode() > hashCode ? 6 : 4) / 16f, 0);

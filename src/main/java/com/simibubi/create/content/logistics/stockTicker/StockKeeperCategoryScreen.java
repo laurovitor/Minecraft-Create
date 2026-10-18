@@ -1,5 +1,6 @@
 package com.simibubi.create.content.logistics.stockTicker;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.neoforged.neoforge.transfer.item.ItemResource;
 import net.neoforged.neoforge.transfer.item.ItemUtil;
 import net.minecraft.client.Minecraft;
@@ -13,7 +14,6 @@ import java.util.List;
 import java.util.Optional;
 
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
 
 import com.google.common.collect.ImmutableList;
 import com.simibubi.create.AllBlocks;
@@ -394,7 +394,7 @@ public class StockKeeperCategoryScreen extends AbstractSimiContainerScreen<Stock
 		if (editingItem == null)
 			return super.keyPressed(event);
 
-		boolean hitEscape = pKeyCode == GLFW.GLFW_KEY_ESCAPE;
+		boolean hitEscape = pKeyCode == InputConstants.KEY_ESCAPE;
 		boolean hitEnter = getFocused() instanceof EditBox && (pKeyCode == 257 || pKeyCode == 335);
 		boolean hitE = getFocused() == null && minecraft.options.keyInventory.matches(event);
 		if (hitE || hitEnter || hitEscape) {

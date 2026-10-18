@@ -1,7 +1,7 @@
 package com.simibubi.create.content.schematics.client;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.input.KeyEvent;
-import org.lwjgl.glfw.GLFW;
 
 import com.simibubi.create.AllItems;
 import com.simibubi.create.CreateClient;
@@ -98,7 +98,7 @@ public class SchematicPromptScreen extends AbstractSimiScreen {
 		int keyCode = event.key();
 		int p_keyPressed_2_ = event.scancode();
 		int p_keyPressed_3_ = event.modifiers();
-		if (keyCode == GLFW.GLFW_KEY_ENTER) {
+		if (keyCode == InputConstants.KEY_RETURN) {
 			confirm(false);
 			return true;
 		}

@@ -7,7 +7,6 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.simibubi.create.content.contraptions.AbstractContraptionEntity;
@@ -68,8 +67,7 @@ public class ControlsHandler {
 		if (packetCooldown > 0)
 			packetCooldown--;
 
-		if (entity.isRemoved() || InputConstants.isKeyDown(Minecraft.getInstance()
-			.getWindow(), GLFW.GLFW_KEY_ESCAPE)) {
+		if (entity.isRemoved() || InputConstants.isKeyDown(InputConstants.KEY_ESCAPE)) {
 			BlockPos pos = controlsPos;
 			stopControlling();
 			ClientNetworkHelper.INSTANCE.sendToServer(new ControlsInputPacket(currentlyPressed, false, entity.getId(), pos, true));

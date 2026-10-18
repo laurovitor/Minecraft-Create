@@ -9,7 +9,6 @@ import java.util.HashSet;
 import java.util.List;
 
 
-import org.lwjgl.glfw.GLFW;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -144,7 +143,7 @@ public class LinkedControllerClientHandler {
 			return;
 		}
 
-		if (InputConstants.isKeyDown(mc.getWindow(), GLFW.GLFW_KEY_ESCAPE)) {
+		if (InputConstants.isKeyDown(InputConstants.KEY_ESCAPE)) {
 			MODE = Mode.IDLE;
 			onReset();
 			return;

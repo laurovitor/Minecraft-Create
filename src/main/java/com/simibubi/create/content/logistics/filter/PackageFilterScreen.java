@@ -1,11 +1,11 @@
 package com.simibubi.create.content.logistics.filter;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import org.joml.Matrix3x2fStack;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.createmod.catnip.api.client.network.ClientNetworkHelper;
-import org.lwjgl.glfw.GLFW;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.content.logistics.AddressEditBox;
@@ -95,7 +95,7 @@ public class PackageFilterScreen extends AbstractFilterScreen<PackageFilterMenu>
 		int pKeyCode = event.key();
 		int pScanCode = event.scancode();
 		int pModifiers = event.modifiers();
-		if (pKeyCode == GLFW.GLFW_KEY_ENTER)
+		if (pKeyCode == InputConstants.KEY_RETURN)
 			setFocused(null);
 		return super.keyPressed(event);
 	}

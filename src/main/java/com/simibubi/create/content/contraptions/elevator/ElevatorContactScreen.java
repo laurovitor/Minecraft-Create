@@ -1,9 +1,9 @@
 package com.simibubi.create.content.contraptions.elevator;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.createmod.catnip.api.client.network.ClientNetworkHelper;
-import org.lwjgl.glfw.GLFW;
 
 import com.google.common.collect.ImmutableList;
 import com.simibubi.create.AllBlocks;
@@ -173,7 +173,7 @@ public class ElevatorContactScreen extends AbstractSimiScreen {
 		int p_keyPressed_3_ = event.modifiers();
 		if (super.keyPressed(event))
 			return true;
-		if (keyCode == GLFW.GLFW_KEY_ENTER) {
+		if (keyCode == InputConstants.KEY_RETURN) {
 			confirm();
 			return true;
 		}
