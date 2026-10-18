@@ -107,7 +107,7 @@ import net.minecraft.world.level.storage.loot.functions.CopyComponentsFunction;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.level.storage.loot.predicates.ExplosionCondition;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
-import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
+import net.minecraft.world.level.storage.loot.providers.number.ints.ContextIntProviders;
 
 import net.neoforged.neoforge.common.Tags;
 
@@ -512,7 +512,7 @@ public class BuilderTransformers {
 				LootItemCondition.Builder survivesExplosion = ExplosionCondition.survivesExplosion();
 				lt.add(block, builder.withPool(LootPool.lootPool()
 					.when(survivesExplosion)
-					.setRolls(ConstantValue.exactly(1))
+					.setRolls(ContextIntProviders.exactly(1))
 					.add(LootItem.lootTableItem(drop.get())
 						.apply(CopyComponentsFunction.copyComponentsFromBlockEntity(LootContextParams.BLOCK_ENTITY)
 							.include(AllDataComponents.BACKTANK_AIR)))));

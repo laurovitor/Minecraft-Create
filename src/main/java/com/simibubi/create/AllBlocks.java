@@ -336,7 +336,7 @@ import net.minecraft.world.level.storage.loot.functions.CopyComponentsFunction;
 import net.minecraft.world.level.storage.loot.functions.CopyNameFunction;
 import net.minecraft.world.level.storage.loot.predicates.ExplosionCondition;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
-import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
+import net.minecraft.world.level.storage.loot.providers.number.ints.ContextIntProviders;
 
 import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.common.util.DeferredSoundType;
@@ -363,7 +363,7 @@ public class AllBlocks {
 				LootItemCondition.Builder survivesExplosion = ExplosionCondition.survivesExplosion();
 				lt.add(block, builder.withPool(LootPool.lootPool()
 					.when(survivesExplosion)
-					.setRolls(ConstantValue.exactly(1))
+					.setRolls(ContextIntProviders.exactly(1))
 					.add(LootItem.lootTableItem(AllBlocks.SCHEMATICANNON.get()
 							.asItem())
 						.apply(CopyComponentsFunction.copyComponentsFromBlockEntity(LootContextParams.BLOCK_ENTITY)
@@ -2209,7 +2209,7 @@ public class AllBlocks {
 			.loot((lt, block) -> {
 				lt.add(block, LootTable.lootTable().withPool(LootPool.lootPool()
 						.when(ExplosionCondition.survivesExplosion())
-						.setRolls(ConstantValue.exactly(1))
+						.setRolls(ContextIntProviders.exactly(1))
 						.add(LootItem.lootTableItem(block)
 								.apply(CopyNameFunction.copyName(LootContext.BlockEntityTarget.BLOCK_ENTITY))
 								.apply(CopyComponentsFunction.copyComponentsFromBlockEntity(LootContextParams.BLOCK_ENTITY)
@@ -2325,7 +2325,7 @@ public class AllBlocks {
 			.blockstate(() -> GirderBlockStateGenerator::blockStateWithShaft)
 			.loot((p, b) -> p.add(b, p.createSingleItemTable(METAL_GIRDER.get())
 				.withPool(p.applyExplosionCondition(SHAFT.get(), LootPool.lootPool()
-					.setRolls(ConstantValue.exactly(1.0F))
+					.setRolls(ContextIntProviders.exactly(1))
 					.add(LootItem.lootTableItem(SHAFT.get()))))))
 			.onRegister(CreateRegistrate.blockModel(() -> ConnectedGirderModel::new))
 			.register();
@@ -2594,12 +2594,12 @@ public class AllBlocks {
 			.blockstate(() -> BlockStateGen.horizontalAxisBlockProvider(false))
 			.loot((r, b) -> r.add(b, LootTable.lootTable()
 				.withPool(LootPool.lootPool()
-					.setRolls(ConstantValue.exactly(1.0F))
+					.setRolls(ContextIntProviders.exactly(1))
 					.add(LootItem.lootTableItem(b)
 						.when(((BlockLootSubProviderAccessor) r).create$hasSilkTouch())
 						.otherwise(r.applyExplosionCondition(b, LootItem.lootTableItem(Items.STRING)))))
 				.withPool(r.applyExplosionCondition(b, LootPool.lootPool()
-					.setRolls(ConstantValue.exactly(1.0F))
+					.setRolls(ContextIntProviders.exactly(1))
 					.add(LootItem.lootTableItem(AllBlocks.CARDBOARD_BLOCK.asItem()))
 					.when(((BlockLootSubProviderAccessor) r).create$hasSilkTouch().invert())))))
 			.item()
