@@ -69,6 +69,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
 import net.minecraft.world.level.block.entity.SignText;
+import net.minecraft.world.level.block.entity.SignTextSlot;
 import net.minecraft.world.level.block.state.BlockState;
 
 import net.neoforged.neoforge.capabilities.Capabilities;
@@ -568,7 +569,7 @@ public class PackagerBlockEntity extends SmartBlockEntity implements Clearable {
 		if (!(blockEntity instanceof SignBlockEntity sign))
 			return null;
 		for (boolean front : Iterate.trueAndFalse) {
-			SignText text = sign.getText(front);
+			SignText text = sign.getText(front ? SignTextSlot.FRONT : SignTextSlot.BACK);
 			String address = "";
 			for (Component component : text.getMessages(false)) {
 				String string = component.getString();
