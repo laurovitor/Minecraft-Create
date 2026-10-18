@@ -70,7 +70,7 @@ public class RotationIndicatorParticle extends SimpleAnimatedParticle {
 	}
 
 	public void move(double x, double y, double z) {
-		float time = AnimationTickHolder.getTicks(level);
+		float time = AnimationTickHolder.getTicks();
 		float angle = (float) ((time * speed) % 360) - (speed / 2 * age * (((float) age) / lifetime));
 		if (speed < 0 && axis.isVertical())
 			angle += 180;

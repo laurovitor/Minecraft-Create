@@ -55,7 +55,7 @@ public class SplitShaftRenderer
 		Block block = be.getBlockState().getBlock();
 		final Axis boxAxis = ((IRotate) block).getRotationAxis(be.getBlockState());
 		final BlockPos pos = be.getBlockPos();
-		float time = AnimationTickHolder.getRenderTime(be.getLevel());
+		float time = AnimationTickHolder.getRenderTime();
 
 		for (Direction direction : Iterate.directions) {
 			Axis axis = direction.getAxis();

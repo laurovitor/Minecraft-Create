@@ -84,7 +84,7 @@ public class ArmRenderer extends KineticBlockEntityRenderer<ArmBlockEntity, ArmR
 
 		boolean rave = be.phase == Phase.DANCING && be.getSpeed() != 0;
 		if (rave) {
-			float renderTick = AnimationTickHolder.getRenderTime(be.getLevel()) + (be.hashCode() % 64);
+			float renderTick = AnimationTickHolder.getRenderTime() + (be.hashCode() % 64);
 			baseAngle = (renderTick * 10) % 360;
 			lowerArmAngle = Mth.lerp((Mth.sin(renderTick / 4) + 1) / 2, -45, 15);
 			upperArmAngle = Mth.lerp((Mth.sin(renderTick / 8) + 1) / 4, -45, 95);

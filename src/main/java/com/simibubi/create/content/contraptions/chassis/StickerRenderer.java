@@ -46,7 +46,7 @@ public class StickerRenderer extends SafeBlockEntityRenderer<StickerBlockEntity,
 
 		BlockState blockState = be.getBlockState();
 		SuperByteBuffer head = CachedBufferer.partial(AllPartialModels.STICKER_HEAD, blockState);
-		float offset = be.piston.getValue(AnimationTickHolder.getPartialTicks(be.getLevel()));
+		float offset = be.piston.getValue(AnimationTickHolder.getPartialTicks());
 
 		if (be.getLevel() != Minecraft.getInstance().level && !be.isVirtual())
 			offset = blockState.getValue(StickerBlock.EXTENDED) ? 1 : 0;

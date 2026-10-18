@@ -98,7 +98,7 @@ public class GantryCarriageRenderer
 	}
 
 	public static float getAngleForBE(KineticBlockEntity be, final BlockPos pos, Axis axis) {
-		float time = AnimationTickHolder.getRenderTime(be.getLevel());
+		float time = AnimationTickHolder.getRenderTime();
 		float offset = getRotationOffsetForPosition(be, pos, axis);
 		return (time * be.getSpeed() * 3f / 20 + offset) % 360;
 	}

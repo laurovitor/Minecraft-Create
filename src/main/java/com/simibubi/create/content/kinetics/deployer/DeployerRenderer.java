@@ -128,7 +128,7 @@ public class DeployerRenderer
 		isBlockItem = be.heldItem.getItem() instanceof BlockItem && item.usesBlockLight();
 
 		state.heldItem = new HeldItem(item, offset, yRot, xRot, displayMode, punching, isBlockItem,
-			AnimationTickHolder.getRenderTime(be.getLevel()));
+			AnimationTickHolder.getRenderTime());
 	}
 
 	protected void extractComponents(DeployerBlockEntity be, DeployerRenderState state, float partialTicks) {
@@ -249,7 +249,7 @@ public class DeployerRenderer
 			axis = def.getRotationAxis(context.state);
 		}
 
-		float time = AnimationTickHolder.getRenderTime(context.world) / 20;
+		float time = AnimationTickHolder.getRenderTime() / 20;
 		float angle = (time * speed) % 360;
 
 		TransformStack.of(m)

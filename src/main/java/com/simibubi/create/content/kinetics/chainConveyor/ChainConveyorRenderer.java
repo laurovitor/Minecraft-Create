@@ -201,7 +201,7 @@ public class ChainConveyorRenderer
 
 	private void extractChains(ChainConveyorBlockEntity be, ChainConveyorRenderState state, Vec3 cameraPosition,
 		boolean visualized) {
-		float time = AnimationTickHolder.getRenderTime(be.getLevel()) / (360f / Math.abs(be.getSpeed()));
+		float time = AnimationTickHolder.getRenderTime() / (360f / Math.abs(be.getSpeed()));
 		time %= 1;
 		if (time < 0)
 			time += 1;

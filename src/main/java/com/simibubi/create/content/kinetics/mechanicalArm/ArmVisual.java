@@ -110,7 +110,7 @@ public class ArmVisual extends SingleAxisRotatingVisual<ArmBlockEntity> implemen
 	}
 
 	private void animateRave(float partialTick) {
-		var ticks = AnimationTickHolder.getTicks(blockEntity.getLevel());
+		var ticks = AnimationTickHolder.getTicks();
 		float renderTick = ticks + partialTick + (blockEntity.hashCode() % 64);
 
 		float baseAngle = (renderTick * 10) % 360;

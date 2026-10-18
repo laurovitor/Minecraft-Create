@@ -100,7 +100,7 @@ public class BlazeBurnerRenderer
 
 		HeatLevel drawnHeat = heatLevel;
 		Level level = context.world;
-		float horizontalAngle = AngleHelper.rad(headAngle.getValue(AnimationTickHolder.getPartialTicks(level)));
+		float horizontalAngle = AngleHelper.rad(headAngle.getValue(AnimationTickHolder.getPartialTicks()));
 		boolean drawGoggles = context.blockEntityData.contains("Goggles");
 		boolean drawHat = conductor || context.blockEntityData.contains("TrainHat");
 		int hashCode = context.hashCode();

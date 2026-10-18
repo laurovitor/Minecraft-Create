@@ -430,7 +430,7 @@ public class BlueprintOverlayRenderer {
 	public static void drawItemStack(GuiGraphicsExtractor graphics, Minecraft mc, int x, int y, ItemStack itemStack,
 									 String count) {
 		if (itemStack.getItem() instanceof FilterItem) {
-			int step = AnimationTickHolder.getTicks(mc.level) / 10;
+			int step = AnimationTickHolder.getTicks() / 10;
 			ItemStack[] itemsMatchingFilter = getItemsMatchingFilter(itemStack);
 			if (itemsMatchingFilter.length > 0)
 				itemStack = itemsMatchingFilter[step % itemsMatchingFilter.length];

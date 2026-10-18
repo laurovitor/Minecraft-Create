@@ -118,7 +118,7 @@ public class BeltRenderer extends SafeBlockEntityRenderer<BeltBlockEntity, BeltR
 
 		PoseStack localTransforms = new PoseStack();
 		var msr = TransformStack.of(localTransforms);
-		float renderTick = AnimationTickHolder.getRenderTime(be.getLevel());
+		float renderTick = AnimationTickHolder.getRenderTime();
 		int light = state.lightCoords;
 
 		msr.center()

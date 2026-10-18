@@ -50,7 +50,7 @@ public class BacktankRenderer
 			.rotateYDegrees(180 + AngleHelper.horizontalAngle(blockState.getValue(BacktankBlock.HORIZONTAL_FACING)))
 			.uncenter()
 			.translate(0, 6.5f / 16, 11f / 16)
-			.rotate(AngleHelper.rad(be.getSpeed() / 4f * AnimationTickHolder.getRenderTime(be.getLevel()) % 360),
+			.rotate(AngleHelper.rad(be.getSpeed() / 4f * AnimationTickHolder.getRenderTime() % 360),
 				Direction.EAST)
 			.translate(0, -6.5f / 16, -11f / 16);
 		state.cogs = cogs.light(state.lightCoords)

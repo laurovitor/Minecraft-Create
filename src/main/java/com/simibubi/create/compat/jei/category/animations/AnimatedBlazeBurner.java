@@ -61,7 +61,7 @@ public class AnimatedBlazeBurner extends AnimatedKinetics {
 			- spriteShift.getTarget()
 				.getV0();
 
-		float time = AnimationTickHolder.getRenderTime(Minecraft.getInstance().level);
+		float time = AnimationTickHolder.getRenderTime();
 		float speed = 1 / 32f + 1 / 64f * heatLevel.ordinal();
 
 		double vScroll = speed * time;

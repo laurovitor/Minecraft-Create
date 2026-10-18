@@ -53,7 +53,7 @@ public class GearboxRenderer
 
 		final Axis boxAxis = be.getBlockState().getValue(BlockStateProperties.AXIS);
 		final BlockPos pos = be.getBlockPos();
-		float time = AnimationTickHolder.getRenderTime(be.getLevel());
+		float time = AnimationTickHolder.getRenderTime();
 
 		for (Direction direction : Iterate.directions) {
 			final Axis axis = direction.getAxis();

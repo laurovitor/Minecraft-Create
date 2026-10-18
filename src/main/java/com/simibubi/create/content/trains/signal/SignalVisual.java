@@ -76,7 +76,7 @@ public class SignalVisual extends AbstractBlockEntityVisual<SignalBlockEntity> i
 		{
 			SignalState signalState = blockEntity.getState();
 
-			float renderTime = AnimationTickHolder.getRenderTime(blockEntity.getLevel());
+			float renderTime = AnimationTickHolder.getRenderTime();
 			boolean isRedLight = signalState.isRedLight(renderTime);
 
 			if (isRedLight != previousIsRedLight) {

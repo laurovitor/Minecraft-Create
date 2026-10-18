@@ -65,7 +65,7 @@ public class EncasedFanRenderer
 		SuperByteBuffer fanInner =
 			CachedBufferer.partialFacing(AllPartialModels.ENCASED_FAN_INNER, be.getBlockState(), direction.getOpposite());
 
-		float time = AnimationTickHolder.getRenderTime(be.getLevel());
+		float time = AnimationTickHolder.getRenderTime();
 		float speed = be.getSpeed() * 5;
 		if (speed > 0)
 			speed = Mth.clamp(speed, 80, 64 * 20);

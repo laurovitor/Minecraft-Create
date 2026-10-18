@@ -88,7 +88,7 @@ public class BasinRenderer extends SmartBlockEntityRenderer<BasinBlockEntity, Ba
 		state.rotation = basin.ingredientRotation.getValue(partialTicks);
 		state.seed = basin.getBlockPos()
 			.hashCode();
-		state.bobPhase = AnimationTickHolder.getRenderTime(basin.getLevel()) / 12f;
+		state.bobPhase = AnimationTickHolder.getRenderTime() / 12f;
 
 		ResourceHandler<ItemResource> inv = basin.itemCapability;
 		if (inv == null)

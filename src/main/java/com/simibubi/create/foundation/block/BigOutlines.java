@@ -32,7 +32,7 @@ public class BigOutlines {
 
 		result = null;
 
-		Vec3 origin = player.getEyePosition(AnimationTickHolder.getPartialTicks(mc.level));
+		Vec3 origin = player.getEyePosition(AnimationTickHolder.getPartialTicks());
 
 		double maxRange = mc.hitResult == null ? Double.MAX_VALUE
 			: mc.hitResult.getLocation()

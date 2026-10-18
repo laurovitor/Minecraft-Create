@@ -58,7 +58,7 @@ public class ControlsActorClient implements MovementBehaviourClient {
 			angles.speed.chase(0, 0, Chaser.EXP);
 		}
 
-		float pt = AnimationTickHolder.getPartialTicks(context.world);
+		float pt = AnimationTickHolder.getPartialTicks();
 		ControlsRenderer.extract(context, renderWorld, matrices, out, angles.equipAnimation.getValue(pt),
 			angles.speed.getValue(pt), angles.steering.getValue(pt));
 	}

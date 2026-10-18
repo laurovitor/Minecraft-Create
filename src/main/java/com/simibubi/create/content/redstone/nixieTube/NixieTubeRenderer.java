@@ -69,7 +69,7 @@ public class NixieTubeRenderer
 		state.computerSignal = be.computerSignal;
 		state.observerVec = cameraPosition;
 		state.lampVec = Vec3.atCenterOf(be.getBlockPos());
-		state.renderTime = AnimationTickHolder.getRenderTime(be.getLevel());
+		state.renderTime = AnimationTickHolder.getRenderTime();
 		state.randomSeed = be.getBlockPos()
 			.asLong();
 
