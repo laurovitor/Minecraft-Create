@@ -15,7 +15,7 @@ import com.simibubi.create.foundation.gui.widget.ScrollInput;
 import com.simibubi.create.foundation.gui.widget.SelectionScrollInput;
 import com.simibubi.create.foundation.utility.CreateLang;
 
-import net.createmod.catnip.api.client.gui.AbstractSimiScreen;
+import com.simibubi.create.foundation.gui.AbstractSimiScreen;
 import net.createmod.catnip.api.client.gui.element.GuiGameElement;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
@@ -127,7 +127,6 @@ public class SchematicEditScreen extends AbstractSimiScreen {
 	@Override
 	public boolean keyPressed(KeyEvent event) {
 		int code = event.key();
-		int p_keyPressed_2_ = event.scancode();
 		int p_keyPressed_3_ = event.modifiers();
 		if (event.isPaste()) {
 			String coords = minecraft.keyboardHandler.getClipboard();

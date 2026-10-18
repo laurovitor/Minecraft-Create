@@ -30,7 +30,7 @@ import com.simibubi.create.content.redstone.DirectedDirectionalBlock;
 import com.simibubi.create.foundation.gui.AllIcons;
 
 import net.createmod.catnip.api.client.animation.AnimationTickHolder;
-import net.createmod.catnip.api.client.gui.AbstractSimiScreen;
+import com.simibubi.create.foundation.gui.AbstractSimiScreen;
 import net.createmod.catnip.api.client.gui.UIRenderHelper;
 import net.createmod.catnip.api.client.gui.element.GuiGameElement;
 import net.createmod.catnip.api.client.gui.element.RenderElement;

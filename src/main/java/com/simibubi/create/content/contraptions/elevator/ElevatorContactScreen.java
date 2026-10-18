@@ -17,7 +17,7 @@ import com.simibubi.create.foundation.gui.widget.TooltipArea;
 import com.simibubi.create.foundation.utility.CreateLang;
 
 import net.createmod.catnip.api.data.Pair;
-import net.createmod.catnip.api.client.gui.AbstractSimiScreen;
+import com.simibubi.create.foundation.gui.AbstractSimiScreen;
 import net.createmod.catnip.api.client.gui.element.GuiGameElement;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;

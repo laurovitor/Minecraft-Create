@@ -382,7 +382,6 @@ public class StationScreen extends AbstractStationScreen {
 	@Override
 	public boolean keyPressed(KeyEvent event) {
 		int pKeyCode = event.key();
-		int pScanCode = event.scancode();
 		int pModifiers = event.modifiers();
 		boolean hitEnter = getFocused() instanceof EditBox
 			&& (pKeyCode == InputConstants.KEY_RETURN || pKeyCode == InputConstants.KEY_NUMPADENTER);

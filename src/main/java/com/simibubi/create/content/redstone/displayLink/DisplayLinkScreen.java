@@ -24,7 +24,7 @@ import com.simibubi.create.infrastructure.ponder.AllCreatePonderTags;
 
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import net.createmod.catnip.api.data.Couple;
-import net.createmod.catnip.api.client.gui.AbstractSimiScreen;
+import com.simibubi.create.foundation.gui.AbstractSimiScreen;
 import net.createmod.catnip.api.client.gui.ScreenOpener;
 import net.createmod.catnip.api.client.gui.element.GuiGameElement;
 import net.createmod.catnip.api.client.gui.widget.AbstractSimiWidget;

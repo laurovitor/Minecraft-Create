@@ -20,7 +20,7 @@ import com.simibubi.create.foundation.gui.AllGuiTextures;
 import com.simibubi.create.foundation.gui.AllIcons;
 import com.simibubi.create.foundation.utility.CreateLang;
 
-import net.createmod.catnip.api.client.gui.AbstractSimiScreen;
+import com.simibubi.create.foundation.gui.AbstractSimiScreen;
 import net.createmod.catnip.api.client.gui.UIRenderHelper;
 import net.createmod.catnip.api.client.animation.AnimationTickHolder;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -296,7 +296,6 @@ public class ValueSettingsScreen extends AbstractSimiScreen {
 	@Override
 	public boolean keyReleased(KeyEvent event) {
 		int pKeyCode = event.key();
-		int pScanCode = event.scancode();
 		int pModifiers = event.modifiers();
 		if (minecraft.options.keyUse.matches(event)) {
 			Window window = minecraft.getWindow();
