@@ -2,11 +2,11 @@ package com.simibubi.create.content.processing.burner;
 
 import com.simibubi.create.foundation.item.ItemHelper;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
 import org.jspecify.annotations.NullMarked;
 import org.jetbrains.annotations.Nullable;
 
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.MapCodec;
 import com.simibubi.create.AllBlockEntityTypes;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllItems;
@@ -51,9 +51,9 @@ import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
 import net.minecraft.world.level.storage.loot.predicates.ExplosionCondition;
-import net.minecraft.world.level.storage.loot.predicates.LootItemBlockStatePropertyCondition;
+import net.minecraft.world.level.storage.loot.predicates.MatchBlock;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
-import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
+import net.minecraft.world.level.storage.loot.providers.number.ints.ContextIntProviders;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -64,8 +64,6 @@ import net.neoforged.neoforge.common.util.FakePlayer;
 public class BlazeBurnerBlock extends HorizontalDirectionalBlock implements IBE<BlazeBurnerBlockEntity>, IWrenchable, SpecialBlockItemRequirement {
 
 	public static final EnumProperty<HeatLevel> HEAT_LEVEL = EnumProperty.create("blaze", HeatLevel.class);
-
-	public static final MapCodec<BlazeBurnerBlock> CODEC = simpleCodec(BlazeBurnerBlock::new);
 
 	public BlazeBurnerBlock(Properties properties) {
 		super(properties);
@@ -259,11 +257,6 @@ public class BlazeBurnerBlock extends HorizontalDirectionalBlock implements IBE<
 			0.5F + random.nextFloat(), random.nextFloat() * 0.7F + 0.6F, false);
 	}
 
-	@Override
-	protected MapCodec<? extends HorizontalDirectionalBlock> codec() {
-		return CODEC;
-	}
-
 	public static HeatLevel getHeatLevelOf(BlockState blockState) {
 		return blockState.hasProperty(BlazeBurnerBlock.HEAT_LEVEL) ? blockState.getValue(BlazeBurnerBlock.HEAT_LEVEL)
 			: HeatLevel.NONE;
@@ -287,11 +280,10 @@ public class BlazeBurnerBlock extends HorizontalDirectionalBlock implements IBE<
 			ItemLike drop = level == HeatLevel.NONE ? AllItems.EMPTY_BLAZE_BURNER.get() : AllBlocks.BLAZE_BURNER.get();
 			poolBuilder.add(LootItem.lootTableItem(drop)
 				.when(survivesExplosion)
-				.when(LootItemBlockStatePropertyCondition.hasBlockStateProperties(block)
-					.setProperties(StatePropertiesPredicate.Builder.properties()
+				.when(MatchBlock.blockMatches(BuiltInRegistries.BLOCK, block, StatePropertiesPredicate.Builder.properties()
 						.hasProperty(HEAT_LEVEL, level))));
 		}
-		builder.withPool(poolBuilder.setRolls(ConstantValue.exactly(1)));
+		builder.withPool(poolBuilder.setRolls(ContextIntProviders.exactly(1)));
 		return builder;
 	}
 
