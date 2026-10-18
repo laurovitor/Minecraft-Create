@@ -22,6 +22,7 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -176,7 +177,8 @@ public class AllPotatoProjectileEntityHitActions {
 				if (NeoForge.EVENT_BUS.post(event)
 					.isCanceled())
 					return false;
-				if (livingEntity.randomTeleport(event.getTargetX(), event.getTargetY(), event.getTargetZ(), true)) {
+				if (livingEntity.randomTeleport(event.getTargetX(), event.getTargetY(), event.getTargetZ(), true,
+					BlockTags.CONSUMABLE_DOES_NOT_TELEPORT_TO)) {
 					if (livingEntity.isPassenger())
 						livingEntity.stopRiding();
 
