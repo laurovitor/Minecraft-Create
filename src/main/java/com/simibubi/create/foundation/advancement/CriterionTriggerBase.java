@@ -11,7 +11,7 @@ import org.jspecify.annotations.NullMarked;
 
 import com.simibubi.create.Create;
 
-import net.minecraft.advancements.predicates.ContextAwarePredicate;
+import net.minecraft.core.Holder;
 import net.minecraft.advancements.predicates.entity.EntityPredicate;
 import net.minecraft.advancements.triggers.CriterionTrigger;
 import net.minecraft.advancements.triggers.SimpleCriterionTrigger;
@@ -19,6 +19,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.PlayerAdvancements;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 
 /**
  * A criterion whose condition is checked against values Create supplies at the moment it fires.
@@ -54,9 +55,9 @@ public abstract class CriterionTriggerBase<T extends CriterionTriggerBase.Instan
 			if (!instance.test(suppliers))
 				continue;
 
-			Optional<ContextAwarePredicate> predicate = instance.player();
-			if (predicate.isPresent() && !predicate.get()
-				.matches(playerContext))
+			Optional<Holder<LootItemCondition>> predicate = instance.player();
+			if (predicate.isPresent() && !predicate.get().value()
+				.test(playerContext))
 				continue;
 
 			if (matched == null)
