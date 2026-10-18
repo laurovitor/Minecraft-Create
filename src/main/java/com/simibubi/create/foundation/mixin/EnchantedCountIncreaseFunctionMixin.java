@@ -9,18 +9,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.simibubi.create.AllDamageTypes;
 
+import net.minecraft.core.Holder;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.functions.EnchantedCountIncreaseFunction;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
-import net.minecraft.world.level.storage.loot.providers.number.NumberProvider;
+import net.minecraft.world.level.storage.loot.providers.number.floats.ContextFloatProvider;
 
 @Mixin(EnchantedCountIncreaseFunction.class)
 public abstract class EnchantedCountIncreaseFunctionMixin {
 	@Shadow
 	@Final
-	private NumberProvider count;
+	private Holder<ContextFloatProvider> count;
 
 	@Shadow
 	protected abstract boolean hasLimit();
@@ -31,11 +32,11 @@ public abstract class EnchantedCountIncreaseFunctionMixin {
 
 	@Inject(method = "run", at = @At("TAIL"))
 	private void create$crushingWheelLooting(ItemStack stack, LootContext context, CallbackInfoReturnable<ItemStack> cir) {
-		DamageSource damageSource = context.getOptionalParameter(LootContextParams.DAMAGE_SOURCE);
+		DamageSource damageSource = context.getOptional(LootContextParams.DAMAGE_SOURCE);
 		if (damageSource != null && damageSource.is(AllDamageTypes.CRUSH)) {
 			int lootingLevel = 2;
 
-			float f = (float) lootingLevel * this.count.getFloat(context);
+			float f = (float) lootingLevel * this.count.value().getFloat(context);
 			stack.grow(Math.round(f));
 			if (this.hasLimit())
 				stack.limitSize(this.limit);
