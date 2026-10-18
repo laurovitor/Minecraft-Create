@@ -18,6 +18,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -40,14 +41,9 @@ public class ClipboardBlockItem extends BlockItem implements SupportsItemCopying
 	}
 
 	@Override
-	protected boolean updateCustomBlockEntityTag(BlockPos pPos, Level pLevel, Player pPlayer, ItemStack pStack,
-		BlockState pState) {
-		if (pLevel.isClientSide())
-			return false;
-		if (!(pLevel.getBlockEntity(pPos) instanceof ClipboardBlockEntity cbe))
-			return false;
-		cbe.notifyUpdate();
-		return true;
+	public void onBlockPlacedBy(BlockPlaceContext context, Level level, BlockPos pos, BlockState state, Player player, ItemStack stack) {
+		if (!level.isClientSide() && level.getBlockEntity(pos) instanceof ClipboardBlockEntity cbe)
+			cbe.notifyUpdate();
 	}
 
 	@Override

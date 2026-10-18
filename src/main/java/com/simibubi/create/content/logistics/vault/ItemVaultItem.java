@@ -34,6 +34,7 @@ public class ItemVaultItem extends BlockItem {
 
 	@Override
 	public InteractionResult place(BlockPlaceContext ctx) {
+		sanitizeBlockEntityData(ctx.getLevel(), ctx.getItemInHand());
 		InteractionResult initialResult = super.place(ctx);
 		if (!initialResult.consumesAction())
 			return initialResult;
@@ -41,12 +42,10 @@ public class ItemVaultItem extends BlockItem {
 		return initialResult;
 	}
 
-	@Override
-	protected boolean updateCustomBlockEntityTag(BlockPos blockPos, Level level, Player player,
-		ItemStack itemStack, BlockState blockState) {
+	private void sanitizeBlockEntityData(Level level, ItemStack itemStack) {
 		MinecraftServer minecraftserver = level.getServer();
 		if (minecraftserver == null)
-			return false;
+			return;
 		if (itemStack.has(DataComponents.BLOCK_ENTITY_DATA)) {
 			CompoundTag nbt = BlockEntityDataHelper.getTag(itemStack);
 			nbt.remove("Length");
@@ -55,7 +54,6 @@ public class ItemVaultItem extends BlockItem {
 			nbt.remove("LastKnownPos");
 			BlockEntityDataHelper.setTag(itemStack, ((IBE<?>) this.getBlock()).getBlockEntityType(), nbt);
 		}
-		return super.updateCustomBlockEntityTag(blockPos, level, player, itemStack, blockState);
 	}
 
 	private void tryMultiPlace(BlockPlaceContext ctx) {

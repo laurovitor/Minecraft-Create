@@ -42,13 +42,8 @@ public class FactoryPanelBlockItem extends LogisticallyLinkedBlockItem {
 			return InteractionResult.FAIL;
 		}
 
+		fixCtrlCopiedStack(stack);
 		return super.place(pContext);
-	}
-
-	@Override
-	protected boolean updateCustomBlockEntityTag(BlockPos pos, Level level, Player player, ItemStack stack,
-		BlockState state) {
-		return super.updateCustomBlockEntityTag(pos, level, player, fixCtrlCopiedStack(stack), state);
 	}
 
 	public static ItemStack fixCtrlCopiedStack(ItemStack stack) {

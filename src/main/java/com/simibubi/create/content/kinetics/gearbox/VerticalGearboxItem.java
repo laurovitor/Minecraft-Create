@@ -13,6 +13,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -31,7 +32,7 @@ public class VerticalGearboxItem extends BlockItem {
 	}
 
 	@Override
-	protected boolean updateCustomBlockEntityTag(BlockPos pos, Level world, Player player, ItemStack stack, BlockState state) {
+	public void onBlockPlacedBy(BlockPlaceContext context, Level world, BlockPos pos, BlockState state, Player player, ItemStack stack) {
 		Axis prefferedAxis = null;
 		for (Direction side : Iterate.horizontalDirections) {
 			BlockState blockState = world.getBlockState(pos.relative(side));
@@ -51,7 +52,6 @@ public class VerticalGearboxItem extends BlockItem {
 				.getClockWise()
 				.getAxis() : prefferedAxis == Axis.X ? Axis.Z : Axis.X;
 		world.setBlockAndUpdate(pos, state.setValue(BlockStateProperties.AXIS, axis));
-		return super.updateCustomBlockEntityTag(pos, world, player, stack, state);
 	}
 
 }

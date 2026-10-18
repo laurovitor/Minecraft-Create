@@ -33,15 +33,12 @@ public class BeltTunnelItem extends BlockItem {
 	}
 
 	@Override
-	protected boolean updateCustomBlockEntityTag(BlockPos pos, Level world, Player p_195943_3_, ItemStack p_195943_4_,
-		BlockState state) {
-		boolean flag = super.updateCustomBlockEntityTag(pos, world, p_195943_3_, p_195943_4_, state);
+	public void onBlockPlacedBy(BlockPlaceContext context, Level world, BlockPos pos, BlockState state, Player player, ItemStack stack) {
 		if (!world.isClientSide()) {
 			BeltBlockEntity belt = BeltHelper.getSegmentBE(world, pos.below());
 			if (belt != null && belt.casing == CasingType.NONE)
 				belt.setCasingType(AllBlocks.ANDESITE_TUNNEL.has(state) ? CasingType.ANDESITE : CasingType.BRASS);
 		}
-		return flag;
 	}
 
 }
