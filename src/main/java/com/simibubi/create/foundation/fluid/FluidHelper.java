@@ -13,6 +13,7 @@ import net.neoforged.neoforge.transfer.fluid.FluidUtil;
 import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.RegistryAccess;
 import net.createmod.catnip.api.data.codec.CatnipCodecUtils;
 import net.neoforged.neoforge.transfer.ResourceHandler;
 import net.neoforged.neoforge.transfer.fluid.FluidResource;
@@ -65,13 +66,13 @@ public class FluidHelper {
 	 * included, are in the ingredient's display, which is resolved here. A display that resolves to
 	 * nothing without registries -- a tag, when there are none to give -- falls back to the bare fluids.
 	 */
-	public static List<FluidStack> matchingStacks(SizedFluidIngredient ingredient, @Nullable HolderLookup.Provider registries) {
-		ContextMap.Builder context = new ContextMap.Builder();
+	public static List<FluidStack> matchingStacks(SizedFluidIngredient ingredient, @Nullable RegistryAccess registries) {
+		ContextMap.Builder context = ContextMap.builder();
 		if (registries != null)
-			context.withParameter(SlotDisplayContext.REGISTRIES, registries);
+			context.set(SlotDisplayContext.REGISTRIES, registries);
 		List<FluidStack> stacks = ingredient.ingredient()
 			.display()
-			.resolve(context.create(SlotDisplayContext.CONTEXT), FluidStackContentsFactory.INSTANCE)
+			.resolve(context.buildAndValidate(SlotDisplayContext.CONTEXT), FluidStackContentsFactory.INSTANCE)
 			.filter(stack -> !stack.isEmpty())
 			.map(stack -> stack.copyWithAmount(ingredient.amount()))
 			.toList();
