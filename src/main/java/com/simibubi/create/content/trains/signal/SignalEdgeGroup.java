@@ -14,6 +14,7 @@ import org.apache.commons.lang3.mutable.MutableInt;
 import com.google.common.base.Predicates;
 import com.simibubi.create.Create;
 import com.simibubi.create.content.trains.entity.Train;
+import com.simibubi.create.foundation.utility.EnumNbt;
 
 import net.createmod.catnip.api.nbt.NBTHelper;
 import net.minecraft.nbt.CompoundTag;
@@ -134,7 +135,7 @@ public class SignalEdgeGroup {
 
 	public static SignalEdgeGroup read(CompoundTag tag) {
 		SignalEdgeGroup group = new SignalEdgeGroup(tag.read("Id", UUIDUtil.CODEC).orElse(null));
-		group.color = NBTHelper.readEnum(tag, "Color", EdgeGroupColor.class);
+		group.color = EnumNbt.read(tag, "Color", EdgeGroupColor.class);
 		NBTHelper.iterateCompoundList(tag.getListOrEmpty("Connected"),
 			nbt -> group.intersecting.put(nbt.read("Key", UUIDUtil.CODEC).orElse(null), nbt.read("Value", UUIDUtil.CODEC).orElse(null)));
 		group.fallbackGroup = tag.getBooleanOr("Fallback", false);
@@ -144,7 +145,7 @@ public class SignalEdgeGroup {
 	public CompoundTag write() {
 		CompoundTag tag = new CompoundTag();
 		tag.store("Id", UUIDUtil.CODEC, id);
-		NBTHelper.writeEnum(tag, "Color", color);
+		EnumNbt.write(tag, "Color", color);
 		tag.put("Connected", NBTHelper.writeCompoundList(intersecting.entrySet(), e -> {
 			CompoundTag nbt = new CompoundTag();
 			nbt.store("Key", UUIDUtil.CODEC, e.getKey());

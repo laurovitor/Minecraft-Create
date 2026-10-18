@@ -16,6 +16,7 @@ import com.simibubi.create.content.trains.graph.TrackNode;
 import com.simibubi.create.content.trains.signal.SignalBlock.SignalType;
 import com.simibubi.create.content.trains.signal.SignalBlockEntity.OverlayState;
 import com.simibubi.create.content.trains.signal.SignalBlockEntity.SignalState;
+import com.simibubi.create.foundation.utility.EnumNbt;
 
 import net.createmod.catnip.api.data.Couple;
 import net.createmod.catnip.api.data.Iterate;
@@ -283,9 +284,9 @@ public class SignalBoundary extends TrackEdgePoint {
 		for (int i = 1; i <= 2; i++)
 			sidesToUpdate.set(i == 1, nbt.contains("Update" + i));
 		for (int i = 1; i <= 2; i++)
-			types.set(i == 1, NBTHelper.readEnum(nbt, "Type" + i, SignalType.class));
+			types.set(i == 1, EnumNbt.read(nbt, "Type" + i, SignalType.class));
 		for (int i = 1; i <= 2; i++)
-			cachedStates.set(i == 1, NBTHelper.readEnum(nbt, "State" + i, SignalState.class));
+			cachedStates.set(i == 1, EnumNbt.read(nbt, "State" + i, SignalState.class));
 	}
 
 	@Override
@@ -317,9 +318,9 @@ public class SignalBoundary extends TrackEdgePoint {
 			if (sidesToUpdate.get(i == 1))
 				nbt.putBoolean("Update" + i, true);
 		for (int i = 1; i <= 2; i++)
-			NBTHelper.writeEnum(nbt, "Type" + i, types.get(i == 1));
+			EnumNbt.write(nbt, "Type" + i, types.get(i == 1));
 		for (int i = 1; i <= 2; i++)
-			NBTHelper.writeEnum(nbt, "State" + i, cachedStates.get(i == 1));
+			EnumNbt.write(nbt, "State" + i, cachedStates.get(i == 1));
 	}
 
 	@Override

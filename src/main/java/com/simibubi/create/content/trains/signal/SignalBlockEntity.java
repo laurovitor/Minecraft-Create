@@ -2,6 +2,7 @@ package com.simibubi.create.content.trains.signal;
 
 import java.util.List;
 
+
 import org.jetbrains.annotations.Nullable;
 
 import com.simibubi.create.AllBlockEntityTypes;
@@ -16,9 +17,9 @@ import com.simibubi.create.content.trains.signal.SignalBlock.SignalType;
 import com.simibubi.create.content.trains.track.TrackTargetingBehaviour;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
+import com.simibubi.create.foundation.utility.EnumNbt;
 
 import dan200.computercraft.api.peripheral.PeripheralCapability;
-import net.createmod.catnip.api.nbt.NBTHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -81,16 +82,16 @@ public class SignalBlockEntity extends SmartBlockEntity implements Transformable
 	@Override
 	protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
 		super.write(tag, registries, clientPacket);
-		NBTHelper.writeEnum(tag, "State", state);
-		NBTHelper.writeEnum(tag, "Overlay", overlay);
+		EnumNbt.write(tag, "State", state);
+		EnumNbt.write(tag, "Overlay", overlay);
 		tag.putBoolean("Power", lastReportedPower);
 	}
 
 	@Override
 	protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
 		super.read(tag, registries, clientPacket);
-		state = NBTHelper.readEnum(tag, "State", SignalState.class);
-		overlay = NBTHelper.readEnum(tag, "Overlay", OverlayState.class);
+		state = EnumNbt.read(tag, "State", SignalState.class);
+		overlay = EnumNbt.read(tag, "Overlay", OverlayState.class);
 		lastReportedPower = tag.getBooleanOr("Power", false);
 		invalidateRenderBoundingBox();
 	}

@@ -17,6 +17,7 @@ import com.simibubi.create.content.trains.schedule.destination.ChangeTitleInstru
 import com.simibubi.create.content.trains.schedule.destination.DestinationInstruction;
 import com.simibubi.create.content.trains.schedule.destination.ScheduleInstruction;
 import com.simibubi.create.content.trains.station.GlobalStation;
+import com.simibubi.create.foundation.utility.EnumNbt;
 
 import net.createmod.catnip.api.nbt.NBTHelper;
 import net.minecraft.core.HolderLookup;
@@ -388,7 +389,7 @@ public class ScheduleRuntime {
 		tag.putBoolean("Completed", completed);
 		if (schedule != null)
 			tag.put("Schedule", schedule.write(registries));
-		NBTHelper.writeEnum(tag, "State", state);
+		EnumNbt.write(tag, "State", state);
 		tag.putIntArray("ConditionProgress", conditionProgress.stream()
 			.mapToInt(Integer::intValue)
 			.toArray());
@@ -407,7 +408,7 @@ public class ScheduleRuntime {
 		currentEntry = Math.max(0, tag.getIntOr("CurrentEntry", 0));
 		if (tag.contains("Schedule"))
 			schedule = Schedule.fromTag(registries, tag.getCompoundOrEmpty("Schedule"));
-		state = NBTHelper.readEnum(tag, "State", State.class);
+		state = EnumNbt.read(tag, "State", State.class);
 		for (int i : tag.getIntArray("ConditionProgress").orElseGet(() -> new int[0]))
 			conditionProgress.add(i);
 		NBTHelper.iterateCompoundList(tag.getListOrEmpty("ConditionContext"), conditionContext::add);
