@@ -12,7 +12,7 @@ import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import net.createmod.catnip.api.client.render.SuperByteBuffer;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import net.createmod.catnip.api.math.AngleHelper;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -75,8 +75,7 @@ public class SteamEngineRenderer
 		SuperByteBuffer pistonBuffer = transformed(AllPartialModels.ENGINE_PISTON, blockState, facing, roll90);
 		TransformStack.of(pistonBuffer.getTransforms())
 			.translate(0, piston + 20 / 16f, 0);
-		state.piston = pistonBuffer.light(state.lightCoords)
-			.extractRenderState();
+		state.piston = SuperByteBufferRenderState.capture(pistonBuffer.light(state.lightCoords));
 
 		SuperByteBuffer linkageBuffer = transformed(AllPartialModels.ENGINE_LINKAGE, blockState, facing, roll90);
 		TransformStack.of(linkageBuffer.getTransforms())
@@ -87,8 +86,7 @@ public class SteamEngineRenderer
 			.translate(0, 4 / 16f, 8 / 16f)
 			.rotateX(angle2)
 			.translate(0, -4 / 16f, -8 / 16f);
-		state.linkage = linkageBuffer.light(state.lightCoords)
-			.extractRenderState();
+		state.linkage = SuperByteBufferRenderState.capture(linkageBuffer.light(state.lightCoords));
 
 		SuperByteBuffer connectorBuffer = transformed(AllPartialModels.ENGINE_CONNECTOR, blockState, facing, roll90);
 		TransformStack.of(connectorBuffer.getTransforms())
@@ -96,8 +94,7 @@ public class SteamEngineRenderer
 			.center()
 			.rotateX(-(angle + Mth.HALF_PI))
 			.uncenter();
-		state.connector = connectorBuffer.light(state.lightCoords)
-			.extractRenderState();
+		state.connector = SuperByteBufferRenderState.capture(connectorBuffer.light(state.lightCoords));
 	}
 
 	@Override

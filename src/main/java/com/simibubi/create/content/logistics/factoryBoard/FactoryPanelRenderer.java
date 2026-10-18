@@ -4,7 +4,7 @@ import com.simibubi.create.foundation.render.CachedBufferer;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import java.util.ArrayList;
 import java.util.List;
@@ -87,8 +87,8 @@ public class FactoryPanelRenderer
 			: AllPartialModels.FACTORY_PANEL_LIGHT;
 
 		SuperByteBuffer bulb = orient(CachedBufferer.partial(partial, blockState), behaviour, yRot, xRot);
-		out.add(new Part(bulb.light(glow > 0.125f ? LightCoordsUtil.FULL_BRIGHT : light)
-			.extractRenderState(),
+		out.add(new Part(SuperByteBufferRenderState.capture(
+			bulb.light(glow > 0.125f ? LightCoordsUtil.FULL_BRIGHT : light)),
 			net.minecraft.client.renderer.rendertype.RenderTypes.translucentMovingBlock()));
 
 		if (glow < .125f)
@@ -99,9 +99,8 @@ public class FactoryPanelRenderer
 		int color = (int) (200 * glow);
 
 		SuperByteBuffer glowBulb = orient(CachedBufferer.partial(partial, blockState), behaviour, yRot, xRot);
-		out.add(new Part(glowBulb.light(LightCoordsUtil.FULL_BRIGHT)
-			.color(color, color, color, 255)
-			.extractRenderState(), RenderTypes.additive()));
+		out.add(new Part(SuperByteBufferRenderState.capture(glowBulb.light(LightCoordsUtil.FULL_BRIGHT)
+			.color(color, color, color, 255)), RenderTypes.additive()));
 	}
 
 	public static void extractPath(FactoryPanelBehaviour behaviour, FactoryPanelConnection connection,
@@ -176,9 +175,8 @@ public class FactoryPanelRenderer
 				&& !behaviour.satisfied && !behaviour.redstonePowered)
 				connectionSprite.shiftUV(AllSpriteShifts.FACTORY_PANEL_CONNECTIONS);
 
-			out.add(new Part(connectionSprite.color(color)
-				.light(light)
-				.extractRenderState(),
+			out.add(new Part(SuperByteBufferRenderState.capture(connectionSprite.color(color)
+				.light(light)),
 				net.minecraft.client.renderer.rendertype.RenderTypes.cutoutMovingBlock()));
 
 			if (pathReversed) {

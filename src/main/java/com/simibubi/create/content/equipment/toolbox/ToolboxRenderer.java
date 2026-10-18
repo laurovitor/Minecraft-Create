@@ -12,7 +12,7 @@ import com.simibubi.create.foundation.blockEntity.renderer.SmartBlockEntityRende
 
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import net.createmod.catnip.api.client.render.SuperByteBuffer;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import net.createmod.catnip.api.data.Iterate;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -59,8 +59,7 @@ public class ToolboxRenderer extends SmartBlockEntityRenderer<ToolboxBlockEntity
 			.translate(0, 6 / 16f, 12 / 16f)
 			.rotateXDegrees(135 * lidAngle)
 			.translate(0, -6 / 16f, -12 / 16f);
-		state.lid = lid.light(state.lightCoords)
-			.extractRenderState();
+		state.lid = SuperByteBufferRenderState.capture(lid.light(state.lightCoords));
 
 		// The two drawers sit at different offsets, so each needs its own buffer.
 		for (int offset : Iterate.zeroAndOne) {
@@ -70,8 +69,7 @@ public class ToolboxRenderer extends SmartBlockEntityRenderer<ToolboxBlockEntity
 				.rotateYDegrees(-facing.toYRot())
 				.uncenter()
 				.translate(0, offset * 1 / 8f, -drawerOffset * .175f * (2 - offset));
-			state.drawers.add(drawer.light(state.lightCoords)
-				.extractRenderState());
+			state.drawers.add(SuperByteBufferRenderState.capture(drawer.light(state.lightCoords)));
 		}
 	}
 
