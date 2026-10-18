@@ -2,11 +2,13 @@ package com.simibubi.create.foundation.pack;
 
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import org.jetbrains.annotations.NotNull;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.packs.PackLocationInfo;
+import net.minecraft.server.packs.PackMetadataResources;
 import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.PackSelectionConfig;
 import net.minecraft.server.packs.PackType;
@@ -25,13 +27,13 @@ public record DynamicPackSource(String packId, PackType packType, Pack.Position 
 		PackSelectionConfig selectionConfig = new PackSelectionConfig(true, packPosition, true);
 		ResourcesSupplier resourcesSupplier = new ResourcesSupplier() {
 			@Override
-			public @NotNull PackResources openPrimary(@NotNull PackLocationInfo packLocationInfo) {
+			public @NotNull PackMetadataResources openMetadata(@NotNull PackLocationInfo packLocationInfo) {
 				return packResources;
 			}
 
 			@Override
-			public @NotNull PackResources openFull(@NotNull PackLocationInfo packLocationInfo, @NotNull Metadata metadata) {
-				return packResources;
+			public @NotNull Stream<PackResources> openResources(@NotNull PackLocationInfo packLocationInfo, @NotNull Metadata metadata) {
+				return Stream.of(packResources);
 			}
 		};
 		onLoad.accept(Pack.readMetaAndCreate(locationInfo, resourcesSupplier, packType, selectionConfig));
