@@ -1,6 +1,6 @@
 package com.simibubi.create.content.kinetics.saw;
 
-import net.neoforged.neoforge.items.wrapper.RecipeWrapper;
+import com.simibubi.create.foundation.recipe.CreateRecipeInput;
 import org.jspecify.annotations.NullMarked;
 import java.util.List;
 import java.util.Set;
@@ -20,14 +20,14 @@ import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.Level;
 
 @NullMarked
-public class CuttingRecipe extends StandardProcessingRecipe<RecipeWrapper> implements IAssemblyRecipe {
+public class CuttingRecipe extends StandardProcessingRecipe<CreateRecipeInput> implements IAssemblyRecipe {
 
 	public CuttingRecipe(ProcessingRecipeParams params) {
 		super(AllRecipeTypes.CUTTING, params);
 	}
 
 	@Override
-	public boolean matches(RecipeWrapper inv, Level worldIn) {
+	public boolean matches(CreateRecipeInput inv, Level worldIn) {
 		if (inv.isEmpty())
 			return false;
 		return ingredients.get(0)

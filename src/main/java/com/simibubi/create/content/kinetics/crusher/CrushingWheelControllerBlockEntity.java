@@ -2,12 +2,11 @@ package com.simibubi.create.content.kinetics.crusher;
 
 import com.simibubi.create.foundation.utility.NbtValueIO;
 import net.neoforged.neoforge.transfer.item.ItemUtil;
-import net.neoforged.neoforge.items.IItemHandler;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.world.item.ItemStackTemplate;
 import net.neoforged.neoforge.transfer.item.ItemResource;
 import net.createmod.catnip.api.platform.services.PlatformHelper;
-import net.neoforged.neoforge.items.wrapper.RecipeWrapper;
+import com.simibubi.create.foundation.recipe.CreateRecipeInput;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -58,7 +57,7 @@ public class CrushingWheelControllerBlockEntity extends SmartBlockEntity impleme
 	protected boolean searchForEntity;
 
 	public ProcessingInventory inventory;
-	private RecipeWrapper wrapper;
+	private CreateRecipeInput wrapper;
 	public float crushingspeed;
 
 	public CrushingWheelControllerBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
@@ -71,7 +70,7 @@ public class CrushingWheelControllerBlockEntity extends SmartBlockEntity impleme
 			}
 
 		};
-		wrapper = new RecipeWrapper(IItemHandler.of(inventory));
+		wrapper = new CreateRecipeInput(inventory);
 	}
 
 	public static void registerCapabilities(RegisterCapabilitiesEvent event) {
@@ -301,7 +300,7 @@ public class CrushingWheelControllerBlockEntity extends SmartBlockEntity impleme
 	}
 
 	private void applyRecipe() {
-		Optional<RecipeHolder<StandardProcessingRecipe<RecipeWrapper>>> recipe = findRecipe();
+		Optional<RecipeHolder<StandardProcessingRecipe<CreateRecipeInput>>> recipe = findRecipe();
 
 		List<ItemStack> list = new ArrayList<>();
 		if (recipe.isPresent()) {
@@ -328,8 +327,8 @@ public class CrushingWheelControllerBlockEntity extends SmartBlockEntity impleme
 
 	}
 
-	public Optional<RecipeHolder<StandardProcessingRecipe<RecipeWrapper>>> findRecipe() {
-		Optional<RecipeHolder<StandardProcessingRecipe<RecipeWrapper>>> crushingRecipe = AllRecipeTypes.CRUSHING.find(wrapper, level);
+	public Optional<RecipeHolder<StandardProcessingRecipe<CreateRecipeInput>>> findRecipe() {
+		Optional<RecipeHolder<StandardProcessingRecipe<CreateRecipeInput>>> crushingRecipe = AllRecipeTypes.CRUSHING.find(wrapper, level);
 		if (!crushingRecipe.isPresent())
 			crushingRecipe = AllRecipeTypes.MILLING.find(wrapper, level);
 		return crushingRecipe;
@@ -367,7 +366,7 @@ public class CrushingWheelControllerBlockEntity extends SmartBlockEntity impleme
 	}
 
 	private void itemInserted(ItemStack stack) {
-		Optional<RecipeHolder<StandardProcessingRecipe<RecipeWrapper>>> recipe = findRecipe();
+		Optional<RecipeHolder<StandardProcessingRecipe<CreateRecipeInput>>> recipe = findRecipe();
 		inventory.remainingTime = recipe.isPresent() ? recipe.get().value()
 			.getProcessingDuration() : 100;
 		inventory.appliedRecipe = false;

@@ -2,7 +2,7 @@ package com.simibubi.create.content.kinetics.deployer;
 
 import com.simibubi.create.foundation.recipe.RecipeFinder;
 import com.simibubi.create.foundation.item.ItemHelper;
-import net.neoforged.neoforge.items.wrapper.RecipeWrapper;
+import com.simibubi.create.foundation.recipe.CreateRecipeInput;
 import java.util.List;
 import java.util.Optional;
 
@@ -56,8 +56,8 @@ public class ManualApplicationRecipe extends ItemApplicationRecipe {
 		if (event.isCanceled())
 			return;
 
-		RecipeType<Recipe<RecipeWrapper>> type = AllRecipeTypes.ITEM_APPLICATION.getType();
-		Optional<RecipeHolder<Recipe<RecipeWrapper>>> foundRecipe = RecipeFinder.all(type, level)
+		RecipeType<Recipe<CreateRecipeInput>> type = AllRecipeTypes.ITEM_APPLICATION.getType();
+		Optional<RecipeHolder<Recipe<CreateRecipeInput>>> foundRecipe = RecipeFinder.all(type, level)
 			.stream()
 			.filter(r -> {
 				ManualApplicationRecipe mar = (ManualApplicationRecipe) r.value();

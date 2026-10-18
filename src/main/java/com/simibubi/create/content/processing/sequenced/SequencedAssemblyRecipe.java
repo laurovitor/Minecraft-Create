@@ -10,7 +10,7 @@ import net.minecraft.world.item.crafting.PlacementInfo;
 import net.minecraft.resources.ResourceKey;
 import com.simibubi.create.foundation.recipe.RecipeFinder;
 import java.util.Collection;
-import net.neoforged.neoforge.items.wrapper.RecipeWrapper;
+import com.simibubi.create.foundation.recipe.CreateRecipeInput;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -44,7 +44,7 @@ import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
-public class SequencedAssemblyRecipe implements Recipe<RecipeWrapper> {
+public class SequencedAssemblyRecipe implements Recipe<CreateRecipeInput> {
 	protected SequencedAssemblyRecipeSerializer serializer;
 
 	protected Ingredient ingredient;
@@ -174,12 +174,12 @@ public class SequencedAssemblyRecipe implements Recipe<RecipeWrapper> {
 	}
 
 	@Override
-	public boolean matches(RecipeWrapper inv, Level level) {
+	public boolean matches(CreateRecipeInput inv, Level level) {
 		return false;
 	}
 
 	@Override
-	public ItemStack assemble(RecipeWrapper input) {
+	public ItemStack assemble(CreateRecipeInput input) {
 		return ItemStack.EMPTY;
 	}
 

@@ -1,7 +1,7 @@
 package com.simibubi.create.compat.jei;
 
 
-import net.neoforged.neoforge.items.wrapper.RecipeWrapper;
+import com.simibubi.create.foundation.recipe.CreateRecipeInput;
 import org.jspecify.annotations.NullMarked;
 import com.simibubi.create.AllRecipeTypes;
 import com.simibubi.create.Create;
@@ -21,7 +21,7 @@ import net.minecraft.world.level.Level;
  * Helper recipe type for displaying an item relationship in JEI
  */
 @NullMarked
-public class ConversionRecipe extends StandardProcessingRecipe<RecipeWrapper> {
+public class ConversionRecipe extends StandardProcessingRecipe<CreateRecipeInput> {
 
 	static int counter = 0;
 
@@ -42,7 +42,7 @@ public class ConversionRecipe extends StandardProcessingRecipe<RecipeWrapper> {
 	}
 
 	@Override
-	public boolean matches(RecipeWrapper inv, Level worldIn) {
+	public boolean matches(CreateRecipeInput inv, Level worldIn) {
 		return false;
 	}
 

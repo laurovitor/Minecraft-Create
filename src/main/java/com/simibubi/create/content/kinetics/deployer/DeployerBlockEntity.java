@@ -4,8 +4,7 @@ import net.neoforged.neoforge.transfer.ResourceHandler;
 import net.neoforged.neoforge.transfer.item.ItemResource;
 import com.simibubi.create.foundation.utility.RegistryNbt;
 import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.wrapper.RecipeWrapper;
+import com.simibubi.create.foundation.recipe.CreateRecipeInput;
 import com.simibubi.create.foundation.utility.NbtValueIO;
 
 import net.minecraft.core.UUIDUtil;
@@ -569,7 +568,7 @@ public class DeployerBlockEntity extends KineticBlockEntity implements Clearable
 		recipeInv.set(0, ItemResource.of(stack), stack.getCount());
 		recipeInv.set(1, ItemResource.of(heldItemMainhand), heldItemMainhand.getCount());
 
-		DeployerRecipeSearchEvent event = new DeployerRecipeSearchEvent(this, new RecipeWrapper(IItemHandler.of(recipeInv)));
+		DeployerRecipeSearchEvent event = new DeployerRecipeSearchEvent(this, new CreateRecipeInput(recipeInv));
 
 		event.addRecipe(() -> SequencedAssemblyRecipe.getRecipe(level, event.getInventory(),
 			AllRecipeTypes.DEPLOYING.getType(), DeployerApplicationRecipe.class), 100);

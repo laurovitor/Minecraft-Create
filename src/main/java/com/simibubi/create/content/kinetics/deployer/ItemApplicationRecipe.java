@@ -1,6 +1,6 @@
 package com.simibubi.create.content.kinetics.deployer;
 
-import net.neoforged.neoforge.items.wrapper.RecipeWrapper;
+import com.simibubi.create.foundation.recipe.CreateRecipeInput;
 import com.simibubi.create.AllRecipeTypes;
 import com.simibubi.create.content.processing.recipe.ProcessingRecipe;
 import com.simibubi.create.content.processing.recipe.ProcessingSerializer;
@@ -12,7 +12,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.Level;
 
-public class ItemApplicationRecipe extends ProcessingRecipe<RecipeWrapper, ItemApplicationRecipeParams> {
+public class ItemApplicationRecipe extends ProcessingRecipe<CreateRecipeInput, ItemApplicationRecipeParams> {
 
 	private boolean keepHeldItem;
 
@@ -22,7 +22,7 @@ public class ItemApplicationRecipe extends ProcessingRecipe<RecipeWrapper, ItemA
 	}
 
 	@Override
-	public boolean matches(RecipeWrapper inv, Level p_77569_2_) {
+	public boolean matches(CreateRecipeInput inv, Level p_77569_2_) {
 		return getProcessedItem().test(inv.getItem(0)) && getRequiredHeldItem().test(inv.getItem(1));
 	}
 

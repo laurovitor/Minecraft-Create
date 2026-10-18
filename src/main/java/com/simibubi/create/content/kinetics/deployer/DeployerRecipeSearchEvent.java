@@ -1,6 +1,6 @@
 package com.simibubi.create.content.kinetics.deployer;
 
-import net.neoforged.neoforge.items.wrapper.RecipeWrapper;
+import com.simibubi.create.foundation.recipe.CreateRecipeInput;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -13,12 +13,12 @@ import net.neoforged.bus.api.Event;
 import net.neoforged.bus.api.ICancellableEvent;
 public class DeployerRecipeSearchEvent extends Event implements ICancellableEvent {
 	private final DeployerBlockEntity blockEntity;
-	private final RecipeWrapper inventory;
+	private final CreateRecipeInput inventory;
 	@Nullable
 	RecipeHolder<? extends Recipe<? extends RecipeInput>> recipe = null;
 	private int maxPriority = 0;
 
-	public DeployerRecipeSearchEvent(DeployerBlockEntity blockEntity, RecipeWrapper inventory) {
+	public DeployerRecipeSearchEvent(DeployerBlockEntity blockEntity, CreateRecipeInput inventory) {
 		this.blockEntity = blockEntity;
 		this.inventory = inventory;
 	}
@@ -27,7 +27,7 @@ public class DeployerRecipeSearchEvent extends Event implements ICancellableEven
 		return blockEntity;
 	}
 
-	public RecipeWrapper getInventory() {
+	public CreateRecipeInput getInventory() {
 		return inventory;
 	}
 

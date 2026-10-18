@@ -5,11 +5,10 @@ import net.neoforged.neoforge.transfer.ResourceHandlerUtil;
 import com.simibubi.create.foundation.utility.NbtValueIO;
 import net.neoforged.neoforge.transfer.item.ItemUtil;
 import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
-import net.neoforged.neoforge.items.IItemHandler;
 import net.minecraft.world.item.ItemStackTemplate;
 import net.neoforged.neoforge.transfer.transaction.TransactionContext;
 import com.simibubi.create.foundation.item.CombinedItemHandler;
-import net.neoforged.neoforge.items.wrapper.RecipeWrapper;
+import com.simibubi.create.foundation.recipe.CreateRecipeInput;
 import net.neoforged.neoforge.transfer.ResourceHandler;
 import net.neoforged.neoforge.transfer.item.ItemResource;
 import java.util.List;
@@ -112,7 +111,7 @@ public class MillstoneBlockEntity extends KineticBlockEntity implements Clearabl
 			.isEmpty())
 			return;
 
-		RecipeWrapper inventoryIn = new RecipeWrapper(IItemHandler.of(inputInv));
+		CreateRecipeInput inventoryIn = new CreateRecipeInput(inputInv);
 		if (lastRecipe == null || !lastRecipe.matches(inventoryIn, level)) {
 			Optional<RecipeHolder<MillingRecipe>> recipe = AllRecipeTypes.MILLING.find(inventoryIn, level);
 			if (!recipe.isPresent()) {
@@ -156,7 +155,7 @@ public class MillstoneBlockEntity extends KineticBlockEntity implements Clearabl
 	}
 
 	private void process() {
-		RecipeWrapper inventoryIn = new RecipeWrapper(IItemHandler.of(inputInv));
+		CreateRecipeInput inventoryIn = new CreateRecipeInput(inputInv);
 
 		if (lastRecipe == null || !lastRecipe.matches(inventoryIn, level)) {
 			Optional<RecipeHolder<MillingRecipe>> recipe = AllRecipeTypes.MILLING.find(inventoryIn, level);
@@ -226,7 +225,7 @@ public class MillstoneBlockEntity extends KineticBlockEntity implements Clearabl
 	private boolean canProcess(ItemStack stack) {
 		ItemStacksResourceHandler tester = new ItemStacksResourceHandler(1);
 		tester.set(0, ItemResource.of(stack), stack.getCount());
-		RecipeWrapper inventoryIn = new RecipeWrapper(IItemHandler.of(tester));
+		CreateRecipeInput inventoryIn = new CreateRecipeInput(tester);
 
 		if (lastRecipe != null && lastRecipe.matches(inventoryIn, level))
 			return true;
