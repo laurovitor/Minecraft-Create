@@ -40,7 +40,6 @@
     "accessor.MinecartFurnaceAccessor",
     "accessor.MobEffectInstanceAccessor",
     "accessor.NbtAccounterAccessor",
-    "accessor.PotionBrewingAccessor",
     "accessor.ProjectileDispenseBehaviorAccessor",
     "accessor.ServerLevelAccessor",
     "accessor.StateHolderAccessor",
