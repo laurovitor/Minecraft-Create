@@ -1,6 +1,7 @@
 package com.simibubi.create.content.fluids.pipes.valve;
 
 import com.simibubi.create.foundation.render.CachedBufferer;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import org.jspecify.annotations.Nullable;
 
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -10,7 +11,6 @@ import com.simibubi.create.content.kinetics.base.KineticBlockEntityRenderer;
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import net.createmod.catnip.api.client.render.SuperByteBuffer;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
 import net.createmod.catnip.api.math.AngleHelper;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -68,8 +68,7 @@ public class FluidValveRenderer
 			.rotateXDegrees(facing == Direction.UP ? 0 : facing == Direction.DOWN ? 180 : 90)
 			.rotateYDegrees(pointerRotationOffset + pointerRotation)
 			.uncenter();
-		state.pointer = pointer.light(state.lightCoords)
-			.extractRenderState();
+		state.pointer = SuperByteBufferRenderState.capture(pointer.light(state.lightCoords));
 	}
 
 	@Override

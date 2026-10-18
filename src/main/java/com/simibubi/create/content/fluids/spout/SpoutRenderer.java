@@ -1,6 +1,7 @@
 package com.simibubi.create.content.fluids.spout;
 
 import com.simibubi.create.foundation.render.CachedBufferer;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,7 +15,6 @@ import com.simibubi.create.foundation.blockEntity.renderer.SafeBlockEntityRender
 
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
 import net.createmod.catnip.api.client.render.FluidRenderHelper;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
@@ -103,9 +103,8 @@ public class SpoutRenderer extends SafeBlockEntityRenderer<SpoutBlockEntity, Spo
 		state.squeeze = squeeze;
 
 		for (PartialModel bit : BITS)
-			state.bits.add(CachedBufferer.partial(bit, be.getBlockState())
-				.light(state.lightCoords)
-				.extractRenderState());
+			state.bits.add(SuperByteBufferRenderState.capture(CachedBufferer.partial(bit, be.getBlockState())
+				.light(state.lightCoords)));
 	}
 
 	@Override

@@ -1,6 +1,7 @@
 package com.simibubi.create.content.fluids.tank;
 
 import com.simibubi.create.foundation.render.CachedBufferer;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,7 +15,6 @@ import dev.engine_room.flywheel.lib.transform.TransformStack;
 import net.createmod.catnip.api.animation.LerpedFloat;
 import net.createmod.catnip.api.client.render.FluidRenderHelper;
 import net.createmod.catnip.api.client.render.SuperByteBuffer;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
 import net.createmod.catnip.api.data.Iterate;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -123,8 +123,7 @@ public class FluidTankRenderer
 				.rotateYDegrees(yRot)
 				.uncenter()
 				.translate(be.width / 2f - 6 / 16f, 0, 0);
-			state.gauges.add(gauge.light(state.lightCoords)
-				.extractRenderState());
+			state.gauges.add(SuperByteBufferRenderState.capture(gauge.light(state.lightCoords)));
 
 			SuperByteBuffer dial = CachedBufferer.partial(AllPartialModels.BOILER_GAUGE_DIAL, blockState);
 			TransformStack.of(dial.getTransforms())
@@ -134,8 +133,7 @@ public class FluidTankRenderer
 				.translate(0, dialPivotY, dialPivotZ)
 				.rotateXDegrees(-145 * progress + 90)
 				.translate(0, -dialPivotY, -dialPivotZ);
-			state.gauges.add(dial.light(state.lightCoords)
-				.extractRenderState());
+			state.gauges.add(SuperByteBufferRenderState.capture(dial.light(state.lightCoords)));
 		}
 	}
 
