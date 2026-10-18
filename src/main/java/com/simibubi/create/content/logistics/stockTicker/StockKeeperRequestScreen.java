@@ -8,6 +8,8 @@ import com.simibubi.create.foundation.gui.render.GuiCustomGeometryRenderState;
 import org.joml.Matrix3x2f;
 import net.minecraft.client.renderer.RenderPipelines;
 import com.simibubi.create.foundation.render.CachedBufferer;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
+import dev.engine_room.flywheel.lib.transform.TransformStack;
 import org.joml.Matrix3x2fStack;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -227,8 +229,8 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 		super.init();
 		clearWidgets();
 
-		int x = getGuiLeft();
-		int y = getGuiTop();
+		int x = leftPos;
+		int y = topPos;
 
 		itemsX = x + (windowWidth - cols * colWidth) / 2 + 1;
 		itemsY = y + 33;
@@ -479,8 +481,8 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 		float currentScroll = itemScroll.getValue(partialTicks);
 		Couple<Integer> hoveredSlot = getHoveredSlot(mouseX, mouseY);
 
-		int x = getGuiLeft();
-		int y = getGuiTop();
+		int x = leftPos;
+		int y = topPos;
 
 		// BG
 		HEADER.render(graphics, x - 15, y);
@@ -490,7 +492,7 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 			y += BODY.getHeight();
 		}
 		FOOTER.render(graphics, x - 15, y);
-		y = getGuiTop();
+		y = topPos;
 
 		// Render text input hints
 		if (addressBox.getValue()
@@ -540,10 +542,11 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 			float burnerUnit = GuiElementTransform.unitsPerBlock(burnerScale);
 			ms.scale(burnerScale / burnerUnit, burnerScale / burnerUnit);
 			graphics.guiRenderState.addPicturesInPictureState(new GuiCustomGeometryRenderState((poseStack, queue) -> {
-				CachedBufferer.partial(AllPartialModels.BLAZE_CAGE, burnerState)
-					.rotateCentered(horizontalAngle + Mth.PI, Direction.UP)
-					.light(LightCoordsUtil.FULL_BRIGHT)
-					.submit(poseStack, RenderTypes.cutoutMovingBlock(), queue);
+				var cage = CachedBufferer.partial(AllPartialModels.BLAZE_CAGE, burnerState);
+				TransformStack.of(cage.getTransforms()).rotateCentered(horizontalAngle + Mth.PI, Direction.UP);
+				cage.light(LightCoordsUtil.FULL_BRIGHT);
+				queue.submitCustomGeometry(poseStack, RenderTypes.cutoutMovingBlock(),
+					SuperByteBufferRenderState.capture(cage));
 				BlazeBurnerRenderer.submitShared(poseStack, null, queue, burnerLevel, burnerState, heatLevel,
 					animation, horizontalAngle, canDrawFlame, drawGoggles, drawHat, hashCode);
 			}, new Matrix3x2f(ms), new GuiElementTransform(0, 0, 0, -22.5f, -45, 0, 0, 0, 0, 0, 0, 0,
@@ -987,13 +990,13 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 
 		// Ordered recipe is hovered
 		if (y >= orderY - 31 && y < orderY - 31 + rowHeight) {
-			int jeiX = getGuiLeft() + (windowWidth - colWidth * recipesToOrder.size()) / 2 + 1;
+			int jeiX = leftPos + (windowWidth - colWidth * recipesToOrder.size()) / 2 + 1;
 			int col = Mth.floorDiv(x - jeiX, colWidth);
 			if (recipesToOrder.size() > col && col >= 0)
 				return Couple.create(-2, col);
 		}
 
-		if (y < getGuiTop() + 16 || y > getGuiTop() + windowHeight - 80)
+		if (y < topPos + 16 || y > topPos + windowHeight - 80)
 			return noneHovered;
 		if (!itemScroll.settled())
 			return noneHovered;
@@ -1034,7 +1037,7 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 			int x, y;
 			BigItemStack entry;
 			if (recipeHovered) {
-				int jeiX = getGuiLeft() + (windowWidth - colWidth * recipesToOrder.size()) / 2 + 1;
+				int jeiX = leftPos + (windowWidth - colWidth * recipesToOrder.size()) / 2 + 1;
 				int jeiY = orderY - 31;
 
 				x = jeiX + (index * colWidth);
@@ -1066,8 +1069,8 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 	}
 
 	private boolean isConfirmHovered(int mouseX, int mouseY) {
-		int confirmX = getGuiLeft() + 143;
-		int confirmY = getGuiTop() + windowHeight - 39;
+		int confirmX = leftPos + 143;
+		int confirmY = topPos + windowHeight - 39;
 		int confirmW = 78;
 		int confirmH = 18;
 
@@ -1129,8 +1132,8 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 
 		// Scroll bar
 		int barX = itemsX + cols * colWidth - 1;
-		if (getMaxScroll() > 0 && lmb && pMouseX > barX && pMouseX <= barX + 8 && pMouseY > getGuiTop() + 15
-			&& pMouseY < getGuiTop() + windowHeight - 82) {
+		if (getMaxScroll() > 0 && lmb && pMouseX > barX && pMouseX <= barX + 8 && pMouseY > topPos + 15
+			&& pMouseY < topPos + windowHeight - 82) {
 			scrollHandleActive = true;
 			if (minecraft.isWindowActive())
 				SDLMouse.SDL_HideCursor();
@@ -1171,8 +1174,8 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 		// Category hiding
 		int localY = (int) (pMouseY - itemsY);
 		if (itemScroll.settled() && lmb && !categories.isEmpty() && pMouseX >= itemsX
-			&& pMouseX < itemsX + cols * colWidth && pMouseY >= getGuiTop() + 16
-			&& pMouseY <= getGuiTop() + windowHeight - 80) {
+			&& pMouseX < itemsX + cols * colWidth && pMouseY >= topPos + 16
+			&& pMouseY <= topPos + windowHeight - 80) {
 			for (int categoryIndex = 0; categoryIndex < displayedItems.size(); categoryIndex++) {
 				CategoryEntry entry = categories.get(categoryIndex);
 				if (Mth.floor((localY - entry.y) / (float) rowHeight + itemScroll.getChaseTarget()) != 0)
@@ -1361,14 +1364,14 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 		int totalH = getMaxScroll() * rowHeight + windowH;
 		int barSize = Math.max(5, Mth.floor((float) windowH / totalH * (windowH - 2)));
 
-		int minY = getGuiTop() + 15 + barSize / 2;
-		int maxY = getGuiTop() + 15 + windowH - barSize / 2;
+		int minY = topPos + 15 + barSize / 2;
+		int maxY = topPos + 15 + windowH - barSize / 2;
 
 		if (barSize >= windowH - 2)
 			return true;
 
 		int barX = itemsX + cols * colWidth;
-		double target = (pMouseY - getGuiTop() - 15 - barSize / 2.0) * totalH / (windowH - 2) / rowHeight;
+		double target = (pMouseY - topPos - 15 - barSize / 2.0) * totalH / (windowH - 2) / rowHeight;
 		itemScroll.chase(Mth.clamp(target, 0, getMaxScroll()), 0.8, Chaser.EXP);
 
 		if (minecraft.isWindowActive()) {
@@ -1526,9 +1529,6 @@ public class StockKeeperRequestScreen extends AbstractSimiContainerScreen<StockK
 
 	@Override
 	public boolean keyReleased(KeyEvent event) {
-		int pKeyCode = event.key();
-		int pScanCode = event.scancode();
-		int pModifiers = event.modifiers();
 		ignoreTextInput = false;
 		return super.keyReleased(event);
 	}
