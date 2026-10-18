@@ -11,7 +11,6 @@ import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ExplosionParticleInfo;
 import net.neoforged.neoforge.entity.PartEntity;
 import net.minecraft.world.level.storage.LevelData;
-import net.minecraft.world.level.block.entity.FuelValues;
 import net.minecraft.world.item.crafting.RecipeAccess;
 import net.minecraft.world.clock.ClockManager;
 import net.minecraft.world.attribute.EnvironmentAttributeSystem;
@@ -41,7 +40,6 @@ import net.minecraft.world.TickRateManager;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.flag.FeatureFlagSet;
-import net.minecraft.world.item.alchemy.PotionBrewing;
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
@@ -371,11 +369,6 @@ public class VirtualRenderWorld extends Level implements VisualizationLevel, Blo
 	}
 
 	@Override
-	public FuelValues fuelValues() {
-		return level.fuelValues();
-	}
-
-	@Override
 	public LevelData.RespawnData getRespawnData() {
 		return level.getRespawnData();
 	}
@@ -403,14 +396,6 @@ public class VirtualRenderWorld extends Level implements VisualizationLevel, Blo
 	public FeatureFlagSet enabledFeatures() {
 		return level.enabledFeatures();
 	}
-
-	@Override
-	public PotionBrewing potionBrewing() {
-		return level.potionBrewing();
-	}
-
-
-
 
 
 	@Override
