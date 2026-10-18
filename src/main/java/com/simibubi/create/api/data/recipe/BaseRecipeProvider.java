@@ -32,11 +32,13 @@ import net.minecraft.world.item.crafting.Ingredient;
 public abstract class BaseRecipeProvider extends RecipeProvider {
 	private static boolean boundComponents;
 	protected final String modid;
+	protected final HolderLookup.Provider registries;
 	protected final List<GeneratedRecipe> all = new ArrayList<>();
 
 	public BaseRecipeProvider(HolderLookup.Provider registries, RecipeOutput output, String defaultNamespace) {
 		super(registries, output);
 		this.modid = defaultNamespace;
+		this.registries = registries;
 		bindItemComponents(registries);
 	}
 

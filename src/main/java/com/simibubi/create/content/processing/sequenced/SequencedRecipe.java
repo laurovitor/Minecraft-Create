@@ -13,7 +13,7 @@ import net.minecraft.world.item.crafting.Recipe;
 import net.neoforged.neoforge.common.crafting.CompoundIngredient;
 
 public class SequencedRecipe<T extends ProcessingRecipe<?, ?>> {
-	public static final Codec<SequencedRecipe<?>> CODEC = Recipe.CODEC
+	public static final Codec<SequencedRecipe<?>> CODEC = Recipe.DIRECT_CODEC
 		.comapFlatMap(recipe -> recipe instanceof ProcessingRecipe<?,?> processing && recipe instanceof IAssemblyRecipe
 				? DataResult.success(new SequencedRecipe<>(processing))
 				: DataResult.error(() -> recipe.getClass().getSimpleName() + " is not supported in Sequenced Assembly"),

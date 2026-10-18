@@ -181,7 +181,7 @@ public abstract class ProcessingRecipeBuilder<P extends ProcessingRecipeParams, 
 	}
 
 	public S require(DatagenMod mod, String id) {
-		params.ingredients.add(SimpleDatagenIngredient.of(mod, id));
+		params.ingredients.add(new SimpleDatagenIngredient(mod, id).toVanilla());
 		return self();
 	}
 
