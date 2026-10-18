@@ -6,7 +6,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import net.createmod.catnip.api.client.render.SuperByteBuffer;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
@@ -37,8 +37,8 @@ public abstract class ColoredOverlayBlockEntityRenderer<T extends BlockEntity, S
 			return;
 		}
 
-		state.overlay = render(getOverlayBuffer(be), getColor(be, partialTicks), state.lightCoords)
-			.extractRenderState();
+		state.overlay = SuperByteBufferRenderState.capture(
+			render(getOverlayBuffer(be), getColor(be, partialTicks), state.lightCoords));
 	}
 
 	@Override

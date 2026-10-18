@@ -9,7 +9,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.item.ItemModelResolver;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import com.simibubi.create.foundation.blockEntity.behaviour.filtering.FilteringRenderer.FilterRenderState;
 import org.jspecify.annotations.Nullable;
 import java.util.List;
@@ -86,9 +86,8 @@ public class SawRenderer extends SafeBlockEntityRenderer<SawBlockEntity, SawRend
 		if (VisualizationManager.supportsVisualization(be.getLevel()))
 			return;
 
-		state.shaft = KineticBlockEntityRenderer
-			.standardKineticRotationTransform(getRotatedModel(be), be, state.lightCoords)
-			.extractRenderState();
+		state.shaft = SuperByteBufferRenderState.capture(KineticBlockEntityRenderer
+			.standardKineticRotationTransform(getRotatedModel(be), be, state.lightCoords));
 	}
 
 	@Override
@@ -136,9 +135,8 @@ public class SawRenderer extends SafeBlockEntityRenderer<SawBlockEntity, SawRend
 			TransformStack.of(superBuffer.getTransforms())
 				.rotateCentered(AngleHelper.rad(90), Direction.UP);
 
-		state.blade = superBuffer.color(0xFFFFFF)
-			.light(state.lightCoords)
-			.extractRenderState();
+		state.blade = SuperByteBufferRenderState.capture(superBuffer.color(0xFFFFFF)
+			.light(state.lightCoords));
 	}
 
 	protected void extractItems(SawBlockEntity be, SawRenderState state, float partialTicks) {

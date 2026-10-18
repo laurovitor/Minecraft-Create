@@ -9,7 +9,7 @@ import net.minecraft.client.renderer.block.model.BlockDisplayContext;
 import net.minecraft.client.renderer.block.BlockModelResolver;
 import net.minecraft.client.renderer.block.BlockModelRenderState;
 import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import org.jspecify.annotations.Nullable;
 import java.util.List;
@@ -88,8 +88,7 @@ public class SchematicannonRenderer
 			.translate(.5f, 0, .5f)
 			.rotate((float) ((yaw + 90) / 180 * Math.PI), Direction.UP)
 			.translate(-.5f, 0, -.5f);
-		state.connector = connector.light(state.lightCoords)
-			.extractRenderState();
+		state.connector = SuperByteBufferRenderState.capture(connector.light(state.lightCoords));
 
 		SuperByteBuffer pipe = CachedBufferer.partial(AllPartialModels.SCHEMATICANNON_PIPE, blockState);
 		TransformStack.of(pipe.getTransforms())
@@ -98,8 +97,7 @@ public class SchematicannonRenderer
 			.rotate((float) (pitch / 180 * Math.PI), Direction.SOUTH)
 			.translate(-.5f, -15 / 16f, -.5f)
 			.translate(0, -recoil / 100, 0);
-		state.pipe = pipe.light(state.lightCoords)
-			.extractRenderState();
+		state.pipe = SuperByteBufferRenderState.capture(pipe.light(state.lightCoords));
 	}
 
 	@Override
