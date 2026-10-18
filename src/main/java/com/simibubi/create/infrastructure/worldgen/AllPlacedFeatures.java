@@ -12,7 +12,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.levelgen.VerticalAnchor;
-import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
+import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.placement.CountPlacement;
 import net.minecraft.world.level.levelgen.placement.HeightRangePlacement;
 import net.minecraft.world.level.levelgen.placement.InSquarePlacement;
@@ -31,10 +31,10 @@ public class AllPlacedFeatures {
 	}
 
 	public static void bootstrap(BootstrapContext<PlacedFeature> ctx) {
-		HolderGetter<ConfiguredFeature<?, ?>> featureLookup = ctx.lookup(Registries.CONFIGURED_FEATURE);
-		Holder<ConfiguredFeature<?, ?>> zincOre = featureLookup.getOrThrow(AllConfiguredFeatures.ZINC_ORE);
-		Holder<ConfiguredFeature<?, ?>> striatedOresOverworld = featureLookup.getOrThrow(AllConfiguredFeatures.STRIATED_ORES_OVERWORLD);
-		Holder<ConfiguredFeature<?, ?>> striatedOresNether = featureLookup.getOrThrow(AllConfiguredFeatures.STRIATED_ORES_NETHER);
+		HolderGetter<Feature> featureLookup = ctx.lookup(Registries.FEATURE);
+		Holder<Feature> zincOre = featureLookup.getOrThrow(AllConfiguredFeatures.ZINC_ORE);
+		Holder<Feature> striatedOresOverworld = featureLookup.getOrThrow(AllConfiguredFeatures.STRIATED_ORES_OVERWORLD);
+		Holder<Feature> striatedOresNether = featureLookup.getOrThrow(AllConfiguredFeatures.STRIATED_ORES_NETHER);
 
 		register(ctx, ZINC_ORE, zincOre, placement(CountPlacement.of(8), -63, 70));
 		register(ctx, STRIATED_ORES_OVERWORLD, striatedOresOverworld, placement(RarityFilter.onAverageOnceEvery(18), -30, 70));
