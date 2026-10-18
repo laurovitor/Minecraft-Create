@@ -83,9 +83,9 @@ public class TableClothRenderer
 			ms.translate(0.5f, 3 / 16f, 0.5f);
 
 			if (count > 1) {
-				ms.mulPose(Axis.YP.rotationDegrees(i * (360f / count) + 45f));
+				ms.mulPose(new org.joml.Matrix4f().rotation(Axis.YP.rotationDegrees(i * (360f / count) + 45f)));
 				ms.translate(0, i % 2 == 0 ? -0.005 : 0, 5 / 16f);
-				ms.mulPose(Axis.YP.rotationDegrees(-i * (360f / count) - 45f));
+				ms.mulPose(new org.joml.Matrix4f().rotation(Axis.YP.rotationDegrees(-i * (360f / count) - 45f)));
 			}
 
 			// Flat items lie facing the shopper rather than following the cloth's rotation.

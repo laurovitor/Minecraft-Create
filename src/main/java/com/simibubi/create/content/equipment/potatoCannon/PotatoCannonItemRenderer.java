@@ -71,7 +71,7 @@ public class PotatoCannonItemRenderer extends CustomRenderedItemModelRenderer {
 
 		ms.pushPose();
 		ms.translate(0, offset, 0);
-		ms.mulPose(Axis.ZP.rotationDegrees(angle));
+		ms.mulPose(new org.joml.Matrix4f().rotation(Axis.ZP.rotationDegrees(angle)));
 		ms.translate(0, -offset, 0);
 		renderer.render(COG.get(), light);
 		ms.popPose();

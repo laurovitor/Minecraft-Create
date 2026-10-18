@@ -149,7 +149,7 @@ public class ToolboxScreen extends AbstractSimiContainerScreen<ToolboxMenu> {
 
 			ps.pushPose();
 			ps.translate(0, -6 / 16f, 12 / 16f);
-			ps.mulPose(Axis.XP.rotationDegrees(-105 * lid));
+			ps.mulPose(new org.joml.Matrix4f().rotation(Axis.XP.rotationDegrees(-105 * lid)));
 			ps.translate(0, 6 / 16f, -12 / 16f);
 			GuiScene.part(ps, col, lidModel, null, 0, 0, 0, 0, 0, 0);
 			ps.popPose();

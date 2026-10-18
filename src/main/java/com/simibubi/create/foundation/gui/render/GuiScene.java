@@ -54,8 +54,8 @@ public final class GuiScene {
 		poseStack.scale((float) scale / unit, (float) scale / unit);
 
 		graphics.guiRenderState.addPicturesInPictureState(new GuiCustomGeometryRenderState((ps, collector) -> {
-			ps.mulPose(Axis.XP.rotationDegrees(viewXRot));
-			ps.mulPose(Axis.YP.rotationDegrees(viewYRot));
+			ps.mulPose(new org.joml.Matrix4f().rotation(Axis.XP.rotationDegrees(viewXRot)));
+			ps.mulPose(new org.joml.Matrix4f().rotation(Axis.YP.rotationDegrees(viewYRot)));
 			parts.submit(ps, collector);
 		}, new Matrix3x2f(poseStack),
 			new GuiElementTransform(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, lighting),
@@ -91,9 +91,9 @@ public final class GuiScene {
 		poseStack.pushPose();
 		poseStack.translate((float) xLocal, (float) yLocal, (float) zLocal);
 		GuiElementTransform.flipForGuiRender(poseStack);
-		poseStack.mulPose(Axis.ZP.rotationDegrees((float) zRot));
-		poseStack.mulPose(Axis.XP.rotationDegrees((float) xRot));
-		poseStack.mulPose(Axis.YP.rotationDegrees((float) yRot));
+		poseStack.mulPose(new org.joml.Matrix4f().rotation(Axis.ZP.rotationDegrees((float) zRot)));
+		poseStack.mulPose(new org.joml.Matrix4f().rotation(Axis.XP.rotationDegrees((float) xRot)));
+		poseStack.mulPose(new org.joml.Matrix4f().rotation(Axis.YP.rotationDegrees((float) yRot)));
 		GuiElementGeometry.submitBlockModel(poseStack, collector, model, state, null, 0xFFFFFFFF);
 		poseStack.popPose();
 	}

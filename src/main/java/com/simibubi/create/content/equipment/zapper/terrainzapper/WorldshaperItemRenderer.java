@@ -61,7 +61,7 @@ public class WorldshaperItemRenderer extends ZapperItemRenderer {
 		angle %= 360;
 		float offset = -.155f;
 		ms.translate(0, offset, 0);
-		ms.mulPose(Axis.ZP.rotationDegrees(angle));
+		ms.mulPose(new org.joml.Matrix4f().rotation(Axis.ZP.rotationDegrees(angle)));
 		ms.translate(0, -offset, 0);
 		renderer.render(ACCELERATOR.get(), light);
 	}

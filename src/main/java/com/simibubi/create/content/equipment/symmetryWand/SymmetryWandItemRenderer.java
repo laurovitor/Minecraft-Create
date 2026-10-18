@@ -34,7 +34,7 @@ public class SymmetryWandItemRenderer extends CustomRenderedItemModelRenderer {
 		float angle = worldTime * -10 % 360;
 
 		ms.translate(0, floating, 0);
-		ms.mulPose(Axis.YP.rotationDegrees(angle));
+		ms.mulPose(new org.joml.Matrix4f().rotation(Axis.YP.rotationDegrees(angle)));
 
 		renderer.renderGlowing(BITS.get(), maxLight);
 	}

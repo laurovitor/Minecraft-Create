@@ -30,8 +30,8 @@ public class HatchFilterSlot extends ValueBoxTransform {
 
 	@Override
 	public void rotate(LevelAccessor level, BlockPos pos, BlockState state, PoseStack ms) {
-		ms.mulPose(Axis.YP.rotationDegrees(angle(state)));
-		ms.mulPose(Axis.XP.rotationDegrees(-45));
+		ms.mulPose(new org.joml.Matrix4f().rotation(Axis.YP.rotationDegrees(angle(state))));
+		ms.mulPose(new org.joml.Matrix4f().rotation(Axis.XP.rotationDegrees(-45)));
 	}
 
 	private float angle(BlockState state) {

@@ -358,7 +358,7 @@ public class BeltRenderer extends SafeBlockEntityRenderer<BeltBlockEntity, BeltR
 		if (slopeShadowOnly)
 			ms.pushPose();
 		if (!renderUpright || slopeShadowOnly)
-			ms.mulPose((transported.slopeAlongX() ? Axis.ZP : Axis.XP).rotationDegrees(transported.slopeAngle()));
+			ms.mulPose(new org.joml.Matrix4f().rotation((transported.slopeAlongX() ? Axis.ZP : Axis.XP).rotationDegrees(transported.slopeAngle())));
 		if (transported.onSlope())
 			ms.translate(0, slopeOffset, 0);
 		ms.pushPose();
@@ -374,7 +374,7 @@ public class BeltRenderer extends SafeBlockEntityRenderer<BeltBlockEntity, BeltR
 			Vec3 cameraPosition = Minecraft.getInstance().gameRenderer.mainCamera().position();
 			Vec3 diff = transported.itemPosition().subtract(cameraPosition);
 			float yRot = (float) (Mth.atan2(diff.x, diff.z) + Math.PI);
-			ms.mulPose(Axis.YP.rotation(yRot));
+			ms.mulPose(new org.joml.Matrix4f().rotation(Axis.YP.rotation(yRot)));
 			ms.translate(0, 3 / 32d, 1 / 16f);
 		}
 
@@ -385,10 +385,10 @@ public class BeltRenderer extends SafeBlockEntityRenderer<BeltBlockEntity, BeltR
 			ms.pushPose();
 
 			boolean box = item.box();
-			ms.mulPose(Axis.YP.rotationDegrees(transported.angle()));
+			ms.mulPose(new org.joml.Matrix4f().rotation(Axis.YP.rotationDegrees(transported.angle())));
 			if (!blockItem && !renderUpright) {
 				ms.translate(0, -.09375, 0);
-				ms.mulPose(Axis.XP.rotationDegrees(90));
+				ms.mulPose(new org.joml.Matrix4f().rotation(Axis.XP.rotationDegrees(90)));
 			}
 
 			if (blockItem && !box)
@@ -407,7 +407,7 @@ public class BeltRenderer extends SafeBlockEntityRenderer<BeltBlockEntity, BeltR
 
 			if (!renderUpright) {
 				if (!blockItem)
-					ms.mulPose(Axis.YP.rotationDegrees(10));
+					ms.mulPose(new org.joml.Matrix4f().rotation(Axis.YP.rotationDegrees(10)));
 				ms.translate(0, blockItem ? 1 / 64d : 1 / 16d, 0);
 			} else
 				ms.translate(0, 0, -1 / 16f);

@@ -201,7 +201,7 @@ public class ItemDrainRenderer
 				diff = VecHelper.rotate(diff, -verticalAngle, Direction.Axis.Z);
 
 			float yRot = (float) Mth.atan2(diff.z, -diff.x);
-			ms.mulPose(Axis.YP.rotation((float) (yRot - Math.PI / 2)));
+			ms.mulPose(new org.joml.Matrix4f().rotation(Axis.YP.rotation((float) (yRot - Math.PI / 2))));
 			ms.translate(0, 0, -1 / 16f);
 		}
 

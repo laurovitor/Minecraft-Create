@@ -24,7 +24,7 @@ public class WrenchItemRenderer extends CustomRenderedItemModelRenderer {
 
 		float xOffset = -1/16f;
 		ms.translate(-xOffset, 0, 0);
-		ms.mulPose(Axis.YP.rotationDegrees(ScrollValueHandler.getScroll(AnimationTickHolder.getPartialTicks())));
+		ms.mulPose(new org.joml.Matrix4f().rotation(Axis.YP.rotationDegrees(ScrollValueHandler.getScroll(AnimationTickHolder.getPartialTicks()))));
 		ms.translate(xOffset, 0, 0);
 
 		renderer.render(GEAR.get(), light);

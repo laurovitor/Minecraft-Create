@@ -48,19 +48,19 @@ public class GogglesCurioRenderer implements ICurioRenderer {
 		// Translate and rotate with our head
 		matrixStack.pushPose();
 		matrixStack.translate(model.head.x / 16.0, model.head.y / 16.0, model.head.z / 16.0);
-		matrixStack.mulPose(Axis.ZP.rotation(model.head.zRot));
-		matrixStack.mulPose(Axis.YP.rotation(model.head.yRot));
-		matrixStack.mulPose(Axis.XP.rotation(model.head.xRot));
+		matrixStack.mulPose(new org.joml.Matrix4f().rotation(Axis.ZP.rotation(model.head.zRot)));
+		matrixStack.mulPose(new org.joml.Matrix4f().rotation(Axis.YP.rotation(model.head.yRot)));
+		matrixStack.mulPose(new org.joml.Matrix4f().rotation(Axis.XP.rotation(model.head.xRot)));
 
 		// Translate and scale to our head
 		matrixStack.translate(0, -0.25, 0);
-		matrixStack.mulPose(Axis.ZP.rotationDegrees(180.0f));
+		matrixStack.mulPose(new org.joml.Matrix4f().rotation(Axis.ZP.rotationDegrees(180.0f)));
 		matrixStack.scale(0.625f, 0.625f, 0.625f);
 
 		if (!slotContext.entity()
 			.getItemBySlot(EquipmentSlot.HEAD)
 			.isEmpty()) {
-			matrixStack.mulPose(Axis.ZP.rotationDegrees(180.0f));
+			matrixStack.mulPose(new org.joml.Matrix4f().rotation(Axis.ZP.rotationDegrees(180.0f)));
 			matrixStack.translate(0, -0.25, 0);
 		}
 

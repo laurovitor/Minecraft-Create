@@ -194,7 +194,7 @@ public class SawRenderer extends SafeBlockEntityRenderer<SawBlockEntity, SawRend
 
 		ms.pushPose();
 		if (state.alongZ)
-			ms.mulPose(Axis.YP.rotationDegrees(90));
+			ms.mulPose(new org.joml.Matrix4f().rotation(Axis.YP.rotationDegrees(90)));
 		ms.translate(state.outputs <= 1 ? .5 : .25, 0, state.offset);
 		ms.translate(state.alongZ ? -1 : 0, 0, 0);
 
@@ -213,7 +213,7 @@ public class SawRenderer extends SafeBlockEntityRenderer<SawBlockEntity, SawRend
 				ms.scale(1.5f, 1.5f, 1.5f);
 			} else {
 				ms.scale(.5f, .5f, .5f);
-				ms.mulPose(Axis.XP.rotationDegrees(90));
+				ms.mulPose(new org.joml.Matrix4f().rotation(Axis.XP.rotationDegrees(90)));
 			}
 
 			sawItem.item()

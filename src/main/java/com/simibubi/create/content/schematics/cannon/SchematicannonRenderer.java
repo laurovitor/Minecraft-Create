@@ -247,8 +247,8 @@ public class SchematicannonRenderer
 			ms.translate(location.x, location.y, location.z);
 
 			ms.translate(.125f, .125f, .125f);
-			ms.mulPose(Axis.YP.rotationDegrees(360 * spin));
-			ms.mulPose(Axis.XP.rotationDegrees(360 * spin));
+			ms.mulPose(new org.joml.Matrix4f().rotation(Axis.YP.rotationDegrees(360 * spin)));
+			ms.mulPose(new org.joml.Matrix4f().rotation(Axis.XP.rotationDegrees(360 * spin)));
 			ms.translate(-.125f, -.125f, -.125f);
 
 			if (block != null) {

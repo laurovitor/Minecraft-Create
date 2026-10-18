@@ -41,7 +41,7 @@ public class BogeyBlockEntityVisual extends AbstractBlockEntityVisual<AbstractBo
 		poseStack.translate(visualPos.getX(), visualPos.getY(), visualPos.getZ());
 		poseStack.translate(.5f, .5f, .5f);
 		if (blockState.getValue(AbstractBogeyBlock.AXIS) == Direction.Axis.X)
-			poseStack.mulPose(Axis.YP.rotationDegrees(90));
+			poseStack.mulPose(new org.joml.Matrix4f().rotation(Axis.YP.rotationDegrees(90)));
 		poseStack.translate(0, -1.5 - 1 / 128f, 0);
 
 		bogey = lastStyle.createVisual(bogeySize, visualizationContext, partialTick, false);

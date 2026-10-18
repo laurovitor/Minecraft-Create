@@ -53,7 +53,7 @@ public class BogeyBlockEntityRenderer<T extends AbstractBogeyBlockEntity>
 		ms.pushPose();
 		ms.translate(.5f, .5f, .5f);
 		if (state.alongX)
-			ms.mulPose(Axis.YP.rotationDegrees(90));
+			ms.mulPose(new org.joml.Matrix4f().rotation(Axis.YP.rotationDegrees(90)));
 		BogeyStyle.submit(state.parts, ms, queue);
 		ms.popPose();
 	}

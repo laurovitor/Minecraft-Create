@@ -163,9 +163,9 @@ public class DeployerRenderer
 			ms.pushPose();
 			ms.translate(offset.x, offset.y, offset.z);
 
-			ms.mulPose(Axis.YP.rotationDegrees(yRot));
+			ms.mulPose(new org.joml.Matrix4f().rotation(Axis.YP.rotationDegrees(yRot)));
 			if (!displayMode) {
-				ms.mulPose(Axis.XP.rotationDegrees(xRot));
+				ms.mulPose(new org.joml.Matrix4f().rotation(Axis.XP.rotationDegrees(xRot)));
 				ms.translate(0, 0, -11 / 16f);
 			}
 
@@ -176,7 +176,7 @@ public class DeployerRenderer
 				float scale = isBlockItem ? 1.25f : 1;
 				ms.translate(0, isBlockItem ? 9 / 16f : 11 / 16f, 0);
 				ms.scale(scale, scale, scale);
-				ms.mulPose(Axis.YP.rotationDegrees(renderTime));
+				ms.mulPose(new org.joml.Matrix4f().rotation(Axis.YP.rotationDegrees(renderTime)));
 			} else {
 				float scale = punching ? .75f : isBlockItem ? .75f - 1 / 64f : .5f;
 				ms.scale(scale, scale, scale);

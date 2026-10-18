@@ -104,7 +104,7 @@ public class MechanicalCrafterRenderer
 		ms.pushPose();
 		ms.translate(state.itemAnchor.x, state.itemAnchor.y, state.itemAnchor.z);
 		ms.scale(1 / 2f, 1 / 2f, 1 / 2f);
-		ms.mulPose(Axis.YP.rotationDegrees(state.yRot));
+		ms.mulPose(new org.joml.Matrix4f().rotation(Axis.YP.rotationDegrees(state.yRot)));
 		submitItems(state, ms, queue);
 		ms.popPose();
 
@@ -198,7 +198,7 @@ public class MechanicalCrafterRenderer
 			for (GridItem item : state.items) {
 				ms.pushPose();
 				ms.translate(0, 0, -1 / 256f);
-				ms.mulPose(Axis.YP.rotationDegrees(180));
+				ms.mulPose(new org.joml.Matrix4f().rotation(Axis.YP.rotationDegrees(180)));
 				item.item()
 					.submit(ms, queue, state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
 				ms.popPose();
@@ -226,11 +226,11 @@ public class MechanicalCrafterRenderer
 		if (state.craftResult.isEmpty())
 			return;
 
-		ms.mulPose(Axis.ZP.rotationDegrees(state.resultSpin));
+		ms.mulPose(new org.joml.Matrix4f().rotation(Axis.ZP.rotationDegrees(state.resultSpin)));
 		ms.scale(state.resultScale, state.resultScale, state.resultScale);
 		for (ItemStackRenderState result : state.craftResult) {
 			ms.pushPose();
-			ms.mulPose(Axis.YP.rotationDegrees(180));
+			ms.mulPose(new org.joml.Matrix4f().rotation(Axis.YP.rotationDegrees(180)));
 			result.submit(ms, queue, state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
 			ms.popPose();
 		}

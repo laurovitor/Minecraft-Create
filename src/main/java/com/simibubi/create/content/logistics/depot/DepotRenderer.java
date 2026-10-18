@@ -183,7 +183,7 @@ public class DepotRenderer extends SafeBlockEntityRenderer<DepotBlockEntity, Dep
 				.position();
 			Vec3 diff = itemPosition.subtract(cameraPosition);
 			float yRot = (float) (Mth.atan2(diff.x, diff.z) + Math.PI);
-			ms.mulPose(Axis.YP.rotation(yRot));
+			ms.mulPose(new org.joml.Matrix4f().rotation(Axis.YP.rotation(yRot)));
 			ms.translate(0, 3 / 32d, -1 / 16f);
 		}
 

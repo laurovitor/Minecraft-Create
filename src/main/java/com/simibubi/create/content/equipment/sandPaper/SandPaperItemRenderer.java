@@ -39,7 +39,7 @@ public class SandPaperItemRenderer extends CustomRenderedItemModelRenderer {
 				ms.scale(.75f, .75f, .75f);
 			} else {
 				int modifier = leftHand ? -1 : 1;
-				ms.mulPose(Axis.YP.rotationDegrees(modifier * 40));
+				ms.mulPose(new org.joml.Matrix4f().rotation(Axis.YP.rotationDegrees(modifier * 40)));
 			}
 
 			// Reverse bobbing
@@ -69,9 +69,9 @@ public class SandPaperItemRenderer extends CustomRenderedItemModelRenderer {
 			if (itemInUseCount > 0) {
 				int modifier = leftHand ? -1 : 1;
 				ms.translate(modifier * .5f, 0, -.25f);
-				ms.mulPose(Axis.ZP.rotationDegrees(modifier * 40));
-				ms.mulPose(Axis.XP.rotationDegrees(modifier * 10));
-				ms.mulPose(Axis.YP.rotationDegrees(modifier * 90));
+				ms.mulPose(new org.joml.Matrix4f().rotation(Axis.ZP.rotationDegrees(modifier * 40)));
+				ms.mulPose(new org.joml.Matrix4f().rotation(Axis.XP.rotationDegrees(modifier * 10)));
+				ms.mulPose(new org.joml.Matrix4f().rotation(Axis.YP.rotationDegrees(modifier * 90)));
 			}
 		}
 
