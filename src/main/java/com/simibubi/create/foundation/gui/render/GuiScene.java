@@ -6,13 +6,20 @@ import org.jspecify.annotations.Nullable;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import java.util.ArrayList;
+import java.util.List;
 
 import net.createmod.catnip.api.client.gui.ILightingSettings;
-import net.createmod.catnip.api.client.gui.element.GuiElementGeometry;
 import net.createmod.catnip.api.client.gui.render.pip.GuiElementTransform;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.block.BlockModelRenderState;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
+import net.minecraft.client.resources.model.geometry.BakedQuad;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.util.LightCoordsUtil;
+import net.minecraft.util.RandomSource;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -76,8 +83,8 @@ public final class GuiScene {
 		poseStack.pushPose();
 		poseStack.translate((float) xLocal, (float) yLocal, (float) zLocal);
 		GuiElementTransform.flipForGuiRender(poseStack);
-		GuiElementGeometry.rotateBlock(poseStack, xRot, yRot, zRot);
-		GuiElementGeometry.submitBlockModel(poseStack, collector, model, state, null, 0xFFFFFFFF);
+		rotateBlock(poseStack, xRot, yRot, zRot);
+		submitBlockModel(poseStack, collector, model, state);
 		poseStack.popPose();
 	}
 
@@ -94,8 +101,29 @@ public final class GuiScene {
 		poseStack.mulPose(new org.joml.Matrix4f().rotation(Axis.ZP.rotationDegrees((float) zRot)));
 		poseStack.mulPose(new org.joml.Matrix4f().rotation(Axis.XP.rotationDegrees((float) xRot)));
 		poseStack.mulPose(new org.joml.Matrix4f().rotation(Axis.YP.rotationDegrees((float) yRot)));
-		GuiElementGeometry.submitBlockModel(poseStack, collector, model, state, null, 0xFFFFFFFF);
+		submitBlockModel(poseStack, collector, model, state);
 		poseStack.popPose();
+	}
+
+	/** Rotate a block about its centre, matching GUI block-element rotation. */
+	public static void rotateBlock(PoseStack poseStack, double xRot, double yRot, double zRot) {
+		poseStack.translate(0.5f, 0.5f, 0.5f);
+		poseStack.mulPose(new org.joml.Matrix4f().rotation(Axis.ZP.rotationDegrees((float) zRot)));
+		poseStack.mulPose(new org.joml.Matrix4f().rotation(Axis.XP.rotationDegrees((float) xRot)));
+		poseStack.mulPose(new org.joml.Matrix4f().rotation(Axis.YP.rotationDegrees((float) yRot)));
+		poseStack.translate(-0.5f, -0.5f, -0.5f);
+	}
+
+	/** Submit the model parts through the 26.3 node collector in the same scene depth pass. */
+	public static void submitBlockModel(PoseStack poseStack, SubmitNodeCollector collector, BlockStateModel model,
+		@Nullable BlockState state) {
+		List<BlockStateModelPart> parts = new ArrayList<>();
+		model.collectParts(RandomSource.create(state != null ? state.getSeed(net.minecraft.core.BlockPos.ZERO) : 0), parts);
+		if (parts.isEmpty())
+			return;
+		boolean translucent = model.hasMaterialFlag(BakedQuad.FLAG_TRANSLUCENT);
+		collector.submitMultiLayerBlockModel(poseStack, parts, translucent, BlockModelRenderState.EMPTY_TINTS,
+			LightCoordsUtil.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, 0);
 	}
 
 	public static BlockStateModel modelOf(BlockState state) {

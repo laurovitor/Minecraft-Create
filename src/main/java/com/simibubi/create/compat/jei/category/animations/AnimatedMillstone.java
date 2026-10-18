@@ -6,7 +6,7 @@ import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllPartialModels;
 import com.simibubi.create.foundation.gui.AllGuiTextures;
 
-import net.createmod.catnip.api.client.gui.element.GuiElementGeometry;
+import com.simibubi.create.foundation.gui.render.GuiScene;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.world.level.block.state.BlockState;
@@ -33,13 +33,13 @@ public class AnimatedMillstone extends AnimatedKinetics {
 		// hole in the top because it is nearer than the floor of it.
 		sceneGeometry(graphics, scale, 0, 0, 0, (poseStack, collector) -> {
 			poseStack.pushPose();
-			GuiElementGeometry.rotateBlock(poseStack, 22.5, cogAngle, 0);
-			GuiElementGeometry.submitBlockModel(poseStack, collector, cogModel, null, null, 0xFFFFFFFF);
+			GuiScene.rotateBlock(poseStack, 22.5, cogAngle, 0);
+			GuiScene.submitBlockModel(poseStack, collector, cogModel, null);
 			poseStack.popPose();
 
 			poseStack.pushPose();
-			GuiElementGeometry.rotateBlock(poseStack, 22.5, 22.5, 0);
-			GuiElementGeometry.submitBlockModel(poseStack, collector, millstoneModel, millstone, null, 0xFFFFFFFF);
+			GuiScene.rotateBlock(poseStack, 22.5, 22.5, 0);
+			GuiScene.submitBlockModel(poseStack, collector, millstoneModel, millstone);
 			poseStack.popPose();
 		});
 
