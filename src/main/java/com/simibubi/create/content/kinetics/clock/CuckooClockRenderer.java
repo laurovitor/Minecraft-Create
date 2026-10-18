@@ -4,7 +4,7 @@ import com.simibubi.create.foundation.render.CachedBufferer;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import java.util.List;
 import java.util.ArrayList;
@@ -53,10 +53,8 @@ public class CuckooClockRenderer
 		SuperByteBuffer minuteHand = CachedBufferer.partial(AllPartialModels.CUCKOO_MINUTE_HAND, blockState);
 		float hourAngle = be.hourHand.getValue(partialTicks);
 		float minuteAngle = be.minuteHand.getValue(partialTicks);
-		state.parts.add(rotateHand(hourHand, hourAngle, direction).light(state.lightCoords)
-			.extractRenderState());
-		state.parts.add(rotateHand(minuteHand, minuteAngle, direction).light(state.lightCoords)
-			.extractRenderState());
+		state.parts.add(SuperByteBufferRenderState.capture(rotateHand(hourHand, hourAngle, direction).light(state.lightCoords)));
+		state.parts.add(SuperByteBufferRenderState.capture(rotateHand(minuteHand, minuteAngle, direction).light(state.lightCoords)));
 
 		// Doors
 		SuperByteBuffer leftDoor = CachedBufferer.partial(AllPartialModels.CUCKOO_LEFT_DOOR, blockState);
@@ -81,10 +79,8 @@ public class CuckooClockRenderer
 			}
 		}
 
-		state.parts.add(rotateDoor(leftDoor, angle, true, direction).light(state.lightCoords)
-			.extractRenderState());
-		state.parts.add(rotateDoor(rightDoor, angle, false, direction).light(state.lightCoords)
-			.extractRenderState());
+		state.parts.add(SuperByteBufferRenderState.capture(rotateDoor(leftDoor, angle, true, direction).light(state.lightCoords)));
+		state.parts.add(SuperByteBufferRenderState.capture(rotateDoor(rightDoor, angle, false, direction).light(state.lightCoords)));
 
 		// Figure
 		if (be.animationType != Animation.NONE) {
@@ -96,8 +92,7 @@ public class CuckooClockRenderer
 				.rotateCentered(AngleHelper.rad(AngleHelper.horizontalAngle(direction.getCounterClockWise())),
 					Direction.UP)
 				.translate(offset, 0, 0);
-			state.parts.add(figure.light(state.lightCoords)
-				.extractRenderState());
+			state.parts.add(SuperByteBufferRenderState.capture(figure.light(state.lightCoords)));
 		}
 	}
 

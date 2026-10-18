@@ -6,7 +6,7 @@ import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.item.ItemModelResolver;
 import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import java.util.List;
 import java.util.ArrayList;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
@@ -246,16 +246,15 @@ public class MechanicalCrafterRenderer
 				.rotateCentered((float) (blockState.getValue(HORIZONTAL_FACING)
 					.getAxis() != Direction.Axis.X ? 0 : Math.PI / 2), Direction.UP)
 				.rotateCentered((float) (Math.PI / 2), Direction.EAST);
-			state.parts.add(superBuffer.extractRenderState());
+			state.parts.add(SuperByteBufferRenderState.capture(superBuffer));
 		}
 
 		Direction targetDirection = MechanicalCrafterBlock.getTargetDirection(blockState);
 		BlockPos pos = be.getBlockPos();
 
 		if ((be.covered || be.phase != Phase.IDLE) && be.phase != Phase.CRAFTING && be.phase != Phase.INSERTING)
-			state.parts.add(renderAndTransform(AllPartialModels.MECHANICAL_CRAFTER_LID, blockState)
-				.light(state.lightCoords)
-				.extractRenderState());
+			state.parts.add(SuperByteBufferRenderState.capture(renderAndTransform(AllPartialModels.MECHANICAL_CRAFTER_LID, blockState)
+				.light(state.lightCoords)));
 
 		if (MechanicalCrafterBlock.isValidTarget(be.getLevel(), pos.relative(targetDirection), blockState)) {
 			SuperByteBuffer beltBuffer = renderAndTransform(AllPartialModels.MECHANICAL_CRAFTER_BELT, blockState);
@@ -267,15 +266,12 @@ public class MechanicalCrafterRenderer
 				beltBuffer.shiftUVtoSheet(AllSpriteShifts.CRAFTER_THINGIES, (textureIndex % 4) / 4f, 0, 1);
 			}
 
-			state.parts.add(beltBuffer.light(state.lightCoords)
-				.extractRenderState());
-			state.parts.add(beltFrameBuffer.light(state.lightCoords)
-				.extractRenderState());
+			state.parts.add(SuperByteBufferRenderState.capture(beltBuffer.light(state.lightCoords)));
+			state.parts.add(SuperByteBufferRenderState.capture(beltFrameBuffer.light(state.lightCoords)));
 
 		} else {
-			state.parts.add(renderAndTransform(AllPartialModels.MECHANICAL_CRAFTER_ARROW, blockState)
-				.light(state.lightCoords)
-				.extractRenderState());
+			state.parts.add(SuperByteBufferRenderState.capture(renderAndTransform(AllPartialModels.MECHANICAL_CRAFTER_ARROW, blockState)
+				.light(state.lightCoords)));
 		}
 	}
 
