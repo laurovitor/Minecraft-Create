@@ -1,12 +1,12 @@
 package com.simibubi.create.content.kinetics.belt;
 
 import com.simibubi.create.foundation.render.CachedBufferer;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.item.ItemModelResolver;
 import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
 import com.simibubi.create.content.logistics.depot.DepotRenderer.ItemState;
 import java.util.List;
 import java.util.ArrayList;
@@ -166,8 +166,8 @@ public class BeltRenderer extends SafeBlockEntityRenderer<BeltBlockEntity, BeltR
 				beltBuffer.shiftUVScrolling(spriteShift, (float) scroll);
 			}
 
-			state.belt.add(beltBuffer.transform(localTransforms)
-				.extractRenderState());
+			beltBuffer.getTransforms().mulPose(localTransforms.last().pose());
+			state.belt.add(SuperByteBufferRenderState.capture(beltBuffer));
 
 			// Diagonal belt do not have a separate bottom model
 			if (diagonal)
@@ -192,8 +192,8 @@ public class BeltRenderer extends SafeBlockEntityRenderer<BeltBlockEntity, BeltR
 
 			SuperByteBuffer superBuffer = CachedBufferer.partialDirectional(AllPartialModels.BELT_PULLEY,
 				blockState, dir, matrixStackSupplier);
-			state.belt.add(KineticBlockEntityRenderer.standardKineticRotationTransform(superBuffer, be, light)
-				.extractRenderState());
+			state.belt.add(SuperByteBufferRenderState.capture(
+				KineticBlockEntityRenderer.standardKineticRotationTransform(superBuffer, be, light)));
 		}
 	}
 

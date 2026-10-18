@@ -1,9 +1,9 @@
 package com.simibubi.create.content.kinetics.chainConveyor;
 
 import com.simibubi.create.foundation.render.CachedBufferer;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
 import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
@@ -96,9 +96,8 @@ public class ChainConveyorRenderer
 		if (visualized)
 			return;
 
-		state.wheel = CachedBufferer.partial(AllPartialModels.CHAIN_CONVEYOR_WHEEL, be.getBlockState())
-			.light(state.lightCoords)
-			.extractRenderState();
+		state.wheel = SuperByteBufferRenderState.capture(CachedBufferer.partial(AllPartialModels.CHAIN_CONVEYOR_WHEEL,
+			be.getBlockState()).light(state.lightCoords));
 
 		for (ChainConveyorPackage box : be.loopingPackages)
 			extractBox(be, state, pos, box, partialTicks);
@@ -194,8 +193,7 @@ public class ChainConveyorRenderer
 			buffer.uncenter();
 			buffer.translate(0, -PackageItem.getHookDistance(box.item) + 7 / 16f, 0);
 
-			state.parts.add(buf.light(light)
-				.extractRenderState());
+			state.parts.add(SuperByteBufferRenderState.capture(buf.light(light)));
 		}
 	}
 
@@ -231,8 +229,7 @@ public class ChainConveyorRenderer
 				guardTransform.center();
 				guardTransform.rotateYDegrees(yaw);
 				guardTransform.uncenter();
-				state.parts.add(guard.light(state.lightCoords)
-					.extractRenderState());
+				state.parts.add(SuperByteBufferRenderState.capture(guard.light(state.lightCoords)));
 			}
 
 			int light1 = LightCoordsUtil.pack(level.getBrightness(LightLayer.BLOCK, tilePos),
