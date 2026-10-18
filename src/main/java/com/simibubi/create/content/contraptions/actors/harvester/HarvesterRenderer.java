@@ -18,7 +18,7 @@ import com.simibubi.create.foundation.virtualWorld.VirtualRenderWorld;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import net.createmod.catnip.api.client.animation.AnimationTickHolder;
 import net.createmod.catnip.api.client.render.SuperByteBuffer;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import net.createmod.catnip.api.math.AngleHelper;
 import net.createmod.catnip.api.math.VecHelper;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -54,8 +54,7 @@ public class HarvesterRenderer
 		BlockState blockState = be.getBlockState();
 		SuperByteBuffer superBuffer = CachedBufferer.partial(AllPartialModels.HARVESTER_BLADE, blockState);
 		transform(be.getLevel(), blockState.getValue(HarvesterBlock.FACING), superBuffer, be.getAnimatedSpeed(), PIVOT);
-		state.blade = superBuffer.light(state.lightCoords)
-			.extractRenderState();
+		state.blade = SuperByteBufferRenderState.capture(superBuffer.light(state.lightCoords));
 	}
 
 	@Override

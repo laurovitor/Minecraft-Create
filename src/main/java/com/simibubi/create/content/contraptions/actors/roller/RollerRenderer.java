@@ -18,7 +18,7 @@ import com.simibubi.create.foundation.virtualWorld.VirtualRenderWorld;
 
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import net.createmod.catnip.api.client.render.SuperByteBuffer;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import net.createmod.catnip.api.math.AngleHelper;
 import net.createmod.catnip.api.math.VecHelper;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -62,14 +62,12 @@ public class RollerRenderer extends SmartBlockEntityRenderer<RollerBlockEntity, 
 		TransformStack.of(wheel.getTransforms())
 			.translate(0, -.5, .5)
 			.rotateYDegrees(90);
-		state.wheel = wheel.light(state.lightCoords)
-			.extractRenderState();
+		state.wheel = SuperByteBufferRenderState.capture(wheel.light(state.lightCoords));
 
 		SuperByteBuffer frame = CachedBufferer.partial(AllPartialModels.ROLLER_FRAME, blockState);
 		TransformStack.of(frame.getTransforms())
 			.rotateCentered(AngleHelper.rad(AngleHelper.horizontalAngle(facing) + 180), Direction.UP);
-		state.frame = frame.light(state.lightCoords)
-			.extractRenderState();
+		state.frame = SuperByteBufferRenderState.capture(frame.light(state.lightCoords));
 	}
 
 	@Override

@@ -6,7 +6,7 @@ import com.simibubi.create.foundation.render.RenderLevels;
 import com.simibubi.create.foundation.render.CachedBufferer;
 import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import org.jspecify.annotations.Nullable;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
@@ -70,15 +70,14 @@ public class ContraptionControlsRenderer
 		state.buttonMovement = buttonMovementAxis.scale(-0.07f + -1 / 24f * be.button.getValue(pt));
 		state.buttonOffset = buttonMovementAxis.scale(0.07f);
 
-		state.button = CachedBufferer.partialFacing(AllPartialModels.CONTRAPTION_CONTROLS_BUTTON, blockState, facing)
-			.light(state.lightCoords)
-			.extractRenderState();
+		state.button = SuperByteBufferRenderState.capture(CachedBufferer
+			.partialFacing(AllPartialModels.CONTRAPTION_CONTROLS_BUTTON, blockState, facing)
+			.light(state.lightCoords));
 
 		int i = (((int) be.indicator.getValue(pt) / 45) % 8) + 8;
-		state.indicator = CachedBufferer
+		state.indicator = SuperByteBufferRenderState.capture(CachedBufferer
 			.partialFacing(AllPartialModels.CONTRAPTION_CONTROLS_INDICATOR.get(i % 8), blockState, facing)
-			.light(state.lightCoords)
-			.extractRenderState();
+			.light(state.lightCoords));
 	}
 
 	/**
