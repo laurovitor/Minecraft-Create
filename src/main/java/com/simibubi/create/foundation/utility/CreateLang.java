@@ -35,39 +35,39 @@ public class CreateLang extends Lang {
 
 	//
 
-	public static LangBuilder builder() {
-		return new LangBuilder(Create.ID);
+	public static CreateLangBuilder builder() {
+		return new CreateLangBuilder(Create.ID);
 	}
 
-	public static LangBuilder blockName(BlockState state) {
+	public static CreateLangBuilder blockName(BlockState state) {
 		return builder().add(state.getBlock()
 				.getName());
 	}
 
-	public static LangBuilder itemName(ItemStack stack) {
+	public static CreateLangBuilder itemName(ItemStack stack) {
 		return builder().add(stack.getHoverName()
 				.copy());
 	}
 
-	public static LangBuilder fluidName(FluidStack stack) {
+	public static CreateLangBuilder fluidName(FluidStack stack) {
 		return builder().add(stack.getHoverName()
 				.copy());
 	}
 
-	public static LangBuilder number(double d) {
+	public static CreateLangBuilder number(double d) {
 		return builder().text(LangNumberFormat.format(d));
 	}
 
-	public static LangBuilder translate(String langKey, Object... args) {
+	public static CreateLangBuilder translate(String langKey, Object... args) {
 		return builder().translate(langKey, args);
 	}
 
-	public static LangBuilder text(String text) {
+	public static CreateLangBuilder text(String text) {
 		return builder().text(text);
 	}
 
 	@Deprecated // Use while implementing and replace all references with Lang.translate
-	public static LangBuilder temporaryText(String text) {
+	public static CreateLangBuilder temporaryText(String text) {
 		return builder().text(text);
 	}
 
