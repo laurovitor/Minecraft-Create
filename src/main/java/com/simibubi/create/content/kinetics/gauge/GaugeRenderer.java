@@ -1,6 +1,5 @@
 package com.simibubi.create.content.kinetics.gauge;
 
-import com.simibubi.create.foundation.render.CachedBufferer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,12 +8,13 @@ import com.simibubi.create.AllPartialModels;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntityRenderer;
 import com.simibubi.create.content.kinetics.base.ShaftRenderer;
 import com.simibubi.create.content.kinetics.gauge.GaugeBlock.Type;
+import com.simibubi.create.foundation.render.CachedBufferer;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import net.createmod.catnip.api.client.render.SuperByteBuffer;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
 import net.createmod.catnip.api.data.Iterate;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -82,12 +82,11 @@ public class GaugeRenderer extends ShaftRenderer<GaugeBlockEntity, GaugeRenderer
 				.translate(0, dialPivot, dialPivot)
 				.rotate((float) (Math.PI / 2 * -progress), Direction.EAST)
 				.translate(0, -dialPivot, -dialPivot);
-			state.faces.add(dialBuffer.light(state.lightCoords)
-				.extractRenderState());
+			state.faces.add(SuperByteBufferRenderState.capture(dialBuffer.light(state.lightCoords)));
 
 			SuperByteBuffer headBuffer = CachedBufferer.partial(partialModel, gaugeState);
-			state.faces.add(rotateBufferTowards(headBuffer, facing).light(state.lightCoords)
-				.extractRenderState());
+			state.faces.add(SuperByteBufferRenderState.capture(
+				rotateBufferTowards(headBuffer, facing).light(state.lightCoords)));
 		}
 	}
 

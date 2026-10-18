@@ -1,18 +1,18 @@
 package com.simibubi.create.content.kinetics.speedController;
 
-import com.simibubi.create.foundation.render.CachedBufferer;
 import org.jspecify.annotations.Nullable;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.AllPartialModels;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntityRenderer;
+import com.simibubi.create.foundation.render.CachedBufferer;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import com.simibubi.create.foundation.blockEntity.renderer.SmartBlockEntityRenderer;
 
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import net.createmod.catnip.api.client.render.CachedBuffers;
 import net.createmod.catnip.api.client.render.SuperByteBuffer;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
@@ -50,9 +50,8 @@ public class SpeedControllerRenderer
 		state.bracket = null;
 
 		if (!VisualizationManager.supportsVisualization(be.getLevel()))
-			state.shaft = KineticBlockEntityRenderer
-				.standardKineticRotationTransform(getRotatedModel(be), be, state.lightCoords)
-				.extractRenderState();
+			state.shaft = SuperByteBufferRenderState.capture(KineticBlockEntityRenderer
+				.standardKineticRotationTransform(getRotatedModel(be), be, state.lightCoords));
 
 		if (!be.hasBracket)
 			return;
@@ -66,8 +65,8 @@ public class SpeedControllerRenderer
 		TransformStack.of(bracket.getTransforms())
 			.translate(0, 1, 0)
 			.rotateCentered((float) (alongX ? Math.PI : Math.PI / 2), Direction.UP);
-		state.bracket = bracket.light(LightCoordsUtil.getLightCoords(world, pos.above()))
-			.extractRenderState();
+		state.bracket = SuperByteBufferRenderState.capture(
+			bracket.light(LightCoordsUtil.getLightCoords(world, pos.above())));
 	}
 
 	@Override
