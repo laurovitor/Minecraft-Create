@@ -14,7 +14,7 @@ import dev.engine_room.flywheel.lib.instance.InstanceTypes;
 import dev.engine_room.flywheel.lib.instance.TransformedInstance;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import dev.engine_room.flywheel.lib.transform.Translate;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import net.createmod.catnip.api.math.VecHelper;
 import net.createmod.catnip.api.math.AngleHelper;
 import net.minecraft.client.renderer.SubmitNodeCollector;

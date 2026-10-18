@@ -13,7 +13,7 @@ import com.simibubi.create.content.logistics.depot.DepotRenderer;
 import com.simibubi.create.foundation.blockEntity.renderer.SmartBlockEntityRenderer;
 
 import dev.engine_room.flywheel.lib.transform.TransformStack;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider.Context;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
@@ -57,8 +57,7 @@ public class TableClothRenderer
 				: AllPartialModels.TABLE_CLOTH_PRICE_SIDE, be.getBlockState());
 			TransformStack.of(priceTag.getTransforms())
 				.rotateCentered(state.rotationInRadians, Direction.UP);
-			state.priceTag = priceTag.light(state.lightCoords)
-				.extractRenderState();
+			state.priceTag = SuperByteBufferRenderState.capture(priceTag.light(state.lightCoords));
 		}
 
 		for (ItemStack entry : be.getItemsForRender())

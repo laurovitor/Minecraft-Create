@@ -11,7 +11,7 @@ import com.simibubi.create.foundation.blockEntity.renderer.SmartBlockEntityRende
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
 import net.createmod.catnip.api.client.render.SuperByteBuffer;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
@@ -55,8 +55,7 @@ public class FunnelRenderer
 		state.funnelFacing = FunnelBlock.getFunnelFacing(blockState);
 		state.flapness = be.flap.getValue(partialTicks);
 		state.flapOffset = -be.getFlapOffset();
-		state.flap = flapBuffer.light(state.lightCoords)
-			.extractRenderState();
+		state.flap = SuperByteBufferRenderState.capture(flapBuffer.light(state.lightCoords));
 	}
 
 	@Override

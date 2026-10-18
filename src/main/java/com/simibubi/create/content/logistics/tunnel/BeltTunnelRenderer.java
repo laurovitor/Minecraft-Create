@@ -13,7 +13,7 @@ import com.simibubi.create.foundation.blockEntity.renderer.SmartBlockEntityRende
 
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import net.createmod.catnip.api.client.render.SuperByteBuffer;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import net.createmod.catnip.api.data.Iterate;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -61,8 +61,7 @@ public class BeltTunnelRenderer
 		// One extracted state serves every direction: the segments share geometry and differ only in
 		// the PoseStack they are submitted with.
 		SuperByteBuffer flapBuffer = CachedBufferer.partial(AllPartialModels.BELT_TUNNEL_FLAP, be.getBlockState());
-		state.flap = flapBuffer.light(state.lightCoords)
-			.extractRenderState();
+		state.flap = SuperByteBufferRenderState.capture(flapBuffer.light(state.lightCoords));
 	}
 
 	@Override
