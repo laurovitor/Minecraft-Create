@@ -28,7 +28,7 @@ public class CuboidBrush extends ShapedBrush {
 			positions = BlockPos
 				.betweenClosedStream(zero.offset((param0 - 1) / -2, (param1 - 1) / -2, (param2 - 1) / -2),
 					zero.offset((param0) / 2, (param1) / 2, (param2) / 2))
-				.map(BlockPos::new)
+				.map(BlockPos::immutable)
 				.collect(Collectors.toList());
 		}
 	}

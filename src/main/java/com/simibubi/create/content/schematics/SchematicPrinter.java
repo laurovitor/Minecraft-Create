@@ -115,8 +115,9 @@ public class SchematicPrinter {
 			return;
 		}
 
-		BlockPos extraBounds = StructureTemplate.calculateRelativePosition(settings, new BlockPos(activeTemplate.getSize())
-			.offset(-1, -1, -1));
+		var templateSize = activeTemplate.getSize();
+		BlockPos extraBounds = StructureTemplate.calculateRelativePosition(settings,
+			new BlockPos(templateSize.getX(), templateSize.getY(), templateSize.getZ()).offset(-1, -1, -1));
 		blockReader.setBounds(BBHelper.encapsulate(blockReader.getBounds(), extraBounds));
 
 		StructureTransform transform = new StructureTransform(settings.getRotationPivot(), Direction.Axis.Y,
