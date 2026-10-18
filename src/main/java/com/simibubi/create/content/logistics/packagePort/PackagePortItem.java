@@ -6,6 +6,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -17,11 +18,9 @@ public class PackagePortItem extends BlockItem {
 	}
 
 	@Override
-	protected boolean updateCustomBlockEntityTag(BlockPos pos, Level world, Player player, ItemStack p_195943_4_,
-		BlockState p_195943_5_) {
+	public void onBlockPlacedBy(BlockPlaceContext context, Level world, BlockPos pos, BlockState state, Player player, ItemStack stack) {
 		if (!world.isClientSide() && player instanceof ServerPlayer sp)
 			NetworkHelper.INSTANCE.sendToClient(sp, new PackagePortPlacementPacket.ClientBoundRequest(pos));
-		return super.updateCustomBlockEntityTag(pos, world, player, p_195943_4_, p_195943_5_);
 	}
 
 }

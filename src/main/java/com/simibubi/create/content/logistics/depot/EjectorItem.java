@@ -36,11 +36,9 @@ public class EjectorItem extends BlockItem implements BlockBreakingItem {
 	}
 
 	@Override
-	protected boolean updateCustomBlockEntityTag(BlockPos pos, Level world, Player player, ItemStack p_195943_4_,
-		BlockState p_195943_5_) {
+	public void onBlockPlacedBy(BlockPlaceContext context, Level world, BlockPos pos, BlockState state, Player player, ItemStack stack) {
 		if (!world.isClientSide() && player instanceof ServerPlayer sp)
 			NetworkHelper.INSTANCE.sendToClient(sp, new EjectorPlacementPacket.ClientBoundRequest(pos));
-		return super.updateCustomBlockEntityTag(pos, world, player, p_195943_4_, p_195943_5_);
 	}
 
 	public boolean canAttackBlock(BlockState state, Level world, BlockPos pos,

@@ -9,6 +9,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -30,11 +31,9 @@ public class ArmItem extends BlockItem implements BlockBreakingItem {
 	}
 
 	@Override
-	protected boolean updateCustomBlockEntityTag(BlockPos pos, Level world, Player player, ItemStack p_195943_4_,
-		BlockState p_195943_5_) {
+	public void onBlockPlacedBy(BlockPlaceContext context, Level world, BlockPos pos, BlockState state, Player player, ItemStack stack) {
 		if (!world.isClientSide() && player instanceof ServerPlayer sp)
 			NetworkHelper.INSTANCE.sendToClient(sp, new ArmPlacementPacket.ClientBoundRequest(pos));
-		return super.updateCustomBlockEntityTag(pos, world, player, p_195943_4_, p_195943_5_);
 	}
 
 	public boolean canAttackBlock(BlockState state, Level world, BlockPos pos, Player p_195938_4_) {
