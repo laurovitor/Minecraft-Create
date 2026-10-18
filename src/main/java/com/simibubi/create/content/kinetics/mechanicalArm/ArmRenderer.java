@@ -17,7 +17,7 @@ import dev.engine_room.flywheel.lib.model.baked.PartialModel;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import net.createmod.catnip.api.client.animation.AnimationTickHolder;
 import net.createmod.catnip.api.client.render.SuperByteBuffer;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import net.createmod.catnip.api.data.Iterate;
 import net.createmod.catnip.api.theme.Color;
 import net.minecraft.client.renderer.item.ItemModelResolver;
@@ -186,8 +186,8 @@ public class ArmRenderer extends KineticBlockEntityRenderer<ArmBlockEntity, ArmR
 			.light(light);
 		if (color != null)
 			buffer.color(color);
-		buffer.transform(msLocal);
-		return buffer.extractRenderState();
+		buffer.getTransforms().mulPose(msLocal.last().pose());
+		return SuperByteBufferRenderState.capture(buffer);
 	}
 
 	private void doItemTransforms(TransformStack msr, float baseAngle, float lowerArmAngle, float upperArmAngle,

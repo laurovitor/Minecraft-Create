@@ -8,7 +8,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.item.ItemModelResolver;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import com.simibubi.create.foundation.blockEntity.behaviour.filtering.FilteringRenderer.FilterRenderState;
 import org.jspecify.annotations.Nullable;
 import java.util.List;
@@ -146,10 +146,10 @@ public class DeployerRenderer
 		TransformStack.of(hand.getTransforms())
 			.translate(offset.x, offset.y, offset.z);
 
-		state.parts.add(transform(pole, blockState, true).light(state.lightCoords)
-			.extractRenderState());
-		state.parts.add(transform(hand, blockState, false).light(state.lightCoords)
-			.extractRenderState());
+		state.parts.add(SuperByteBufferRenderState.capture(
+			transform(pole, blockState, true).light(state.lightCoords)));
+		state.parts.add(SuperByteBufferRenderState.capture(
+			transform(hand, blockState, false).light(state.lightCoords)));
 	}
 
 	/**
