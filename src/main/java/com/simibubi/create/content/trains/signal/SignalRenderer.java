@@ -1,6 +1,7 @@
 package com.simibubi.create.content.trains.signal;
 
 import com.simibubi.create.foundation.render.CachedBufferer;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import org.jspecify.annotations.Nullable;
 
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -17,7 +18,6 @@ import com.simibubi.create.foundation.blockEntity.renderer.SafeBlockEntityRender
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import net.createmod.catnip.api.client.animation.AnimationTickHolder;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
@@ -71,13 +71,11 @@ public class SignalRenderer extends SafeBlockEntityRenderer<SignalBlockEntity, S
 
 		float renderTime = AnimationTickHolder.getRenderTime();
 		if (signalState.isRedLight(renderTime))
-			state.lamp = CachedBufferer.partial(AllPartialModels.SIGNAL_ON, blockState)
-				.light(FULL_BLOCK_LIGHT)
-				.extractRenderState();
+			state.lamp = SuperByteBufferRenderState.capture(CachedBufferer.partial(AllPartialModels.SIGNAL_ON, blockState)
+				.light(FULL_BLOCK_LIGHT));
 		else
-			state.lamp = CachedBufferer.partial(AllPartialModels.SIGNAL_OFF, blockState)
-				.light(state.lightCoords)
-				.extractRenderState();
+			state.lamp = SuperByteBufferRenderState.capture(CachedBufferer.partial(AllPartialModels.SIGNAL_OFF, blockState)
+				.light(state.lightCoords));
 
 		BlockPos pos = be.getBlockPos();
 		TrackTargetingBehaviour<SignalBoundary> target = be.edgePoint;

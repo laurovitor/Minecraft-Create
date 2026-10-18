@@ -1,13 +1,13 @@
 package com.simibubi.create.content.trains.station;
 
 import com.simibubi.create.foundation.render.CachedBufferer;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.core.Direction.AxisDirection;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.item.ItemModelResolver;
 import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
 import com.simibubi.create.content.trains.track.BezierTrackPointLocation;
 import org.jspecify.annotations.Nullable;
 import java.util.List;
@@ -137,10 +137,10 @@ public class StationRenderer extends SafeBlockEntityRenderer<StationBlockEntity,
 				ms.pushPose();
 				ms.translate(0, 0, i + 1);
 				SuperByteBuffer sbb = CachedBufferer.partial(assemblyOverlay, trackState);
-				sbb.transform(ms);
+				TransformStack.of(sbb.getTransforms()).transform(ms.last());
 				sbb.color(valid);
 				sbb.light(LightCoordsUtil.getLightCoords(level, currentPos));
-				state.assembly.add(new AssemblySlot(sbb.extractRenderState(), i + 1));
+				state.assembly.add(new AssemblySlot(SuperByteBufferRenderState.capture(sbb), i + 1));
 				ms.popPose();
 			}
 			currentPos.move(direction);
@@ -183,8 +183,7 @@ public class StationRenderer extends SafeBlockEntityRenderer<StationBlockEntity,
 		tr.translate(0.5f / 16, 0, 0)
 			.rotateYDegrees(be.flagFlipped ? 0 : 180)
 			.translate(-0.5f / 16, 0, 0);
-		return flagBB.light(light)
-			.extractRenderState();
+		return SuperByteBufferRenderState.capture(flagBB.light(light));
 	}
 
 	/**
