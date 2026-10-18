@@ -10,7 +10,7 @@ import com.simibubi.create.foundation.blockEntity.renderer.SafeBlockEntityRender
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import net.createmod.catnip.api.client.render.SuperByteBuffer;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import net.createmod.catnip.api.math.AngleHelper;
 import net.createmod.catnip.api.theme.Color;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -59,16 +59,14 @@ public class AnalogLeverRenderer
 			.translate(1 / 2f, 1 / 16f, 1 / 2f)
 			.rotate(angle, Direction.EAST)
 			.translate(-1 / 2f, -1 / 16f, -1 / 2f);
-		state.handle = handle.light(state.lightCoords)
-			.extractRenderState();
+		state.handle = SuperByteBufferRenderState.capture(handle.light(state.lightCoords));
 
 		// Indicator
 		int color = Color.mixColors(0x2C0300, 0xCD0000, value / 15f);
 		SuperByteBuffer indicator =
 			transform(CachedBufferer.partial(AllPartialModels.ANALOG_LEVER_INDICATOR, leverState), leverState);
-		state.indicator = indicator.light(state.lightCoords)
-			.color(color)
-			.extractRenderState();
+		state.indicator = SuperByteBufferRenderState.capture(indicator.light(state.lightCoords)
+			.color(color));
 	}
 
 	@Override

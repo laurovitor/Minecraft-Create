@@ -9,7 +9,7 @@ import com.simibubi.create.foundation.blockEntity.renderer.SmartBlockEntityRende
 
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import net.createmod.catnip.api.client.render.SuperByteBuffer;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import net.createmod.catnip.api.math.AngleHelper;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider.Context;
@@ -62,8 +62,7 @@ public class DeskBellRenderer
 			.rotateXDegrees(AngleHelper.verticalAngle(facing) + 90)
 			.uncenter()
 			.translate(0, f * -.75f / 16f, 0);
-		state.plunger = plunger.light(state.lightCoords)
-			.extractRenderState();
+		state.plunger = SuperByteBufferRenderState.capture(plunger.light(state.lightCoords));
 
 		SuperByteBuffer bell = CachedBufferer.partial(AllPartialModels.DESK_BELL_BELL, blockState);
 		TransformStack.of(bell.getTransforms())
@@ -76,8 +75,7 @@ public class DeskBellRenderer
 			.translate(0, 1 / 16, 0)
 			.scale(0.995f)
 			.uncenter();
-		state.bell = bell.light(state.lightCoords)
-			.extractRenderState();
+		state.bell = SuperByteBufferRenderState.capture(bell.light(state.lightCoords));
 	}
 
 	@Override

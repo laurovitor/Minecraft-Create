@@ -9,7 +9,7 @@ import com.simibubi.create.foundation.blockEntity.renderer.SafeBlockEntityRender
 import com.simibubi.create.foundation.render.RenderTypes;
 
 import dev.engine_room.flywheel.lib.transform.TransformStack;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import net.createmod.catnip.api.math.AngleHelper;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -58,16 +58,14 @@ public class LinkBulbRenderer
 		var tube = CachedBufferer.partial(AllPartialModels.DISPLAY_LINK_TUBE, blockState);
 		TransformStack.of(tube.getTransforms())
 			.translate(be.getBulbOffset(blockState));
-		state.tube = tube.light(LightCoordsUtil.FULL_BRIGHT)
-			.extractRenderState();
+		state.tube = SuperByteBufferRenderState.capture(tube.light(LightCoordsUtil.FULL_BRIGHT));
 
 		var bulb = CachedBufferer.partial(AllPartialModels.DISPLAY_LINK_GLOW, blockState);
 		TransformStack.of(bulb.getTransforms())
 			.translate(be.getBulbOffset(blockState));
-		state.glow = bulb.light(LightCoordsUtil.FULL_BRIGHT)
+		state.glow = SuperByteBufferRenderState.capture(bulb.light(LightCoordsUtil.FULL_BRIGHT)
 			.color(color, color, color, 255)
-			.disableDiffuse()
-			.extractRenderState();
+			.disableDiffuse());
 	}
 
 	@Override
