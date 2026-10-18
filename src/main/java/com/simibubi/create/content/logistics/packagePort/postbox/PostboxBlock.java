@@ -3,10 +3,7 @@ package com.simibubi.create.content.logistics.packagePort.postbox;
 import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.util.RandomSource;
-import org.jetbrains.annotations.NotNull;
 
-import com.mojang.serialization.MapCodec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.simibubi.create.AllBlockEntityTypes;
 import com.simibubi.create.AllShapes;
 import com.simibubi.create.content.equipment.wrench.IWrenchable;
@@ -25,7 +22,6 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition.Builder;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -38,11 +34,6 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class PostboxBlock extends HorizontalDirectionalBlock
 	implements IBE<PostboxBlockEntity>, IWrenchable, ProperWaterloggedBlock {
-	public static MapCodec<PostboxBlock> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-		BlockBehaviour.propertiesCodec(),
-		DyeColor.CODEC.fieldOf("color").forGetter(PostboxBlock::getColor)
-	).apply(instance, PostboxBlock::new));
-
 	public static final BooleanProperty OPEN = BlockStateProperties.OPEN;
 
 	protected final DyeColor color;
@@ -116,10 +107,5 @@ public class PostboxBlock extends HorizontalDirectionalBlock
 	public int getAnalogOutputSignal(BlockState pState, Level pLevel, BlockPos pPos, Direction direction) {
 		return getBlockEntityOptional(pLevel, pPos).map(pbe -> pbe.getComparatorOutput())
 			.orElse(0);
-	}
-	
-	@Override
-	protected @NotNull MapCodec<? extends HorizontalDirectionalBlock> codec() {
-		return CODEC;
 	}
 }
