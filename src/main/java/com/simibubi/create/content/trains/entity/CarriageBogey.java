@@ -19,7 +19,6 @@ import net.createmod.catnip.api.data.Couple;
 import net.createmod.catnip.api.data.Iterate;
 import net.createmod.catnip.api.math.AngleHelper;
 import net.createmod.catnip.api.math.VecHelper;
-import net.createmod.catnip.api.nbt.NBTHelper;
 import net.createmod.catnip.api.registry.RegisteredObjectsHelper;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -196,7 +195,7 @@ public class CarriageBogey {
 		tag.put("Points", points.serializeEach(tp -> tp.write(dimensions)));
 		tag.putBoolean("UpsideDown", upsideDown);
 		bogeyData.putBoolean(UPSIDE_DOWN_KEY, upsideDown);
-		NBTHelper.writeIdentifier(bogeyData, BOGEY_STYLE_KEY, getStyle().id);
+		bogeyData.putString(BOGEY_STYLE_KEY, getStyle().id.toString());
 		tag.put(BOGEY_DATA_KEY, bogeyData);
 		return tag;
 	}
@@ -212,7 +211,7 @@ public class CarriageBogey {
 	}
 
 	public BogeyStyle getStyle() {
-		Identifier location = NBTHelper.readIdentifier(this.bogeyData, BOGEY_STYLE_KEY);
+		Identifier location = Identifier.parse(this.bogeyData.getStringOr(BOGEY_STYLE_KEY, AllBogeyStyles.STANDARD.id.toString()));
 		BogeyStyle style = AllBogeyStyles.BOGEY_STYLES.get(location);
 		return style != null ? style : AllBogeyStyles.STANDARD; // just for safety
 	}
@@ -224,7 +223,7 @@ public class CarriageBogey {
 	private CompoundTag createBogeyData() {
 		BogeyStyle style = type != null ? type.getDefaultStyle() : AllBogeyStyles.STANDARD;
 		CompoundTag nbt = style.defaultData != null ? style.defaultData : new CompoundTag();
-		NBTHelper.writeIdentifier(nbt, BOGEY_STYLE_KEY, style.id);
+		nbt.putString(BOGEY_STYLE_KEY, style.id.toString());
 		nbt.putBoolean(UPSIDE_DOWN_KEY, isUpsideDown());
 		return nbt;
 	}

@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import com.simibubi.create.AllBogeyStyles;
 import com.simibubi.create.foundation.blockEntity.CachedRenderBBBlockEntity;
 
-import net.createmod.catnip.api.nbt.NBTHelper;
 import net.createmod.catnip.api.animation.LerpedFloat;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -40,7 +39,7 @@ public abstract class AbstractBogeyBlockEntity extends CachedRenderBBBlockEntity
 	public void setBogeyData(@NotNull CompoundTag newData) {
 		if (!newData.contains(BOGEY_STYLE_KEY)) {
 			Identifier style = getDefaultStyle().id;
-			NBTHelper.writeIdentifier(newData, BOGEY_STYLE_KEY, style);
+			newData.putString(BOGEY_STYLE_KEY, style.toString());
 		}
 		this.bogeyData = newData;
 	}
@@ -48,14 +47,14 @@ public abstract class AbstractBogeyBlockEntity extends CachedRenderBBBlockEntity
 	public void setBogeyStyle(@NotNull BogeyStyle style) {
 		Identifier location = style.id;
 		CompoundTag data = this.getBogeyData();
-		NBTHelper.writeIdentifier(data, BOGEY_STYLE_KEY, location);
+		data.putString(BOGEY_STYLE_KEY, location.toString());
 		markUpdated();
 	}
 
 	@NotNull
 	public BogeyStyle getStyle() {
 		CompoundTag data = this.getBogeyData();
-		Identifier currentStyle = NBTHelper.readIdentifier(data, BOGEY_STYLE_KEY);
+		Identifier currentStyle = Identifier.parse(data.getStringOr(BOGEY_STYLE_KEY, getDefaultStyle().id.toString()));
 		BogeyStyle style = AllBogeyStyles.BOGEY_STYLES.get(currentStyle);
 		if (style == null) {
 			setBogeyStyle(getDefaultStyle());
@@ -82,7 +81,7 @@ public abstract class AbstractBogeyBlockEntity extends CachedRenderBBBlockEntity
 
 	private CompoundTag createBogeyData() {
 		CompoundTag nbt = new CompoundTag();
-		NBTHelper.writeIdentifier(nbt, BOGEY_STYLE_KEY, getDefaultStyle().id);
+		nbt.putString(BOGEY_STYLE_KEY, getDefaultStyle().id.toString());
 		boolean upsideDown = false;
 		if (getBlockState().getBlock() instanceof AbstractBogeyBlock<?> bogeyBlock)
 			upsideDown = bogeyBlock.isUpsideDown(getBlockState());
