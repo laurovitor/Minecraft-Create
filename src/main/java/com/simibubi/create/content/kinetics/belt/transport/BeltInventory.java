@@ -442,7 +442,7 @@ public class BeltInventory {
 		ItemEntity entity = new ItemEntity(belt.getLevel(), outPos.x, outPos.y + 6 / 16f, outPos.z, ejected);
 		entity.setDeltaMovement(outMotion);
 		entity.setDefaultPickUpDelay();
-		entity.hurtMarked = true;
+		entity.syncVelocity = true;
 		belt.getLevel()
 			.addFreshEntity(entity);
 	}

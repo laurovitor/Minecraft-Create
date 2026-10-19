@@ -188,7 +188,7 @@ public class ItemDrainBlockEntity extends SmartBlockEntity implements IHaveGoggl
 					ItemEntity entity = new ItemEntity(level, outPos.x, outPos.y + 6 / 16f, outPos.z, ejected);
 					entity.setDeltaMovement(outMotion);
 					entity.setDefaultPickUpDelay();
-					entity.hurtMarked = true;
+					entity.syncVelocity = true;
 					level.addFreshEntity(entity);
 
 					heldItem = null;

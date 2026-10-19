@@ -196,7 +196,7 @@ public class BeltMovementHandler {
 			entityIn.setPos(entityIn.getX(), entityIn.getY() + movement.y, entityIn.getZ());
 		if (movedPastEndingSlope) {
 			entityIn.setDeltaMovement(movement);
-			entityIn.hurtMarked = true;
+			entityIn.syncVelocity = true;
 		}
 
 	}
