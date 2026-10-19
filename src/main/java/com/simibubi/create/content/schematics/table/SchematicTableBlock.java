@@ -1,6 +1,5 @@
 package com.simibubi.create.content.schematics.table;
 
-import com.mojang.serialization.MapCodec;
 import com.simibubi.create.AllBlockEntityTypes;
 import com.simibubi.create.AllShapes;
 import com.simibubi.create.foundation.block.IBE;
@@ -25,11 +24,9 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-import org.jetbrains.annotations.NotNull;
 
 public class SchematicTableBlock extends HorizontalDirectionalBlock implements IBE<SchematicTableBlockEntity> {
 
-	public static final MapCodec<SchematicTableBlock> CODEC = simpleCodec(SchematicTableBlock::new);
 
 	public SchematicTableBlock(Properties properties) {
 		super(properties);
@@ -86,9 +83,5 @@ public class SchematicTableBlock extends HorizontalDirectionalBlock implements I
 		return false;
 	}
 
-	@Override
-	protected @NotNull MapCodec<? extends HorizontalDirectionalBlock> codec() {
-		return CODEC;
-	}
 
 }

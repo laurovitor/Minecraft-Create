@@ -9,7 +9,6 @@ import java.util.UUID;
 import org.jetbrains.annotations.NotNull;
 
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.MapCodec;
 import com.simibubi.create.AllBlockEntityTypes;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllShapes;
@@ -69,7 +68,6 @@ import net.neoforged.neoforge.common.NeoForge;
 
 public class FactoryPanelBlock extends FaceAttachedHorizontalDirectionalBlock
 	implements ProperWaterloggedBlock, IBE<FactoryPanelBlockEntity>, IWrenchable, SpecialBlockItemRequirement {
-    public static final MapCodec<FactoryPanelBlock> CODEC = simpleCodec(FactoryPanelBlock::new);
 
 	public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
 
@@ -390,8 +388,4 @@ public class FactoryPanelBlock extends FaceAttachedHorizontalDirectionalBlock
 		return ItemRequirement.NONE;
 	}
 
-	@Override
-	protected @NotNull MapCodec<? extends FaceAttachedHorizontalDirectionalBlock> codec() {
-		return CODEC;
-	}
 }

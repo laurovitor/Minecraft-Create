@@ -3,9 +3,7 @@ package com.simibubi.create.content.kinetics.crusher;
 import net.minecraft.world.entity.InsideBlockEffectApplier;
 import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.LevelReader;
-import org.jetbrains.annotations.NotNull;
 
-import com.mojang.serialization.MapCodec;
 import com.simibubi.create.AllBlockEntityTypes;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllShapes;
@@ -54,7 +52,6 @@ public class CrushingWheelControllerBlock extends DirectionalBlock implements En
 
 	public static final BooleanProperty VALID = BooleanProperty.create("valid");
 
-	public static final MapCodec<CrushingWheelControllerBlock> CODEC = simpleCodec(CrushingWheelControllerBlock::new);
 
 	@Override
 	public boolean canBeReplaced(BlockState state, BlockPlaceContext useContext) {
@@ -225,8 +222,4 @@ public class CrushingWheelControllerBlock extends DirectionalBlock implements En
 		return false;
 	}
 
-	@Override
-	protected @NotNull MapCodec<? extends DirectionalBlock> codec() {
-		return CODEC;
-	}
 }

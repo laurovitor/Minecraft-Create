@@ -3,9 +3,7 @@ package com.simibubi.create.content.fluids.pipes;
 import net.minecraft.world.level.ScheduledTickAccess;
 import org.jspecify.annotations.Nullable;
 import net.minecraft.world.level.redstone.Orientation;
-import org.jetbrains.annotations.NotNull;
 
-import com.mojang.serialization.MapCodec;
 import com.simibubi.create.AllBlockEntityTypes;
 import com.simibubi.create.AllShapes;
 import com.simibubi.create.content.equipment.wrench.IWrenchable;
@@ -43,7 +41,6 @@ import net.minecraft.world.ticks.TickPriority;
 public class SmartFluidPipeBlock extends FaceAttachedHorizontalDirectionalBlock
 	implements IBE<SmartFluidPipeBlockEntity>, IAxisPipe, IWrenchable, ProperWaterloggedBlock {
 
-	public static final MapCodec<SmartFluidPipeBlock> CODEC = simpleCodec(SmartFluidPipeBlock::new);
 
 	public SmartFluidPipeBlock(Properties p_i48339_1_) {
 		super(p_i48339_1_);
@@ -183,9 +180,5 @@ public class SmartFluidPipeBlock extends FaceAttachedHorizontalDirectionalBlock
 		return  AllBlockEntityTypes.SMART_FLUID_PIPE.get();
 	}
 
-	@Override
-	protected @NotNull MapCodec<? extends FaceAttachedHorizontalDirectionalBlock> codec() {
-		return CODEC;
-	}
 
 }
