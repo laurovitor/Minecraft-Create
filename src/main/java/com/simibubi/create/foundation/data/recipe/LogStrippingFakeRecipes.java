@@ -15,7 +15,6 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.tags.ItemTags;
-import net.minecraft.world.item.AxeItem;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -23,7 +22,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeHolder;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.Block;
 
 /**
  * Just in case players don't know about that vanilla feature
@@ -47,13 +46,14 @@ public class LogStrippingFakeRecipes {
 	private static void process(Item item, List<RecipeHolder<ManualApplicationRecipe>> list, ItemStack axe) {
 		if (!(item instanceof BlockItem blockItem))
 			return;
-		BlockState state = blockItem.getBlock()
-			.defaultBlockState();
-		BlockState strippedState = AxeItem.getAxeStrippingState(state);
-		if (strippedState == null)
+		// 26.3 stores axe transformations in a dynamic registry; fake recipe generation
+		// has no level to evaluate it, so resolve the conventional stripped block ID.
+		Identifier sourceId = BuiltInRegistries.BLOCK.getKey(blockItem.getBlock());
+		Identifier strippedId = Identifier.fromNamespaceAndPath(sourceId.getNamespace(), "stripped_" + sourceId.getPath());
+		Block strippedBlock = BuiltInRegistries.BLOCK.getValue(strippedId);
+		if (strippedBlock == null || strippedBlock == net.minecraft.world.level.block.Blocks.AIR)
 			return;
-		Item resultItem = strippedState.getBlock()
-			.asItem();
+		Item resultItem = strippedBlock.asItem();
 		if (resultItem == null)
 			return;
 		list.add(create(item, resultItem, axe));

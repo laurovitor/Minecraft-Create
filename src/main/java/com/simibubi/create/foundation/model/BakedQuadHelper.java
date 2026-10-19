@@ -92,8 +92,8 @@ public final class BakedQuadHelper {
 		BakedQuad.MaterialInfo info = quad.materialInfo();
 		return new BakedQuad(quad.position0(), quad.position1(), quad.position2(), quad.position3(), quad.packedUV0(),
 			quad.packedUV1(), quad.packedUV2(), quad.packedUV3(), quad.direction(),
-			new BakedQuad.MaterialInfo(sprite, info.layer(), info.itemRenderType(), info.tintIndex(), info.shade(),
-				info.lightEmission(), info.ambientOcclusion()),
+			new BakedQuad.MaterialInfo(sprite, info.layer(), info.itemRenderType(), info.itemGlintRenderType(), info.itemGlintSpecialRenderType(),
+				info.tintIndex(), info.shadeDirectionOverride(), info.lightEmission(), info.ambientOcclusion()),
 			quad.bakedNormals(), quad.bakedColors());
 	}
 
@@ -109,8 +109,8 @@ public final class BakedQuadHelper {
 			return quad;
 		return new BakedQuad(quad.position0(), quad.position1(), quad.position2(), quad.position3(), quad.packedUV0(),
 			quad.packedUV1(), quad.packedUV2(), quad.packedUV3(), quad.direction(),
-			new BakedQuad.MaterialInfo(info.sprite(), info.layer(), info.itemRenderType(), info.tintIndex(),
-				info.shade(), MAX_LIGHT_EMISSION, info.ambientOcclusion()),
+			new BakedQuad.MaterialInfo(info.sprite(), info.layer(), info.itemRenderType(), info.itemGlintRenderType(),
+				info.itemGlintSpecialRenderType(), info.tintIndex(), info.shadeDirectionOverride(), MAX_LIGHT_EMISSION, info.ambientOcclusion()),
 			quad.bakedNormals(), quad.bakedColors());
 	}
 

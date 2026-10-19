@@ -42,6 +42,7 @@ import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.resources.Identifier;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.level.BlockGetter;
@@ -59,18 +60,21 @@ public class WindowGen {
 	private static final CreateRegistrate REGISTRATE = Create.registrate();
 
 	private static Properties glassProperties(Properties p) {
-		return p.isValidSpawn(WindowGen::never)
+		return p.isValidSpawn(WindowGen::neverSpawn)
 			.isRedstoneConductor(WindowGen::never)
 			.isSuffocating(WindowGen::never)
-			.isViewBlocking(WindowGen::never);
+			.isViewBlocking(WindowGen::neverViewBlocking);
 	}
 
 	private static boolean never(BlockState p_235436_0_, BlockGetter p_235436_1_, BlockPos p_235436_2_) {
 		return false;
 	}
 
-	private static Boolean never(BlockState p_235427_0_, BlockGetter p_235427_1_, BlockPos p_235427_2_,
-								 EntityType<?> p_235427_3_) {
+	private static Boolean neverSpawn(BlockState state, BlockGetter level, BlockPos pos, EntityType<?> entityType) {
+		return false;
+	}
+
+	private static Boolean neverViewBlocking(BlockState state, BlockGetter level, BlockPos pos, AABB nearPlaneBox) {
 		return false;
 	}
 
