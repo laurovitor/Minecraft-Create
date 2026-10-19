@@ -1,5 +1,6 @@
 package com.simibubi.create.content.contraptions.elevator;
 
+import com.simibubi.create.foundation.utility.EnumNbt;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -14,7 +15,6 @@ import com.simibubi.create.foundation.utility.BlockHelper;
 import net.createmod.catnip.api.data.Couple;
 import net.createmod.catnip.api.data.IntAttached;
 import net.createmod.catnip.api.data.WorldAttached;
-import net.createmod.catnip.api.nbt.NBTHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -215,14 +215,14 @@ public class ElevatorColumn {
 			CompoundTag tag = new CompoundTag();
 			tag.putInt("X", x);
 			tag.putInt("Z", z);
-			NBTHelper.writeEnum(tag, "Side", side);
+			EnumNbt.write(tag, "Side", side);
 			return tag;
 		}
 
 		public static ColumnCoords read(CompoundTag tag) {
 			int x = tag.getIntOr("X", 0);
 			int z = tag.getIntOr("Z", 0);
-			Direction side = NBTHelper.readEnum(tag, "Side", Direction.class);
+			Direction side = EnumNbt.read(tag, "Side", Direction.class);
 			return new ColumnCoords(x, z, side);
 		}
 

@@ -1,10 +1,10 @@
 package com.simibubi.create.content.decoration.slidingDoor;
 
+import com.simibubi.create.foundation.utility.EnumNbt;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BehaviourType;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 
-import net.createmod.catnip.api.nbt.NBTHelper;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 
@@ -28,13 +28,13 @@ public class DoorControlBehaviour extends BlockEntityBehaviour {
 
 	@Override
 	public void write(CompoundTag nbt, HolderLookup.Provider registries, boolean clientPacket) {
-		NBTHelper.writeEnum(nbt, "DoorControl", mode);
+		EnumNbt.write(nbt, "DoorControl", mode);
 		super.write(nbt, registries, clientPacket);
 	}
 
 	@Override
 	public void read(CompoundTag nbt, HolderLookup.Provider registries, boolean clientPacket) {
-		mode = NBTHelper.readEnum(nbt, "DoorControl", DoorControl.class);
+		mode = EnumNbt.read(nbt, "DoorControl", DoorControl.class);
 		super.read(nbt, registries, clientPacket);
 	}
 

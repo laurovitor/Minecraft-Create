@@ -1,5 +1,6 @@
 package com.simibubi.create.content.contraptions.bearing;
 
+import com.simibubi.create.foundation.utility.EnumNbt;
 import java.util.HashSet;
 import java.util.Queue;
 import java.util.Set;
@@ -11,7 +12,6 @@ import com.simibubi.create.api.contraption.ContraptionType;
 import com.simibubi.create.content.contraptions.AssemblyException;
 import com.simibubi.create.content.contraptions.Contraption;
 
-import net.createmod.catnip.api.nbt.NBTHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -108,14 +108,14 @@ public class ClockworkContraption extends Contraption {
 		CompoundTag tag = super.writeNBT(registries, spawnPacket);
 		tag.putInt("facing", facing.get3DDataValue());
 		tag.putInt("offset", offset);
-		NBTHelper.writeEnum(tag, "HandType", handType);
+		EnumNbt.write(tag, "HandType", handType);
 		return tag;
 	}
 
 	@Override
 	public void readNBT(Level world, CompoundTag tag, boolean spawnData) {
 		facing = Direction.from3DDataValue(tag.getIntOr("facing", 0));
-		handType = NBTHelper.readEnum(tag, "HandType", HandType.class);
+		handType = EnumNbt.read(tag, "HandType", HandType.class);
 		offset = tag.getIntOr("offset", 0);
 		super.readNBT(world, tag, spawnData);
 	}

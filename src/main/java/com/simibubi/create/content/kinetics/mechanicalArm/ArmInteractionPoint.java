@@ -1,5 +1,6 @@
 package com.simibubi.create.content.kinetics.mechanicalArm;
 
+import com.simibubi.create.foundation.utility.EnumNbt;
 import net.neoforged.neoforge.transfer.transaction.Transaction;
 import net.neoforged.neoforge.transfer.ResourceHandler;
 import net.neoforged.neoforge.transfer.item.ItemResource;
@@ -148,11 +149,11 @@ public class ArmInteractionPoint {
 	}
 
 	protected void serialize(CompoundTag nbt, BlockPos anchor) {
-		NBTHelper.writeEnum(nbt, "Mode", mode);
+		EnumNbt.write(nbt, "Mode", mode);
 	}
 
 	protected void deserialize(CompoundTag nbt, BlockPos anchor) {
-		mode = NBTHelper.readEnum(nbt, "Mode", Mode.class);
+		mode = EnumNbt.read(nbt, "Mode", Mode.class);
 	}
 
 	public final CompoundTag serialize(BlockPos anchor) {

@@ -1,5 +1,6 @@
 package com.simibubi.create.content.kinetics.clock;
 
+import com.simibubi.create.foundation.utility.EnumNbt;
 import com.simibubi.create.foundation.utility.WorldClocks;
 import java.util.List;
 
@@ -12,7 +13,6 @@ import net.createmod.catnip.api.client.animation.AnimationTickHolder;
 import net.createmod.catnip.api.animation.LerpedFloat;
 import net.createmod.catnip.api.animation.LerpedFloat.Chaser;
 import net.createmod.catnip.api.math.VecHelper;
-import net.createmod.catnip.api.nbt.NBTHelper;
 import net.minecraft.world.entity.animal.pig.PigSoundVariants;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -55,7 +55,7 @@ public class CuckooClockBlockEntity extends KineticBlockEntity {
 	protected void read(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
 		super.read(compound, registries, clientPacket);
 		if (clientPacket && compound.contains("Animation")) {
-			animationType = NBTHelper.readEnum(compound, "Animation", Animation.class);
+			animationType = EnumNbt.read(compound, "Animation", Animation.class);
 			animationProgress.startWithValue(0);
 		}
 	}
@@ -63,7 +63,7 @@ public class CuckooClockBlockEntity extends KineticBlockEntity {
 	@Override
 	public void write(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
 		if (clientPacket && sendAnimationUpdate)
-			NBTHelper.writeEnum(compound, "Animation", animationType);
+			EnumNbt.write(compound, "Animation", animationType);
 		sendAnimationUpdate = false;
 		super.write(compound, registries, clientPacket);
 	}
