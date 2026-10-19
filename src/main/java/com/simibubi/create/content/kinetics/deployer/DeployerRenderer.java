@@ -38,7 +38,6 @@ import dev.engine_room.flywheel.lib.transform.TransformStack;
 import net.createmod.catnip.api.client.animation.AnimationTickHolder;
 import net.createmod.catnip.api.math.AngleHelper;
 import net.createmod.catnip.api.math.VecHelper;
-import net.createmod.catnip.api.nbt.NBTHelper;
 import net.createmod.catnip.api.client.render.CachedBuffers;
 import net.createmod.catnip.api.client.render.SuperByteBuffer;
 import net.minecraft.client.Minecraft;
@@ -215,7 +214,12 @@ public class DeployerRenderer
 	public static void extractInContraption(MovementContext context, VirtualRenderWorld renderWorld,
 		ContraptionMatrices matrices, List<ActorGeometry> out) {
 		BlockState blockState = context.state;
-		Mode mode = NBTHelper.readEnum(context.blockEntityData, "Mode", Mode.class);
+		Mode mode;
+		try {
+			mode = Mode.valueOf(context.blockEntityData.getStringOr("Mode", Mode.USE.name()));
+		} catch (IllegalArgumentException ignored) {
+			mode = Mode.USE;
+		}
 		PartialModel handPose = getHandPose(mode);
 
 		float speed = (float) context.getAnimationSpeed();
@@ -257,15 +261,15 @@ public class DeployerRenderer
 			.rotateYDegrees(axis == Direction.Axis.Z ? 90 : 0)
 			.rotateZDegrees(axis.isHorizontal() ? 90 : 0)
 			.uncenter();
-		shaft.transform(m);
+		shaft.getTransforms().mulPose(m.last().pose());
 		TransformStack.of(shaft.getTransforms())
 			.rotateCentered(angle, Direction.get(AxisDirection.POSITIVE, Direction.Axis.Y));
 		m.popPose();
 
 		if (!context.disabled)
 			m.translate(offset.x, offset.y, offset.z);
-		pole.transform(m);
-		hand.transform(m);
+		pole.getTransforms().mulPose(m.last().pose());
+		hand.getTransforms().mulPose(m.last().pose());
 
 		transform(pole, blockState, true);
 		transform(hand, blockState, false);

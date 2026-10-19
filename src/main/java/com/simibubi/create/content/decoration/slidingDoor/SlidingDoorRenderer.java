@@ -1,6 +1,7 @@
 package com.simibubi.create.content.decoration.slidingDoor;
 
 import com.simibubi.create.foundation.render.CachedBufferer;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,7 +13,6 @@ import dev.engine_room.flywheel.lib.model.baked.PartialModel;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import net.createmod.catnip.api.client.render.CachedBuffers;
 import net.createmod.catnip.api.client.render.SuperByteBuffer;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
 import net.createmod.catnip.api.data.Couple;
 import net.createmod.catnip.api.data.Iterate;
 import net.createmod.catnip.api.math.AngleHelper;
@@ -93,8 +93,7 @@ public class SlidingDoorRenderer
 				if (flip)
 					msr.translate(0, 0, -1 / 2f);
 
-				state.parts.add(partial.light(state.lightCoords)
-					.extractRenderState());
+				state.parts.add(SuperByteBufferRenderState.capture(partial.light(state.lightCoords)));
 			}
 
 			return;
@@ -106,8 +105,7 @@ public class SlidingDoorRenderer
 			TransformStack.of(partial.getTransforms())
 				.translate(0, half == DoubleBlockHalf.UPPER ? 1 - 1 / 512f : 0, 0)
 				.translate(offset);
-			state.parts.add(partial.light(state.lightCoords)
-				.extractRenderState());
+			state.parts.add(SuperByteBufferRenderState.capture(partial.light(state.lightCoords)));
 		}
 	}
 
