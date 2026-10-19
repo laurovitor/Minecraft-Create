@@ -31,11 +31,12 @@ public class ControlsRenderer {
 		SuperByteBuffer cover = CachedBufferer.partial(AllPartialModels.TRAIN_CONTROLS_COVER, state);
 		float hAngle = 180 + AngleHelper.horizontalAngle(facing);
 		PoseStack ms = matrices.getModel();
-		cover.transform(ms)
+		cover.getTransforms().mulPose(ms.last().pose());
+		TransformStack.of(cover.getTransforms())
 			.center()
 			.rotateYDegrees(hAngle)
-			.uncenter()
-			.light(LightCoordsUtil.getLightCoords(renderWorld, context.localPos))
+			.uncenter();
+		cover.light(LightCoordsUtil.getLightCoords(renderWorld, context.localPos))
 			.useLevelLight(RenderLevels.lightSource(context.world, renderWorld), matrices.getWorld());
 		out.add(ActorGeometry.of(matrices.getViewProjection(), cover, RenderTypes.cutoutMovingBlock()));
 
@@ -55,8 +56,8 @@ public class ControlsRenderer {
 				.uncenter()
 				.translate(0, -6 / 16f, -3 / 16f)
 				.translate(first ? 0 : 6 / 16f, 0, 0);
-			lever.transform(ms)
-				.light(LightCoordsUtil.getLightCoords(renderWorld, context.localPos))
+			lever.getTransforms().mulPose(ms.last().pose());
+			lever.light(LightCoordsUtil.getLightCoords(renderWorld, context.localPos))
 				.useLevelLight(RenderLevels.lightSource(context.world, renderWorld), matrices.getWorld());
 			out.add(ActorGeometry.of(matrices.getViewProjection(), lever, RenderTypes.solidMovingBlock()));
 			ms.popPose();

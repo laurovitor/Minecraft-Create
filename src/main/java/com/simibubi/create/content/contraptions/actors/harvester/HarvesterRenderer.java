@@ -75,7 +75,7 @@ public class HarvesterRenderer
 		if (context.contraption.stalled)
 			speed = 0;
 
-		superBuffer.transform(matrices.getModel());
+		superBuffer.getTransforms().mulPose(matrices.getModel().last().pose());
 		transform(context.world, facing, superBuffer, speed, PIVOT);
 
 		superBuffer.light(LightCoordsUtil.getLightCoords(renderWorld, context.localPos))

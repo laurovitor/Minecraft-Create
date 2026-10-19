@@ -96,7 +96,7 @@ public class RollerRenderer extends SmartBlockEntityRenderer<RollerBlockEntity, 
 		if (context.contraption.stalled)
 			speed = 0;
 
-		superBuffer.transform(matrices.getModel());
+		superBuffer.getTransforms().mulPose(matrices.getModel().last().pose());
 		TransformStack.of(superBuffer.getTransforms())
 			.translate(Vec3.atLowerCornerOf(facing.getUnitVec3i())
 				.scale(17 / 16f));
@@ -115,7 +115,7 @@ public class RollerRenderer extends SmartBlockEntityRenderer<RollerBlockEntity, 
 		viewProjection.popPose();
 
 		SuperByteBuffer frame = CachedBufferer.partial(AllPartialModels.ROLLER_FRAME, blockState);
-		frame.transform(matrices.getModel());
+		frame.getTransforms().mulPose(matrices.getModel().last().pose());
 		TransformStack.of(frame.getTransforms())
 			.rotateCentered(AngleHelper.rad(AngleHelper.horizontalAngle(facing) + 180), Direction.UP);
 		frame.light(contraptionWorldLight)

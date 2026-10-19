@@ -5,6 +5,7 @@ import org.joml.Matrix4f;
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.createmod.catnip.api.client.render.SuperByteBuffer;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.rendertype.RenderType;
 
@@ -49,7 +50,7 @@ public interface ActorGeometry {
 	}
 
 	static ActorGeometry of(SuperByteBuffer buffer, RenderType renderType) {
-		var state = buffer.extractRenderState();
+		var state = SuperByteBufferRenderState.capture(buffer);
 		return (ms, queue) -> state.submit(ms, renderType, queue);
 	}
 

@@ -17,6 +17,7 @@ import com.simibubi.create.foundation.virtualWorld.VirtualRenderWorld;
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
+import dev.engine_room.flywheel.lib.transform.TransformStack;
 import java.util.List;
 import net.createmod.catnip.api.client.animation.AnimationTickHolder;
 import net.createmod.catnip.api.client.render.SuperByteBuffer;
@@ -61,8 +62,8 @@ public class StabilizedBearingActorClient implements MovementBehaviourClient {
 
 		orientation = rotation;
 
-		superBuffer.transform(matrices.getModel());
-		superBuffer.rotateCentered(orientation);
+		superBuffer.getTransforms().mulPose(matrices.getModel().last().pose());
+		TransformStack.of(superBuffer.getTransforms()).rotateCentered(orientation);
 
 		// render
 		superBuffer.light(LightCoordsUtil.getLightCoords(renderWorld, context.localPos))
