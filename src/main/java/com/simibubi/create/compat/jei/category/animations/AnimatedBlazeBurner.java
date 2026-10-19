@@ -1,6 +1,7 @@
 package com.simibubi.create.compat.jei.category.animations;
 
 import com.simibubi.create.foundation.render.CachedBufferer;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import org.joml.Matrix3x2fStack;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import com.simibubi.create.AllBlocks;
@@ -77,10 +78,10 @@ public class AnimatedBlazeBurner extends AnimatedKinetics {
 		// pushed onto the pose stack are part of that pass, leaving the offset to be handed over.
 		float uScrollF = (float) uScroll;
 		float vScrollF = (float) vScroll;
-		sceneGeometry(graphics, scale, 0, -1.8, 0, (poseStack, queue) -> CachedBufferer
+		sceneGeometry(graphics, scale, 0, -1.8, 0, (poseStack, queue) -> SuperByteBufferRenderState.capture(CachedBufferer
 			.partial(AllPartialModels.BLAZE_BURNER_FLAME, Blocks.AIR.defaultBlockState())
 			.shiftUVScrolling(spriteShift, uScrollF, vScrollF)
-			.light(LightCoordsUtil.FULL_BRIGHT)
+			.light(LightCoordsUtil.FULL_BRIGHT))
 			.submit(poseStack, RenderTypes.cutoutMovingBlock(), queue));
 
 		matrixStack.popMatrix();

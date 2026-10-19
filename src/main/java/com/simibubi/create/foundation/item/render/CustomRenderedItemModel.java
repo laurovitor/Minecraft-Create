@@ -6,6 +6,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.renderer.item.ItemModelResolver;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
+import net.minecraft.client.resources.model.geometry.ItemQuads;
 import net.minecraft.world.entity.ItemOwner;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
@@ -47,8 +48,7 @@ public class CustomRenderedItemModel implements ItemModel {
 			return;
 		}
 		for (int i = before; i < after; i++)
-			layers.create$getLayers()[i].prepareQuadList()
-				.clear();
+			layers.create$getLayers()[i].setQuads(ItemQuads.EMPTY);
 		ItemStackRenderState.LayerRenderState layer = layers.create$getLayers()[after - 1];
 
 		if (item.hasFoil())

@@ -141,6 +141,14 @@ public abstract class AbstractSimiContainerScreen<T extends AbstractContainerMen
 		}
 	}
 
+	public int getGuiLeft() {
+		return leftPos;
+	}
+
+	public int getGuiTop() {
+		return topPos;
+	}
+
 	public int getLeftOfCentered(int textureWidth) {
 		return leftPos - windowXOffset + (imageWidth - textureWidth) / 2;
 	}
