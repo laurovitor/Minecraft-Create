@@ -190,7 +190,7 @@ public class CarriageContraption extends Contraption {
 	@Override
 	public CompoundTag writeNBT(HolderLookup.Provider registries, boolean spawnPacket) {
 		CompoundTag tag = super.writeNBT(registries, spawnPacket);
-		NBTHelper.writeEnum(tag, "AssemblyDirection", getAssemblyDirection());
+		tag.putString("AssemblyDirection", getAssemblyDirection().name());
 		tag.putBoolean("FrontControls", forwardControls);
 		tag.putBoolean("BackControls", backwardControls);
 		tag.putBoolean("FrontBlazeConductor", blockConductors.getFirst());
@@ -211,7 +211,7 @@ public class CarriageContraption extends Contraption {
 
 	@Override
 	public void readNBT(Level world, CompoundTag nbt, boolean spawnData) {
-		assemblyDirection = NBTHelper.readEnum(nbt, "AssemblyDirection", Direction.class);
+		assemblyDirection = Direction.valueOf(nbt.getStringOr("AssemblyDirection", Direction.NORTH.name()));
 		forwardControls = nbt.getBooleanOr("FrontControls", false);
 		backwardControls = nbt.getBooleanOr("BackControls", false);
 		blockConductors =

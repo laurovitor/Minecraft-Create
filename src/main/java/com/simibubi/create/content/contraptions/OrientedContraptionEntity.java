@@ -160,7 +160,7 @@ public class OrientedContraptionEntity extends AbstractContraptionEntity {
 		super.readAdditional(compound, spawnPacket);
 
 		if (compound.contains("InitialOrientation"))
-			setInitialOrientation(NBTHelper.readEnum(compound, "InitialOrientation", Direction.class));
+			setInitialOrientation(Direction.valueOf(compound.getStringOr("InitialOrientation", Direction.UP.name())));
 
 		yaw = compound.getFloatOr("Yaw", 0);
 		pitch = compound.getFloatOr("Pitch", 0);
@@ -190,7 +190,7 @@ public class OrientedContraptionEntity extends AbstractContraptionEntity {
 		Direction optional = entityData.get(INITIAL_ORIENTATION);
 		if (optional.getAxis()
 			.isHorizontal())
-			NBTHelper.writeEnum(compound, "InitialOrientation", optional);
+			compound.putString("InitialOrientation", optional.name());
 		if (forceAngle) {
 			compound.putFloat("ForceYaw", yaw);
 			forceAngle = false;

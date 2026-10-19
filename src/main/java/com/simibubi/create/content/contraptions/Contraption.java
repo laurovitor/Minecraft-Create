@@ -78,6 +78,7 @@ import com.simibubi.create.foundation.blockEntity.behaviour.filtering.FilteringB
 import com.simibubi.create.foundation.collision.CollisionList;
 import com.simibubi.create.foundation.collision.CollisionList.Populate;
 import com.simibubi.create.foundation.utility.BlockHelper;
+import com.simibubi.create.foundation.utility.RegistryNbt;
 import com.simibubi.create.infrastructure.config.AllConfigs;
 
 import it.unimi.dsi.fastutil.objects.Object2BooleanArrayMap;
@@ -96,6 +97,7 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.DoubleTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
@@ -767,7 +769,8 @@ public abstract class Contraption {
 				getActors().add(MutablePair.of(info, context));
 			});
 
-		disabledActors = NBTHelper.readItemList(nbt.getListOrEmpty("DisabledActors"), world.registryAccess());
+		disabledActors = new ArrayList<>(nbt.read("DisabledActors", ItemStack.OPTIONAL_CODEC.listOf(),
+			RegistryNbt.ops(world.registryAccess())).orElse(List.of()));
 		for (ItemStack stack : disabledActors)
 			setActorsActive(stack, false);
 
@@ -802,8 +805,12 @@ public abstract class Contraption {
 				interactors.put(pos, behaviour);
 		});
 
-		if (nbt.contains("BoundsFront"))
-			bounds = NBTHelper.readAABB(nbt.getListOrEmpty("BoundsFront"));
+		if (nbt.contains("BoundsFront")) {
+			ListTag bb = nbt.getListOrEmpty("BoundsFront");
+			if (bb.size() == 6)
+				bounds = new AABB(bb.getDoubleOr(0, 0), bb.getDoubleOr(1, 0), bb.getDoubleOr(2, 0),
+					bb.getDoubleOr(3, 0), bb.getDoubleOr(4, 0), bb.getDoubleOr(5, 0));
+		}
 
 		stalled = nbt.getBooleanOr("Stalled", false);
 		hasUniversalCreativeCrate = nbt.getBooleanOr("BottomlessSupply", false);
@@ -846,8 +853,6 @@ public abstract class Contraption {
 			actorsNBT.add(compound);
 		}
 
-		ListTag disabledActorsNBT = NBTHelper.writeItemList(disabledActors, registries);
-
 		ListTag superglueNBT = new ListTag();
 		if (!spawnPacket) {
 			for (AABB glueEntry : superglue) {
@@ -888,7 +893,7 @@ public abstract class Contraption {
 		nbt.put("Blocks", blocksNBT);
 		nbt.put("Actors", actorsNBT);
 		nbt.put("CapturedMultiblocks", multiblocksNBT);
-		nbt.put("DisabledActors", disabledActorsNBT);
+		nbt.store("DisabledActors", ItemStack.OPTIONAL_CODEC.listOf(), RegistryNbt.ops(registries), disabledActors);
 		nbt.put("Interactors", interactorNBT);
 		nbt.put("Superglue", superglueNBT);
 		nbt.store("Anchor", BlockPos.CODEC, anchor);
@@ -896,7 +901,13 @@ public abstract class Contraption {
 		nbt.putBoolean("BottomlessSupply", hasUniversalCreativeCrate);
 
 		if (bounds != null) {
-			ListTag bb = NBTHelper.writeAABB(bounds);
+			ListTag bb = new ListTag();
+			bb.add(DoubleTag.valueOf(bounds.minX));
+			bb.add(DoubleTag.valueOf(bounds.minY));
+			bb.add(DoubleTag.valueOf(bounds.minZ));
+			bb.add(DoubleTag.valueOf(bounds.maxX));
+			bb.add(DoubleTag.valueOf(bounds.maxY));
+			bb.add(DoubleTag.valueOf(bounds.maxZ));
 			nbt.put("BoundsFront", bb);
 		}
 
