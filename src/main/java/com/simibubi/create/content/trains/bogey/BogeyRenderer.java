@@ -3,8 +3,7 @@ package com.simibubi.create.content.trains.bogey;
 import java.util.List;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.nbt.CompoundTag;

@@ -6,12 +6,12 @@ import dev.engine_room.flywheel.api.model.Model;
 import dev.engine_room.flywheel.lib.material.LightShaders;
 import dev.engine_room.flywheel.lib.material.SimpleMaterial;
 import dev.engine_room.flywheel.lib.model.ModelUtil;
-import dev.engine_room.flywheel.lib.model.baked.BakedModelBuilder;
+import dev.engine_room.flywheel.lib.model.baked.BlockModelBuilder;
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
 import dev.engine_room.flywheel.lib.util.RendererReloadCache;
 
 public class SpecialModels {
-	private static final RendererReloadCache<Key, Model> FLAT = new RendererReloadCache<>(it -> new BakedModelBuilder(it.partial.get())
+	private static final RendererReloadCache<Key, Model> FLAT = new RendererReloadCache<>(it -> new BlockModelBuilder(it.partial.get())
 		.materialFunc((renderType, shaded, ao) -> {
 			var material = ModelUtil.getMaterial(renderType, shaded, ao);
 			if (material == null) {

@@ -1,12 +1,13 @@
 package com.simibubi.create.content.trains.bogey;
 
-import com.simibubi.create.foundation.render.CachedBufferer;
 import java.util.List;
 
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllPartialModels;
 import com.simibubi.create.AllSpriteShifts;
 import com.simibubi.create.content.kinetics.simpleRelays.ShaftBlock;
+import com.simibubi.create.foundation.render.CachedBufferer;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import net.createmod.catnip.api.client.render.CachedBuffers;
@@ -29,8 +30,7 @@ public class StandardBogeyRenderer implements BogeyRenderer {
 	 * fetched fresh per iteration - one extracted state holds exactly one transform.
 	 */
 	protected static void add(List<Part> out, SuperByteBuffer buffer, int light) {
-		out.add(new Part(buffer.light(light)
-			.extractRenderState(), RENDER_TYPE));
+		out.add(new Part(SuperByteBufferRenderState.capture(buffer.light(light)), RENDER_TYPE));
 	}
 
 	@Override
