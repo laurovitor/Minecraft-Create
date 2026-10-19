@@ -7,8 +7,6 @@ import java.util.Optional;
 
 import org.jetbrains.annotations.Nullable;
 
-
-import com.mojang.serialization.MapCodec;
 import com.simibubi.create.AllBlockEntityTypes;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllItems;
@@ -52,8 +50,6 @@ public class ElevatorContactBlock extends WrenchableDirectionalBlock
 	public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
 	public static final BooleanProperty CALLING = BooleanProperty.create("calling");
 	public static final BooleanProperty POWERING = BrassDiodeBlock.POWERING;
-
-	public static final MapCodec<ElevatorContactBlock> CODEC = simpleCodec(ElevatorContactBlock::new);
 
 	public ElevatorContactBlock(Properties pProperties) {
 		super(pProperties);
@@ -202,13 +198,6 @@ public class ElevatorContactBlock extends WrenchableDirectionalBlock
 	}
 
 	@Override
-	public boolean canConnectRedstone(BlockState state, BlockGetter world, BlockPos pos, @Nullable Direction side) {
-		if (side == null)
-			return true;
-		return state.getValue(FACING) != side.getOpposite();
-	}
-
-	@Override
 	public int getSignal(BlockState state, BlockGetter blockAccess, BlockPos pos, Direction side) {
 		if (side == null)
 			return 0;
@@ -240,7 +229,6 @@ public class ElevatorContactBlock extends WrenchableDirectionalBlock
 		PlatformHelper.INSTANCE.executeOnClientOnly(() -> () -> withBlockEntityDo(level, pos, be -> ElevatorContactBlockClient.displayScreen(be, player)));
 		return InteractionResult.SUCCESS;
 	}
-
 
 	public static int getLight(BlockState state) {
 		return state.getValue(POWERING) ? 10 : 0;

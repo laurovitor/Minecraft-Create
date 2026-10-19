@@ -3,7 +3,6 @@ package com.simibubi.create.content.contraptions.actors.trainControls;
 import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.util.RandomSource;
-import com.mojang.serialization.MapCodec;
 import com.simibubi.create.AllShapes;
 import com.simibubi.create.content.contraptions.ContraptionWorld;
 import com.simibubi.create.content.equipment.wrench.IWrenchable;
@@ -24,14 +23,10 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-import org.jetbrains.annotations.NotNull;
-
 public class ControlsBlock extends HorizontalDirectionalBlock implements IWrenchable, ProperWaterloggedBlock {
 
 	public static final BooleanProperty OPEN = BooleanProperty.create("open");
 	public static final BooleanProperty VIRTUAL = BooleanProperty.create("virtual");
-
-	public static final MapCodec<ControlsBlock> CODEC = simpleCodec(ControlsBlock::new);
 
 	public ControlsBlock(Properties p_54120_) {
 		super(p_54120_);
@@ -79,10 +74,5 @@ public class ControlsBlock extends HorizontalDirectionalBlock implements IWrench
 	public VoxelShape getCollisionShape(BlockState pState, BlockGetter pLevel, BlockPos pPos,
 		CollisionContext pContext) {
 		return AllShapes.CONTROLS_COLLISION.get(pState.getValue(FACING));
-	}
-
-	@Override
-	protected @NotNull MapCodec<? extends HorizontalDirectionalBlock> codec() {
-		return CODEC;
 	}
 }

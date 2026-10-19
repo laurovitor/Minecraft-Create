@@ -3,7 +3,6 @@ package com.simibubi.create.content.redstone.contact;
 import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.LevelReader;
 import org.jspecify.annotations.NullMarked;
-import org.jetbrains.annotations.Nullable;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.content.contraptions.elevator.ElevatorColumn;
 import com.simibubi.create.content.contraptions.elevator.ElevatorColumn.ColumnCoords;
@@ -129,11 +128,6 @@ public class RedstoneContactBlock extends WrenchableDirectionalBlock {
 	@Override
 	public boolean isSignalSource(BlockState state) {
 		return state.getValue(POWERED);
-	}
-
-	@Override
-	public boolean canConnectRedstone(BlockState state, BlockGetter world, BlockPos pos, @Nullable Direction side) {
-		return side != null && state.getValue(FACING) != side.getOpposite();
 	}
 
 	@Override

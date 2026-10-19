@@ -2,7 +2,6 @@ package com.simibubi.create.content.contraptions.actors.contraptionControls;
 
 import org.jspecify.annotations.Nullable;
 import net.minecraft.world.level.redstone.Orientation;
-import com.mojang.serialization.MapCodec;
 import com.simibubi.create.AllBlockEntityTypes;
 import com.simibubi.create.AllShapes;
 import com.simibubi.create.AllSoundEvents;
@@ -23,11 +22,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-import org.jetbrains.annotations.NotNull;
-
 public class ContraptionControlsBlock extends ControlsBlock implements IBE<ContraptionControlsBlockEntity> {
-
-	public static final MapCodec<ContraptionControlsBlock> CODEC = simpleCodec(ContraptionControlsBlock::new);
 
 	public ContraptionControlsBlock(Properties pProperties) {
 		super(pProperties);
@@ -73,10 +68,5 @@ public class ContraptionControlsBlock extends ControlsBlock implements IBE<Contr
 	@Override
 	public BlockEntityType<? extends ContraptionControlsBlockEntity> getBlockEntityType() {
 		return AllBlockEntityTypes.CONTRAPTION_CONTROLS.get();
-	}
-
-	@Override
-	protected @NotNull MapCodec<? extends HorizontalDirectionalBlock> codec() {
-		return CODEC;
 	}
 }

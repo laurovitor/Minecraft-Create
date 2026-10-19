@@ -8,9 +8,6 @@ import static net.minecraft.world.level.block.state.properties.BlockStatePropert
 
 import java.util.function.Predicate;
 
-import org.jetbrains.annotations.NotNull;
-
-import com.mojang.serialization.MapCodec;
 import com.simibubi.create.AllBlockEntityTypes;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllShapes;
@@ -58,8 +55,6 @@ public class SteamEngineBlock extends FaceAttachedHorizontalDirectionalBlock
 	implements SimpleWaterloggedBlock, IWrenchable, IBE<SteamEngineBlockEntity> {
 
 	private static final IPlacementHelper placementHelper = PlacementHelpers.register(new PlacementHelper());
-
-	public static final MapCodec<SteamEngineBlock> CODEC = simpleCodec(SteamEngineBlock::new);
 
 	public SteamEngineBlock(Properties properties) {
 		super(properties);
@@ -217,11 +212,6 @@ public class SteamEngineBlock extends FaceAttachedHorizontalDirectionalBlock
 
 	public static Direction getConnectedDirection(BlockState state) {
 		return FaceAttachedHorizontalDirectionalBlock.getConnectedDirection(state);
-	}
-
-	@Override
-	protected @NotNull MapCodec<? extends FaceAttachedHorizontalDirectionalBlock> codec() {
-		return CODEC;
 	}
 
 }
