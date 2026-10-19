@@ -1,6 +1,7 @@
 package com.simibubi.create.content.decoration.steamWhistle;
 
 import com.simibubi.create.foundation.render.CachedBufferer;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import org.jspecify.annotations.Nullable;
 
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -12,7 +13,6 @@ import dev.engine_room.flywheel.lib.model.baked.PartialModel;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import net.createmod.catnip.api.client.animation.AnimationTickHolder;
 import net.createmod.catnip.api.client.render.SuperByteBuffer;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
 import net.createmod.catnip.api.math.AngleHelper;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -64,8 +64,7 @@ public class WhistleRenderer extends SafeBlockEntityRenderer<WhistleBlockEntity,
 			.rotateYDegrees(AngleHelper.horizontalAngle(direction))
 			.uncenter()
 			.translate(0, offset * 4 / 16f, 0);
-		state.mouth = buffer.light(state.lightCoords)
-			.extractRenderState();
+		state.mouth = SuperByteBufferRenderState.capture(buffer.light(state.lightCoords));
 	}
 
 	@Override

@@ -1,6 +1,7 @@
 package com.simibubi.create.content.equipment.armor;
 
 import com.simibubi.create.foundation.render.CachedBufferer;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import org.jspecify.annotations.Nullable;
 
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -12,7 +13,6 @@ import dev.engine_room.flywheel.lib.model.baked.PartialModel;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import net.createmod.catnip.api.client.animation.AnimationTickHolder;
 import net.createmod.catnip.api.client.render.SuperByteBuffer;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
 import net.createmod.catnip.api.math.AngleHelper;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -53,8 +53,7 @@ public class BacktankRenderer
 			.rotate(AngleHelper.rad(be.getSpeed() / 4f * AnimationTickHolder.getRenderTime() % 360),
 				Direction.EAST)
 			.translate(0, -6.5f / 16, -11f / 16);
-		state.cogs = cogs.light(state.lightCoords)
-			.extractRenderState();
+		state.cogs = SuperByteBufferRenderState.capture(cogs.light(state.lightCoords));
 	}
 
 	@Override
