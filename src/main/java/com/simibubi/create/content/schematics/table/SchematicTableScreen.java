@@ -22,7 +22,7 @@ import com.simibubi.create.foundation.utility.CreateLang;
 import com.simibubi.create.foundation.utility.CreatePaths;
 
 import net.createmod.catnip.api.client.gui.element.GuiGameElement;
-import net.minecraft.util.Util;
+import com.mojang.blaze3d.Blaze3D;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.CommonComponents;
@@ -98,7 +98,7 @@ public class SchematicTableScreen extends AbstractSimiContainerScreen<SchematicT
 
 		folderButton = new IconButton(x + 20, y + 21, AllIcons.I_OPEN_FOLDER);
 		folderButton.withCallback(() -> {
-			Util.getPlatform().openFile(CreatePaths.SCHEMATICS_DIR.toFile());
+			Blaze3D.openPath(CreatePaths.SCHEMATICS_DIR);
 		});
 		folderButton.setToolTip(folder);
 		refreshButton = new IconButton(x + 206, y + 21, AllIcons.I_REFRESH);

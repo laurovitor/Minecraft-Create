@@ -35,8 +35,8 @@ public class RotateTool extends PlacementToolBase {
 			.disableLineNormals()
 			.colored(0xdddddd)
 			.lineWidth(1 / 16f);
-		line.set(start, end)
-			.submit(ms, queue, Vec3.ZERO, AnimationTickHolder.getPartialTicks());
+		line.set(start, end);
+		submitOutline(line, ms, queue, AnimationTickHolder.getPartialTicks());
 
 		super.submitOnSchematic(ms, queue);
 	}

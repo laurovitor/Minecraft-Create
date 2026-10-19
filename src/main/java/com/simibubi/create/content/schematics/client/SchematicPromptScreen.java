@@ -96,7 +96,6 @@ public class SchematicPromptScreen extends AbstractSimiScreen {
 	@Override
 	public boolean keyPressed(KeyEvent event) {
 		int keyCode = event.key();
-		int p_keyPressed_2_ = event.scancode();
 		int p_keyPressed_3_ = event.modifiers();
 		if (keyCode == InputConstants.KEY_RETURN) {
 			confirm(false);

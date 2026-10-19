@@ -12,6 +12,7 @@ import java.util.List;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.foundation.render.BlockEntityRenderHelper;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 
 import net.createmod.catnip.api.client.level.wrapper.WrappedClientLevel;
 import net.createmod.catnip.api.client.animation.AnimationTickHolder;
@@ -65,7 +66,7 @@ public class SchematicRenderer {
 		changed = false;
 
 		if (buffer != null && !buffer.isEmpty())
-			buffer.submit(ms, RenderTypes.solidMovingBlock(), queue);
+			SuperByteBufferRenderState.capture(buffer).submit(ms, RenderTypes.solidMovingBlock(), queue);
 
 		scratchErroredBlockEntities.clear();
 		float pt = AnimationTickHolder.getPartialTicks();

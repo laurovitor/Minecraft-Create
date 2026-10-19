@@ -68,7 +68,7 @@ public class DeployTool extends PlacementToolBase {
 			.translateBack(origin);
 
 		AABBOutline outline = schematicHandler.getOutline();
-		outline.submit(ms, queue, Vec3.ZERO, pt);
+		submitOutline(outline, ms, queue, pt);
 		outline.getParams()
 			.clearTextures();
 		ms.popPose();

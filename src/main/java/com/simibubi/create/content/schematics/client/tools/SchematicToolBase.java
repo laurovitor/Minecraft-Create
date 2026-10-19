@@ -13,6 +13,8 @@ import com.simibubi.create.foundation.utility.RaycastHelper.PredicateTraceResult
 import net.createmod.catnip.api.client.animation.AnimationTickHolder;
 import net.createmod.catnip.api.math.VecHelper;
 import net.createmod.catnip.api.client.outliner.AABBOutline;
+import net.createmod.catnip.api.client.outliner.Outline;
+import net.createmod.catnip.api.client.render.DefaultSuperRenderTypeBuffer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -140,10 +142,16 @@ public abstract class SchematicToolBase implements ISchematicTool {
 			.colored(0x6886c5)
 			.withFaceTexture(AllSpecialTextures.CHECKERED)
 			.lineWidth(1 / 16f);
-		outline.submit(ms, queue, Vec3.ZERO, AnimationTickHolder.getPartialTicks());
+		submitOutline(outline, ms, queue, AnimationTickHolder.getPartialTicks());
 		outline.getParams()
 			.clearTextures();
 		ms.popPose();
+	}
+
+	protected static void submitOutline(Outline outline, PoseStack ms, SubmitNodeCollector queue, float partialTicks) {
+		DefaultSuperRenderTypeBuffer buffer = new DefaultSuperRenderTypeBuffer(queue);
+		outline.render(ms, buffer, Vec3.ZERO, partialTicks);
+		buffer.draw();
 	}
 
 }
