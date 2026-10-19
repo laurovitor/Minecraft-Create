@@ -26,22 +26,26 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.HoneycombItem;
 import net.minecraft.world.item.ItemUseAnimation;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.LevelEvent;
+import net.minecraft.world.level.block.WeatheringCopper;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
-import net.neoforged.neoforge.common.ItemAbilities;
 import net.neoforged.neoforge.common.ItemAbility;
 
 @NullMarked
 public class SandPaperItem extends Item {
+
+	private static final ItemAbility AXE_SCRAPE = ItemAbility.get("axe_scrape");
+	private static final ItemAbility AXE_WAX_OFF = ItemAbility.get("axe_wax_off");
 
 	public SandPaperItem(Properties properties) {
 		// Enchantability is a component in 26.2 rather than an override.
@@ -171,12 +175,19 @@ public class SandPaperItem extends Item {
 		BlockPos pos = context.getClickedPos();
 		BlockState state = level.getBlockState(pos);
 
-		BlockState newState = state.getToolModifiedState(context, ItemAbilities.AXE_SCRAPE, false);
+		BlockState newState = state.getToolModifiedState(context, AXE_SCRAPE, false);
+		if (newState == null)
+			newState = WeatheringCopper.getPrevious(state).orElse(null);
 		if (newState != null) {
 			AllSoundEvents.SANDING_LONG.play(level, player, pos, 1, 1 + (level.getRandom().nextFloat() * 0.5f - 1f) / 5f);
 			level.levelEvent(player, LevelEvent.PARTICLES_SCRAPE, pos, 0); // Spawn particles
 		} else {
-			newState = state.getToolModifiedState(context, ItemAbilities.AXE_WAX_OFF, false);
+			newState = state.getToolModifiedState(context, AXE_WAX_OFF, false);
+			if (newState == null) {
+				var unwaxed = HoneycombItem.WAX_OFF_BY_BLOCK.get().get(state.getBlock());
+				if (unwaxed != null)
+					newState = unwaxed.withPropertiesOf(state);
+			}
 			if (newState != null) {
 				AllSoundEvents.SANDING_LONG.play(level, player, pos, 1,
 					1 + (level.getRandom().nextFloat() * 0.5f - 1f) / 5f);
@@ -196,7 +207,7 @@ public class SandPaperItem extends Item {
 
 	@Override
 	public boolean canPerformAction(ItemInstance stack, ItemAbility itemAbility) {
-		return itemAbility == ItemAbilities.AXE_SCRAPE || itemAbility == ItemAbilities.AXE_WAX_OFF;
+		return itemAbility == AXE_SCRAPE || itemAbility == AXE_WAX_OFF;
 	}
 
 	/**

@@ -4,14 +4,13 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.player.AvatarRenderer;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.player.PlayerModelPart;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.item.ItemDisplayContext;
@@ -76,10 +75,11 @@ public abstract class ShootableGadgetRenderHandler {
 			return;
 
 		Minecraft mc = Minecraft.getInstance();
-		AbstractClientPlayer player = mc.player;
-		AvatarRenderer<AbstractClientPlayer> playerrenderer = mc.getEntityRenderDispatcher()
-			.getPlayerRenderer(player);
-		ItemInHandRenderer firstPersonRenderer = mc.getEntityRenderDispatcher().getItemInHandRenderer();
+		LocalPlayer player = mc.player;
+		if (player == null)
+			return;
+		var avatarState = event.getPlayerState().avatarRenderState;
+		AvatarRenderer<?> playerrenderer = mc.getEntityRenderDispatcher().getRenderer(avatarState);
 
 		PoseStack ms = event.getPoseStack();
 		SubmitNodeCollector buffer = event.getSubmitNodeCollector();
@@ -98,7 +98,7 @@ public abstract class ShootableGadgetRenderHandler {
 
 		// Render arm
 		ms.pushPose();
-		Identifier skin = player.getSkin()
+		Identifier skin = avatarState.skin
 			.body()
 			.texturePath();
 
@@ -123,10 +123,10 @@ public abstract class ShootableGadgetRenderHandler {
 		transformHand(ms, flip, equipProgress, recoil, pt);
 		if (rightHand)
 			playerrenderer.renderRightHand(ms, buffer, light, skin,
-				player.isModelPartShown(PlayerModelPart.RIGHT_SLEEVE));
+				avatarState.showRightSleeve);
 		else
 			playerrenderer.renderLeftHand(ms, buffer, light, skin,
-				player.isModelPartShown(PlayerModelPart.LEFT_SLEEVE));
+				avatarState.showLeftSleeve);
 		ms.popPose();
 
 		// Render gadget
@@ -135,9 +135,11 @@ public abstract class ShootableGadgetRenderHandler {
 		ms.mulPose(new org.joml.Matrix4f().rotation(Axis.YP.rotationDegrees(flip * f6 * 70.0F)));
 		ms.mulPose(new org.joml.Matrix4f().rotation(Axis.ZP.rotationDegrees(flip * f5 * -20.0F)));
 		transformTool(ms, flip, equipProgress, recoil, pt);
-		firstPersonRenderer.renderItem(mc.player, heldItem,
-			rightHand ? ItemDisplayContext.FIRST_PERSON_RIGHT_HAND : ItemDisplayContext.FIRST_PERSON_LEFT_HAND, ms,
-			buffer, light);
+		ItemStackRenderState itemState = new ItemStackRenderState();
+		mc.getItemModelResolver().updateForTopItem(itemState, heldItem,
+			rightHand ? ItemDisplayContext.FIRST_PERSON_RIGHT_HAND : ItemDisplayContext.FIRST_PERSON_LEFT_HAND,
+			player.level(), player, 0);
+		itemState.submit(ms, buffer, light, OverlayTexture.NO_OVERLAY, 0);
 		ms.popPose();
 
 		event.setCanceled(true);
