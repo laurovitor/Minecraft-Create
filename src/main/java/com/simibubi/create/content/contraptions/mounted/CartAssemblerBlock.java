@@ -9,7 +9,6 @@ import org.jetbrains.annotations.Nullable;
 
 import org.jetbrains.annotations.NotNull;
 
-import com.mojang.serialization.MapCodec;
 import com.simibubi.create.foundation.block.MinecartPassBlock;
 import com.simibubi.create.AllBlockEntityTypes;
 import com.simibubi.create.AllBlocks;
@@ -73,8 +72,6 @@ public class CartAssemblerBlock extends BaseRailBlock
 		EnumProperty.create("shape", RailShape.class, RailShape.EAST_WEST, RailShape.NORTH_SOUTH);
 	public static final Property<CartAssembleRailType> RAIL_TYPE =
 		EnumProperty.create("rail_type", CartAssembleRailType.class);
-
-	public static final MapCodec<CartAssemblerBlock> CODEC = simpleCodec(CartAssemblerBlock::new);
 
 	public CartAssemblerBlock(Properties properties) {
 		super(true, properties);
@@ -374,10 +371,5 @@ public class CartAssemblerBlock extends BaseRailBlock
 		default:
 			return Direction.NORTH;
 		}
-	}
-
-	@Override
-	protected @NotNull MapCodec<? extends BaseRailBlock> codec() {
-		return CODEC;
 	}
 }

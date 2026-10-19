@@ -12,11 +12,7 @@ import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition.Builder;
 
-import org.jetbrains.annotations.NotNull;
-
 public class WrenchableDirectionalBlock extends DirectionalBlock implements IWrenchable {
-
-	public static final MapCodec<WrenchableDirectionalBlock> CODEC = simpleCodec(WrenchableDirectionalBlock::new);
 
 	public WrenchableDirectionalBlock(Properties properties) {
 		super(properties);
@@ -56,9 +52,8 @@ public class WrenchableDirectionalBlock extends DirectionalBlock implements IWre
 		return state.rotate(mirrorIn.getRotation(state.getValue(FACING)));
 	}
 
-	@Override
-	protected @NotNull MapCodec<? extends DirectionalBlock> codec() {
-		return CODEC;
+	// Retained for subclasses with legacy codec overrides; DirectionalBlock no longer declares this hook.
+	protected MapCodec<? extends DirectionalBlock> codec() {
+		return MapCodec.unit(this);
 	}
-
 }

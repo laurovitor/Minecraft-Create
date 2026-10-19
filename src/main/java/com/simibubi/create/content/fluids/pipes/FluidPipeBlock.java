@@ -10,9 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.world.InteractionResult;
 
-import org.jetbrains.annotations.NotNull;
 
-import com.mojang.serialization.MapCodec;
 import com.simibubi.create.AllBlockEntityTypes;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.api.contraption.transformable.TransformableBlock;
@@ -63,8 +61,6 @@ public class FluidPipeBlock extends PipeBlock implements SimpleWaterloggedBlock,
 	IBE<FluidPipeBlockEntity>, EncasableBlock, TransformableBlock {
 
 	private static final VoxelShape OCCLUSION_BOX = Block.box(4, 4, 4, 12, 12, 12);
-
-	public static final MapCodec<FluidPipeBlock> CODEC = simpleCodec(FluidPipeBlock::new);
 
 	public FluidPipeBlock(Properties properties) {
 		// Eight pixels across, centred: the same 4 to 12 core as the occlusion box below. PipeBlock used
@@ -356,10 +352,5 @@ public class FluidPipeBlock extends PipeBlock implements SimpleWaterloggedBlock,
 	@Override
 	public BlockState transform(BlockState state, StructureTransform transform) {
 		return FluidPipeBlockRotation.transform(state, transform);
-	}
-
-	@Override
-	protected @NotNull MapCodec<? extends PipeBlock> codec() {
-		return CODEC;
 	}
 }
