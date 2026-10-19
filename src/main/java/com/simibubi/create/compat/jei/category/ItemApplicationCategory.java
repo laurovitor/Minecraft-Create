@@ -89,7 +89,7 @@ public class ItemApplicationCategory extends CreateRecipeCategory<ItemApplicatio
 		// element instead of being pushed around it.
 		GuiGameElement.of(state)
 			.lighting(AnimatedKinetics.DEFAULT_LIGHTING)
-			.viewRotate(-15.5, 22.5, 0)
+			.rotate(-15.5, 22.5, 0)
 			.scale(scale)
 			.submit(graphics);
 

@@ -14,6 +14,7 @@ import com.simibubi.create.content.equipment.symmetryWand.mirror.SymmetryMirror;
 import com.simibubi.create.content.equipment.symmetryWand.mirror.TriplePlaneMirror;
 import com.simibubi.create.foundation.gui.AllGuiTextures;
 import com.simibubi.create.foundation.gui.AllIcons;
+import com.simibubi.create.foundation.gui.render.GuiScene;
 import com.simibubi.create.foundation.gui.widget.IconButton;
 import com.simibubi.create.foundation.gui.widget.Label;
 import com.simibubi.create.foundation.gui.widget.ScrollInput;
@@ -22,6 +23,7 @@ import com.simibubi.create.foundation.utility.CreateLang;
 
 import com.simibubi.create.foundation.gui.AbstractSimiScreen;
 import net.createmod.catnip.api.client.gui.element.GuiGameElement;
+import net.createmod.catnip.api.client.gui.ILightingSettings;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
@@ -141,13 +143,12 @@ public class SymmetryWandScreen extends AbstractSimiScreen {
 	protected void renderBlock(GuiGraphicsExtractor graphics, int x, int y) {
 		Matrix3x2fStack ms = graphics.pose();
 
-		GuiGameElement.of(currentElement.getModel()
-			.get())
-			.rotateBlock(0, currentElement.getModelYRotation(), 0)
-			.rotate(-22.5f * .3f, -22.5f, 0)
-			.scale(16)
-			.at(x + 26, y + 39)
-			.submit(graphics);
+		ms.pushMatrix();
+		ms.translate(x + 26, y + 39);
+		GuiScene.submit(graphics, 16, -22.5f * .3f, -22.5f, ILightingSettings.ITEMS_3D,
+			(ps, collector) -> GuiScene.part(ps, collector, currentElement.getModel().get(), null,
+				0, 0, 0, 0, currentElement.getModelYRotation(), 0));
+		ms.popMatrix();
 	}
 
 	@Override

@@ -8,10 +8,11 @@ import com.simibubi.create.content.logistics.filter.FilterScreenPacket;
 import com.simibubi.create.content.logistics.filter.FilterScreenPacket.Option;
 import com.simibubi.create.foundation.gui.AllGuiTextures;
 import com.simibubi.create.foundation.gui.AllIcons;
+import com.simibubi.create.foundation.gui.render.GuiScene;
 import com.simibubi.create.foundation.gui.menu.AbstractSimiContainerScreen;
 import com.simibubi.create.foundation.gui.widget.IconButton;
 import com.simibubi.create.foundation.utility.CreateLang;
-import net.createmod.catnip.api.client.gui.element.GuiGameElement;
+import net.createmod.catnip.api.client.gui.ILightingSettings;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.Rect2i;
@@ -75,11 +76,14 @@ public class BlueprintScreen extends AbstractSimiContainerScreen<BlueprintMenu> 
 		background.render(graphics, x, y);
 		graphics.text(font, title, x + 15, y + 4, 0xFFFFFFFF, false);
 
-		GuiGameElement.of(AllPartialModels.CRAFTING_BLUEPRINT_1x1.get()).<GuiGameElement
-			.GuiRenderBuilder>at(x + background.getWidth() + 20, y + background.getHeight() - 32, 0)
-			.rotate(45, -45, 22.5f)
-			.scale(40)
-			.submit(graphics);
+		// A partial model must enter the 26.3 GUI render state through a scene.
+		var pose = graphics.pose();
+		pose.pushMatrix();
+		pose.translate(x + background.getWidth() + 20, y + background.getHeight() - 32);
+		GuiScene.submit(graphics, 40, 45, -45, ILightingSettings.ITEMS_3D,
+			(ps, collector) -> GuiScene.partSpun(ps, collector, AllPartialModels.CRAFTING_BLUEPRINT_1x1.get(),
+				null, 0, 0, 0, 0, 0, 22.5f));
+		pose.popMatrix();
 	}
 
 	@Override

@@ -91,12 +91,12 @@ public abstract class ProcessingViaFanCategory<T extends Recipe<?>> extends Crea
 	}
 
 	/**
-	 * Applies the angle this scene is viewed from. 26.2's GUI transform stack is two-dimensional, so
+	 * Applies the angle this scene is viewed from. 26.3's GUI transform stack is two-dimensional, so
 	 * the rotation is handed to each element instead of being pushed around the scene as a whole -
 	 * subclasses drawing the block beside the fan have to go through here as well.
 	 */
 	protected static GuiGameElement.GuiRenderBuilder viewRotated(GuiGameElement.GuiRenderBuilder element) {
-		return element.viewRotate(-12.5, 22.5, 0);
+		return element.rotate(-12.5, 22.5, 0);
 	}
 
 	protected abstract void renderAttachedBlock(GuiGraphicsExtractor graphics);
