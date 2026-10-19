@@ -274,7 +274,7 @@ public class CarriageSounds {
 		private static final SubtitleOverlay OVERLAY = ((HudAccessor) Minecraft.getInstance().gui.hud).create$getSubtitleOverlay();
 
 		private final boolean repeatSubtitle;
-		private final WeighedSoundEvents weighedSoundEvents = this.resolve(Minecraft.getInstance().getSoundManager());
+		private final WeighedSoundEvents weighedSoundEvents = this.getOrResolve(Minecraft.getInstance().getSoundManager());
 		private byte subtitleTimer = 0;
 
 		protected LoopingSound(SoundEvent soundEvent, SoundSource source) {

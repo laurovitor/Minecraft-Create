@@ -12,7 +12,6 @@ import com.simibubi.create.foundation.virtualWorld.VirtualRenderWorld;
 import dev.engine_room.flywheel.api.visual.DynamicVisual;
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
-import dev.engine_room.flywheel.lib.util.RecyclingPoseStack;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate.StructureBlockInfo;
@@ -20,7 +19,7 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemp
 public class CarriageContraptionVisual extends ContraptionVisual<CarriageContraptionEntity> {
 	public static final int MAX_NUM_BOGEYS = 2;
 
-	private final PoseStack poseStack = new RecyclingPoseStack();
+	private final PoseStack poseStack = new PoseStack();
 
 	private final CarriageContraption contraption;
 

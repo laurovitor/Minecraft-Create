@@ -213,7 +213,7 @@ public class FlapDisplayBlockEntity extends KineticBlockEntity {
 
 		for (int j = 0; j < colour.length; j++)
 			if (colour[j] != null)
-				NBTHelper.writeEnum(tag, "Dye" + j, colour[j]);
+				tag.putString("Dye" + j, colour[j].name());
 
 		List<FlapDisplayLayout> lines = getLines();
 		for (int i = 0; i < lines.size(); i++)
@@ -241,7 +241,7 @@ public class FlapDisplayBlockEntity extends KineticBlockEntity {
 
 		colour = new DyeColor[ySize * 2];
 		for (int i = 0; i < ySize * 2; i++)
-			colour[i] = tag.contains("Dye" + i) ? NBTHelper.readEnum(tag, "Dye" + i, DyeColor.class) : null;
+			colour[i] = tag.contains("Dye" + i) ? DyeColor.valueOf(tag.getStringOr("Dye" + i, "WHITE")) : null;
 
 		if (clientPacket && wasActive != isController || prevX != xSize || prevY != ySize) {
 			invalidateRenderBoundingBox();
