@@ -17,6 +17,7 @@ import com.simibubi.create.foundation.ponder.CreateSceneBuilder;
 
 import net.createmod.catnip.api.math.AngleHelper;
 import net.createmod.catnip.api.math.Pointing;
+import net.createmod.catnip.api.client.render.SuperRenderTypeBuffer;
 import net.createmod.ponder.api.client.PonderPalette;
 import net.createmod.ponder.api.client.element.ElementLink;
 import net.createmod.ponder.api.client.element.ParrotElement;
@@ -323,7 +324,7 @@ public class FrogAndConveyorScenes {
 		}
 
 		@Override
-		protected void renderLast(PonderLevel world, SubmitNodeCollector queue, Camera camera,
+		protected void renderLast(PonderLevel world, SuperRenderTypeBuffer buffer, SubmitNodeCollector queue, Camera camera,
 								  CameraRenderState cameraRenderState, PoseStack poseStack, float fade, float pt) {
 			EntityRenderDispatcher entityrenderermanager = Minecraft.getInstance()
 				.getEntityRenderDispatcher();
@@ -346,16 +347,16 @@ public class FrogAndConveyorScenes {
 			poseStack.pushPose();
 			poseStack.translate(location.x, location.y, location.z);
 			poseStack.translate(lx, ly, lz);
-			poseStack.mulPose(Axis.YP.rotationDegrees(angle));
+			poseStack.rotateDegrees(Axis.YP, angle);
 
 			poseStack.translate(0, 1.5f, 0);
-			poseStack.mulPose(Axis.ZP.rotationDegrees(Mth.sin((world.scene.getCurrentTime() + pt) * 0.2f) * 10));
+			poseStack.rotateDegrees(Axis.ZP, Mth.sin((world.scene.getCurrentTime() + pt) * 0.2f) * 10);
 			poseStack.translate(0, -1.5f, 0);
 
 			poseStack.pushPose();
-			poseStack.mulPose(Axis.YP.rotationDegrees(90));
-			poseStack.mulPose(Axis.XP.rotationDegrees(90));
-			poseStack.mulPose(Axis.ZP.rotationDegrees(90));
+			poseStack.rotateDegrees(Axis.YP, 90);
+			poseStack.rotateDegrees(Axis.XP, 90);
+			poseStack.rotateDegrees(Axis.ZP, 90);
 			poseStack.scale(1.5f, 1.5f, 1.5f);
 			poseStack.translate(-0.1, 0.2, -0.6);
 

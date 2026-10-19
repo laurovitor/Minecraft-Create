@@ -16,7 +16,6 @@ import com.simibubi.create.content.kinetics.press.PressingBehaviour.Mode;
 import com.simibubi.create.content.kinetics.simpleRelays.ShaftBlock;
 import com.simibubi.create.foundation.ponder.CreateSceneBuilder;
 
-import net.createmod.catnip.api.nbt.NBTHelper;
 import net.createmod.catnip.api.math.Pointing;
 import net.createmod.ponder.api.client.PonderPalette;
 import net.createmod.ponder.api.client.element.ElementLink;
@@ -160,7 +159,7 @@ public class BeltScenes {
 				.withItem(new ItemStack(Items.DYE.pick(DyeColor.BLUE)));
 		scene.idle(7);
 		scene.world().modifyBlockEntityNBT(util.select().fromTo(0, 1, 2, 4, 1, 2), BeltBlockEntity.class,
-			nbt -> NBTHelper.writeEnum(nbt, "Dye", DyeColor.BLUE));
+			nbt -> nbt.putString("Dye", DyeColor.BLUE.name()));
 		scene.idle(20);
 		scene.overlay().showText(80)
 			.colored(PonderPalette.BLUE)
@@ -425,7 +424,7 @@ public class BeltScenes {
 		scene.idle(7);
 		scene.world().modifyBlock(beltPos2, s -> s.setValue(BeltBlock.CASING, true), true);
 		scene.world().modifyBlockEntityNBT(util.select().position(beltPos2), BeltBlockEntity.class, nbt -> {
-			NBTHelper.writeEnum(nbt, "Casing", BeltBlockEntity.CasingType.ANDESITE);
+			nbt.putString("Casing", BeltBlockEntity.CasingType.ANDESITE.name());
 		});
 		scene.idle(20);
 
@@ -460,7 +459,7 @@ public class BeltScenes {
 			scene.idle(4);
 			scene.world().modifyBlock(pos, s -> s.setValue(BeltBlock.CASING, true), true);
 			scene.world().modifyBlockEntityNBT(util.select().position(pos), BeltBlockEntity.class, nbt -> {
-				NBTHelper.writeEnum(nbt, "Casing", BeltBlockEntity.CasingType.ANDESITE);
+				nbt.putString("Casing", BeltBlockEntity.CasingType.ANDESITE.name());
 			});
 		}
 		for (BlockPos pos : brassBelts) {
