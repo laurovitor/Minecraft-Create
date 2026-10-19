@@ -1,5 +1,9 @@
 package com.simibubi.create.api.data.recipe;
 
+import net.minecraft.advancements.Advancement;
+import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.world.item.crafting.Recipe;
+
 
 import com.simibubi.create.AllRecipeTypes;
 import com.simibubi.create.content.kinetics.mixer.MixingRecipe;
@@ -25,8 +29,8 @@ public abstract class MixingRecipeGen extends StandardProcessingRecipeGen<Mixing
 			.whenModLoaded(mod.getId()));
 	}
 
-	public MixingRecipeGen(HolderLookup.Provider registries, RecipeOutput output, String defaultNamespace) {
-		super(registries, output, defaultNamespace);
+	public MixingRecipeGen(BootstrapContext<Recipe<?>> recipeContext, BootstrapContext<Advancement> advancementContext, String defaultNamespace) {
+		super(recipeContext, advancementContext, defaultNamespace);
 	}
 
 	@Override

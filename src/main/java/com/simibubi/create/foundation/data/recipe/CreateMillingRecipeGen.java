@@ -1,5 +1,9 @@
 package com.simibubi.create.foundation.data.recipe;
 
+import net.minecraft.advancements.Advancement;
+import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.world.item.crafting.Recipe;
+
 import net.minecraft.world.item.DyeColor;
 import java.util.List;
 
@@ -957,7 +961,7 @@ public final class CreateMillingRecipeGen extends MillingRecipeGen {
 		}
 	}
 
-	public CreateMillingRecipeGen(HolderLookup.Provider registries, RecipeOutput output) {
-		super(registries, output, Create.ID);
+	public CreateMillingRecipeGen(BootstrapContext<Recipe<?>> recipeContext, BootstrapContext<Advancement> advancementContext) {
+		super(recipeContext, advancementContext, Create.ID);
 	}
 }

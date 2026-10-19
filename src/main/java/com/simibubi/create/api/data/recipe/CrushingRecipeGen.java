@@ -1,5 +1,9 @@
 package com.simibubi.create.api.data.recipe;
 
+import net.minecraft.advancements.Advancement;
+import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.world.item.crafting.Recipe;
+
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
@@ -120,8 +124,8 @@ public abstract class CrushingRecipeGen extends StandardProcessingRecipeGen<Crus
 		});
 	}
 
-	public CrushingRecipeGen(HolderLookup.Provider registries, RecipeOutput output, String defaultNamespace) {
-		super(registries, output, defaultNamespace);
+	public CrushingRecipeGen(BootstrapContext<Recipe<?>> recipeContext, BootstrapContext<Advancement> advancementContext, String defaultNamespace) {
+		super(recipeContext, advancementContext, defaultNamespace);
 	}
 
 	@Override

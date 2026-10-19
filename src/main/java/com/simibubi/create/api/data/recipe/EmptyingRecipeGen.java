@@ -1,5 +1,9 @@
 package com.simibubi.create.api.data.recipe;
 
+import net.minecraft.advancements.Advancement;
+import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.world.item.crafting.Recipe;
+
 
 import com.simibubi.create.AllRecipeTypes;
 
@@ -16,8 +20,8 @@ import net.minecraft.data.recipes.RecipeOutput;
  */
 public abstract class EmptyingRecipeGen extends StandardProcessingRecipeGen<EmptyingRecipe> {
 
-	public EmptyingRecipeGen(HolderLookup.Provider registries, RecipeOutput output, String defaultNamespace) {
-		super(registries, output, defaultNamespace);
+	public EmptyingRecipeGen(BootstrapContext<Recipe<?>> recipeContext, BootstrapContext<Advancement> advancementContext, String defaultNamespace) {
+		super(recipeContext, advancementContext, defaultNamespace);
 	}
 
 	@Override

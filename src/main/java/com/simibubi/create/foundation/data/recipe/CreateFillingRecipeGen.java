@@ -1,5 +1,9 @@
 package com.simibubi.create.foundation.data.recipe;
 
+import net.minecraft.advancements.Advancement;
+import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.world.item.crafting.Recipe;
+
 
 import com.simibubi.create.AllFluids;
 import com.simibubi.create.AllItems;
@@ -108,7 +112,7 @@ public final class CreateFillingRecipeGen extends FillingRecipeGen {
 			.whenModLoaded(Mods.IE.getId()));
 
 
-	public CreateFillingRecipeGen(HolderLookup.Provider registries, RecipeOutput output) {
-		super(registries, output, Create.ID);
+	public CreateFillingRecipeGen(BootstrapContext<Recipe<?>> recipeContext, BootstrapContext<Advancement> advancementContext) {
+		super(recipeContext, advancementContext, Create.ID);
 	}
 }

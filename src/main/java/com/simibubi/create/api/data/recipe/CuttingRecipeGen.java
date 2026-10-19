@@ -1,5 +1,9 @@
 package com.simibubi.create.api.data.recipe;
 
+import net.minecraft.advancements.Advancement;
+import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.world.item.crafting.Recipe;
+
 import java.util.Objects;
 
 import com.simibubi.create.AllRecipeTypes;
@@ -100,8 +104,8 @@ public abstract class CuttingRecipeGen extends StandardProcessingRecipeGen<Cutti
 		return null;
 	}
 
-	public CuttingRecipeGen(HolderLookup.Provider registries, RecipeOutput output, String defaultNamespace) {
-		super(registries, output, defaultNamespace);
+	public CuttingRecipeGen(BootstrapContext<Recipe<?>> recipeContext, BootstrapContext<Advancement> advancementContext, String defaultNamespace) {
+		super(recipeContext, advancementContext, defaultNamespace);
 	}
 
 	@Override

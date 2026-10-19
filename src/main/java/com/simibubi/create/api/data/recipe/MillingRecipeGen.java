@@ -1,5 +1,9 @@
 package com.simibubi.create.api.data.recipe;
 
+import net.minecraft.advancements.Advancement;
+import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.world.item.crafting.Recipe;
+
 
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 
@@ -44,8 +48,8 @@ public abstract class MillingRecipeGen extends StandardProcessingRecipeGen<Milli
 			.whenModLoaded(mod.getId()));
 	}
 
-	public MillingRecipeGen(HolderLookup.Provider registries, RecipeOutput output, String defaultNamespace) {
-		super(registries, output, defaultNamespace);
+	public MillingRecipeGen(BootstrapContext<Recipe<?>> recipeContext, BootstrapContext<Advancement> advancementContext, String defaultNamespace) {
+		super(recipeContext, advancementContext, defaultNamespace);
 	}
 
 	@Override

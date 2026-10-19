@@ -167,6 +167,7 @@ public class Create {
 			(GatherDataEvent.Server e) -> CreateDatagen.gatherDataHighPriority());
 		modEventBus.addListener(EventPriority.HIGHEST,
 			(GatherDataEvent.Client e) -> CreateDatagen.gatherDataHighPriority());
+		modEventBus.addListener(CreateDatagen::gatherRegistryEntries);
 		modEventBus.addListener((GatherDataEvent.Server e) -> CreateDatagen.gatherData(e));
 		modEventBus.addListener((GatherDataEvent.Client e) -> CreateDatagen.gatherData(e));
 

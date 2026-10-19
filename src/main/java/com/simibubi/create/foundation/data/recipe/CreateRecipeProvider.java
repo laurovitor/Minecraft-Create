@@ -1,18 +1,17 @@
 package com.simibubi.create.foundation.data.recipe;
 
+import net.minecraft.advancements.Advancement;
+import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.world.item.crafting.Recipe;
+
 import net.minecraft.tags.BlockItemTags;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllItems;
 import com.simibubi.create.AllTags.AllItemTags;
 import com.simibubi.create.api.data.recipe.BaseRecipeProvider;
 
-import net.minecraft.core.HolderLookup;
-import net.minecraft.data.DataProvider;
-import net.minecraft.data.PackOutput;
-import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.data.recipes.RecipeProvider;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
@@ -29,11 +28,6 @@ import net.neoforged.neoforge.fluids.FluidType;
  *
  * @see com.simibubi.create.infrastructure.data.CreateDatagen
  */
-/**
- * 26.2 splits a recipe provider in two: the DataProvider half waits on the registries, then builds
- * the provider proper with the output already in hand. So the processing generators are gathered
- * behind one DataProvider that builds all of them per run rather than each being one itself.
- */
 public final class CreateRecipeProvider {
 
 	static final int BUCKET = FluidType.BUCKET_VOLUME;
@@ -42,24 +36,24 @@ public final class CreateRecipeProvider {
 	private CreateRecipeProvider() {
 	}
 
-	public static DataProvider allProcessing(PackOutput output, CompletableFuture<HolderLookup.Provider> registries) {
-		return BaseRecipeProvider.runner(output, registries, "Create's Processing Recipes", AllProcessing::new);
+	public static RecipeProvider allProcessing(BootstrapContext<Recipe<?>> recipeContext, BootstrapContext<Advancement> advancementContext) {
+		return new AllProcessing(recipeContext, advancementContext);
 	}
 
 	private static class AllProcessing extends RecipeProvider {
 
 		private final List<BaseRecipeProvider> generators;
 
-		private AllProcessing(HolderLookup.Provider registries, RecipeOutput output) {
-			super(registries, output);
-			generators = List.of(new CreateCrushingRecipeGen(registries, output),
-				new CreateMillingRecipeGen(registries, output), new CreateCuttingRecipeGen(registries, output),
-				new CreateWashingRecipeGen(registries, output), new CreatePolishingRecipeGen(registries, output),
-				new CreateDeployingRecipeGen(registries, output), new CreateMixingRecipeGen(registries, output),
-				new CreateCompactingRecipeGen(registries, output), new CreatePressingRecipeGen(registries, output),
-				new CreateFillingRecipeGen(registries, output), new CreateEmptyingRecipeGen(registries, output),
-				new CreateHauntingRecipeGen(registries, output),
-				new CreateItemApplicationRecipeGen(registries, output));
+		private AllProcessing(BootstrapContext<Recipe<?>> recipeContext, BootstrapContext<Advancement> advancementContext) {
+			super(recipeContext, advancementContext);
+			generators = List.of(new CreateCrushingRecipeGen(recipeContext, advancementContext),
+				new CreateMillingRecipeGen(recipeContext, advancementContext), new CreateCuttingRecipeGen(recipeContext, advancementContext),
+				new CreateWashingRecipeGen(recipeContext, advancementContext), new CreatePolishingRecipeGen(recipeContext, advancementContext),
+				new CreateDeployingRecipeGen(recipeContext, advancementContext), new CreateMixingRecipeGen(recipeContext, advancementContext),
+				new CreateCompactingRecipeGen(recipeContext, advancementContext), new CreatePressingRecipeGen(recipeContext, advancementContext),
+				new CreateFillingRecipeGen(recipeContext, advancementContext), new CreateEmptyingRecipeGen(recipeContext, advancementContext),
+				new CreateHauntingRecipeGen(recipeContext, advancementContext),
+				new CreateItemApplicationRecipeGen(recipeContext, advancementContext));
 		}
 
 		@Override

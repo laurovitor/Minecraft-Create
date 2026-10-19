@@ -1,5 +1,9 @@
 package com.simibubi.create.foundation.data.recipe;
 
+import net.minecraft.advancements.Advancement;
+import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.world.item.crafting.Recipe;
+
 import java.util.stream.Stream;
 
 import com.simibubi.create.AllBlocks;
@@ -64,7 +68,7 @@ public final class CreateSequencedAssemblyRecipeGen extends SequencedAssemblyRec
 
 		;
 
-	public CreateSequencedAssemblyRecipeGen(HolderLookup.Provider registries, RecipeOutput output) {
-		super(registries, output, Create.ID);
+	public CreateSequencedAssemblyRecipeGen(BootstrapContext<Recipe<?>> recipeContext, BootstrapContext<Advancement> advancementContext) {
+		super(recipeContext, advancementContext, Create.ID);
 	}
 }

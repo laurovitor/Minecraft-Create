@@ -1,5 +1,9 @@
 package com.simibubi.create.api.data.recipe;
 
+import net.minecraft.advancements.Advancement;
+import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.world.item.crafting.Recipe;
+
 import java.util.function.UnaryOperator;
 
 import com.simibubi.create.content.processing.sequenced.SequencedAssemblyRecipeBuilder;
@@ -17,8 +21,8 @@ import net.minecraft.data.recipes.RecipeOutput;
  */
 public abstract class SequencedAssemblyRecipeGen extends BaseRecipeProvider {
 
-	public SequencedAssemblyRecipeGen(HolderLookup.Provider registries, RecipeOutput output, String defaultNamespace) {
-		super(registries, output, defaultNamespace);
+	public SequencedAssemblyRecipeGen(BootstrapContext<Recipe<?>> recipeContext, BootstrapContext<Advancement> advancementContext, String defaultNamespace) {
+		super(recipeContext, advancementContext, defaultNamespace);
 	}
 
 	@Override
@@ -29,7 +33,7 @@ public abstract class SequencedAssemblyRecipeGen extends BaseRecipeProvider {
 	protected GeneratedRecipe create(String name, UnaryOperator<SequencedAssemblyRecipeBuilder> transform) {
 		GeneratedRecipe generatedRecipe =
 			c -> transform.apply(new SequencedAssemblyRecipeBuilder(asResource(name)).withItemLookup(items)
-				.withFluidLookup(registries.lookupOrThrow(Registries.FLUID)))
+				.withFluidLookup(recipeContext.lookup(Registries.FLUID)))
 				.build(c);
 		all.add(generatedRecipe);
 		return generatedRecipe;

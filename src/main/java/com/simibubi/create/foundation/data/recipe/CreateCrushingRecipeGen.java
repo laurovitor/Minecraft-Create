@@ -1,5 +1,9 @@
 package com.simibubi.create.foundation.data.recipe;
 
+import net.minecraft.advancements.Advancement;
+import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.world.item.crafting.Recipe;
+
 import static com.simibubi.create.foundation.data.recipe.CommonMetal.ALUMINUM;
 import static com.simibubi.create.foundation.data.recipe.CommonMetal.LEAD;
 import static com.simibubi.create.foundation.data.recipe.CommonMetal.NICKEL;
@@ -439,8 +443,8 @@ public final class CreateCrushingRecipeGen extends CrushingRecipeGen {
 		return null;
 	}
 
-	public CreateCrushingRecipeGen(HolderLookup.Provider registries, RecipeOutput output) {
-		super(registries, output, Create.ID);
+	public CreateCrushingRecipeGen(BootstrapContext<Recipe<?>> recipeContext, BootstrapContext<Advancement> advancementContext) {
+		super(recipeContext, advancementContext, Create.ID);
 	}
 
 	GeneratedRecipe ensMineralRecycling(AllPaletteStoneTypes type, UnaryOperator<StandardProcessingRecipe.Builder<CrushingRecipe>> transform) {

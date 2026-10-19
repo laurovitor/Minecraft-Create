@@ -1,5 +1,9 @@
 package com.simibubi.create.foundation.data.recipe;
 
+import net.minecraft.advancements.Advancement;
+import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.world.item.crafting.Recipe;
+
 import net.minecraft.world.item.DyeColor;
 import static com.simibubi.create.foundation.data.recipe.CommonMetal.ALUMINUM;
 import static com.simibubi.create.foundation.data.recipe.CommonMetal.LEAD;
@@ -117,8 +121,8 @@ public final class CreateWashingRecipeGen extends WashingRecipeGen {
 	VH = simpleModded(Mods.VH, "ornate_chain", "ornate_chain_rusty");
 
 
-	public CreateWashingRecipeGen(HolderLookup.Provider registries, RecipeOutput output) {
-		super(registries, output, Create.ID);
+	public CreateWashingRecipeGen(BootstrapContext<Recipe<?>> recipeContext, BootstrapContext<Advancement> advancementContext) {
+		super(recipeContext, advancementContext, Create.ID);
 	}
 
 	public GeneratedRecipe moddedCrushedOre(ItemEntry<? extends Item> crushed, CommonMetal metal) {

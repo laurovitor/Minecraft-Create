@@ -1,5 +1,9 @@
 package com.simibubi.create.foundation.data.recipe;
 
+import net.minecraft.advancements.Advancement;
+import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.world.item.crafting.Recipe;
+
 import java.util.List;
 
 import com.simibubi.create.AllBlocks;
@@ -51,7 +55,7 @@ public final class CreateDeployingRecipeGen extends DeployingRecipeGen {
 
 	CUT_COPPER_SLAB = oxidizationChain(Blocks.CUT_COPPER_SLAB);
 
-	public CreateDeployingRecipeGen(Provider registries, RecipeOutput output) {
-		super(registries, output, Create.ID);
+	public CreateDeployingRecipeGen(BootstrapContext<Recipe<?>> recipeContext, BootstrapContext<Advancement> advancementContext) {
+		super(recipeContext, advancementContext, Create.ID);
 	}
 }

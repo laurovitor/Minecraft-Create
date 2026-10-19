@@ -1,5 +1,9 @@
 package com.simibubi.create.api.data.recipe;
 
+import net.minecraft.advancements.Advancement;
+import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.world.item.crafting.Recipe;
+
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
@@ -33,8 +37,8 @@ import net.minecraft.world.level.ItemLike;
  */
 public abstract class ProcessingRecipeGen<P extends ProcessingRecipeParams, R extends ProcessingRecipe<?, P>, B extends ProcessingRecipeBuilder<P, R, B>> extends BaseRecipeProvider {
 
-	public ProcessingRecipeGen(HolderLookup.Provider registries, RecipeOutput output, String defaultNamespace) {
-		super(registries, output, defaultNamespace);
+	public ProcessingRecipeGen(BootstrapContext<Recipe<?>> recipeContext, BootstrapContext<Advancement> advancementContext, String defaultNamespace) {
+		super(recipeContext, advancementContext, defaultNamespace);
 	}
 
 	/**
@@ -94,7 +98,7 @@ public abstract class ProcessingRecipeGen<P extends ProcessingRecipeParams, R ex
 	 */
 	private B builder(Identifier id) {
 		return getBuilder(id).withItemLookup(items)
-			.withFluidLookup(registries.lookupOrThrow(Registries.FLUID));
+			.withFluidLookup(recipeContext.lookup(Registries.FLUID));
 	}
 
 	protected Supplier<Identifier> idWithSuffix(Supplier<ItemLike> item, String suffix) {

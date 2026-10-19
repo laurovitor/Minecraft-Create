@@ -1,5 +1,9 @@
 package com.simibubi.create.foundation.data.recipe;
 
+import net.minecraft.advancements.Advancement;
+import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.world.item.crafting.Recipe;
+
 import net.minecraft.tags.BlockItemTags;
 import org.jspecify.annotations.NullMarked;
 import static com.simibubi.create.foundation.data.recipe.CommonMetal.ALUMINUM;
@@ -1726,8 +1730,8 @@ public final class CreateStandardRecipeGen extends BaseRecipeProvider {
 		return item instanceof BlockItem ? CookingBookCategory.BLOCKS : CookingBookCategory.MISC;
 	}
 
-	public CreateStandardRecipeGen(HolderLookup.Provider registries, RecipeOutput output) {
-		super(registries, output, Create.ID);
+	public CreateStandardRecipeGen(BootstrapContext<Recipe<?>> recipeContext, BootstrapContext<Advancement> advancementContext) {
+		super(recipeContext, advancementContext, Create.ID);
 	}
 
 }

@@ -1,5 +1,9 @@
 package com.simibubi.create.foundation.data.recipe;
 
+import net.minecraft.advancements.Advancement;
+import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.world.item.crafting.Recipe;
+
 
 import com.simibubi.create.AllFluids;
 import com.simibubi.create.AllItems;
@@ -51,7 +55,7 @@ public final class CreateEmptyingRecipeGen extends EmptyingRecipeGen {
 
 	;
 
-	public CreateEmptyingRecipeGen(HolderLookup.Provider registries, RecipeOutput output) {
-		super(registries, output, Create.ID);
+	public CreateEmptyingRecipeGen(BootstrapContext<Recipe<?>> recipeContext, BootstrapContext<Advancement> advancementContext) {
+		super(recipeContext, advancementContext, Create.ID);
 	}
 }

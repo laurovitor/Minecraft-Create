@@ -1,5 +1,9 @@
 package com.simibubi.create.api.data.recipe;
 
+import net.minecraft.advancements.Advancement;
+import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.world.item.crafting.Recipe;
+
 import java.util.function.Supplier;
 
 import com.simibubi.create.AllRecipeTypes;
@@ -36,8 +40,8 @@ public abstract class WashingRecipeGen extends StandardProcessingRecipeGen<Splas
 			.output(mod, output).whenModLoaded(mod.getId()));
 	}
 
-	public WashingRecipeGen(HolderLookup.Provider registries, RecipeOutput output, String defaultNamespace) {
-		super(registries, output, defaultNamespace);
+	public WashingRecipeGen(BootstrapContext<Recipe<?>> recipeContext, BootstrapContext<Advancement> advancementContext, String defaultNamespace) {
+		super(recipeContext, advancementContext, defaultNamespace);
 	}
 
 	@Override

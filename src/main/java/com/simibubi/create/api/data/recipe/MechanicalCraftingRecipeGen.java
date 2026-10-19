@@ -1,5 +1,9 @@
 package com.simibubi.create.api.data.recipe;
 
+import net.minecraft.advancements.Advancement;
+import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.world.item.crafting.Recipe;
+
 import java.util.function.UnaryOperator;
 
 import com.google.common.base.Supplier;
@@ -20,8 +24,8 @@ import net.minecraft.world.level.ItemLike;
  */
 public abstract class MechanicalCraftingRecipeGen extends BaseRecipeProvider {
 
-	public MechanicalCraftingRecipeGen(HolderLookup.Provider registries, RecipeOutput output, String defaultNamespace) {
-		super(registries, output, defaultNamespace);
+	public MechanicalCraftingRecipeGen(BootstrapContext<Recipe<?>> recipeContext, BootstrapContext<Advancement> advancementContext, String defaultNamespace) {
+		super(recipeContext, advancementContext, defaultNamespace);
 	}
 
 	protected GeneratedRecipeBuilder create(Supplier<ItemLike> result) {

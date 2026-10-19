@@ -1,5 +1,9 @@
 package com.simibubi.create.foundation.data.recipe;
 
+import net.minecraft.advancements.Advancement;
+import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.world.item.crafting.Recipe;
+
 
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.Create;
@@ -73,8 +77,8 @@ public final class CreateCuttingRecipeGen extends CuttingRecipeGen {
 		BWG_2 = stripAndMakePlanksDiffPlanksModId(Mods.BWG, null, "stripped_palo_verde_wood", Mods.VANILLA, "birch_planks")
 		;
 
-	public CreateCuttingRecipeGen(Provider registries, RecipeOutput output) {
-		super(registries, output, Create.ID);
+	public CreateCuttingRecipeGen(BootstrapContext<Recipe<?>> recipeContext, BootstrapContext<Advancement> advancementContext) {
+		super(recipeContext, advancementContext, Create.ID);
 	}
 
 	GeneratedRecipe ieWires(CommonMetal... metals) {

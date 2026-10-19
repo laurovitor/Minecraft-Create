@@ -1,24 +1,31 @@
 package com.simibubi.create.api.data.recipe;
 
+import net.minecraft.advancements.Advancement;
+import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.world.item.crafting.Recipe;
+
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BiFunction;
-import java.util.concurrent.CompletableFuture;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 import com.simibubi.create.Create;
 
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.HolderGetter;
 import net.minecraft.core.HolderOwner;
 import net.minecraft.core.HolderSet;
+import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.component.DataComponentInitializers;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.data.DataProvider;
-import net.minecraft.data.PackOutput;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.data.recipes.RecipeProvider;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.neoforged.neoforge.common.CommonHooks;
+import net.neoforged.neoforge.registries.DataPackRegistriesHooks;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -32,14 +39,16 @@ import net.minecraft.world.item.crafting.Ingredient;
 public abstract class BaseRecipeProvider extends RecipeProvider {
 	private static boolean boundComponents;
 	protected final String modid;
-	protected final HolderLookup.Provider registries;
+	protected final BootstrapContext<Recipe<?>> recipeContext;
+	protected final HolderGetter<Item> items;
 	protected final List<GeneratedRecipe> all = new ArrayList<>();
 
-	public BaseRecipeProvider(HolderLookup.Provider registries, RecipeOutput output, String defaultNamespace) {
-		super(registries, output);
+	public BaseRecipeProvider(BootstrapContext<Recipe<?>> recipeContext, BootstrapContext<Advancement> advancementContext, String defaultNamespace) {
+		super(recipeContext, advancementContext);
 		this.modid = defaultNamespace;
-		this.registries = registries;
-		bindItemComponents(registries);
+		this.recipeContext = recipeContext;
+		this.items = recipeContext.lookup(Registries.ITEM);
+		bindItemComponents(recipeContext);
 	}
 
 	protected Identifier asResource(String path) {
@@ -47,9 +56,43 @@ public abstract class BaseRecipeProvider extends RecipeProvider {
 	}
 
 	/**
+	 * Recipe bootstraps run before GatherDataEvent supplies a lookup future. Rebuild the
+	 * provider view from the static and already-bootstrapped world registries exposed by
+	 * this recipe context, so item defaults are bound before a generator makes ItemStacks.
+	 */
+	private static void bindItemComponents(BootstrapContext<Recipe<?>> context) {
+		if (boundComponents)
+			return;
+
+		List<ResourceKey<? extends Registry<?>>> keys = Stream.concat(
+			RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY).listRegistryKeys(),
+			DataPackRegistriesHooks.getWorldRegistriesWithDimensions().map(data -> data.key()))
+			.distinct()
+			.filter(key -> context.holderLookup(key).isPresent())
+			.toList();
+
+		HolderLookup.Provider registries = new HolderLookup.Provider() {
+			@Override
+			public Stream<ResourceKey<? extends Registry<?>>> listRegistryKeys() {
+				return keys.stream();
+			}
+
+			@Override
+			public <T> Optional<? extends HolderLookup.RegistryLookup<T>> lookup(ResourceKey<? extends Registry<? extends T>> key) {
+				return context.holderLookup(key).map(lookup -> {
+					if (lookup instanceof HolderLookup.RegistryLookup<?> registryLookup)
+						return (HolderLookup.RegistryLookup<T>) registryLookup;
+					throw new IllegalStateException("Recipe bootstrap lookup is not a registry lookup: " + key);
+				});
+			}
+		};
+		bindItemComponents(registries);
+	}
+
+	/**
 	 * An item's default components are bound when a server loads its datapacks, which never happens
 	 * during datagen - so anything that asks an item about itself fails on "Components not bound yet".
-	 * Bind them from the registries the provider was handed.
+	 * Bind them from the bootstrap context's static and world registry lookups.
 	 * <p>
 	 * One wrinkle: those registries answer a tag lookup with an unbound placeholder, an anonymous
 	 * subclass of HolderSet.Named. NeoForge only whitelists Named itself as a component value, so say
@@ -58,7 +101,6 @@ public abstract class BaseRecipeProvider extends RecipeProvider {
 	public static void bindItemComponents(HolderLookup.Provider registries) {
 		if (boundComponents)
 			return;
-		boundComponents = true;
 
 		CommonHooks.markComponentClassAsValid(HolderSet.emptyNamed(new HolderOwner<>() {
 		}, TagKey.create(Registries.ITEM, Create.asResource("datagen_placeholder")))
@@ -66,6 +108,7 @@ public abstract class BaseRecipeProvider extends RecipeProvider {
 
 		BuiltInRegistries.DATA_COMPONENT_INITIALIZERS.build(registries)
 			.forEach(DataComponentInitializers.PendingComponents::apply);
+		boundComponents = true;
 	}
 
 	/**
@@ -88,30 +131,10 @@ public abstract class BaseRecipeProvider extends RecipeProvider {
 	}
 
 	/**
-	 * A name for the log line above. 26.2 moved getName onto the DataProvider half, so a generator
-	 * that wants a prettier name says so here.
+	 * A name for the recipe registration log.
 	 */
 	public String getName() {
 		return getClass().getSimpleName();
-	}
-
-	/**
-	 * The DataProvider half. 26.2 builds the recipe provider itself once the registries have loaded,
-	 * handing it the output to write into, so the generator can no longer be a DataProvider directly.
-	 */
-	public static DataProvider runner(PackOutput output, CompletableFuture<HolderLookup.Provider> registries,
-		String name, BiFunction<HolderLookup.Provider, RecipeOutput, RecipeProvider> factory) {
-		return new RecipeProvider.Runner(output, registries) {
-			@Override
-			protected RecipeProvider createRecipeProvider(HolderLookup.Provider lookup, RecipeOutput recipeOutput) {
-				return factory.apply(lookup, recipeOutput);
-			}
-
-			@Override
-			public String getName() {
-				return name;
-			}
-		};
 	}
 
 	@FunctionalInterface

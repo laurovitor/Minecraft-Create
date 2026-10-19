@@ -1,5 +1,9 @@
 package com.simibubi.create.foundation.data.recipe;
 
+import net.minecraft.advancements.Advancement;
+import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.world.item.crafting.Recipe;
+
 
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.Create;
@@ -32,7 +36,7 @@ public final class CreateItemApplicationRecipeGen extends ItemApplicationRecipeG
 		.output(CreateRecipeProvider.I.railwayCasing()));
 
 
-	public CreateItemApplicationRecipeGen(HolderLookup.Provider registries, RecipeOutput output) {
-		super(registries, output, Create.ID);
+	public CreateItemApplicationRecipeGen(BootstrapContext<Recipe<?>> recipeContext, BootstrapContext<Advancement> advancementContext) {
+		super(recipeContext, advancementContext, Create.ID);
 	}
 }

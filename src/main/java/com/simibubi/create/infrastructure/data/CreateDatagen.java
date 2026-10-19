@@ -11,7 +11,6 @@ import com.simibubi.create.AllSoundEvents;
 import com.simibubi.create.Create;
 import com.simibubi.create.compat.curios.CuriosDataGenerator;
 import com.simibubi.create.content.equipment.armor.AllEquipmentAssets;
-import com.simibubi.create.api.data.recipe.BaseRecipeProvider;
 import com.simibubi.create.foundation.advancement.AllAdvancements;
 import com.simibubi.create.foundation.data.recipe.CreateMechanicalCraftingRecipeGen;
 import com.simibubi.create.foundation.data.recipe.CreateRecipeProvider;
@@ -38,6 +37,7 @@ import net.minecraft.data.DataGenerator;
 import net.minecraft.data.PackOutput;
 
 import net.neoforged.neoforge.data.event.GatherDataEvent;
+import net.neoforged.neoforge.data.event.GatherDataRegistryEntriesEvent;
 
 public class CreateDatagen {
 	private static boolean addedExtraRegistrateData;
@@ -72,17 +72,17 @@ public class CreateDatagen {
 		event.addProvider(new CreateMountedItemStorageTypeTagsProvider(output, registries));
 		event.addProvider(new DamageTypeTagGen(output, registries));
 		event.addProvider(new AllAdvancements(output, registries));
-		event.addProvider(BaseRecipeProvider.runner(output, registries, "Create's Standard Recipes",
-			CreateStandardRecipeGen::new));
-		event.addProvider(BaseRecipeProvider.runner(output, registries, "Create's Mechanical Crafting Recipes",
-			CreateMechanicalCraftingRecipeGen::new));
-		event.addProvider(BaseRecipeProvider.runner(output, registries, "Create's Sequenced Assembly Recipes",
-			CreateSequencedAssemblyRecipeGen::new));
-		event.addProvider(CreateRecipeProvider.allProcessing(output, registries));
 		event.addProvider(new CreateDatamapProvider(output, registries));
 		event.addProvider(new VanillaHatOffsetGenerator(output, registries));
 		event.addProvider(new CuriosDataGenerator(output, registries));
 		event.addProvider(new CreateEnchantmentTagsProvider(output, registries));
+	}
+
+	public static void gatherRegistryEntries(GatherDataRegistryEntriesEvent event) {
+		event.recipe(CreateStandardRecipeGen::new);
+		event.recipe(CreateMechanicalCraftingRecipeGen::new);
+		event.recipe(CreateSequencedAssemblyRecipeGen::new);
+		event.recipe(CreateRecipeProvider::allProcessing);
 	}
 
 	public static void gatherData(GatherDataEvent.Client event) {
