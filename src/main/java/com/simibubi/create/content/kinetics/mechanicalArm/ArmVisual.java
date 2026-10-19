@@ -3,6 +3,7 @@ package com.simibubi.create.content.kinetics.mechanicalArm;
 import java.util.ArrayList;
 import java.util.function.Consumer;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.google.common.collect.Lists;
 import com.simibubi.create.content.logistics.depot.DepotRenderer;
 import com.simibubi.create.AllPartialModels;
@@ -17,7 +18,6 @@ import dev.engine_room.flywheel.lib.instance.InstanceTypes;
 import dev.engine_room.flywheel.lib.instance.TransformedInstance;
 import dev.engine_room.flywheel.lib.model.Models;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
-import dev.engine_room.flywheel.lib.util.RecyclingPoseStack;
 import dev.engine_room.flywheel.lib.visual.SimpleDynamicVisual;
 import net.createmod.catnip.api.client.animation.AnimationTickHolder;
 import net.createmod.catnip.api.data.Iterate;
@@ -38,7 +38,7 @@ public class ArmVisual extends SingleAxisRotatingVisual<ArmBlockEntity> implemen
 	private final ArrayList<TransformedInstance> models;
 	private final boolean ceiling;
 
-	private final RecyclingPoseStack poseStack = new RecyclingPoseStack();
+	private final PoseStack poseStack = new PoseStack();
 
 	private boolean wasDancing = false;
 	private float baseAngle = Float.NaN;

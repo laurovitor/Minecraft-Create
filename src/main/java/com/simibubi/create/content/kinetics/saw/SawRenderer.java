@@ -269,17 +269,19 @@ public class SawRenderer extends SafeBlockEntityRenderer<SawBlockEntity, SawRend
 				superBuffer = CachedBufferer.partial(AllPartialModels.SAW_BLADE_VERTICAL_INACTIVE, state);
 		}
 
-		superBuffer.transform(matrices.getModel())
+		superBuffer.getTransforms().mulPose(matrices.getModel().last().pose());
+		var transforms = TransformStack.of(superBuffer.getTransforms());
+		transforms
 			.center()
 			.rotateYDegrees(AngleHelper.horizontalAngle(facing))
 			.rotateXDegrees(AngleHelper.verticalAngle(facing));
 
 		if (!SawBlock.isHorizontal(state)) {
-			superBuffer.rotateZDegrees(state.getValue(SawBlock.AXIS_ALONG_FIRST_COORDINATE) ? 90 : 0);
+			transforms.rotateZDegrees(state.getValue(SawBlock.AXIS_ALONG_FIRST_COORDINATE) ? 90 : 0);
 		}
 
-		superBuffer.uncenter()
-			.light(LightCoordsUtil.getLightCoords(renderWorld, context.localPos))
+		transforms.uncenter();
+		superBuffer.light(LightCoordsUtil.getLightCoords(renderWorld, context.localPos))
 			.useLevelLight(RenderLevels.lightSource(context.world, renderWorld), matrices.getWorld());
 		out.add(ActorGeometry.of(matrices.getViewProjection(), superBuffer, RenderTypes.cutoutMovingBlock()));
 	}
