@@ -1,6 +1,5 @@
 package com.simibubi.create.foundation.block;
 
-import com.mojang.serialization.MapCodec;
 import com.simibubi.create.content.equipment.wrench.IWrenchable;
 
 import net.minecraft.core.Direction;
@@ -50,10 +49,5 @@ public class WrenchableDirectionalBlock extends DirectionalBlock implements IWre
 	@SuppressWarnings("deprecation")
 	public BlockState mirror(BlockState state, Mirror mirrorIn) {
 		return state.rotate(mirrorIn.getRotation(state.getValue(FACING)));
-	}
-
-	// Retained for subclasses with legacy codec overrides; DirectionalBlock no longer declares this hook.
-	protected MapCodec<? extends DirectionalBlock> codec() {
-		return MapCodec.unit(this);
 	}
 }

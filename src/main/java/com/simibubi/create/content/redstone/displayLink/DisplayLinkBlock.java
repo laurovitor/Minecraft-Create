@@ -6,7 +6,6 @@ import net.createmod.catnip.api.platform.services.PlatformHelper;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import org.jetbrains.annotations.NotNull;
 
 import com.mojang.serialization.MapCodec;
 import com.simibubi.create.AllBlockEntityTypes;
@@ -33,7 +32,6 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.DirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -171,8 +169,4 @@ public class DisplayLinkBlock extends WrenchableDirectionalBlock implements IBE<
 		return AllBlockEntityTypes.DISPLAY_LINK.get();
 	}
 
-	@Override
-	protected @NotNull MapCodec<? extends DirectionalBlock> codec() {
-		return CODEC;
-	}
 }

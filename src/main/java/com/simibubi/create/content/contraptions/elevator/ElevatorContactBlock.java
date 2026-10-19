@@ -7,7 +7,6 @@ import java.util.Optional;
 
 import org.jetbrains.annotations.Nullable;
 
-import org.jetbrains.annotations.NotNull;
 
 import com.mojang.serialization.MapCodec;
 import com.simibubi.create.AllBlockEntityTypes;
@@ -39,7 +38,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.SignalGetter;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.DirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -248,8 +246,4 @@ public class ElevatorContactBlock extends WrenchableDirectionalBlock
 		return state.getValue(POWERING) ? 10 : 0;
 	}
 
-	@Override
-	protected @NotNull MapCodec<? extends DirectionalBlock> codec() {
-		return CODEC;
-	}
 }
