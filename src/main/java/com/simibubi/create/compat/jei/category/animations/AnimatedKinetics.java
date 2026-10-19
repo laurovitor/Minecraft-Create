@@ -14,8 +14,6 @@ import mezz.jei.api.gui.drawable.IDrawable;
 import net.createmod.catnip.api.client.animation.AnimationTickHolder;
 import net.createmod.catnip.api.client.gui.ILightingSettings;
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.createmod.catnip.api.client.gui.element.GuiElementGeometry;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import org.jspecify.annotations.Nullable;
@@ -49,7 +47,7 @@ public abstract class AnimatedKinetics implements IDrawable {
 	 * Use {@link #blockElement(PartialModel)} if calling from inside a subclass.
 	 */
 	public static GuiGameElement.GuiRenderBuilder defaultBlockElement(PartialModel partial) {
-		return GuiGameElement.of(partial.get())
+		return new PartialModelRenderBuilder(partial)
 				.lighting(DEFAULT_LIGHTING);
 	}
 
@@ -87,11 +85,47 @@ public abstract class AnimatedKinetics implements IDrawable {
 	}
 
 	protected GuiGameElement.GuiRenderBuilder blockElement(BlockState state) {
-		return defaultBlockElement(state).viewRotate(viewXRot, viewYRot, 0);
+		return defaultBlockElement(state).rotate(viewXRot, viewYRot, 0);
 	}
 
 	protected GuiGameElement.GuiRenderBuilder blockElement(PartialModel partial) {
-		return defaultBlockElement(partial).viewRotate(viewXRot, viewYRot, 0);
+		return ((PartialModelRenderBuilder) defaultBlockElement(partial)).view(viewXRot, viewYRot);
+	}
+
+	/** Catnip 26.3 no longer accepts a baked model in GuiGameElement.of. */
+	private static class PartialModelRenderBuilder extends GuiGameElement.GuiRenderBuilder {
+		private final PartialModel partial;
+		private float viewXRot;
+		private float viewYRot;
+
+		private PartialModelRenderBuilder(PartialModel partial) {
+			this.partial = partial;
+		}
+
+		private PartialModelRenderBuilder view(float xRot, float yRot) {
+			viewXRot = xRot;
+			viewYRot = yRot;
+			return this;
+		}
+
+		@Override
+		public void submit(GuiGraphicsExtractor graphics) {
+			Matrix3x2fStack pose = graphics.pose();
+			pose.pushMatrix();
+			pose.translate(x, y);
+			var model = partial.get();
+			double localX = xLocal;
+			double localY = yLocal;
+			double localZ = zLocal;
+			double angleX = xRot;
+			double angleY = yRot;
+			double angleZ = zRot;
+			GuiScene.submit(graphics, scale, viewXRot, viewYRot,
+				customLighting != null ? customLighting : DEFAULT_LIGHTING,
+				(ps, collector) -> GuiScene.part(ps, collector, model, null, localX, localY, localZ,
+					angleX, angleY, angleZ));
+			pose.popMatrix();
+		}
 	}
 
 	/**
