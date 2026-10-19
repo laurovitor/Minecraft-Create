@@ -1,5 +1,7 @@
 package com.simibubi.create.content.equipment.armor;
 
+import java.util.Map;
+
 import com.tterrag.registrate.providers.DataGenContext;
 import com.tterrag.registrate.providers.generators.RegistrateItemModelGenerator;
 
@@ -12,18 +14,14 @@ import net.minecraft.world.item.equipment.ArmorType;
 /**
  * Item models for armour that can carry a trim.
  * <p>
- * 26.2 generates these itself. A trimmed model used to be an override on the base model, picked by a
- * predicate on {@code trim_type}, and building one meant reaching into the model builder's texture
- * map by reflection to add the trim layer. Now a trimmable item is one call: the layers come from
- * the material's {@link net.minecraft.world.item.equipment.EquipmentAsset}, and the slot decides
- * which trim sprites are used.
+ * 26.3 generates a model for each trim material with a slot-specific trim sprite prefix.
+ * Create supplies its own cardboard trim sprites below; vanilla uses the same generator for its armour.
  */
 public class TrimmableArmorModelGenerator {
 
 	public static <T extends BaseArmorItem> void generate(DataGenContext<Item, T> c, RegistrateItemModelGenerator p) {
 		T item = c.get();
-		p.generateTrimmableItem(item, item.getMaterial()
-			.assetId(), slotTrimPrefix(item.getArmorType()), false);
+		p.generateTrimmableItem(item, slotTrimPrefix(item.getArmorType()), false, Map.of());
 	}
 
 	/**

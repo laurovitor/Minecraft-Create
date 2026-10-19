@@ -37,11 +37,11 @@ public class NetheriteBacktankFirstPersonRenderer {
 	/**
 	 * Draws the diving suit's sleeve over the first-person arm.
 	 * <p>
-	 * 26.2 poses models from a render state rather than from the entity, so the sleeve is reset the
+	 * 26.3 poses models from a render state rather than from the entity, so the sleeve is reset the
 	 * way vanilla's own first-person hand is instead of being animated from the player.
 	 */
 	@SubscribeEvent(priority = EventPriority.LOWEST)
-	public static void onRenderPlayerHand(RenderArmEvent<?> event) {
+	public static void onRenderPlayerHand(RenderArmEvent event) {
 		if (!rendererActive)
 			return;
 
@@ -51,7 +51,7 @@ public class NetheriteBacktankFirstPersonRenderer {
 			return;
 
 		AvatarRenderer<?> renderer = mc.getEntityRenderDispatcher()
-			.getPlayerRenderer(player);
+			.getRenderer(event.getPlayerRenderState().avatarRenderState);
 		PlayerModel model = renderer.getModel();
 		ModelPart armPart = event.getArm() == HumanoidArm.LEFT ? model.leftSleeve : model.rightSleeve;
 		armPart.resetPose();

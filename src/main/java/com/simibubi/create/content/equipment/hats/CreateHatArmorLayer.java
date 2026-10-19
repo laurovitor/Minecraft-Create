@@ -6,8 +6,10 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.content.trains.schedule.hat.TrainHatInfo;
 import com.simibubi.create.foundation.mixin.accessor.EntityRenderDispatcherAccessor;
 import com.simibubi.create.foundation.render.CachedBufferer;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
+import dev.engine_room.flywheel.lib.transform.TransformStack;
 import net.createmod.catnip.api.client.render.SuperByteBuffer;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.geom.ModelPart;
@@ -68,10 +70,8 @@ public class CreateHatArmorLayer<S extends LivingEntityRenderState, M extends En
 
 		BlockState air = Blocks.AIR.defaultBlockState();
 		SuperByteBuffer buffer = CachedBufferer.partial(hat, air);
-		buffer.rotateXDegrees(-8.5F)
-			.disableDiffuse()
-			.light(light)
-			.extractRenderState()
+		TransformStack.of(buffer.getTransforms()).rotateXDegrees(-8.5F);
+		SuperByteBufferRenderState.capture(buffer.disableDiffuse().light(light))
 			.submit(ms, RenderTypes.cutoutMovingBlock(), queue);
 
 		ms.popPose();
