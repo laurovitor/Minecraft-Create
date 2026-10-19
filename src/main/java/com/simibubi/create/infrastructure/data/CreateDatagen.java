@@ -52,14 +52,14 @@ public class CreateDatagen {
 	}
 
 	/**
-	 * 26.2 fires a separate event per side instead of handing one event a pair of include flags, and
+	 * Datagen fires a separate event per side instead of handing one event a pair of include flags, and
 	 * providers are added to the event rather than to the generator. The event is also raised per mod,
 	 * so there is no mod set to filter on any more.
 	 */
 	public static void gatherData(GatherDataEvent.Server event) {
 		DataGenerator generator = event.getGenerator();
 		PackOutput output = generator.getPackOutput();
-		CompletableFuture<HolderLookup.Provider> lookupProvider = event.getLookupProvider();
+		CompletableFuture<HolderLookup.Provider> lookupProvider = event.getReloadableLookupProvider();
 		componentRegistries = lookupProvider;
 
 		GeneratedEntriesProvider generatedEntriesProvider = new GeneratedEntriesProvider(output, lookupProvider);
@@ -88,7 +88,7 @@ public class CreateDatagen {
 	public static void gatherData(GatherDataEvent.Client event) {
 		DataGenerator generator = event.getGenerator();
 		PackOutput output = generator.getPackOutput();
-		componentRegistries = event.getLookupProvider();
+		componentRegistries = event.getReloadableLookupProvider();
 
 		event.addProvider(new AllEquipmentAssets(output));
 		event.addProvider(AllSoundEvents.provider(generator));
