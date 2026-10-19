@@ -339,7 +339,7 @@ public class ItemHelper {
 	}
 
 	public static void fillItemStackHandler(ItemContainerContents contents, ItemStacksResourceHandler inv) {
-		List<ItemStack> itemStacks = contents.allItemsCopyStream()
+		List<ItemStack> itemStacks = contents.itemCopies()
 			.toList();
 
 		for (int i = 0; i < itemStacks.size(); i++) {

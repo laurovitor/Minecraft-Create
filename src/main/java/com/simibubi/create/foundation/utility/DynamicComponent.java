@@ -102,7 +102,7 @@ public class DynamicComponent {
 
 	public static CommandSourceStack getCommandSource(ServerLevel level, BlockPos pos) {
 		return new CommandSourceStack(CommandSource.NULL, Vec3.atCenterOf(pos), Vec2.ZERO, level,
-			LevelBasedPermissionSet.GAMEMASTER, Create.ID, Component.literal(Create.ID), level.getServer(), null);
+			LevelBasedPermissionSet.GAMEMASTER, Component.literal(Create.ID), level.getServer());
 	}
 
 }

@@ -253,7 +253,7 @@ public class BlockHelper {
 				if (!level.environmentAttributes()
 					.getValue(EnvironmentAttributes.WATER_EVAPORATES, pos)) {
 					BlockState below = level.getBlockState(pos.below());
-					if (below.blocksMotion() || below.liquid()) {
+					if (below.isSolid() || below.liquid()) {
 						fluidState = IceBlock.meltsInto().getFluidState();
 					}
 				}
