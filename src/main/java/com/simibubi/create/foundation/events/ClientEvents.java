@@ -19,7 +19,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.AllItems;
 import com.simibubi.create.Create;
-import net.createmod.catnip.api.client.config.BaseConfigScreen;
+import net.createmod.catnip.impl.client.gui.config.RootConfigScreen;
 import com.simibubi.create.CreateClient;
 import com.simibubi.create.content.contraptions.ContraptionHandler;
 import com.simibubi.create.content.contraptions.actors.seat.ContraptionPlayerPassengerRotation;
@@ -444,6 +444,7 @@ public class ClientEvents {
 			.getModContainerById(Create.ID)
 			.orElseThrow(() -> new IllegalStateException("Create mod container missing on LoadComplete"));
 		createContainer.registerExtensionPoint(IConfigScreenFactory.class,
-			(mc, previousScreen) -> new BaseConfigScreen(previousScreen, Create.ID));
+			(mc, previousScreen) -> RootConfigScreen.forMod(Create.ID, previousScreen)
+				.<net.minecraft.client.gui.screens.Screen>map(screen -> screen).orElse(previousScreen));
 	}
 }

@@ -100,8 +100,6 @@ public class ValueSettingsClient implements GuiLayer {
 			return;
 		}
 
-		if (interactHeldTicks > 3)
-			player.swinging = false;
 		if (interactHeldTicks++ < 5)
 			return;
 		ScreenOpener.open(new ValueSettingsScreen(interactHeldPos,

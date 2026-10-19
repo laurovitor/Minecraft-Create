@@ -6,7 +6,6 @@ import org.lwjgl.sdl.SDLMouse;
 
 import com.mojang.blaze3d.platform.InputConstants;
 
-import net.createmod.catnip.api.client.ConflictSafeKeyMapping;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 
@@ -64,11 +63,13 @@ public enum AllKeys {
 	public static void register(RegisterKeyMappingsEvent event) {
 		event.registerCategory(CATEGORY);
 		for (AllKeys key : values()) {
-			if (key.conflictSafe) {
-				key.keybind = new ConflictSafeKeyMapping(key.description, key.key, CATEGORY);
-			} else {
-				key.keybind = new KeyMapping(key.description, key.key, CATEGORY);
-			}
+			// Modifier pseudo-bindings must not conflict with ordinary key mappings.
+			key.keybind = key.conflictSafe ? new KeyMapping(key.description, key.key, CATEGORY) {
+				@Override
+				public boolean same(KeyMapping other) {
+					return false;
+				}
+			} : new KeyMapping(key.description, key.key, CATEGORY);
 			if (!key.modifiable)
 				continue;
 
