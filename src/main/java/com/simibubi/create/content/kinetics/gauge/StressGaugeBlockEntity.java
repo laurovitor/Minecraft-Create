@@ -114,7 +114,7 @@ public class StressGaugeBlockEntity extends GaugeBlockEntity {
 				.style(ChatFormatting.DARK_GRAY)
 				.forGoggles(tooltip);
 		else {
-			StressImpact.getFormattedStressText(stressFraction)
+			CreateLang.builder().add(StressImpact.getFormattedStressText(stressFraction))
 				.forGoggles(tooltip);
 			CreateLang.translate("gui.stressometer.capacity")
 				.style(ChatFormatting.GRAY)
@@ -134,7 +134,7 @@ public class StressGaugeBlockEntity extends GaugeBlockEntity {
 						.add(su)
 						.style(ChatFormatting.DARK_GRAY));
 
-			stressTip.forGoggles(tooltip, 1);
+			CreateLang.builder().add(stressTip).forGoggles(tooltip, 1);
 		}
 
 		if (!worldPosition.equals(lastSent))

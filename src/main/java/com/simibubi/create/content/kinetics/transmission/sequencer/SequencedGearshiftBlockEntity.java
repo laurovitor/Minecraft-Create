@@ -12,7 +12,6 @@ import com.simibubi.create.content.kinetics.transmission.SplitShaftBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 
 import dan200.computercraft.api.peripheral.PeripheralCapability;
-import net.createmod.catnip.api.nbt.NBTHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -50,7 +49,7 @@ public class SequencedGearshiftBlockEntity extends SplitShaftBlockEntity {
 
 		public CompoundTag serializeNBT() {
 			CompoundTag nbt = new CompoundTag();
-			NBTHelper.writeEnum(nbt, "Mode", instruction);
+			nbt.putString("Mode", instruction.name());
 			nbt.putDouble("Value", relativeValue);
 			return nbt;
 		}
@@ -58,8 +57,13 @@ public class SequencedGearshiftBlockEntity extends SplitShaftBlockEntity {
 		public static SequenceContext fromNBT(CompoundTag nbt) {
 			if (nbt.isEmpty())
 				return null;
-			return new SequenceContext(NBTHelper.readEnum(nbt, "Mode", SequencerInstructions.class),
-				nbt.getDoubleOr("Value", 0));
+			SequencerInstructions instruction;
+			try {
+				instruction = SequencerInstructions.valueOf(nbt.getStringOr("Mode", ""));
+			} catch (IllegalArgumentException ignored) {
+				instruction = SequencerInstructions.END;
+			}
+			return new SequenceContext(instruction, nbt.getDoubleOr("Value", 0));
 		}
 
 	}

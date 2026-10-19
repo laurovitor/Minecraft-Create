@@ -85,7 +85,7 @@ public class SpeedGaugeBlockEntity extends GaugeBlockEntity {
 		CreateLang.translate("gui.speedometer.title")
 			.style(ChatFormatting.GRAY)
 			.forGoggles(tooltip);
-		SpeedLevel.getFormattedSpeedText(speed, isOverStressed())
+		CreateLang.builder().add(SpeedLevel.getFormattedSpeedText(speed, isOverStressed()))
 			.forGoggles(tooltip);
 		return true;
 	}
