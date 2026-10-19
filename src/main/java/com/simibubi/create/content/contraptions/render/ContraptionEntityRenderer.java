@@ -7,7 +7,7 @@ import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.block.BlockStateModelSet;
 import net.minecraft.client.renderer.block.BlockModelLighter;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import org.jspecify.annotations.Nullable;
 import java.util.List;
 import java.util.ArrayList;
@@ -105,7 +105,7 @@ public class ContraptionEntityRenderer<C extends AbstractContraptionEntity, S ex
 
 	@Override
 	public boolean shouldRender(C entity, Frustum frustum, double cameraX, double cameraY,
-		double cameraZ) {
+		double cameraZ, float partialTicks) {
 		if (entity.getContraption() == null)
 			return false;
 		if (!entity.isAliveOrStale())
@@ -113,7 +113,7 @@ public class ContraptionEntityRenderer<C extends AbstractContraptionEntity, S ex
 		if (!entity.isReadyForRender())
 			return false;
 
-		return super.shouldRender(entity, frustum, cameraX, cameraY, cameraZ);
+		return super.shouldRender(entity, frustum, cameraX, cameraY, cameraZ, partialTicks);
 	}
 
 	@Override
@@ -140,10 +140,11 @@ public class ContraptionEntityRenderer<C extends AbstractContraptionEntity, S ex
 
 		if (!VisualizationManager.supportsVisualization(level)) {
 			SuperByteBuffer sbb = getBuffer(contraption, renderWorld);
-			if (!sbb.isEmpty())
-				state.structure = sbb.transform(matrices.getModel())
-					.useLevelLight(RenderLevels.lightSource(level, renderWorld), matrices.getWorld())
-					.extractRenderState();
+			if (!sbb.isEmpty()) {
+				sbb.getTransforms().mulPose(matrices.getModel().last().pose());
+				state.structure = SuperByteBufferRenderState.capture(sbb
+					.useLevelLight(RenderLevels.lightSource(level, renderWorld), matrices.getWorld()));
+			}
 		}
 
 		var adjustRenderedBlockEntities = clientContraption.getAndAdjustShouldRenderBlockEntities();

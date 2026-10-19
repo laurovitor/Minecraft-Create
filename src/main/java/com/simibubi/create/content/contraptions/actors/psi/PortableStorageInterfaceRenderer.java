@@ -6,7 +6,7 @@ import com.simibubi.create.content.contraptions.render.ActorGeometry;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import java.util.List;
 import java.util.ArrayList;
@@ -64,8 +64,7 @@ public class PortableStorageInterfaceRenderer
 		BlockState blockState = be.getBlockState();
 		float progress = be.getExtensionDistance(partialTicks);
 		transform(blockState, be.isConnected(), progress, null,
-			sbb -> state.parts.add(sbb.light(state.lightCoords)
-				.extractRenderState()));
+			sbb -> state.parts.add(SuperByteBufferRenderState.capture(sbb.light(state.lightCoords))));
 	}
 
 	@Override
@@ -101,8 +100,8 @@ public class PortableStorageInterfaceRenderer
 		SuperByteBuffer top = CachedBufferer.partial(getTopForState(blockState), blockState);
 
 		if (local != null) {
-			middle.transform(local);
-			top.transform(local);
+			middle.getTransforms().mulPose(local.last().pose());
+			top.getTransforms().mulPose(local.last().pose());
 		}
 		Direction facing = blockState.getValue(PortableStorageInterfaceBlock.FACING);
 		rotateToFacing(middle, facing);

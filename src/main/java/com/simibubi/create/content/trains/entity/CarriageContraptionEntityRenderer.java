@@ -37,13 +37,13 @@ public class CarriageContraptionEntityRenderer
 
 	@Override
 	public boolean shouldRender(CarriageContraptionEntity entity, Frustum clippingHelper, double cameraX,
-		double cameraY, double cameraZ) {
+		double cameraY, double cameraZ, float partialTicks) {
 		Carriage carriage = entity.getCarriage();
 		if (carriage != null)
 			for (CarriageBogey bogey : carriage.bogeys)
 				if (bogey != null)
 					bogey.couplingAnchors.replace(v -> null);
-		return super.shouldRender(entity, clippingHelper, cameraX, cameraY, cameraZ);
+		return super.shouldRender(entity, clippingHelper, cameraX, cameraY, cameraZ, partialTicks);
 	}
 
 	@Override

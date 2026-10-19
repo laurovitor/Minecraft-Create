@@ -13,8 +13,8 @@ public class OrientedContraptionEntityRenderer extends ContraptionEntityRenderer
 
 	@Override
 	public boolean shouldRender(OrientedContraptionEntity entity, Frustum frustum, double cameraX, double cameraY,
-			double cameraZ) {
-		if (!super.shouldRender(entity, frustum, cameraX, cameraY, cameraZ))
+			double cameraZ, float partialTicks) {
+		if (!super.shouldRender(entity, frustum, cameraX, cameraY, cameraZ, partialTicks))
 			return false;
 		if (entity.getVehicle() == null && AllContraptionTypeTags.REQUIRES_VEHICLE_FOR_RENDER.matches(entity.getContraption().getType()))
 			return false;
