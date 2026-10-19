@@ -6,11 +6,10 @@ import com.simibubi.create.content.legacy.ChromaticCompoundColor;
 import com.simibubi.create.foundation.gui.render.GuiCustomGeometryRenderer;
 import com.simibubi.create.AllFluids;
 import com.simibubi.create.foundation.render.CachedBufferer;
+import net.createmod.catnip.api.client.config.CatnipConfigScreenOptions;
 import net.createmod.catnip.api.client.event.LevelRenderCallback;
 import com.simibubi.create.foundation.events.ClientEvents;
 import com.simibubi.create.foundation.networking.CreateClientPayloadHandlers;
-import com.mojang.blaze3d.opengl.GlStateManager;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.simibubi.create.compat.Mods;
 import com.simibubi.create.compat.ftb.FTBIntegration;
 import com.simibubi.create.compat.pojav.PojavChecker;
@@ -35,10 +34,7 @@ import com.simibubi.create.foundation.model.ModelSwapper;
 import com.simibubi.create.foundation.ponder.CreatePonderPlugin;
 import com.simibubi.create.foundation.render.AllInstanceTypes;
 import com.simibubi.create.infrastructure.config.AllConfigs;
-import com.simibubi.create.infrastructure.gui.CreatePanorama;
 
-import net.createmod.catnip.api.client.config.BaseConfigScreen;
-import net.createmod.catnip.api.client.config.ConfigScreen;
 import net.createmod.catnip.api.client.render.SuperByteBufferCache;
 import net.createmod.ponder.api.client.PonderIndex;
 import net.minecraft.ChatFormatting;
@@ -108,8 +104,9 @@ public class CreateClient {
 		// CreateClientPayloadHandlers.
 		CreateClientPayloadHandlers.register();
 
-		// 26.2 submits render nodes ahead of drawing them; see ClientEvents#onSubmitFeatures.
-		LevelRenderCallback.SUBMIT_FEATURES.subscribe(ClientEvents::onSubmitFeatures);
+		// 26.3 collects custom render nodes while assembling the level render state.
+		LevelRenderCallback.COLLECT_SUBMITS.subscribe((renderer, state, transforms, collector) ->
+			ClientEvents.onSubmitFeatures(state, collector, transforms));
 
 		//BUFFER_CACHE.registerCompartment(CachedBufferer.GENERIC_BLOCK);
 		//BUFFER_CACHE.registerCompartment(CachedPartialBuffers.partial);
@@ -138,21 +135,13 @@ public class CreateClient {
 		//PonderIndex.register();
 		PonderIndex.addPlugin(new CreatePonderPlugin());
 
-		setupConfigUIBackground();
+		setupConfigUIOptions();
 	}
 
-	private static void setupConfigUIBackground() {
-		ConfigScreen.backgrounds.put(Create.ID, (screen, graphics, partialTicks) -> {
-			CreatePanorama.extract(graphics, screen.width, screen.height);
-			graphics.fill(0, 0, screen.width, screen.height, 0x90_282c34);
-		});
-
-		ConfigScreen.shadowState = AllBlocks.LARGE_COGWHEEL.getDefaultState().setValue(CogWheelBlock.AXIS, Direction.Axis.Y);
-
-		BaseConfigScreen.setDefaultActionFor(Create.ID, base -> base
-				.withButtonLabels("Client Settings", "World Generation Settings", "Gameplay Settings")
-				.withSpecs(AllConfigs.client().specification, AllConfigs.common().specification, AllConfigs.server().specification)
-		);
+	private static void setupConfigUIOptions() {
+		CatnipConfigScreenOptions.register(Create.ID,
+			new CatnipConfigScreenOptions(AllBlocks.LARGE_COGWHEEL.getDefaultState()
+				.setValue(CogWheelBlock.AXIS, Direction.Axis.Y)));
 	}
 
 	public static void invalidateRenderers() {

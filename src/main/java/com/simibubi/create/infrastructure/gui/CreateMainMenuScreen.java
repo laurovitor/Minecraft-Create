@@ -3,7 +3,7 @@ package com.simibubi.create.infrastructure.gui;
 import org.joml.Matrix3x2fStack;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.Create;
-import net.createmod.catnip.api.client.config.BaseConfigScreen;
+import net.createmod.catnip.impl.client.gui.config.RootConfigScreen;
 import com.simibubi.create.CreateBuildInfo;
 import com.simibubi.create.foundation.gui.AllGuiTextures;
 import com.simibubi.create.foundation.utility.CreateLang;
@@ -29,6 +29,8 @@ import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
+import com.mojang.blaze3d.Blaze3D;
+import java.net.URI;
 
 public class CreateMainMenuScreen extends AbstractSimiScreen {
 
@@ -84,13 +86,11 @@ public class CreateMainMenuScreen extends AbstractSimiScreen {
 			ms.scale((float) (24 * side), (float) (24 * side));
 			ms.translate((float) (-1.75 * ((alpha * alpha) / 2f + .5f)), .25f);
 			GuiGameElement.of(AllBlocks.LARGE_COGWHEEL.getDefaultState())
-				.viewRotate(45, 0, 0)
-				.rotateBlock(0, Util.getMillis() / 32f * side, 0)
+				.rotateBlock(45, Util.getMillis() / 32f * side, 0)
 				.submit(graphics);
 			ms.translate((float) (-1), (float) (0));
 			GuiGameElement.of(AllBlocks.COGWHEEL.getDefaultState())
-				.viewRotate(45, 0, 0)
-				.rotateBlock(0, Util.getMillis() / -16f * side + 22.5f, 0)
+				.rotateBlock(45, Util.getMillis() / -16f * side + 22.5f, 0)
 				.submit(graphics);
 			ms.popMatrix();
 		}
@@ -136,7 +136,7 @@ public class CreateMainMenuScreen extends AbstractSimiScreen {
 			.bounds(center - 100, yStart + 92, bLongWidth, bHeight)
 			.build());
 		addRenderableWidget(Button.builder(CreateLang.translateDirect("menu.configure"),
-			$ -> linkTo(new BaseConfigScreen(this, Create.ID)))
+			$ -> RootConfigScreen.forMod(Create.ID, this).ifPresent(this::linkTo))
 			.bounds(center - 100, yStart + 24 + -16, bLongWidth, bHeight)
 			.build());
 
@@ -185,12 +185,12 @@ public class CreateMainMenuScreen extends AbstractSimiScreen {
 
 	private void linkTo(String url) {
 		returnOnClose = false;
+		URI uri = URI.create(url);
 		ScreenOpener.open(new ConfirmLinkScreen((p_213069_2_) -> {
 			if (p_213069_2_)
-				Util.getPlatform()
-					.openUri(url);
+				Blaze3D.openUri(uri);
 			this.minecraft.setScreenAndShow(this);
-		}, url, true));
+		}, uri, true));
 	}
 
 	@Override
