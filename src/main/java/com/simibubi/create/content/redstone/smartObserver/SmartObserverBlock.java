@@ -110,7 +110,7 @@ public class SmartObserverBlock extends DirectedDirectionalBlock implements IBE<
 	}
 
 	@Override
-	public boolean canConnectRedstone(BlockState state, BlockGetter world, BlockPos pos, Direction side) {
+	protected boolean shouldRedstoneWireConnectTo(BlockState state, BlockGetter world, BlockPos pos, Direction side) {
 		return side != state.getValue(FACING)
 			.getOpposite();
 	}

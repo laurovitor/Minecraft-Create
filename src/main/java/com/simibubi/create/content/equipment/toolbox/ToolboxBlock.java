@@ -7,9 +7,7 @@ import static net.minecraft.world.level.block.state.properties.BlockStatePropert
 
 import java.util.Optional;
 
-import org.jetbrains.annotations.NotNull;
 
-import com.mojang.serialization.MapCodec;
 import com.simibubi.create.AllBlockEntityTypes;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllDataComponents;
@@ -52,7 +50,6 @@ public class ToolboxBlock extends HorizontalDirectionalBlock implements SimpleWa
 
 	protected final DyeColor color;
 
-	public static final MapCodec<ToolboxBlock> CODEC = simpleCodec(p -> new ToolboxBlock(p, DyeColor.WHITE));
 
 	public ToolboxBlock(Properties properties, DyeColor color) {
 		super(properties);
@@ -204,8 +201,4 @@ public class ToolboxBlock extends HorizontalDirectionalBlock implements SimpleWa
 		return ItemHelper.calcRedstoneFromBlockEntity(this, pLevel, pPos);
 	}
 
-	@Override
-	protected @NotNull MapCodec<? extends HorizontalDirectionalBlock> codec() {
-		return CODEC;
-	}
 }

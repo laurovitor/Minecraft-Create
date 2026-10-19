@@ -1,6 +1,5 @@
 package com.simibubi.create.content.logistics.crate;
 
-import com.mojang.serialization.MapCodec;
 import com.simibubi.create.AllShapes;
 import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import com.simibubi.create.foundation.block.WrenchableDirectionalBlock;
@@ -15,7 +14,6 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class CrateBlock extends WrenchableDirectionalBlock implements IWrenchable {
 
-	public static final MapCodec<CrateBlock> CODEC = simpleCodec(CrateBlock::new);
 
 	public CrateBlock(Properties p_i48415_1_) {
 		super(p_i48415_1_);

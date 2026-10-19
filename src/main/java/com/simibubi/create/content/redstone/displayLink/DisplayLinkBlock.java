@@ -7,7 +7,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 
-import com.mojang.serialization.MapCodec;
 import com.simibubi.create.AllBlockEntityTypes;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllShapes;
@@ -47,7 +46,6 @@ public class DisplayLinkBlock extends WrenchableDirectionalBlock implements IBE<
 
 	public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
 
-	public static final MapCodec<DisplayLinkBlock> CODEC = simpleCodec(DisplayLinkBlock::new);
 
 	public DisplayLinkBlock(Properties p_i48415_1_) {
 		super(p_i48415_1_);

@@ -40,7 +40,7 @@ public class TrackObserverBlock extends Block implements IBE<TrackObserverBlockE
 	}
 
 	@Override
-	public boolean canConnectRedstone(BlockState state, BlockGetter world, BlockPos pos, Direction side) {
+	protected boolean shouldRedstoneWireConnectTo(BlockState state, BlockGetter world, BlockPos pos, Direction side) {
 		return true;
 	}
 

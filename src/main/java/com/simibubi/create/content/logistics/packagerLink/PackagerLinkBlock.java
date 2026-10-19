@@ -4,7 +4,6 @@ import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.util.RandomSource;
 import org.jspecify.annotations.Nullable;
 import net.minecraft.world.level.redstone.Orientation;
-import com.mojang.serialization.MapCodec;
 import com.simibubi.create.AllBlockEntityTypes;
 import com.simibubi.create.AllShapes;
 import com.simibubi.create.content.equipment.wrench.IWrenchable;
@@ -37,7 +36,6 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class PackagerLinkBlock extends FaceAttachedHorizontalDirectionalBlock
 	implements IBE<PackagerLinkBlockEntity>, ProperWaterloggedBlock, IWrenchable {
-	public static final MapCodec<PackagerLinkBlock> CODEC = simpleCodec(PackagerLinkBlock::new);
 
 	public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
 
@@ -138,8 +136,4 @@ public class PackagerLinkBlock extends FaceAttachedHorizontalDirectionalBlock
 		return AllBlockEntityTypes.PACKAGER_LINK.get();
 	}
 
-	@Override
-	protected MapCodec<? extends FaceAttachedHorizontalDirectionalBlock> codec() {
-		return CODEC;
-	}
 }

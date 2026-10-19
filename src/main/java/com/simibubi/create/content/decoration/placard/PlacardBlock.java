@@ -6,9 +6,7 @@ import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.util.RandomSource;
 import java.util.List;
 
-import org.jetbrains.annotations.NotNull;
 
-import com.mojang.serialization.MapCodec;
 import com.simibubi.create.AllBlockEntityTypes;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllShapes;
@@ -54,7 +52,6 @@ public class PlacardBlock extends FaceAttachedHorizontalDirectionalBlock
 
 	public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
 
-	public static final MapCodec<PlacardBlock> CODEC = simpleCodec(PlacardBlock::new);
 
 	public PlacardBlock(Properties p_53182_) {
 		super(p_53182_);
@@ -225,9 +222,5 @@ public class PlacardBlock extends FaceAttachedHorizontalDirectionalBlock
 		return AllBlockEntityTypes.PLACARD.get();
 	}
 
-	@Override
-	protected @NotNull MapCodec<? extends FaceAttachedHorizontalDirectionalBlock> codec() {
-		return CODEC;
-	}
 
 }

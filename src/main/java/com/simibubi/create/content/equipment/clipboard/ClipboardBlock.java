@@ -16,10 +16,8 @@ import com.simibubi.create.content.schematics.requirement.ItemRequirement.ItemUs
 
 import com.simibubi.create.content.schematics.requirement.ItemRequirement.PartialStrictNbtStackRequirement;
 
-import org.jetbrains.annotations.NotNull;
 
 import com.google.common.collect.ImmutableList;
-import com.mojang.serialization.MapCodec;
 import com.simibubi.create.AllBlockEntityTypes;
 import com.simibubi.create.AllShapes;
 import com.simibubi.create.content.equipment.wrench.IWrenchable;
@@ -65,7 +63,6 @@ public class ClipboardBlock extends FaceAttachedHorizontalDirectionalBlock
 
 	public static final BooleanProperty WRITTEN = BooleanProperty.create("written");
 
-	public static final MapCodec<ClipboardBlock> CODEC = simpleCodec(ClipboardBlock::new);
 
 	public ClipboardBlock(Properties pProperties) {
 		super(pProperties);
@@ -197,10 +194,6 @@ public class ClipboardBlock extends FaceAttachedHorizontalDirectionalBlock
 		return AllBlockEntityTypes.CLIPBOARD.get();
 	}
 
-	@Override
-	protected @NotNull MapCodec<? extends FaceAttachedHorizontalDirectionalBlock> codec() {
-		return CODEC;
-	}
 
 	@Override
 	public ItemRequirement getRequiredItems(BlockState state, @Nullable BlockEntity blockEntity) {

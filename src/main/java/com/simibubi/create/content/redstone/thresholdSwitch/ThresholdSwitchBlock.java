@@ -49,7 +49,7 @@ public class ThresholdSwitchBlock extends DirectedDirectionalBlock implements IB
 	}
 
 	@Override
-	public boolean canConnectRedstone(BlockState state, BlockGetter world, BlockPos pos, Direction side) {
+	protected boolean shouldRedstoneWireConnectTo(BlockState state, BlockGetter world, BlockPos pos, Direction side) {
 		return side != null && side.getOpposite() != getTargetDirection(state);
 	}
 

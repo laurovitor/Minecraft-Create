@@ -4,7 +4,6 @@ import net.minecraft.util.Prediction;
 import net.neoforged.neoforge.transfer.item.ItemResource;
 import net.neoforged.neoforge.transfer.transaction.Transaction;
 import net.neoforged.neoforge.transfer.item.ItemUtil;
-import com.mojang.serialization.MapCodec;
 import com.simibubi.create.AllBlockEntityTypes;
 import com.simibubi.create.AllPartialModels;
 import com.simibubi.create.AllShapes;
@@ -39,7 +38,6 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class StockTickerBlock extends HorizontalDirectionalBlock implements IBE<StockTickerBlockEntity>, IWrenchable {
 
-	public static final MapCodec<StockTickerBlock> CODEC = simpleCodec(StockTickerBlock::new);
 
 	public StockTickerBlock(Properties pProperties) {
 		super(pProperties);
@@ -124,8 +122,4 @@ public class StockTickerBlock extends HorizontalDirectionalBlock implements IBE<
 		return false;
 	}
 
-	@Override
-	protected MapCodec<? extends HorizontalDirectionalBlock> codec() {
-		return CODEC;
-	}
 }
