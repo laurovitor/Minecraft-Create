@@ -44,7 +44,7 @@ public class DeployerActorVisual extends ActorVisual {
 	public DeployerActorVisual(VisualizationContext visualizationContext, VirtualRenderWorld simulationWorld, MovementContext context) {
         super(visualizationContext, simulationWorld, context);
         BlockState state = context.state;
-        DeployerBlockEntity.Mode mode = NBTHelper.readEnum(context.blockEntityData, "Mode", DeployerBlockEntity.Mode.class);
+        DeployerBlockEntity.Mode mode = DeployerBlockEntity.readMode(context.blockEntityData);
         PartialModel handPose = DeployerRenderer.getHandPose(mode);
 
         stationaryTimer = context.data.contains("StationaryTimer");

@@ -8,6 +8,7 @@ import java.util.List;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import com.simibubi.create.AllPartialModels;
+import dev.engine_room.flywheel.lib.transform.TransformStack;
 import com.simibubi.create.content.contraptions.behaviour.MovementContext;
 import com.simibubi.create.content.contraptions.render.ContraptionMatrices;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntityRenderer;
@@ -45,14 +46,14 @@ public class DrillRenderer extends KineticBlockEntityRenderer<DrillBlockEntity, 
 		float time = AnimationTickHolder.getRenderTime() / 20;
 		float angle = (float) (((time * speed) % 360));
 
-		superBuffer
-			.transform(matrices.getModel())
+		superBuffer.getTransforms().mulPose(matrices.getModel().last().pose());
+		TransformStack.of(superBuffer.getTransforms())
 			.center()
 			.rotateYDegrees(AngleHelper.horizontalAngle(facing))
 			.rotateXDegrees(AngleHelper.verticalAngle(facing))
 			.rotateZDegrees(angle)
-			.uncenter()
-			.light(LightCoordsUtil.getLightCoords(renderWorld, context.localPos))
+			.uncenter();
+		superBuffer.light(LightCoordsUtil.getLightCoords(renderWorld, context.localPos))
 			.useLevelLight(RenderLevels.lightSource(context.world, renderWorld), matrices.getWorld());
 		out.add(ActorGeometry.of(matrices.getViewProjection(), superBuffer, RenderTypes.solidMovingBlock()));
 	}

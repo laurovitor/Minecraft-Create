@@ -87,7 +87,7 @@ public class BlockBreakingMovementBehaviour implements MovementBehaviour {
 		}
 		entity.setDeltaMovement(entity.getDeltaMovement()
 			.add(motionBoost));
-		entity.hurtMarked = true;
+		entity.syncVelocity = true;
 	}
 
 	protected DamageSource getDamageSource(Level level) {

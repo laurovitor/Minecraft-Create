@@ -302,7 +302,7 @@ public class DeployerMovementBehaviour implements MovementBehaviour {
 	}
 
 	private Mode getMode(MovementContext context) {
-		return NBTHelper.readEnum(context.blockEntityData, "Mode", Mode.class);
+		return DeployerBlockEntity.readMode(context.blockEntityData);
 	}
 
 	@Override

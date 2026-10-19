@@ -439,6 +439,10 @@ public class DeployerBlockEntity extends KineticBlockEntity implements Clearable
 		super.writeSafe(tag, registries);
 	}
 
+	static Mode readMode(CompoundTag tag) {
+		return readEnum(tag, "Mode", Mode.class, Mode.USE);
+	}
+
 	private static <E extends Enum<E>> E readEnum(CompoundTag tag, String key, Class<E> type, E fallback) {
 		try {
 			return Enum.valueOf(type, tag.getStringOr(key, fallback.name()));

@@ -38,9 +38,9 @@ public class DeployerMovingInteraction extends MovingInteractionBehaviour {
 		ItemStack heldStack = player.getItemInHand(activeHand);
 		if (heldStack.getItem()
 			.equals(AllItems.WRENCH.get())) {
-			DeployerBlockEntity.Mode mode = NBTHelper.readEnum(ctx.blockEntityData, "Mode", DeployerBlockEntity.Mode.class);
-			NBTHelper.writeEnum(ctx.blockEntityData, "Mode",
-				mode == DeployerBlockEntity.Mode.PUNCH ? DeployerBlockEntity.Mode.USE : DeployerBlockEntity.Mode.PUNCH);
+			DeployerBlockEntity.Mode mode = DeployerBlockEntity.readMode(ctx.blockEntityData);
+			ctx.blockEntityData.putString("Mode",
+				(mode == DeployerBlockEntity.Mode.PUNCH ? DeployerBlockEntity.Mode.USE : DeployerBlockEntity.Mode.PUNCH).name());
 
 		} else {
 			if (ctx.world.isClientSide())

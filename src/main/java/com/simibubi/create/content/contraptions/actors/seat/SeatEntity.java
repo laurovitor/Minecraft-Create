@@ -153,7 +153,7 @@ public class SeatEntity extends Entity implements IEntityWithComplexSpawn {
 
 		@Override
 		public boolean shouldRender(SeatEntity seatEntity, Frustum frustum, double p_225626_3_, double p_225626_5_,
-			double p_225626_7_) {
+			double p_225626_7_, float partialTicks) {
 			return false;
 		}
 	}

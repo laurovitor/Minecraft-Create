@@ -2,7 +2,6 @@ package com.simibubi.create.content.contraptions.actors.roller;
 
 import java.util.function.Predicate;
 
-import com.mojang.serialization.MapCodec;
 import com.simibubi.create.AllBlockEntityTypes;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.content.contraptions.actors.AttachedActorBlock;
@@ -23,7 +22,6 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
@@ -31,12 +29,9 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-import org.jetbrains.annotations.NotNull;
 
 public class RollerBlock extends AttachedActorBlock implements IBE<RollerBlockEntity> {
 	private static final IPlacementHelper placementHelper = PlacementHelpers.register(new PlacementHelper());
-
-	public static final MapCodec<RollerBlock> CODEC = simpleCodec(RollerBlock::new);
 
 	public RollerBlock(Properties p_i48377_1_) {
 		super(p_i48377_1_);
@@ -100,11 +95,6 @@ public class RollerBlock extends AttachedActorBlock implements IBE<RollerBlockEn
 			return AllBlocks.MECHANICAL_ROLLER::isIn;
 		}
 
-	}
-
-	@Override
-	protected @NotNull MapCodec<? extends HorizontalDirectionalBlock> codec() {
-		return CODEC;
 	}
 
 }
