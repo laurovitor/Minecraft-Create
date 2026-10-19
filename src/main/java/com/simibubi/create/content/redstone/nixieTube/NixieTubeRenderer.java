@@ -1,6 +1,7 @@
 package com.simibubi.create.content.redstone.nixieTube;
 
 import com.simibubi.create.foundation.render.CachedBufferer;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import com.simibubi.create.content.redstone.nixieTube.NixieTubeBlockEntity.ComputerSignal;
 import com.simibubi.create.content.trains.signal.SignalBlockEntity.SignalState;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
@@ -184,8 +185,8 @@ public class NixieTubeRenderer
 		boolean invertTubes =
 			facing == Direction.DOWN || blockState.getValue(NixieTubeBlock.FACE) == DoubleAttachFace.WALL_REVERSED;
 
-		CachedBufferer.partial(AllPartialModels.SIGNAL_PANEL, blockState)
-			.light(light)
+		SuperByteBufferRenderState.capture(CachedBufferer.partial(AllPartialModels.SIGNAL_PANEL, blockState)
+			.light(light))
 			.submit(ms, net.minecraft.client.renderer.rendertype.RenderTypes.solidMovingBlock(), queue);
 
 		ms.pushPose();
@@ -295,7 +296,7 @@ public class NixieTubeRenderer
 		RenderType renderType, float x, float y, float z) {
 		TransformStack.of(buffer.getTransforms())
 			.scale(x, y, z);
-		buffer.submit(ms, renderType, queue);
+		SuperByteBufferRenderState.capture(buffer).submit(ms, renderType, queue);
 	}
 
 	private static void submitScaled(SuperByteBuffer buffer, PoseStack ms, SubmitNodeCollector queue,

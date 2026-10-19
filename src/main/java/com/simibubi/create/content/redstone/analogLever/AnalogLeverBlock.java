@@ -2,11 +2,11 @@ package com.simibubi.create.content.redstone.analogLever;
 
 import net.minecraft.util.ARGB;
 import net.minecraft.server.level.ServerLevel;
-import com.mojang.serialization.MapCodec;
 
 import com.simibubi.create.foundation.mixin.accessor.BlockBehaviourAccessor;
 
 import org.jetbrains.annotations.NotNull;
+
 import org.joml.Vector3f;
 
 import com.simibubi.create.AllBlockEntityTypes;
@@ -36,8 +36,6 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class AnalogLeverBlock extends FaceAttachedHorizontalDirectionalBlock implements IBE<AnalogLeverBlockEntity> {
-
-	public static final MapCodec<AnalogLeverBlock> CODEC = simpleCodec(AnalogLeverBlock::new);
 
 	public AnalogLeverBlock(Properties p_i48402_1_) {
 		super(p_i48402_1_);
@@ -140,10 +138,5 @@ public class AnalogLeverBlock extends FaceAttachedHorizontalDirectionalBlock imp
 	@Override
 	protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
 		return false;
-	}
-
-	@Override
-	protected @NotNull MapCodec<? extends FaceAttachedHorizontalDirectionalBlock> codec() {
-		return CODEC;
 	}
 }
