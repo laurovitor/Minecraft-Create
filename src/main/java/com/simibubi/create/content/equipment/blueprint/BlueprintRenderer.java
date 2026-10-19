@@ -10,11 +10,11 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.AllPartialModels;
 import com.simibubi.create.content.equipment.blueprint.BlueprintEntity.BlueprintSection;
 import com.simibubi.create.foundation.render.CachedBufferer;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import net.createmod.catnip.api.client.render.SuperByteBuffer;
-import net.createmod.catnip.api.client.render.SuperByteBufferRenderState;
 import net.createmod.catnip.api.data.Couple;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -70,14 +70,13 @@ public class BlueprintRenderer extends EntityRenderer<BlueprintEntity, Blueprint
 			: entity.size == 2 ? AllPartialModels.CRAFTING_BLUEPRINT_2x2 : AllPartialModels.CRAFTING_BLUEPRINT_1x1;
 
 		SuperByteBuffer sbb = CachedBufferer.partial(partialModel, Blocks.AIR.defaultBlockState());
-		sbb.rotateYDegrees(-yaw)
+		TransformStack.of(sbb.getTransforms())
+			.rotateYDegrees(-yaw)
 			.rotateXDegrees(90.0F + entity.getXRot())
 			.translate(-.5, -1 / 32f, -.5);
 		if (entity.size == 2)
-			sbb.translate(.5, 0, -.5);
-		state.board = sbb.disableDiffuse()
-			.light(state.lightCoords)
-			.extractRenderState();
+			TransformStack.of(sbb.getTransforms()).translate(.5, 0, -.5);
+		state.board = SuperByteBufferRenderState.capture(sbb.disableDiffuse().light(state.lightCoords));
 
 		// The board catches light as if it faced the viewer, so the items on it are lit to match.
 		float fakeNormalXRotation = -15;

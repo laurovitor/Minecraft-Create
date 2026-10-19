@@ -6,16 +6,13 @@ import com.simibubi.create.AllPartialModels;
 
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
-import net.createmod.catnip.api.client.animation.AnimationTickHolder;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.client.renderer.entity.player.AvatarRenderer;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.player.PlayerModelPart;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.item.BlockItem;
@@ -60,9 +57,11 @@ public class ExtendoGripRenderHandler {
 		ItemStack heldItem = event.getItemStack();
 		Minecraft mc = Minecraft.getInstance();
 		LocalPlayer player = mc.player;
+		if (player == null)
+			return;
 		boolean rightHand = event.getHand() == InteractionHand.MAIN_HAND ^ player.getMainArm() == HumanoidArm.LEFT;
 
-		ItemStack offhandItem = getRenderedOffHandStack();
+		ItemStack offhandItem = event.getPlayerState().firstPersonHandsAndItems.offHandItem;
 		boolean notInOffhand = !AllItems.EXTENDO_GRIP.isIn(offhandItem);
 		if (notInOffhand && !AllItems.EXTENDO_GRIP.isIn(heldItem))
 			return;
@@ -92,27 +91,29 @@ public class ExtendoGripRenderHandler {
 			msr.rotateYDegrees(flip * 40.0F);
 			ms.translate(flip * 0.05f, -0.3f, -0.3f);
 
-			AvatarRenderer<AbstractClientPlayer> playerrenderer = mc.getEntityRenderDispatcher()
-				.getPlayerRenderer(player);
-			Identifier skin = player.getSkin()
+			AvatarRenderer<?> playerrenderer = mc.getEntityRenderDispatcher()
+				.getRenderer(event.getPlayerState().avatarRenderState);
+			Identifier skin = event.getPlayerState().avatarRenderState.skin
 				.body()
 				.texturePath();
 			if (rightHand)
 				playerrenderer.renderRightHand(ms, event.getSubmitNodeCollector(), event.getPackedLight(), skin,
-					player.isModelPartShown(PlayerModelPart.RIGHT_SLEEVE));
+					event.getPlayerState().avatarRenderState.showRightSleeve);
 			else
 				playerrenderer.renderLeftHand(ms, event.getSubmitNodeCollector(), event.getPackedLight(), skin,
-					player.isModelPartShown(PlayerModelPart.LEFT_SLEEVE));
+					event.getPlayerState().avatarRenderState.showLeftSleeve);
 			ms.popPose();
 
 			// Render gun
 			ms.pushPose();
 			ms.translate(flip * -0.1f, 0, -0.3f);
-			ItemInHandRenderer firstPersonRenderer = mc.getEntityRenderDispatcher().getItemInHandRenderer();
 			ItemDisplayContext transform =
 				rightHand ? ItemDisplayContext.FIRST_PERSON_RIGHT_HAND : ItemDisplayContext.FIRST_PERSON_LEFT_HAND;
-			firstPersonRenderer.renderItem(mc.player, notInOffhand ? heldItem : offhandItem, transform, ms,
-				event.getSubmitNodeCollector(), event.getPackedLight());
+			ItemStackRenderState itemState = new ItemStackRenderState();
+			mc.getItemModelResolver().updateForTopItem(itemState, notInOffhand ? heldItem : offhandItem,
+				transform, player.level(), player, 0);
+			itemState.submit(ms, event.getSubmitNodeCollector(), event.getPackedLight(),
+				OverlayTexture.NO_OVERLAY, 0);
 
 			ms.popPose();
 		}
@@ -121,11 +122,13 @@ public class ExtendoGripRenderHandler {
 	}
 
 	private static ItemStack getRenderedMainHandStack() {
-		return Minecraft.getInstance().getEntityRenderDispatcher().getItemInHandRenderer().mainHandItem;
+		LocalPlayer player = Minecraft.getInstance().player;
+		return player == null ? ItemStack.EMPTY : player.getMainHandItem();
 	}
 
 	private static ItemStack getRenderedOffHandStack() {
-		return Minecraft.getInstance().getEntityRenderDispatcher().getItemInHandRenderer().offHandItem;
+		LocalPlayer player = Minecraft.getInstance().player;
+		return player == null ? ItemStack.EMPTY : player.getOffhandItem();
 	}
 
 }
