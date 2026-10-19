@@ -12,7 +12,6 @@ import com.simibubi.create.Create;
 import com.tterrag.registrate.util.entry.ItemProviderEntry;
 
 import net.minecraft.world.item.ItemStackTemplate;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.advancements.AdvancementType;
@@ -120,13 +119,18 @@ public class CreateAdvancement {
 			mcBuilder.addCriterion(String.valueOf(i), createBuilder.triggers.get(i)
 				.get());
 
-		mcBuilder.display(createBuilder.icon.get(), Component.translatable(titleKey()),
-			Component.translatable(descriptionKey()).withStyle(s -> s.withColor(0xDBA213)),
-			id.equals("root") ? BACKGROUND : null, createBuilder.type.advancementType, createBuilder.type.toast,
-			createBuilder.type.announce, createBuilder.type.hide);
+		ItemStackTemplate icon = createBuilder.icon.get();
+		Component title = Component.translatable(titleKey());
+		Component description = Component.translatable(descriptionKey()).withStyle(s -> s.withColor(0xDBA213));
+		if (id.equals("root"))
+			mcBuilder.rootDisplay(icon, title, description, BACKGROUND, createBuilder.type.advancementType,
+				createBuilder.type.toast, createBuilder.type.announce, createBuilder.type.hide);
+		else
+			mcBuilder.display(icon, title, description, createBuilder.type.advancementType,
+				createBuilder.type.toast, createBuilder.type.announce, createBuilder.type.hide);
 
-		datagenResult = mcBuilder.save(t, Create.asResource(id)
-			.toString());
+		datagenResult = mcBuilder.build(Create.asResource(id));
+		t.accept(datagenResult);
 	}
 
 	void provideLang(BiConsumer<String, String> consumer) {
@@ -228,7 +232,8 @@ public class CreateAdvancement {
 		}
 
 		Builder whenBlockPlaced(Block block) {
-			return externalTrigger(() -> ItemUsedOnLocationTrigger.TriggerInstance.placedBlock(block));
+			return externalTrigger(() -> ItemUsedOnLocationTrigger.TriggerInstance.placedBlock(
+				datagenRegistries.lookupOrThrow(Registries.BLOCK), block));
 		}
 
 		Builder whenIconCollected() {
