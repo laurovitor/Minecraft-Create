@@ -5,7 +5,6 @@ import com.simibubi.create.content.logistics.depot.EjectorBlockEntity;
 import com.simibubi.create.foundation.gui.AllIcons;
 import com.simibubi.create.foundation.ponder.CreateSceneBuilder;
 
-import net.createmod.catnip.api.nbt.NBTHelper;
 import net.createmod.catnip.api.math.Pointing;
 import net.createmod.ponder.api.client.PonderPalette;
 import net.createmod.ponder.api.client.element.ElementLink;
@@ -61,7 +60,7 @@ public class EjectorScenes {
 		scene.idle(7);
 		scene.world().setKineticSpeed(ejectorS, 0);
 		scene.world().modifyBlockEntityNBT(ejectorS, EjectorBlockEntity.class, nbt -> {
-			NBTHelper.writeEnum(nbt, "State", EjectorBlockEntity.State.RETRACTING);
+			nbt.putString("State", EjectorBlockEntity.State.RETRACTING.name());
 			nbt.putFloat("ForceAngle", 1);
 		});
 		scene.world().showSection(ejectorS, Direction.DOWN);

@@ -13,7 +13,6 @@ import com.simibubi.create.foundation.gui.AllIcons;
 import com.simibubi.create.foundation.ponder.CreateSceneBuilder;
 
 import net.createmod.catnip.api.data.Iterate;
-import net.createmod.catnip.api.nbt.NBTHelper;
 import net.createmod.catnip.api.math.Pointing;
 import net.createmod.catnip.api.math.VecHelper;
 import net.createmod.ponder.api.client.PonderPalette;
@@ -57,7 +56,7 @@ public class TunnelScenes {
 		for (int i = 0; i < 3; i++) {
 			scene.world().cycleBlockProperty(util.grid().at(1 + i, 1, 2), BeltBlock.CASING);
 			scene.world().modifyBlockEntityNBT(util.select().position(1 + i, 1, 2), BeltBlockEntity.class,
-				nbt -> NBTHelper.writeEnum(nbt, "Casing", BeltBlockEntity.CasingType.ANDESITE), true);
+				nbt -> nbt.putString("Casing", BeltBlockEntity.CasingType.ANDESITE.name()), true);
 			scene.idle(4);
 		}
 
@@ -130,7 +129,7 @@ public class TunnelScenes {
 		for (int i = 0; i < 3; i++) {
 			scene.world().cycleBlockProperty(util.grid().at(2 + i, 1, 2), BeltBlock.CASING);
 			scene.world().modifyBlockEntityNBT(util.select().position(2 + i, 1, 2), BeltBlockEntity.class,
-				nbt -> NBTHelper.writeEnum(nbt, "Casing", BeltBlockEntity.CasingType.BRASS), true);
+				nbt -> nbt.putString("Casing", BeltBlockEntity.CasingType.BRASS.name()), true);
 			scene.idle(4);
 		}
 
