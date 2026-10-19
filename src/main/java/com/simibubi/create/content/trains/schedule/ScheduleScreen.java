@@ -300,7 +300,7 @@ public class ScheduleScreen extends AbstractSimiContainerScreen<ScheduleMenu> {
 
 		editorSubWidgets.reset();
 		field.initConfigurationWidgets(editorSubWidgets.newLineBuilder(
-			font, getGuiLeft() + 77, getGuiTop() + 92
+			font, leftPos + 77, topPos + 92
 		).speechBubble());
 		editorSubWidgets.load(field.getData());
 
@@ -1068,8 +1068,8 @@ public class ScheduleScreen extends AbstractSimiContainerScreen<ScheduleMenu> {
 		}
 
 		matrices.pushMatrix();
-		matrices.translate(0, getGuiTop() + 87);
-		editorSubWidgets.renderBg(getGuiLeft() + 77, graphics);
+		matrices.translate(0, topPos + 87);
+		editorSubWidgets.renderBg(leftPos + 77, graphics);
 		matrices.popMatrix();
 
 		matrices.popMatrix();
