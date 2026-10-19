@@ -426,7 +426,6 @@ public class BrassTunnelBlockEntity extends BeltTunnelBlockEntity implements IHa
 					ItemEntity entity = new ItemEntity(level, outPos.x, outPos.y + 6 / 16f, outPos.z, ejected);
 					entity.setDeltaMovement(outMotion);
 					entity.setDefaultPickUpDelay();
-					entity.hurtMarked = true;
 					level.addFreshEntity(entity);
 				}
 
@@ -599,7 +598,7 @@ public class BrassTunnelBlockEntity extends BeltTunnelBlockEntity implements IHa
 
 		compound.store("StackToDistribute", ItemStack.OPTIONAL_CODEC, RegistryNbt.ops(registries), stackToDistribute);
 		if (stackEnteredFrom != null)
-			NBTHelper.writeEnum(compound, "StackEnteredFrom", stackEnteredFrom);
+			compound.putString("StackEnteredFrom", stackEnteredFrom.name());
 
 		compound.putFloat("DistributionProgress", distributionProgress);
 		compound.putInt("PreviousIndex", previousOutputIndex);
@@ -630,9 +629,13 @@ public class BrassTunnelBlockEntity extends BeltTunnelBlockEntity implements IHa
 		connectedRight = compound.getBooleanOr("ConnectedRight", false);
 
 		stackToDistribute = compound.read("StackToDistribute", ItemStack.OPTIONAL_CODEC, RegistryNbt.ops(registries)).orElse(ItemStack.EMPTY);
-		stackEnteredFrom =
-			compound.contains("StackEnteredFrom") ? NBTHelper.readEnum(compound, "StackEnteredFrom", Direction.class)
-				: null;
+		stackEnteredFrom = null;
+		String enteredFrom = compound.getStringOr("StackEnteredFrom", "");
+		for (Direction direction : Direction.values())
+			if (direction.name().equals(enteredFrom)) {
+				stackEnteredFrom = direction;
+				break;
+			}
 
 		distributionProgress = compound.getFloatOr("DistributionProgress", 0);
 		previousOutputIndex = compound.getIntOr("PreviousIndex", 0);

@@ -49,6 +49,7 @@ import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour
 import com.simibubi.create.foundation.blockEntity.behaviour.ValueSettingsBoard;
 import com.simibubi.create.foundation.blockEntity.behaviour.ValueSettingsFormatter;
 import com.simibubi.create.foundation.blockEntity.behaviour.filtering.FilteringBehaviour;
+import com.simibubi.create.foundation.item.ItemHelper;
 import com.simibubi.create.foundation.utility.CreateLang;
 import com.simibubi.create.infrastructure.config.AllConfigs;
 
@@ -65,6 +66,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -846,7 +848,10 @@ public class FactoryPanelBehaviour extends FilteringBehaviour implements MenuPro
 		panelTag.putInt("RecipeOutput", recipeOutput);
 		panelTag.putInt("PromiseClearingInterval", promiseClearingInterval);
 		panelTag.store("Freq", UUIDUtil.CODEC, network);
-		panelTag.put("Craft", NBTHelper.writeItemList(activeCraftingArrangement, registries));
+		ListTag craftTags = new ListTag();
+		for (ItemStack stack : activeCraftingArrangement)
+			craftTags.add(ItemHelper.saveOptional(stack, registries));
+		panelTag.put("Craft", craftTags);
 
 		if (panelBE().restocker && !clientPacket)
 			panelTag.put("Promises", restockerPromises.write(registries));
@@ -889,7 +894,9 @@ public class FactoryPanelBehaviour extends FilteringBehaviour implements MenuPro
 		CatnipCodecUtils.decode(Codec.list(FactoryPanelConnection.CODEC), registries, panelTag.get("TargetedByLinks")).orElse(List.of())
 			.forEach(c -> targetedByLinks.put(c.from.pos(), c));
 
-		activeCraftingArrangement = NBTHelper.readItemList(panelTag.getListOrEmpty("Craft"), registries);
+		activeCraftingArrangement = new ArrayList<>();
+		for (Tag stackTag : panelTag.getListOrEmpty("Craft"))
+			activeCraftingArrangement.add(ItemHelper.parseOptional(registries, stackTag));
 		recipeAddress = panelTag.getStringOr("RecipeAddress", "");
 		recipeOutput = panelTag.getIntOr("RecipeOutput", 0);
 

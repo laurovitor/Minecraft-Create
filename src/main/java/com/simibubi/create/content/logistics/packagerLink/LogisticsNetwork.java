@@ -15,6 +15,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 
@@ -47,7 +48,7 @@ public class LogisticsNetwork {
 			CompoundTag nbt = new CompoundTag();
 			nbt.store("Pos", BlockPos.CODEC, p.pos());
 			if (p.dimension() != Level.OVERWORLD)
-				NBTHelper.writeIdentifier(nbt, "Dim", p.dimension().identifier());
+				nbt.putString("Dim", p.dimension().identifier().toString());
 			return nbt;
 		}));
 
@@ -64,7 +65,7 @@ public class LogisticsNetwork {
 
 		NBTHelper.iterateCompoundList(tag.getListOrEmpty("Links"), nbt -> {
 			network.totalLinks.add(GlobalPos.of(nbt.contains("Dim")
-				? ResourceKey.create(Registries.DIMENSION, NBTHelper.readIdentifier(nbt, "Dim"))
+				? ResourceKey.create(Registries.DIMENSION, Identifier.parse(nbt.getStringOr("Dim", "")))
 				: Level.OVERWORLD, NBTHelper.readBlockPos(nbt, "Pos")));
 		});
 

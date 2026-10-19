@@ -42,6 +42,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.Clearable;
 import net.minecraft.world.Containers;
@@ -164,7 +166,10 @@ public class StockTickerBlockEntity extends StockCheckingBlockEntity implements 
 		super.write(tag, registries, clientPacket);
 		tag.putString("PreviousAddress", previouslyUsedAddress);
 		tag.put("ReceivedPayments", receivedPayments.serializeNBT(registries));
-		tag.put("Categories", NBTHelper.writeItemList(categories, registries));
+		ListTag categoryTags = new ListTag();
+		for (ItemStack category : categories)
+			categoryTags.add(ItemHelper.saveOptional(category, registries));
+		tag.put("Categories", categoryTags);
 		tag.put("HiddenCategories", NBTHelper.writeCompoundList(hiddenCategoriesByPlayer.entrySet(), e -> {
 			CompoundTag c = new CompoundTag();
 			c.store("Id", UUIDUtil.CODEC, e.getKey());
@@ -184,7 +189,9 @@ public class StockTickerBlockEntity extends StockCheckingBlockEntity implements 
 		super.read(tag, registries, clientPacket);
 		previouslyUsedAddress = tag.getStringOr("PreviousAddress", "");
 		receivedPayments.deserializeNBT(registries, tag.getCompoundOrEmpty("ReceivedPayments"));
-		categories = NBTHelper.readItemList(tag.getListOrEmpty("Categories"), registries);
+		categories = new ArrayList<>();
+		for (Tag categoryTag : tag.getListOrEmpty("Categories"))
+			categories.add(ItemHelper.parseOptional(registries, categoryTag));
 		categories.removeIf(stack -> !stack.isEmpty() && !(stack.getItem() instanceof FilterItem));
 		hiddenCategoriesByPlayer.clear();
 
