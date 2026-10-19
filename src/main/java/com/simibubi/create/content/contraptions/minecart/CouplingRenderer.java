@@ -1,6 +1,7 @@
 package com.simibubi.create.content.contraptions.minecart;
 
 import com.simibubi.create.foundation.render.CachedBufferer;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import net.minecraft.world.entity.vehicle.minecart.OldMinecartBehavior;
 import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -85,10 +86,10 @@ public class CouplingRenderer {
 
 			ms.pushPose();
 			cartTransform.apply(ms, camera);
-			attachment.light(lightValues.get(isFirst))
+			SuperByteBufferRenderState.capture(attachment.light(lightValues.get(isFirst)))
 				.submit(ms, RenderTypes.solidMovingBlock(), queue);
 			msr.rotateYDegrees((float) connectorYaw - cartTransform.yaw);
-			ring.light(lightValues.get(isFirst))
+			SuperByteBufferRenderState.capture(ring.light(lightValues.get(isFirst)))
 				.submit(ms, RenderTypes.solidMovingBlock(), queue);
 			ms.popPose();
 		});
@@ -104,7 +105,7 @@ public class CouplingRenderer {
 			.rotateZDegrees((float) connectorPitch);
 		ms.scale((float) endPointDiff.length(), 1, 1);
 
-		connector.light(meanSkyLight << 20 | meanBlockLight << 4)
+		SuperByteBufferRenderState.capture(connector.light(meanSkyLight << 20 | meanBlockLight << 4))
 			.submit(ms, RenderTypes.solidMovingBlock(), queue);
 		ms.popPose();
 	}

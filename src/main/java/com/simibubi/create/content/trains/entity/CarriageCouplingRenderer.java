@@ -1,6 +1,9 @@
 package com.simibubi.create.content.trains.entity;
 
 import com.simibubi.create.foundation.render.CachedBufferer;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
+import dev.engine_room.flywheel.lib.transform.TransformStack;
+import net.createmod.catnip.api.client.render.SuperByteBuffer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import java.util.Collection;
@@ -69,10 +72,11 @@ public class CarriageCouplingRenderer {
 				{
 					ms.pushPose();
 					ms.translate(anchor.x - camera.x, anchor.y - camera.y, anchor.z - camera.z);
-					CachedBufferer.partial(AllPartialModels.TRAIN_COUPLING_HEAD, air)
+					SuperByteBuffer head = CachedBufferer.partial(AllPartialModels.TRAIN_COUPLING_HEAD, air);
+					TransformStack.of(head.getTransforms())
 						.rotateYDegrees(-yRot)
-						.rotateXDegrees(xRot)
-						.light(lightCoords)
+						.rotateXDegrees(xRot);
+					SuperByteBufferRenderState.capture(head.light(lightCoords))
 						.submit(ms, RenderTypes.solidMovingBlock(), queue);
 
 					float margin = 3 / 16f;
@@ -81,13 +85,14 @@ public class CarriageCouplingRenderer {
 					int couplingSegments = (int) Math.round(couplingDistance * 4);
 					double stretch = ((anchor2.distanceTo(anchor) - 2 * margin) * 4) / couplingSegments;
 					for (int j = 0; j < couplingSegments; j++) {
-						CachedBufferer.partial(AllPartialModels.TRAIN_COUPLING_CABLE, air)
+						SuperByteBuffer cable = CachedBufferer.partial(AllPartialModels.TRAIN_COUPLING_CABLE, air);
+						TransformStack.of(cable.getTransforms())
 							.rotateYDegrees(-yRot + 180)
 							.rotateXDegrees(-xRot)
 							.translate(0, 0, margin + 2 / 16f)
 							.scale(1, 1, (float) stretch)
-							.translate(0, 0, j / 4f)
-							.light(lightCoords)
+							.translate(0, 0, j / 4f);
+						SuperByteBufferRenderState.capture(cable.light(lightCoords))
 							.submit(ms, RenderTypes.solidMovingBlock(), queue);
 					}
 					ms.popPose();
@@ -99,10 +104,11 @@ public class CarriageCouplingRenderer {
 						.add(anchor2)
 						.subtract(camera);
 					ms.translate(translation.x, translation.y, translation.z);
-					CachedBufferer.partial(AllPartialModels.TRAIN_COUPLING_HEAD, air)
+					SuperByteBuffer head = CachedBufferer.partial(AllPartialModels.TRAIN_COUPLING_HEAD, air);
+					TransformStack.of(head.getTransforms())
 						.rotateYDegrees(-yRot + 180)
-						.rotateXDegrees(-xRot)
-						.light(lightCoords2)
+						.rotateXDegrees(-xRot);
+					SuperByteBufferRenderState.capture(head.light(lightCoords2))
 						.submit(ms, RenderTypes.solidMovingBlock(), queue);
 					ms.popPose();
 				}
