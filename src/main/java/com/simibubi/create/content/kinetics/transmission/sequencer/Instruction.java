@@ -6,7 +6,6 @@ import java.util.Vector;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 
 import io.netty.buffer.ByteBuf;
-import net.createmod.catnip.api.nbt.NBTHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -131,17 +130,25 @@ public class Instruction {
 
 	CompoundTag serialize() {
 		CompoundTag tag = new CompoundTag();
-		NBTHelper.writeEnum(tag, "Type", instruction);
-		NBTHelper.writeEnum(tag, "Modifier", speedModifier);
+		tag.putString("Type", instruction.name());
+		tag.putString("Modifier", speedModifier.name());
 		tag.putInt("Value", value);
 		return tag;
 	}
 
 	static Instruction deserialize(CompoundTag tag) {
-		Instruction instruction = new Instruction(NBTHelper.readEnum(tag, "Type", SequencerInstructions.class));
-		instruction.speedModifier = NBTHelper.readEnum(tag, "Modifier", InstructionSpeedModifiers.class);
+		Instruction instruction = new Instruction(readEnum(tag, "Type", SequencerInstructions.class, SequencerInstructions.END));
+		instruction.speedModifier = readEnum(tag, "Modifier", InstructionSpeedModifiers.class, InstructionSpeedModifiers.FORWARD);
 		instruction.value = tag.getIntOr("Value", 0);
 		return instruction;
+	}
+
+	private static <E extends Enum<E>> E readEnum(CompoundTag tag, String key, Class<E> type, E fallback) {
+		try {
+			return Enum.valueOf(type, tag.getStringOr(key, ""));
+		} catch (IllegalArgumentException ignored) {
+			return fallback;
+		}
 	}
 
 }

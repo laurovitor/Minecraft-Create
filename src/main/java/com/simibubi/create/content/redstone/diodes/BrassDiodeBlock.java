@@ -1,8 +1,5 @@
 package com.simibubi.create.content.redstone.diodes;
 
-import org.jetbrains.annotations.NotNull;
-
-import com.mojang.serialization.MapCodec;
 import com.simibubi.create.AllBlockEntityTypes;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllItems;
@@ -19,7 +16,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.DiodeBlock;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition.Builder;
@@ -30,8 +26,6 @@ public class BrassDiodeBlock extends AbstractDiodeBlock implements IBE<BrassDiod
 
 	public static final BooleanProperty POWERING = BooleanProperty.create("powering");
 	public static final BooleanProperty INVERTED = BooleanProperty.create("inverted");
-
-	public static final MapCodec<BrassDiodeBlock> CODEC = simpleCodec(BrassDiodeBlock::new);
 
 	public BrassDiodeBlock(Properties properties) {
 		super(properties);
@@ -82,7 +76,6 @@ public class BrassDiodeBlock extends AbstractDiodeBlock implements IBE<BrassDiod
 		return 2;
 	}
 
-	@Override
 	public boolean canConnectRedstone(BlockState state, BlockGetter world, BlockPos pos, Direction side) {
 		if (side == null)
 			return false;
@@ -102,8 +95,4 @@ public class BrassDiodeBlock extends AbstractDiodeBlock implements IBE<BrassDiod
 				: AllBlockEntityTypes.PULSE_REPEATER.get();
 	}
 
-	@Override
-	protected @NotNull MapCodec<? extends DiodeBlock> codec() {
-		return CODEC;
-	}
 }
