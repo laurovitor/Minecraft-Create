@@ -31,6 +31,7 @@ import com.simibubi.create.content.processing.sequenced.SequencedAssemblyRecipe;
 import com.simibubi.create.foundation.advancement.AllAdvancements;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.foundation.blockEntity.behaviour.filtering.FilteringBehaviour;
+import com.simibubi.create.foundation.item.ItemHelper;
 import com.simibubi.create.foundation.item.TooltipHelper;
 import com.simibubi.create.foundation.utility.CreateLang;
 
@@ -373,15 +374,16 @@ public class DeployerBlockEntity extends KineticBlockEntity implements Clearable
 
 	@Override
 	protected void read(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
-		state = NBTHelper.readEnum(compound, "State", State.class);
-		mode = NBTHelper.readEnum(compound, "Mode", Mode.class);
+		state = readEnum(compound, "State", State.class, State.WAITING);
+		mode = readEnum(compound, "Mode", Mode.class, Mode.USE);
 		timer = compound.getIntOr("Timer", 0);
 		redstoneLocked = compound.getBooleanOr("Powered", false);
 		if (compound.contains("Owner"))
 			owner = compound.read("Owner", UUIDUtil.CODEC).orElse(null);
 
 		deferredInventoryList = compound.getListOrEmpty("Inventory");
-		overflowItems = NBTHelper.readItemList(compound.getListOrEmpty("Overflow"), registries);
+		overflowItems = NBTHelper.readCompoundList(compound.getListOrEmpty("Overflow"),
+			tag -> ItemHelper.parseOptional(registries, tag));
 		if (compound.contains("HeldItem")) {
 			heldItem = compound.read("HeldItem", ItemStack.OPTIONAL_CODEC, RegistryNbt.ops(registries)).orElse(ItemStack.EMPTY);
 		}
@@ -400,8 +402,8 @@ public class DeployerBlockEntity extends KineticBlockEntity implements Clearable
 
 	@Override
 	public void write(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
-		NBTHelper.writeEnum(compound, "Mode", mode);
-		NBTHelper.writeEnum(compound, "State", state);
+		compound.putString("Mode", mode.name());
+		compound.putString("State", state.name());
 		compound.putInt("Timer", timer);
 		compound.putBoolean("Powered", redstoneLocked);
 		if (owner != null)
@@ -410,7 +412,8 @@ public class DeployerBlockEntity extends KineticBlockEntity implements Clearable
 		if (player != null) {
 			compound.put("Inventory", NbtValueIO.saveInventory(player.getInventory(), registries));
 			compound.store("HeldItem", ItemStack.OPTIONAL_CODEC, RegistryNbt.ops(registries), player.getMainHandItem());
-			compound.put("Overflow", NBTHelper.writeItemList(overflowItems, registries));
+			compound.put("Overflow", NBTHelper.writeCompoundList(overflowItems,
+				stack -> (CompoundTag) ItemHelper.saveOptional(stack, registries)));
 		} else if (deferredInventoryList != null) {
 			compound.put("Inventory", deferredInventoryList);
 		}
@@ -432,8 +435,16 @@ public class DeployerBlockEntity extends KineticBlockEntity implements Clearable
 
 	@Override
 	public void writeSafe(CompoundTag tag, HolderLookup.Provider registries) {
-		NBTHelper.writeEnum(tag, "Mode", mode);
+		tag.putString("Mode", mode.name());
 		super.writeSafe(tag, registries);
+	}
+
+	private static <E extends Enum<E>> E readEnum(CompoundTag tag, String key, Class<E> type, E fallback) {
+		try {
+			return Enum.valueOf(type, tag.getStringOr(key, fallback.name()));
+		} catch (IllegalArgumentException ignored) {
+			return fallback;
+		}
 	}
 
 	private ResourceHandler<ItemResource> createHandler() {

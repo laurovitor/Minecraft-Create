@@ -171,12 +171,18 @@ public class BasinBlockEntity extends SmartBlockEntity implements IHaveGoggleInf
 		outputInventory.deserializeNBT(registries, compound.getCompoundOrEmpty("OutputItems"));
 
 		preferredSpoutput = null;
-		if (compound.contains("PreferredSpoutput"))
-			preferredSpoutput = NBTHelper.readEnum(compound, "PreferredSpoutput", Direction.class);
+		if (compound.contains("PreferredSpoutput")) {
+			try {
+				preferredSpoutput = Direction.valueOf(compound.getStringOr("PreferredSpoutput", ""));
+			} catch (IllegalArgumentException ignored) {
+				// A removed or malformed direction should not prevent loading the basin.
+			}
+		}
 		disabledSpoutputs.clear();
 		ListTag disabledList = compound.getListOrEmpty("DisabledSpoutput");
 		disabledList.forEach(d -> disabledSpoutputs.add(Direction.valueOf(((StringTag) d).value())));
-		spoutputBuffer = NBTHelper.readItemList(compound.getListOrEmpty("Overflow"), registries);
+		spoutputBuffer = NBTHelper.readCompoundList(compound.getListOrEmpty("Overflow"),
+			tag -> ItemHelper.parseOptional(registries, tag));
 		spoutputFluidBuffer = NBTHelper.readCompoundList(compound.getListOrEmpty("FluidOverflow"), tag -> FluidHelper.parseOptional(registries, tag));
 
 		if (!clientPacket)
@@ -196,11 +202,12 @@ public class BasinBlockEntity extends SmartBlockEntity implements IHaveGoggleInf
 		compound.put("OutputItems", outputInventory.serializeNBT(registries));
 
 		if (preferredSpoutput != null)
-			NBTHelper.writeEnum(compound, "PreferredSpoutput", preferredSpoutput);
+			compound.putString("PreferredSpoutput", preferredSpoutput.name());
 		ListTag disabledList = new ListTag();
 		disabledSpoutputs.forEach(d -> disabledList.add(StringTag.valueOf(d.name())));
 		compound.put("DisabledSpoutput", disabledList);
-		compound.put("Overflow", NBTHelper.writeItemList(spoutputBuffer, registries));
+		compound.put("Overflow", NBTHelper.writeCompoundList(spoutputBuffer,
+			stack -> (CompoundTag) ItemHelper.saveOptional(stack, registries)));
 		compound.put("FluidOverflow",
 			NBTHelper.writeCompoundList(spoutputFluidBuffer, fs -> (CompoundTag) FluidHelper.saveOptional(fs, registries)));
 
