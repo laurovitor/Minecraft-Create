@@ -1,6 +1,7 @@
 package com.simibubi.create.content.processing.burner;
 
 import com.simibubi.create.foundation.render.CachedBufferer;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import com.simibubi.create.content.contraptions.render.ActorGeometry;
 import java.util.List;
 import net.minecraft.world.phys.Vec3;
@@ -135,7 +136,7 @@ public class BlazeBurnerRenderer
 
 		SuperByteBuffer blazeBuffer = CachedBufferer.partial(blazeModel, blockState);
 		if (modelTransform != null)
-			blazeBuffer.transform(modelTransform);
+			blazeBuffer.getTransforms().mulPose(modelTransform.last().pose());
 		TransformStack.of(blazeBuffer.getTransforms())
 			.translate(0, headY, 0);
 		submit(blazeBuffer, horizontalAngle, ms, queue, RenderTypes.solidMovingBlock());
@@ -146,7 +147,7 @@ public class BlazeBurnerRenderer
 
 			SuperByteBuffer gogglesBuffer = CachedBufferer.partial(gogglesModel, blockState);
 			if (modelTransform != null)
-				gogglesBuffer.transform(modelTransform);
+				gogglesBuffer.getTransforms().mulPose(modelTransform.last().pose());
 			TransformStack.of(gogglesBuffer.getTransforms())
 				.translate(0, headY + 8 / 16f, 0);
 			submit(gogglesBuffer, horizontalAngle, ms, queue, RenderTypes.solidMovingBlock());
@@ -155,7 +156,7 @@ public class BlazeBurnerRenderer
 		if (drawHat != null) {
 			SuperByteBuffer hatBuffer = CachedBufferer.partial(drawHat, blockState);
 			if (modelTransform != null)
-				hatBuffer.transform(modelTransform);
+				hatBuffer.getTransforms().mulPose(modelTransform.last().pose());
 			var hatTr = TransformStack.of(hatBuffer.getTransforms());
 			hatTr.translate(0, headY, 0);
 			if (blazeModel == AllPartialModels.BLAZE_INERT) {
@@ -168,7 +169,7 @@ public class BlazeBurnerRenderer
 			}
 			hatTr.rotateCentered(horizontalAngle + Mth.PI, Direction.UP)
 					.translate(0.5f, 0, 0.5f);
-			hatBuffer.light(LightCoordsUtil.FULL_BRIGHT)
+			SuperByteBufferRenderState.capture(hatBuffer.light(LightCoordsUtil.FULL_BRIGHT))
 					.submit(ms, RenderTypes.cutoutMovingBlock(), queue);
 		}
 
@@ -180,18 +181,18 @@ public class BlazeBurnerRenderer
 
 			SuperByteBuffer rodsBuffer = CachedBufferer.partial(rodsModel, blockState);
 			if (modelTransform != null)
-				rodsBuffer.transform(modelTransform);
+				rodsBuffer.getTransforms().mulPose(modelTransform.last().pose());
 			TransformStack.of(rodsBuffer.getTransforms())
 					.translate(0, offset1 + animation + .125f, 0);
-			rodsBuffer.light(LightCoordsUtil.FULL_BRIGHT)
+			SuperByteBufferRenderState.capture(rodsBuffer.light(LightCoordsUtil.FULL_BRIGHT))
 					.submit(ms, RenderTypes.solidMovingBlock(), queue);
 
 			SuperByteBuffer rodsBuffer2 = CachedBufferer.partial(rodsModel2, blockState);
 			if (modelTransform != null)
-				rodsBuffer2.transform(modelTransform);
+				rodsBuffer2.getTransforms().mulPose(modelTransform.last().pose());
 			TransformStack.of(rodsBuffer2.getTransforms())
 					.translate(0, offset2 + animation - 3 / 16f, 0);
-			rodsBuffer2.light(LightCoordsUtil.FULL_BRIGHT)
+			SuperByteBufferRenderState.capture(rodsBuffer2.light(LightCoordsUtil.FULL_BRIGHT))
 					.submit(ms, RenderTypes.solidMovingBlock(), queue);
 		}
 
@@ -221,7 +222,7 @@ public class BlazeBurnerRenderer
 
 			SuperByteBuffer flameBuffer = CachedBufferer.partial(AllPartialModels.BLAZE_BURNER_FLAME, blockState);
 			if (modelTransform != null)
-				flameBuffer.transform(modelTransform);
+				flameBuffer.getTransforms().mulPose(modelTransform.last().pose());
 			flameBuffer.shiftUVScrolling(spriteShift, (float) uScroll, (float) vScroll);
 
 			submit(flameBuffer, horizontalAngle, ms, queue, RenderTypes.cutoutMovingBlock());
@@ -245,7 +246,7 @@ public class BlazeBurnerRenderer
 		RenderType renderType) {
 		TransformStack.of(buffer.getTransforms())
 				.rotateCentered(horizontalAngle, Direction.UP);
-		buffer.light(LightCoordsUtil.FULL_BRIGHT)
+		SuperByteBufferRenderState.capture(buffer.light(LightCoordsUtil.FULL_BRIGHT))
 				.submit(ms, renderType, queue);
 	}
 }
