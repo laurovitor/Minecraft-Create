@@ -4,10 +4,8 @@ import net.minecraft.world.level.ScheduledTickAccess;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import com.mojang.serialization.MapCodec;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.api.equipment.goggles.IProxyHoveringInformation;
 import com.simibubi.create.content.equipment.wrench.IWrenchable;
@@ -36,13 +34,10 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition.Builder;
 import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
 
 import net.neoforged.neoforge.client.extensions.common.IClientBlockExtensions;
 
 public class WaterWheelStructuralBlock extends DirectionalBlock implements IWrenchable, IProxyHoveringInformation {
-
-	public static final MapCodec<WaterWheelStructuralBlock> CODEC = simpleCodec(WaterWheelStructuralBlock::new);
 
 	public WaterWheelStructuralBlock(Properties p_52591_) {
 		super(p_52591_);
@@ -177,17 +172,14 @@ public class WaterWheelStructuralBlock extends DirectionalBlock implements IWren
 		}
 
 		@Override
-		public boolean addHitEffects(BlockState state, Level level, HitResult target, ParticleEngine manager) {
-			if (target instanceof BlockHitResult bhr) {
-				BlockPos targetPos = bhr.getBlockPos();
-				WaterWheelStructuralBlock waterWheelStructuralBlock = AllBlocks.WATER_WHEEL_STRUCTURAL.get();
-				if (waterWheelStructuralBlock.stillValid(level, targetPos, state, false)
-					&& level instanceof ClientLevel clientLevel)
-					clientLevel.addBreakingBlockEffect(WaterWheelStructuralBlock.getMaster(level, targetPos, state),
-						bhr.getDirection());
-				return true;
-			}
-			return IClientBlockExtensions.super.addHitEffects(state, level, target, manager);
+		public boolean addHitEffects(BlockState state, Level level, BlockPos pos, Direction direction,
+			ParticleEngine manager) {
+			WaterWheelStructuralBlock waterWheelStructuralBlock = AllBlocks.WATER_WHEEL_STRUCTURAL.get();
+			if (waterWheelStructuralBlock.stillValid(level, pos, state, false)
+				&& level instanceof ClientLevel clientLevel)
+				clientLevel.addBreakingBlockEffects(WaterWheelStructuralBlock.getMaster(level, pos, state),
+					direction, false);
+			return true;
 		}
 
 		@Override
@@ -210,9 +202,5 @@ public class WaterWheelStructuralBlock extends DirectionalBlock implements IWren
 	@Override
 	public boolean isFlammable(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
 		return false;
-	}
-	@Override
-	protected @NotNull MapCodec<? extends DirectionalBlock> codec() {
-		return CODEC;
 	}
 }

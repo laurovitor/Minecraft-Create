@@ -210,10 +210,10 @@ public class BeltBlockEntity extends KineticBlockEntity implements Clearable {
 		compound.putBoolean("IsController", isController());
 		compound.putInt("Length", beltLength);
 		compound.putInt("Index", index);
-		NBTHelper.writeEnum(compound, "Casing", casing);
+		compound.putString("Casing", casing.name());
 		compound.putBoolean("Covered", covered);
 
-		color.ifPresent(dyeColor -> NBTHelper.writeEnum(compound, "Dye", dyeColor));
+		color.ifPresent(dyeColor -> compound.putString("Dye", dyeColor.name()));
 
 		if (isController())
 			compound.put("Inventory", getInventory().write(registries));
@@ -227,7 +227,7 @@ public class BeltBlockEntity extends KineticBlockEntity implements Clearable {
 		if (compound.getBooleanOr("IsController", false))
 			controller = worldPosition;
 
-		color = compound.contains("Dye") ? Optional.of(NBTHelper.readEnum(compound, "Dye", DyeColor.class))
+		color = compound.contains("Dye") ? Optional.ofNullable(readEnum(compound, "Dye", DyeColor.class, null))
 			: Optional.empty();
 
 		if (!wasMoved) {
@@ -243,7 +243,7 @@ public class BeltBlockEntity extends KineticBlockEntity implements Clearable {
 
 		CasingType casingBefore = casing;
 		boolean coverBefore = covered;
-		casing = NBTHelper.readEnum(compound, "Casing", CasingType.class);
+		casing = readEnum(compound, "Casing", CasingType.class, CasingType.NONE);
 		covered = compound.getBooleanOr("Covered", false);
 
 		if (!clientPacket)
@@ -580,5 +580,13 @@ public class BeltBlockEntity extends KineticBlockEntity implements Clearable {
 			return;
 		covered = blockCoveringBelt;
 		notifyUpdate();
+	}
+
+	private static <E extends Enum<E>> E readEnum(CompoundTag tag, String key, Class<E> type, E fallback) {
+		try {
+			return Enum.valueOf(type, tag.getStringOr(key, ""));
+		} catch (IllegalArgumentException ignored) {
+			return fallback;
+		}
 	}
 }
