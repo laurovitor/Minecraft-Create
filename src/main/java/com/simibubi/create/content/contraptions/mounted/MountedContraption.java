@@ -17,7 +17,7 @@ import com.simibubi.create.content.contraptions.mounted.CartAssemblerBlockEntity
 
 import net.createmod.catnip.api.data.Iterate;
 import net.createmod.catnip.api.math.VecHelper;
-import net.createmod.catnip.api.nbt.NBTHelper;
+import com.simibubi.create.foundation.utility.NbtEnumCompat;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -129,13 +129,13 @@ public class MountedContraption extends Contraption {
 	@Override
 	public CompoundTag writeNBT(HolderLookup.Provider registries, boolean spawnPacket) {
 		CompoundTag tag = super.writeNBT(registries, spawnPacket);
-		NBTHelper.writeEnum(tag, "RotationMode", rotationMode);
+		NbtEnumCompat.writeEnum(tag, "RotationMode", rotationMode);
 		return tag;
 	}
 
 	@Override
 	public void readNBT(Level world, CompoundTag nbt, boolean spawnData) {
-		rotationMode = NBTHelper.readEnum(nbt, "RotationMode", CartMovementMode.class);
+		rotationMode = NbtEnumCompat.readEnum(nbt, "RotationMode", CartMovementMode.class);
 		super.readNBT(world, nbt, spawnData);
 	}
 

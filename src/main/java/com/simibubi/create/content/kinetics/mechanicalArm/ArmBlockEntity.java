@@ -30,7 +30,7 @@ import net.createmod.catnip.api.animation.LerpedFloat;
 import net.createmod.catnip.api.lang.Lang;
 import net.createmod.catnip.api.math.AngleHelper;
 import net.createmod.catnip.api.math.VecHelper;
-import net.createmod.catnip.api.nbt.NBTHelper;
+import com.simibubi.create.foundation.utility.NbtEnumCompat;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -523,7 +523,7 @@ public class ArmBlockEntity extends KineticBlockEntity implements TransformableB
 
 		writeInteractionPoints(compound);
 
-		NBTHelper.writeEnum(compound, "Phase", phase);
+		NbtEnumCompat.writeEnum(compound, "Phase", phase);
 		compound.putBoolean("Powered", redstoneLocked);
 		compound.putBoolean("Goggles", goggles);
 		compound.store("HeldItem", ItemStack.OPTIONAL_CODEC, RegistryNbt.ops(registries), heldItem);
@@ -546,7 +546,7 @@ public class ArmBlockEntity extends KineticBlockEntity implements TransformableB
 
 		super.read(tag, registries, clientPacket);
 		heldItem = tag.read("HeldItem", ItemStack.OPTIONAL_CODEC, RegistryNbt.ops(registries)).orElse(ItemStack.EMPTY);
-		phase = NBTHelper.readEnum(tag, "Phase", Phase.class);
+		phase = NbtEnumCompat.readEnum(tag, "Phase", Phase.class);
 		chasedPointIndex = tag.getIntOr("TargetPointIndex", 0);
 		chasedPointProgress = tag.getFloatOr("MovementProgress", 0);
 		interactionPointTag = tag.getListOrEmpty("InteractionPoints");

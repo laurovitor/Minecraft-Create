@@ -15,7 +15,7 @@ import com.simibubi.create.content.kinetics.gantry.GantryShaftBlockEntity;
 import com.simibubi.create.foundation.utility.ServerSpeedProvider;
 
 import net.createmod.catnip.api.math.VecHelper;
-import net.createmod.catnip.api.nbt.NBTHelper;
+import com.simibubi.create.foundation.utility.NbtEnumCompat;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -148,7 +148,7 @@ public class GantryContraptionEntity extends AbstractContraptionEntity {
 
 	@Override
 	protected void writeAdditional(CompoundTag compound, HolderLookup.Provider registries, boolean spawnPacket) {
-		NBTHelper.writeEnum(compound, "GantryAxis", movementAxis);
+		NbtEnumCompat.writeEnum(compound, "GantryAxis", movementAxis);
 		if (sequencedOffsetLimit >= 0)
 			compound.putDouble("SequencedOffsetLimit", sequencedOffsetLimit);
 		super.writeAdditional(compound, registries, spawnPacket);
@@ -156,7 +156,7 @@ public class GantryContraptionEntity extends AbstractContraptionEntity {
 
 	@Override
 	protected void readAdditional(CompoundTag compound, boolean spawnData) {
-		movementAxis = NBTHelper.readEnum(compound, "GantryAxis", Direction.class);
+		movementAxis = NbtEnumCompat.readEnum(compound, "GantryAxis", Direction.class);
 		sequencedOffsetLimit =
 			compound.contains("SequencedOffsetLimit") ? compound.getDoubleOr("SequencedOffsetLimit", 0) : -1;
 		super.readAdditional(compound, spawnData);

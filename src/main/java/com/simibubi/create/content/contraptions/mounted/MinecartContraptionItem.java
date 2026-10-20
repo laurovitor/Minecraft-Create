@@ -27,7 +27,7 @@ import com.simibubi.create.foundation.advancement.AllAdvancements;
 import com.simibubi.create.foundation.utility.CreateLang;
 import com.simibubi.create.infrastructure.config.AllConfigs;
 
-import net.createmod.catnip.api.nbt.NBTHelper;
+import com.simibubi.create.foundation.utility.NbtEnumCompat;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -193,7 +193,7 @@ public class MinecartContraptionItem extends Item {
 		if (itemstack.has(AllDataComponents.MINECRAFT_CONTRAPTION_DATA)) {
 			CompoundTag contraptionTag = itemstack.get(AllDataComponents.MINECRAFT_CONTRAPTION_DATA);
 
-			Direction intialOrientation = NBTHelper.readEnum(contraptionTag, "InitialOrientation", Direction.class);
+			Direction intialOrientation = NbtEnumCompat.readEnum(contraptionTag, "InitialOrientation", Direction.class);
 
 			Contraption mountedContraption = Contraption.fromNBT(world, contraptionTag, false);
 			OrientedContraptionEntity contraptionEntity =
@@ -303,7 +303,7 @@ public class MinecartContraptionItem extends Item {
 		tag.remove("Pos");
 		tag.remove("Motion");
 
-		NBTHelper.writeEnum(tag, "InitialOrientation", entity.getInitialOrientation());
+		NbtEnumCompat.writeEnum(tag, "InitialOrientation", entity.getInitialOrientation());
 
 		stack.set(AllDataComponents.MINECRAFT_CONTRAPTION_DATA, tag);
 		return stack;

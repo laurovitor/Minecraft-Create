@@ -31,6 +31,7 @@ import com.simibubi.create.infrastructure.config.AllConfigs;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
 import net.createmod.catnip.api.data.IntAttached;
 import net.createmod.catnip.api.data.Iterate;
+import com.simibubi.create.foundation.utility.NbtEnumCompat;
 import net.createmod.catnip.api.nbt.NBTHelper;
 import net.createmod.catnip.api.data.Pair;
 import net.createmod.catnip.api.math.VecHelper;
@@ -530,7 +531,7 @@ public class EjectorBlockEntity extends KineticBlockEntity {
 		compound.putInt("HorizontalDistance", launcher.getHorizontalDistance());
 		compound.putInt("VerticalDistance", launcher.getVerticalDistance());
 		compound.putBoolean("Powered", powered);
-		NBTHelper.writeEnum(compound, "State", state);
+		NbtEnumCompat.writeEnum(compound, "State", state);
 		compound.put("Lid", NbtValueIO.toTag(lidProgress::write));
 		compound.put("LaunchedItems",
 			NBTHelper.writeCompoundList(launchedItems, ia -> ia.serializeNBT(s -> (CompoundTag) ItemHelper.saveOptional(s, registries))));
@@ -562,7 +563,7 @@ public class EjectorBlockEntity extends KineticBlockEntity {
 		}
 
 		powered = compound.getBooleanOr("Powered", false);
-		state = NBTHelper.readEnum(compound, "State", State.class);
+		state = NbtEnumCompat.readEnum(compound, "State", State.class);
 		lidProgress.read(NbtValueIO.fromTag(compound.getCompoundOrEmpty("Lid")), false);
 		launchedItems = NBTHelper.readCompoundList(compound.getListOrEmpty("LaunchedItems"),
 			nbt -> IntAttached.read(nbt, t -> ItemHelper.parseOptional(registries, t)));

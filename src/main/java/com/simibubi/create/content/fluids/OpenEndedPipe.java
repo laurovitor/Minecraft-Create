@@ -22,7 +22,7 @@ import com.simibubi.create.foundation.mixin.accessor.FlowingFluidAccessor;
 import com.simibubi.create.infrastructure.config.AllConfigs;
 
 import net.createmod.catnip.api.math.BlockFace;
-import net.createmod.catnip.api.nbt.NBTHelper;
+import com.simibubi.create.foundation.utility.NbtEnumCompat;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.attribute.EnvironmentAttributes;
 import net.minecraft.core.BlockPos;
@@ -123,7 +123,7 @@ public class OpenEndedPipe extends FlowSource {
 
 	/** The way an open end was pointed before the face was written down through a codec. */
 	private static Direction legacyFace(CompoundTag location) {
-		return location.contains("Face") ? NBTHelper.readEnum(location, "Face", Direction.class)
+		return location.contains("Face") ? NbtEnumCompat.readEnum(location, "Face", Direction.class)
 			: Direction.UP;
 	}
 

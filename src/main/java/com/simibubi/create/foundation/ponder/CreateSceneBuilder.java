@@ -31,7 +31,7 @@ import com.simibubi.create.foundation.ponder.instruction.AnimateBlockEntityInstr
 
 import net.createmod.catnip.api.data.FunctionalHelper;
 import net.createmod.catnip.api.math.VecHelper;
-import net.createmod.catnip.api.nbt.NBTHelper;
+import com.simibubi.create.foundation.utility.NbtEnumCompat;
 import net.createmod.ponder.api.client.element.ElementLink;
 import net.createmod.ponder.api.client.element.ParrotElement;
 import net.createmod.ponder.api.client.element.ParrotPose;
@@ -250,7 +250,7 @@ public class CreateSceneBuilder extends PonderSceneBuilder {
 								int targetedPoint) {
 			modifyBlockEntityNBT(scene.getSceneBuildingUtil().select().position(armLocation), ArmBlockEntity.class,
 				compound -> {
-					NBTHelper.writeEnum(compound, "Phase", phase);
+					NbtEnumCompat.writeEnum(compound, "Phase", phase);
 					compound.put("HeldItem", ItemHelper.saveOptional(heldItem, world().getHolderLookupProvider()));
 					compound.putInt("TargetPointIndex", targetedPoint);
 					compound.putFloat("MovementProgress", 0);
@@ -288,7 +288,7 @@ public class CreateSceneBuilder extends PonderSceneBuilder {
 
 		public void changeSignalState(BlockPos position, SignalBlockEntity.SignalState state) {
 			modifyBlockEntityNBT(getScene().getSceneBuildingUtil().select().position(position), SignalBlockEntity.class,
-				c -> NBTHelper.writeEnum(c, "State", state));
+				c -> NbtEnumCompat.writeEnum(c, "State", state));
 		}
 
 		public void setDisplayBoardText(BlockPos position, int line, Component text) {

@@ -6,7 +6,7 @@ import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
-import net.createmod.catnip.api.nbt.NBTHelper;
+import com.simibubi.create.foundation.utility.NbtEnumCompat;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -57,7 +57,7 @@ public abstract class AbstractBellBlockEntity extends SmartBlockEntity {
 		super.write(tag, registries, clientPacket);
 		if (!clientPacket || ringingTicks != 0 || !isRinging)
 			return;
-		NBTHelper.writeEnum(tag, "Ringing", ringDirection);
+		NbtEnumCompat.writeEnum(tag, "Ringing", ringDirection);
 	}
 
 	@Override
@@ -65,7 +65,7 @@ public abstract class AbstractBellBlockEntity extends SmartBlockEntity {
 		super.read(tag, registries, clientPacket);
 		if (!clientPacket || !tag.contains("Ringing"))
 			return;
-		ringDirection = NBTHelper.readEnum(tag, "Ringing", Direction.class);
+		ringDirection = NbtEnumCompat.readEnum(tag, "Ringing", Direction.class);
 		ringingTicks = 0;
 		isRinging = true;
 	}
