@@ -70,7 +70,6 @@ public class ValueBox extends ChasingAABBOutline {
 		return this;
 	}
 
-	@Override
 	public void submit(PoseStack ms, SubmitNodeCollector queue, Vec3 camera, float pt) {
 		boolean hasTransform = transform != null;
 		if (transform instanceof Sided && params.getHighlightedFace() != null)

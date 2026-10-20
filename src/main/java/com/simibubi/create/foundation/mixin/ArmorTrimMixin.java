@@ -1,63 +1,43 @@
 package com.simibubi.create.foundation.mixin;
 
-import java.util.function.BiFunction;
-
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.simibubi.create.Create;
-import com.simibubi.create.content.equipment.armor.AllArmorMaterials;
 
-import net.minecraft.world.item.equipment.EquipmentAsset;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.util.Util;
-import net.minecraft.core.Holder;
+import net.minecraft.client.resources.model.EquipmentClientInfo;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.item.equipment.ArmorMaterial;
 import net.minecraft.world.item.equipment.trim.ArmorTrim;
-import net.minecraft.world.item.equipment.trim.TrimMaterial;
-import net.minecraft.world.item.equipment.trim.TrimPattern;
 
-@Mixin(ArmorTrim.class)
+/**
+ * The 26.3 renderer resolves trim textures from its equipment-info and pattern pair, not from
+ * ArmorTrim.layerAssetId (which no longer exists). Keep the cardboard pattern in Create's texture
+ * namespace while leaving the material's palette ID for the game's dynamic recoloring path.
+ */
+@Pseudo
+@Mixin(targets = "net.minecraft.client.renderer.entity.layers.EquipmentLayerRenderer$TrimTextureKey")
 public abstract class ArmorTrimMixin {
-	@Shadow
-	@Final
-	private Holder<TrimMaterial> material;
+	@Shadow @Final private ArmorTrim trim;
+	@Shadow @Final private EquipmentClientInfo.LayerType layerType;
+	@Shadow @Final private EquipmentClientInfo equipmentInfo;
 
-	@Shadow
-	@Final
-	private Holder<TrimPattern> pattern;
+	@ModifyExpressionValue(method = "getOrPrepareTexture", at = @At(value = "INVOKE",
+		target = "Lnet/minecraft/resources/Identifier;withPath(Ljava/util/function/UnaryOperator;)Lnet/minecraft/resources/Identifier;"))
+	private Identifier create$useCardboardTrimTexture(Identifier original) {
+		// The key carries the resolved asset info, not the equipment asset key. Match Create's
+		// cardboard layer texture, preserving the ordinary trim path for every other asset.
+		boolean cardboard = equipmentInfo.getLayers(layerType)
+			.stream()
+			.anyMatch(layer -> layer.textureId().equals(Create.asResource("cardboard")));
+		if (!cardboard)
+			return original;
 
-	/**
-	 * The cardboard variant of a trim texture.
-	 * <p>
-	 * 26.2 folded the inner and outer texture lookups into one {@code layerAssetId}, and the colour
-	 * suffix that used to come from {@code getColorPaletteSuffix} is now the material's asset info for
-	 * the equipment being trimmed. The suffix still matters: Create's trim textures go through the
-	 * paletted_permutations atlas source, so the sprite is named after the palette.
-	 */
-	@Unique
-	private Identifier create$textureCardboard(boolean leggings, ResourceKey<EquipmentAsset> equipmentAsset) {
-		String assetPath = pattern.value()
-			.assetId()
-			.getPath();
-		String colorSuffix = material.value()
-			.assets()
-			.assetId(equipmentAsset)
-			.suffix();
-		return Create.asResource("trims/models/armor/card_" + assetPath + (leggings ? "_leggings_" : "_") + colorSuffix);
-	}
-
-	@Inject(method = "layerAssetId", at = @At("HEAD"), cancellable = true)
-	private void create$swapTexturesForCardboardTrims(String layerAssetPrefix,
-		ResourceKey<EquipmentAsset> equipmentAsset, CallbackInfoReturnable<Identifier> cir) {
-		if (equipmentAsset != AllArmorMaterials.CARDBOARD_ASSET)
-			return;
-		cir.setReturnValue(create$textureCardboard(layerAssetPrefix.endsWith("_leggings"), equipmentAsset));
+		String pattern = trim.pattern().value().assetId().getPath();
+		String leggings = layerType == EquipmentClientInfo.LayerType.HUMANOID_LEGGINGS ? "_leggings" : "";
+		return Create.asResource("trims/models/armor/card_" + pattern + leggings);
 	}
 }

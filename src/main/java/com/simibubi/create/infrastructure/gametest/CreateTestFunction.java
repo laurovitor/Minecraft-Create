@@ -16,6 +16,7 @@ import net.minecraft.gametest.framework.TestData;
 import net.minecraft.gametest.framework.TestEnvironmentDefinition;
 import net.minecraft.core.Holder;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Rotation;
 
 /**
@@ -77,7 +78,7 @@ public class CreateTestFunction {
 		// was laid one block above the marker naming it, which left space over its roof; the game now lays
 		// it on the marker and walls the test in tight to its own size. Anything thrown - an ejector's arc,
 		// a dispenser's arrow - then hits the ceiling instead of what it was aimed at.
-		TestData<Holder<TestEnvironmentDefinition<?>>> data = new TestData<>(environment, structure,
+		TestData<Holder<TestEnvironmentDefinition<?>>> data = new TestData<>(environment, Level.OVERWORLD, structure,
 			gt.timeoutTicks(), gt.setupTicks(), gt.required(), rotation, false, gt.attempts(),
 			gt.requiredSuccesses(), true, ROOM_AROUND_THE_STRUCTURE);
 
