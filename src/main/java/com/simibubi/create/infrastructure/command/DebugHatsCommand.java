@@ -42,7 +42,7 @@ public class DebugHatsCommand {
 							if (entity instanceof Mob mob)
 								mob.setNoAi(true);
 
-							entity.setInvulnerable(true);
+							entity.setPermanentlyInvulnerable(true);
 							entity.setSilent(true);
 
 							level.tryAddFreshEntityWithPassengers(entity);
