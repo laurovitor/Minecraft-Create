@@ -56,7 +56,10 @@ public class AllRenderPipelines {
 	 * The solid half draws opaque. It is the lit core of a model whose glow is the separate
 	 * translucent half, and blending it turns that core into a window.
 	 */
-	public static final RenderPipeline GLOWING = pipeline("glowing", RenderPipeline.builder(GLOWING_SNIPPET));
+	public static final RenderPipeline GLOWING = pipeline("glowing",
+		RenderPipeline.builder(GLOWING_SNIPPET)
+			// The item atlas and level passes both have one color attachment.
+			.withColorTargetState(ColorTargetState.DEFAULT));
 
 	public static final RenderPipeline GLOWING_TRANSLUCENT = pipeline("glowing_translucent",
 		RenderPipeline.builder(GLOWING_SNIPPET)

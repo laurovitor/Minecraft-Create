@@ -1,6 +1,7 @@
 package com.simibubi.create.content.fluids.potion;
 
 import com.simibubi.create.foundation.item.ItemHelper;
+import com.simibubi.create.foundation.recipe.ClientRecipes;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -25,7 +26,6 @@ import net.minecraft.world.item.alchemy.Potion;
 import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.item.crafting.BrewingRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.level.Level;
 
@@ -70,11 +70,16 @@ public class PotionMixingRecipes {
 		int recipeIndex = 0;
 
 		// Brewing is data-driven in 26.3. Include vanilla and modded brewing recipes alike.
-		for (Reference<Recipe<?>> holder : level.registryAccess()
-			.lookupOrThrow(Registries.RECIPE)
-			.listElements().toList()) {
-			if (!(holder.value() instanceof BrewingRecipe recipe))
-				continue;
+		// The client has only recipes explicitly requested through NeoForge's sync event.
+		// The recipe registry itself is not part of ClientLevel.registryAccess().
+		Iterable<RecipeHolder<BrewingRecipe>> brewingRecipes = level.isClientSide()
+			? ClientRecipes.all(net.minecraft.world.item.crafting.RecipeType.BREWING)
+			: level.registryAccess().lookupOrThrow(Registries.RECIPE).listElements()
+				.filter(holder -> holder.value() instanceof BrewingRecipe)
+				.map(holder -> new RecipeHolder<>(holder.key(), (BrewingRecipe) holder.value()))
+				.toList();
+		for (RecipeHolder<BrewingRecipe> holder : brewingRecipes) {
+			BrewingRecipe recipe = holder.value();
 			ItemStack output = recipe.getOutput().create();
 			if (!SUPPORTED_CONTAINERS.contains(output.getItem()))
 				continue;

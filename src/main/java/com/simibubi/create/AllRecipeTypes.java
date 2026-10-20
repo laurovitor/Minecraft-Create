@@ -174,7 +174,7 @@ public enum AllRecipeTypes implements IRecipeTypeInfo, StringRepresentable {
 	 */
 	public static List<RecipeType<?>> syncedTypes() {
 		List<RecipeType<?>> types = new ArrayList<>(List.of(RecipeType.CRAFTING, RecipeType.SMELTING,
-			RecipeType.BLASTING, RecipeType.SMOKING, RecipeType.STONECUTTING));
+			RecipeType.BLASTING, RecipeType.SMOKING, RecipeType.STONECUTTING, RecipeType.BREWING));
 		for (AllRecipeTypes type : values()) {
 			RecipeType<?> recipeType = type.getType();
 			if (!types.contains(recipeType))
