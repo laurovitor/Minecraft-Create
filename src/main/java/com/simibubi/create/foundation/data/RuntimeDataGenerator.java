@@ -38,6 +38,7 @@ import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.ConcretePowderBlock;
 
+import net.neoforged.neoforge.common.conditions.ConditionalOps;
 import net.neoforged.neoforge.common.conditions.WithConditions;
 
 @ApiStatus.Internal
@@ -217,7 +218,9 @@ public class RuntimeDataGenerator {
 			Identifier id = Identifier.fromNamespaceAndPath(recipeId.getNamespace(),
 				typeId.getPath() + "/" + recipeId.getPath());
 
-			Optional<JsonElement> serialized = CatnipCodecUtils.encode(Recipe.CONDITIONAL_CODEC, JsonOps.INSTANCE, Optional.of(new WithConditions<>(recipe)));
+			Optional<JsonElement> serialized = CatnipCodecUtils.encode(
+				ConditionalOps.createConditionalCodecWithConditions(Recipe.DIRECT_CODEC), JsonOps.INSTANCE,
+				Optional.of(new WithConditions<Recipe<?>>(recipe)));
 			serialized.ifPresent(r -> JSON_FILES.put(id.withPrefix("recipe/"), r));
 			return recipe;
 		}

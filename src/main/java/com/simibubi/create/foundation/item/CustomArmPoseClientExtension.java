@@ -27,6 +27,6 @@ public class CustomArmPoseClientExtension implements IClientItemExtensions {
 
 	@Override
 	public @Nullable ArmPose getArmPose(LivingEntity entity, InteractionHand hand, ItemStack stack) {
-		return entity.swinging ? null : ArmPose.CROSSBOW_HOLD;
+		return entity.isSwinging() ? null : ArmPose.CROSSBOW_HOLD;
 	}
 }
