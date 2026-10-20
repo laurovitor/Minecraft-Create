@@ -281,7 +281,7 @@ public class ContraptionCollider {
 			entityMotion =
 				handleDamageFromTrain(world, contraptionEntity, contraptionMotion, entity, entityMotion, playerType);
 
-			entity.hurtMarked = true;
+			entity.syncVelocity = true;
 			Vec3 contactPointMotion = Vec3.ZERO;
 
 			if (surfaceCollision) {

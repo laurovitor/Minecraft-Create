@@ -146,7 +146,7 @@ public class MinecartController implements ValueIOSerializable {
 				cart.setHurtDir(-cart.getHurtDir());
 				cart.setHurtTime(10);
 				cart.setDamage(50.0F);
-				cart.hurtMarked = true;
+				cart.syncVelocity = true;
 			}
 		}
 	}
