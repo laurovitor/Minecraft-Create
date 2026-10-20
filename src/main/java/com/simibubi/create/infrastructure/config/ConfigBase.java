@@ -1,4 +1,4 @@
-package net.createmod.catnip.api.config;
+package com.simibubi.create.infrastructure.config;
 
 import java.util.ArrayList;
 import java.util.List;

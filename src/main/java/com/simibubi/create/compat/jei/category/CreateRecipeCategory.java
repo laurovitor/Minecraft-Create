@@ -46,7 +46,7 @@ import mezz.jei.api.recipe.types.IRecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import mezz.jei.api.registration.IRecipeCatalystRegistration;
 import mezz.jei.api.registration.IRecipeRegistration;
-import net.createmod.catnip.api.config.ConfigBase.ConfigBool;
+import com.simibubi.create.infrastructure.config.ConfigBase.ConfigBool;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;

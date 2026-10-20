@@ -3,7 +3,7 @@ package com.simibubi.create.infrastructure.config;
 
 import com.simibubi.create.content.logistics.stockTicker.StockKeeperRequestScreen.SearchSyncMode;
 
-import net.createmod.catnip.api.config.ConfigBase;
+import com.simibubi.create.infrastructure.config.ConfigBase;
 
 // TODO: restore ConfigAnnotations.IntDisplay.HEX on the colour options once Catnip's config UI is
 // ported and re-enabled; the hex hint below is the comment it used to add.

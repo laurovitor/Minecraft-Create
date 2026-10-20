@@ -5,7 +5,7 @@ import org.jspecify.annotations.Nullable;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 
-import net.createmod.catnip.api.client.gui.render.pip.GuiElementTransform;
+import com.simibubi.create.foundation.gui.render.GuiElementTransform;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.state.gui.pip.PictureInPictureRenderState;

@@ -198,7 +198,10 @@ dependencies {
     if (cc_tweaked_enable.toBoolean()) {
         compileOnly("cc.tweaked:cc-tweaked-$minecraft_version-core-api:$cc_tweaked_version")
         compileOnly("cc.tweaked:cc-tweaked-$minecraft_version-forge-api:$cc_tweaked_version")
-        localRuntimeOnly("cc.tweaked:cc-tweaked-$minecraft_version-forge:$cc_tweaked_version")
+        // Current 1.120.3 runtime references removed ModConfig.Type.SERVER in NeoForge 26.3.
+        // Keep its API on the compile classpath but opt into the incompatible mod only when requested.
+        if (project.findProperty("cc_tweaked_runtime") == "true")
+            localRuntimeOnly("cc.tweaked:cc-tweaked-$minecraft_version-forge:$cc_tweaked_version")
     }
 
     localImplementation("maven.modrinth:journeymap:$journeymap_version")

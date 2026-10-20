@@ -18,7 +18,7 @@ import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import org.jspecify.annotations.Nullable;
 import net.createmod.catnip.api.client.gui.element.GuiGameElement;
-import net.createmod.catnip.api.client.gui.render.pip.GuiElementTransform;
+import com.simibubi.create.foundation.gui.render.GuiElementTransform;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.world.level.block.state.BlockState;

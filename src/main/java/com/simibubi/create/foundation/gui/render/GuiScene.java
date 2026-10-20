@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.createmod.catnip.api.client.gui.ILightingSettings;
-import net.createmod.catnip.api.client.gui.render.pip.GuiElementTransform;
+import com.simibubi.create.foundation.gui.render.GuiElementTransform;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.SubmitNodeCollector;

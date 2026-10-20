@@ -6,7 +6,7 @@ import com.simibubi.create.AllBlocks;
 
 import net.createmod.catnip.api.client.render.FluidRenderHelper;
 import net.minecraft.world.level.block.state.BlockState;
-import net.createmod.catnip.api.client.gui.render.pip.GuiElementTransform;
+import com.simibubi.create.foundation.gui.render.GuiElementTransform;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.util.LightCoordsUtil;
 

@@ -1,6 +1,6 @@
 package com.simibubi.create.infrastructure.config;
 
-import net.createmod.catnip.api.config.ConfigBase;
+import com.simibubi.create.infrastructure.config.ConfigBase;
 
 public class CSchematics extends ConfigBase {
 

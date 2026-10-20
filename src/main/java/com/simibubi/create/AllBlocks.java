@@ -2601,7 +2601,7 @@ public class AllBlocks {
 				.withPool(r.applyExplosionCondition(b, LootPool.lootPool()
 					.setRolls(ContextIntProviders.exactly(1))
 					.add(LootItem.lootTableItem(AllBlocks.CARDBOARD_BLOCK.asItem()))
-					.when(((BlockLootSubProviderAccessor) r).create$hasSilkTouch().invert())))))
+					.when(net.minecraft.world.level.storage.loot.predicates.InvertedLootItemCondition.invert(((BlockLootSubProviderAccessor) r).create$hasSilkTouch()))))))
 			.item()
 			.burnTime(4000)
 			.build()

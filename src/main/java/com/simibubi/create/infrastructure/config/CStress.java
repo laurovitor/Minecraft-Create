@@ -12,7 +12,7 @@ import com.tterrag.registrate.util.nullness.NonNullUnaryOperator;
 
 import it.unimi.dsi.fastutil.objects.Object2DoubleMap;
 import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
-import net.createmod.catnip.api.config.ConfigBase;
+import com.simibubi.create.infrastructure.config.ConfigBase;
 import net.createmod.catnip.api.registry.RegisteredObjectsHelper;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;

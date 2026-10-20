@@ -1,4 +1,4 @@
-package net.createmod.catnip.api.client.gui.render.pip;
+package com.simibubi.create.foundation.gui.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import org.joml.Matrix4f;

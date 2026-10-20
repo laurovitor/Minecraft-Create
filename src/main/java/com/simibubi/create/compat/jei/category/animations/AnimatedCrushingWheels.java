@@ -3,7 +3,7 @@ package com.simibubi.create.compat.jei.category.animations;
 import org.joml.Matrix3x2fStack;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.AllBlocks;
-import net.createmod.catnip.api.client.gui.render.pip.GuiElementTransform;
+import com.simibubi.create.foundation.gui.render.GuiElementTransform;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
