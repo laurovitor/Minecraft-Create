@@ -10,6 +10,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.PositionPath;
 import net.minecraft.world.phys.Vec3;
 
 public record LimbSwingUpdatePacket(int entityId, Vec3 position, float limbSwing) implements CustomPacketPayload {
@@ -27,7 +28,7 @@ public record LimbSwingUpdatePacket(int entityId, Vec3 position, float limbSwing
 		CompoundTag data = entity.getPersistentData();
 		data.putInt("LastOverrideLimbSwingUpdate", 0);
 		data.putFloat("OverrideLimbSwing", limbSwing);
-		entity.moveOrInterpolateTo(position);
+		entity.moveOrInterpolateTo(PositionPath.of(position));
 	}
 
 	@Override

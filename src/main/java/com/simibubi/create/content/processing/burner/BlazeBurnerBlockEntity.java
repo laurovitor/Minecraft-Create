@@ -5,6 +5,7 @@ import net.minecraft.world.entity.player.Player;
 import com.simibubi.create.foundation.utility.ClientAccess;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +29,7 @@ import net.createmod.catnip.api.math.AngleHelper;
 import net.createmod.catnip.api.math.VecHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.particles.ParticleTypes;
@@ -38,6 +40,15 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CookingFuel;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import net.minecraft.world.level.storage.loot.providers.number.ints.ResolvableInt;
+import net.neoforged.neoforge.common.loot.NeoForgeLootContextParams;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -225,6 +236,29 @@ public class BlazeBurnerBlockEntity extends SmartBlockEntity {
 		notifyUpdate();
 	}
 
+	private int getCookingFuelBurnTime(ItemStack stack) {
+		CookingFuel fuel = stack.get(DataComponents.COOKING_FUEL);
+		if (fuel == null)
+			return 0;
+
+		// Fuel values became a contextual data component in 26.3. The server resolves
+		// dynamic providers with the same context that a furnace uses for fuel.
+		if (!(level instanceof ServerLevel serverLevel))
+			return fuel.burnTime() instanceof ResolvableInt.Constant constant ? constant.value() : 1;
+
+		SimpleContainer furnaceSlots = new SimpleContainer(3);
+		furnaceSlots.setItem(1, stack);
+		LootContext context = new LootContext.Builder(new LootParams.Builder(serverLevel)
+			.withParameter(LootContextParams.BLOCK_STATE, getBlockState())
+			.withParameter(LootContextParams.BLOCK_ENTITY, this)
+			.withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(worldPosition))
+			.withParameter(LootContextParams.CONTAINER, furnaceSlots)
+			.withParameter(NeoForgeLootContextParams.QUERIED_STACK, stack)
+			.create(LootContextParamSets.CONTAINER_PROCESS))
+			.create(Optional.empty());
+		return ResolvableInt.getFromItem(stack, DataComponents.COOKING_FUEL, CookingFuel::burnTime, context, 0);
+	}
+
 	/**
 	 * @return true if the heater updated its burn time and an item should be
 	 *         consumed
@@ -251,7 +285,7 @@ public class BlazeBurnerBlockEntity extends SmartBlockEntity {
 			newBurnTime = 3200;
 			newFuel = FuelType.SPECIAL;
 		} else {
-			newBurnTime = itemStack.getBurnTime(null, level.fuelValues());
+			newBurnTime = getCookingFuelBurnTime(itemStack);
 			if (newBurnTime > 0) {
 				newFuel = FuelType.NORMAL;
 			} else if (AllItemTags.BLAZE_BURNER_FUEL_REGULAR.matches(itemStack)) {

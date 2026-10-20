@@ -11,7 +11,6 @@ import com.simibubi.create.foundation.block.IBE;
 import com.simibubi.create.foundation.utility.CreateLang;
 
 import io.netty.buffer.ByteBuf;
-import net.createmod.catnip.api.nbt.NBTHelper;
 import net.createmod.catnip.api.client.outliner.Outliner;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -124,7 +123,7 @@ public abstract class ClickToLinkBlockItem extends BlockItem {
 
 		CompoundTag beTag = new CompoundTag();
 		beTag.store("TargetOffset", BlockPos.CODEC, selectedPos.subtract(placedPos));
-		NBTHelper.writeIdentifier(beTag, "TargetDimension", selectedDim);
+		beTag.store("TargetDimension", Identifier.CODEC, selectedDim);
 		BlockEntityDataHelper.setTag(stack, ((IBE<?>) this.getBlock()).getBlockEntityType(), beTag);
 
 		InteractionResult useOn = super.useOn(pContext);
