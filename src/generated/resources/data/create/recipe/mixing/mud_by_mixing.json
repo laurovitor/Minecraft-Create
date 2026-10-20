@@ -3,7 +3,7 @@
   "ingredients": [
     {
       "neoforge:ingredient_type": "neoforge:block_tag",
-      "tag": "minecraft:convertable_to_mud"
+      "tag": "minecraft:convertible_to_mud"
     },
     {
       "amount": 250,

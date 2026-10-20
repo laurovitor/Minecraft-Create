@@ -4,5 +4,6 @@
   "ingredient": "create:crushed_raw_copper",
   "result": {
     "id": "minecraft:copper_ingot"
-  }
+  },
+  "cookingtime": 100
 }

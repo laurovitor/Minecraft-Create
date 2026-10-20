@@ -4,5 +4,6 @@
   "ingredient": "create:crushed_raw_zinc",
   "result": {
     "id": "create:zinc_ingot"
-  }
+  },
+  "cookingtime": 100
 }

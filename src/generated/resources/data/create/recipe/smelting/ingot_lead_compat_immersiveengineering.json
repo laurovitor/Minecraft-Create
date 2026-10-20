@@ -11,5 +11,6 @@
   "ingredient": "create:crushed_raw_lead",
   "result": {
     "id": "immersiveengineering:ingot_lead"
-  }
+  },
+  "cookingtime": 200
 }

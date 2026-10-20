@@ -4,5 +4,6 @@
   "ingredient": "create:dough",
   "result": {
     "id": "minecraft:bread"
-  }
+  },
+  "cookingtime": 200
 }

@@ -4,5 +4,6 @@
   "ingredient": "#c:raw_materials/zinc",
   "result": {
     "id": "create:zinc_ingot"
-  }
+  },
+  "cookingtime": 100
 }

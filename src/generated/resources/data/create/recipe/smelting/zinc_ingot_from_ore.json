@@ -4,5 +4,6 @@
   "ingredient": "#c:ores/zinc",
   "result": {
     "id": "create:zinc_ingot"
-  }
+  },
+  "cookingtime": 200
 }

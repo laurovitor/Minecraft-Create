@@ -11,5 +11,6 @@
   "ingredient": "create:crushed_raw_uranium",
   "result": {
     "id": "ic2:ingot_uranium"
-  }
+  },
+  "cookingtime": 200
 }

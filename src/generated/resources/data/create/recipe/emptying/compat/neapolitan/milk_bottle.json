@@ -10,7 +10,7 @@
     {
       "neoforge:ingredient_type": "neoforge:compound",
       "ingredients": [
-        "farmersdelight:milk_bottle"
+        "neapolitan:milk_bottle"
       ]
     }
   ],

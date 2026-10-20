@@ -12,11 +12,14 @@ import com.simibubi.create.infrastructure.worldgen.AllBiomeModifiers;
 import com.simibubi.create.infrastructure.worldgen.AllConfiguredFeatures;
 import com.simibubi.create.infrastructure.worldgen.AllPlacedFeatures;
 
+import net.minecraft.core.Cloner;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.RegistrySetBuilder;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.PackOutput;
-import net.minecraft.data.registries.RegistryPatchGenerator;
+
 
 import net.neoforged.neoforge.common.data.DatapackBuiltinEntriesProvider;
 import net.neoforged.neoforge.registries.DataPackRegistriesHooks;
@@ -31,8 +34,21 @@ public class GeneratedEntriesProvider extends DatapackBuiltinEntriesProvider {
 		.add(NeoForgeRegistries.Keys.BIOME_MODIFIERS, AllBiomeModifiers::bootstrap)
 		.add(CreateRegistries.POTATO_PROJECTILE_TYPE, AllPotatoProjectileTypes::bootstrap);
 
+	private static CompletableFuture<RegistrySetBuilder.PatchedRegistries> createWorldLookup(CompletableFuture<HolderLookup.Provider> registries) {
+		// Vanilla's RegistryPatchGenerator only registers vanilla world registry codecs with
+		// the cloner. NeoForge adds data-pack registries such as context_int_provider.
+		return registries.thenApply(parent -> {
+			Cloner.Factory cloner = new Cloner.Factory();
+			DataPackRegistriesHooks.getWorldRegistriesWithDimensions()
+				.forEach(registry -> registry.runWithArguments(cloner::addCodec));
+			DataPackRegistriesHooks.getReloadableRegistries()
+				.forEach(registry -> registry.runWithArguments(cloner::addCodec));
+			return BUILDER.buildPatch(RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY), parent, cloner);
+		});
+	}
+
 	public GeneratedEntriesProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> registries) {
 		super(output, "Create's Generated Registry Entries", DataPackRegistriesHooks.getWorldRegistriesWithDimensions().toList(),
-			RegistryPatchGenerator.createWorldLookup(registries, BUILDER), Set.of(Create.ID));
+			createWorldLookup(registries), Set.of(Create.ID));
 	}
 }

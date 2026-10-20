@@ -11,5 +11,6 @@
   "ingredient": "create:crushed_raw_tin",
   "result": {
     "id": "mekanism:ingot_tin"
-  }
+  },
+  "cookingtime": 200
 }

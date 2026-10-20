@@ -3,7 +3,7 @@
   "key": {
     "B": "create:electron_tube",
     "C": "create:brass_casing",
-    "R": "minecraft:crafting_table"
+    "R": "#c:player_workstations/crafting_tables"
   },
   "pattern": [
     "B",

@@ -15,10 +15,10 @@
           }
         },
         "requirements": {
-          "condition": "minecraft:match_tool",
           "predicate": {
             "items": []
-          }
+          },
+          "type": "minecraft:match_tool"
         }
       }
     ]
