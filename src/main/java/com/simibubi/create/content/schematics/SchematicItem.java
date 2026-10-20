@@ -1,5 +1,7 @@
 package com.simibubi.create.content.schematics;
 
+import net.minecraft.util.datafix.DataFixTypes;
+import net.minecraft.util.datafix.DataFixers;
 import net.minecraft.world.item.component.TooltipDisplay;
 import java.util.function.Consumer;
 import net.createmod.catnip.api.platform.services.PlatformHelper;
@@ -30,6 +32,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
+import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -122,6 +125,8 @@ public class SchematicItem extends Item {
 		try (DataInputStream stream = new DataInputStream(new BufferedInputStream(
 			new GZIPInputStream(Files.newInputStream(path, StandardOpenOption.READ))))) {
 			CompoundTag nbt = NbtIo.read(stream, NbtAccounter.create(0x20000000L));
+			// Upgrade schematics saved by older versions; 26.3 palette entries use new keys.
+			nbt = DataFixTypes.STRUCTURE.updateToCurrentVersion(DataFixers.getDataFixer(), nbt, NbtUtils.getDataVersion(nbt, 500));
 			t.load(level.holderLookup(Registries.BLOCK), nbt);
 		} catch (IOException e) {
 			LOGGER.warn("Failed to read schematic", e);
