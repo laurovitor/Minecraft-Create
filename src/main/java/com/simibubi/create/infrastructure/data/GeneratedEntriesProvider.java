@@ -19,6 +19,7 @@ import net.minecraft.core.RegistrySetBuilder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.PackOutput;
+import net.minecraft.resources.RegistryDataLoader;
 
 
 import net.neoforged.neoforge.common.data.DatapackBuiltinEntriesProvider;
@@ -41,7 +42,7 @@ public class GeneratedEntriesProvider extends DatapackBuiltinEntriesProvider {
 			Cloner.Factory cloner = new Cloner.Factory();
 			DataPackRegistriesHooks.getWorldRegistriesWithDimensions()
 				.forEach(registry -> registry.runWithArguments(cloner::addCodec));
-			DataPackRegistriesHooks.getReloadableRegistries()
+			RegistryDataLoader.RELOADABLE_REGISTRIES.stream()
 				.forEach(registry -> registry.runWithArguments(cloner::addCodec));
 			return BUILDER.buildPatch(RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY), parent, cloner);
 		});
