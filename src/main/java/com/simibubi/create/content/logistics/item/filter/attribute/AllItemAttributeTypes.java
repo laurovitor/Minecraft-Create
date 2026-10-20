@@ -33,8 +33,6 @@ import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.ComposterBlock;
-import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
 
 import net.neoforged.neoforge.capabilities.Capabilities;
 
@@ -56,7 +54,7 @@ public class AllItemAttributeTypes {
 				.getType() : EquipmentSlot.MAINHAND.getType();
 			return type != EquipmentSlot.Type.HAND;
 		}),
-		FURNACE_FUEL = singleton("furnace_fuel", (s, w) -> s.getBurnTime(null, w.fuelValues()) > 0),
+		FURNACE_FUEL = singleton("furnace_fuel", s -> s.has(DataComponents.COOKING_FUEL)),
 		WASHABLE = singleton("washable", AllFanProcessingTypes.SPLASHING::canProcess),
 		HAUNTABLE = singleton("hauntable", AllFanProcessingTypes.HAUNTING::canProcess),
 		CRUSHABLE = singleton("crushable", (s, w) -> testRecipe(s, w, AllRecipeTypes.CRUSHING.getType())
@@ -64,7 +62,7 @@ public class AllItemAttributeTypes {
 		SMELTABLE = singleton("smeltable", (s, w) -> testRecipe(s, w, RecipeType.SMELTING)),
 		SMOKABLE = singleton("smokable", (s, w) -> testRecipe(s, w, RecipeType.SMOKING)),
 		BLASTABLE = singleton("blastable", (s, w) -> testRecipe(s, w, RecipeType.BLASTING)),
-		COMPOSTABLE = singleton("compostable", s -> ComposterBlock.getValue(s) > 0),
+		COMPOSTABLE = singleton("compostable", s -> s.has(DataComponents.COMPOSTABLE)),
 
 	IN_TAG = register("in_tag", new InTagAttribute.Type()),
 		IN_ITEM_GROUP = register("in_item_group", new InItemGroupAttribute.Type()),
