@@ -169,8 +169,6 @@ public class ElevatorContactScreen extends AbstractSimiScreen {
 	@Override
 	public boolean keyPressed(KeyEvent event) {
 		int keyCode = event.key();
-		int p_keyPressed_2_ = event.scancode();
-		int p_keyPressed_3_ = event.modifiers();
 		if (super.keyPressed(event))
 			return true;
 		if (keyCode == InputConstants.KEY_RETURN) {

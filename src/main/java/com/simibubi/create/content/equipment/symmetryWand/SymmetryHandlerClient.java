@@ -5,6 +5,7 @@ import com.simibubi.create.AllItems;
 import com.simibubi.create.content.equipment.symmetryWand.mirror.EmptyMirror;
 import com.simibubi.create.content.equipment.symmetryWand.mirror.SymmetryMirror;
 import com.simibubi.create.foundation.render.CachedBufferer;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 
 import net.createmod.catnip.api.client.animation.AnimationTickHolder;
 import dev.engine_room.flywheel.lib.transform.TransformStack;
@@ -87,8 +88,8 @@ public class SymmetryHandlerClient {
 				.rotateYDegrees(mirror.getModelYRotation())
 				.uncenter();
 
-			CachedBufferer.partial(mirror.getModel(), Blocks.AIR.defaultBlockState())
-				.light(LightCoordsUtil.FULL_BRIGHT)
+			SuperByteBufferRenderState.capture(CachedBufferer.partial(mirror.getModel(), Blocks.AIR.defaultBlockState())
+				.light(LightCoordsUtil.FULL_BRIGHT))
 				.submit(ms, RenderTypes.solidMovingBlock(), queue);
 
 			ms.popPose();

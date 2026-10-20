@@ -8,6 +8,7 @@ import com.simibubi.create.AllPartialModels;
 
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
+import dev.engine_room.flywheel.lib.transform.TransformStack;
 import net.createmod.catnip.api.client.render.SuperByteBuffer;
 import net.createmod.catnip.api.math.AngleHelper;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -70,10 +71,11 @@ public class PackageRenderer extends EntityRenderer<PackageEntity, PackageRender
 		if (model == null)
 			return null;
 		SuperByteBuffer sbb = CachedBufferer.partial(model, Blocks.AIR.defaultBlockState());
-		return SuperByteBufferRenderState.capture(sbb.translate(-.5, 0, -.5)
+		TransformStack.of(sbb.getTransforms())
+			.translate(-.5, 0, -.5)
 			.rotateCentered(-AngleHelper.rad(yaw + 90), Direction.UP)
-			.light(light)
-			.nudge(entity.getId()));
+			.nudge(entity.getId());
+		return SuperByteBufferRenderState.capture(sbb.light(light));
 	}
 
 }

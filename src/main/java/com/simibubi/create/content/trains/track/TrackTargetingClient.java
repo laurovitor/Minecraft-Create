@@ -10,6 +10,7 @@ import dev.engine_room.flywheel.lib.model.baked.PartialModel;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.util.LightCoordsUtil;
 import com.simibubi.create.foundation.render.CachedBufferer;
+import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 import com.google.common.base.Objects;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.AllDataComponents;
@@ -161,7 +162,7 @@ public class TrackTargetingClient {
 				.translate(.5, 0, .5)
 				.scale(scale)
 				.translate(-.5, 0, -.5);
-			buffer.light(LightCoordsUtil.getLightCoords(level, pos))
+			SuperByteBufferRenderState.capture(buffer.light(LightCoordsUtil.getLightCoords(level, pos)))
 				.submit(ms, RenderTypes.cutoutMovingBlock(), queue);
 		}
 		ms.popPose();

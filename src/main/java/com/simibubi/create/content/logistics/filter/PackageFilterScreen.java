@@ -93,8 +93,6 @@ public class PackageFilterScreen extends AbstractFilterScreen<PackageFilterMenu>
 	@Override
 	public boolean keyPressed(KeyEvent event) {
 		int pKeyCode = event.key();
-		int pScanCode = event.scancode();
-		int pModifiers = event.modifiers();
 		if (pKeyCode == InputConstants.KEY_RETURN)
 			setFocused(null);
 		return super.keyPressed(event);

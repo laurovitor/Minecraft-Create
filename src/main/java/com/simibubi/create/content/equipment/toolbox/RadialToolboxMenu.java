@@ -212,7 +212,7 @@ public class RadialToolboxMenu extends AbstractSimiScreen {
 
 	@Override
 	public void extractBackground(GuiGraphicsExtractor pGuiGraphics, int pMouseX, int pMouseY, float pPartialTick) {
-		Color color = BACKGROUND_COLOR
+		Color color = new Color(0x101010).setAlpha(0.7f)
 				.scaleAlpha(Math.min(1, (ticksOpen + AnimationTickHolder.getPartialTicks()) / 20f));
 
 		pGuiGraphics.fillGradient(0, 0, this.width, this.height, color.getRGB(), color.getRGB());
