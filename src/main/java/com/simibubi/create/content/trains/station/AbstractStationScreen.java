@@ -13,10 +13,11 @@ import com.simibubi.create.content.trains.entity.TrainIconType;
 import com.simibubi.create.foundation.gui.AllGuiTextures;
 import com.simibubi.create.foundation.gui.AllIcons;
 import com.simibubi.create.foundation.gui.widget.IconButton;
+import com.simibubi.create.foundation.gui.render.GuiScene;
 
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
 import com.simibubi.create.foundation.gui.AbstractSimiScreen;
-import net.createmod.catnip.api.client.gui.element.GuiGameElement;
+import net.createmod.catnip.api.client.gui.ILightingSettings;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -101,30 +102,21 @@ public abstract class AbstractStationScreen extends AbstractSimiScreen {
 	private void renderAdditional(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks, int guiLeft, int guiTop, AllGuiTextures background) {
 		Matrix3x2fStack ms = graphics.pose();
 		ms.pushMatrix();
-		// Only the position on the screen goes on the stack now that it is two-dimensional; the
-		// angle the station is viewed from rides along with each element instead.
+		// The GUI pose locates the picture; GuiScene supplies its shared 3D view rotation.
 		ms.translate(guiLeft + background.getWidth() + 4, guiTop + background.getHeight() + 4);
 
-		GuiGameElement.of(blockEntity.getBlockState()
-			.setValue(BlockStateProperties.WATERLOGGED, false))
-			.viewRotate(-22, 63, 0)
-			.scale(40)
-			.submit(graphics);
-
-		if (blockEntity.resolveFlagAngle()) {
-			// StationRenderer.transformFlag walks a 3D stack, which a GUI element has no way to
-			// follow. For this call - yaw 180, not flipped - that whole chain reduces to a fixed
-			// offset followed by the flag's pitch about X and the 180 degree yaw, so it is spelled
-			// out here rather than replayed.
-			float nudge = 1 / 512f;
-			float pitch = StationRenderer.flagProgress(blockEntity, partialTicks) * 90 + 270;
-			GuiGameElement.of(getFlag(partialTicks).get())
-				.viewRotate(-22, 63, 0)
-				.atLocal(1 + 1 / 16f - nudge, -9.5f / 16f, 1 / 8f - nudge)
-				.rotate(pitch, 180, 0)
-				.scale(40)
-				.submit(graphics);
-		}
+		var stationState = blockEntity.getBlockState()
+			.setValue(BlockStateProperties.WATERLOGGED, false);
+		float nudge = 1 / 512f;
+		float pitch = StationRenderer.flagProgress(blockEntity, partialTicks) * 90 + 270;
+		boolean showFlag = blockEntity.resolveFlagAngle();
+		// Body and animated flag share one depth pass, preserving their relative placement.
+		GuiScene.submit(graphics, 40, -22, 63, ILightingSettings.ITEMS_3D, (ps, collector) -> {
+			GuiScene.part(ps, collector, GuiScene.modelOf(stationState), stationState, 0, 0, 0, 0, 0, 0);
+			if (showFlag)
+				GuiScene.partSpun(ps, collector, getFlag(partialTicks).get(), null,
+					1 + 1 / 16f - nudge, -9.5f / 16f, 1 / 8f - nudge, pitch, 180, 0);
+		});
 
 		ms.popMatrix();
 	}

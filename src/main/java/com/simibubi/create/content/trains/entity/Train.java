@@ -63,6 +63,7 @@ import net.createmod.catnip.api.data.Pair;
 import net.createmod.catnip.api.math.VecHelper;
 import net.createmod.catnip.api.nbt.NBTHelper;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.core.HolderLookup;
@@ -75,17 +76,29 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
+import net.minecraft.util.context.ContextKeySet;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CookingFuel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.Level.ExplosionInteraction;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import net.minecraft.world.level.storage.loot.providers.number.ints.ResolvableInt;
 
 import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.common.loot.NeoForgeLootContextParams;
 public class Train {
+	private static final ContextKeySet FUEL_CONTEXT_PARAMS = new ContextKeySet.Builder()
+		.required(LootContextParams.ORIGIN)
+		.optional(NeoForgeLootContextParams.QUERIED_STACK)
+		.build();
 	public static final StreamCodec<RegistryFriendlyByteBuf, Train> STREAM_CODEC = CatnipLargerStreamCodecs.composite(
 			UUIDUtil.STREAM_CODEC, train -> train.id,
 			CatnipStreamCodecBuilders.nullable(UUIDUtil.STREAM_CODEC), train -> train.owner,
@@ -1141,7 +1154,19 @@ public class Train {
 					int transferred3 = transferred3Resource.isEmpty() ? 0 : fuelItems.extract(slot, transferred3Resource, 1, transaction);
 					stack = transferred3 <= 0 ? ItemStack.EMPTY : transferred3Resource.toStack(transferred3);
 				}
-				int burnTime = stack.getBurnTime(null, level.fuelValues());
+				// 26.3 fuel duration lives in the cooking-fuel component and may be a
+				// registry-backed provider, so resolve it against the train's level.
+				if (!(level instanceof ServerLevel serverLevel))
+					continue;
+				DimensionalCarriageEntity dimensional = carriage.getDimensionalIfPresent(level.dimension());
+				Vec3 fuelPosition = dimensional != null && dimensional.positionAnchor != null
+					? dimensional.positionAnchor : Vec3.ZERO;
+				LootContext fuelContext = new LootContext.Builder(new LootParams.Builder(serverLevel)
+					.withParameter(LootContextParams.ORIGIN, fuelPosition)
+					.withParameter(NeoForgeLootContextParams.QUERIED_STACK, stack)
+					.create(FUEL_CONTEXT_PARAMS)).create(Optional.empty());
+				int burnTime = ResolvableInt.getFromItem(stack, DataComponents.COOKING_FUEL,
+					CookingFuel::burnTime, fuelContext, 0);
 				if (burnTime <= 0)
 					continue;
 
