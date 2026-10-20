@@ -52,7 +52,7 @@ public class MetalLadderBlock extends LadderBlock implements IWrenchable {
 	public boolean skipRendering(BlockState pState, BlockState pAdjacentBlockState, Direction pDirection) {
 		if (pDirection != null && pDirection.getAxis()
 			.isHorizontal())
-			return pAdjacentBlockState.isAir() || !pAdjacentBlockState.blocksMotion();
+			return pAdjacentBlockState.isAir() || !pAdjacentBlockState.isSolid();
 		return pDirection == Direction.UP && pAdjacentBlockState.getBlock() instanceof LadderBlock;
 	}
 
