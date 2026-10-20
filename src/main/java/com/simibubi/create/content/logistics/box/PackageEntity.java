@@ -148,8 +148,8 @@ public class PackageEntity extends LivingEntity implements IEntityWithComplexSpa
 
 		Vec3 clientPos = position().add(motion);
 		InterpolationHandler interpolation = getInterpolation();
-		if (interpolation != null && interpolation.hasActiveInterpolation())
-			clientPos = VecHelper.lerp(Math.min(1, tickCount / 20f), clientPos, interpolation.position());
+		if (interpolation != null && interpolation.hasActiveInterpolation() && interpolation.target() != null)
+			clientPos = VecHelper.lerp(Math.min(1, tickCount / 20f), clientPos, interpolation.target().position());
 		if (tickCount < 5)
 			setPos(clientPos.x, clientPos.y, clientPos.z);
 		if (tickCount < 20)

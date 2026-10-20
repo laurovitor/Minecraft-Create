@@ -29,11 +29,11 @@ import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.foundation.blockEntity.behaviour.filtering.FilteringBehaviour;
 import com.simibubi.create.foundation.utility.CreateLang;
+import com.simibubi.create.foundation.utility.RegistryNbt;
 
 import dan200.computercraft.api.peripheral.PeripheralCapability;
 import net.createmod.catnip.api.data.codec.CatnipCodecUtils;
 import net.createmod.catnip.api.data.IntAttached;
-import net.createmod.catnip.api.nbt.NBTHelper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -335,7 +335,7 @@ public class TableClothBlockEntity extends SmartBlockEntity implements Transform
 	@Override
 	protected void write(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
 		super.write(tag, registries, clientPacket);
-		tag.put("Items", NBTHelper.writeItemList(manuallyAddedItems, registries));
+		tag.store("Items", ItemStack.OPTIONAL_CODEC.listOf(), RegistryNbt.ops(registries), manuallyAddedItems);
 		tag.putInt("Facing", facing.get2DDataValue());
 		tag.put("RequestData", CatnipCodecUtils.encode(AutoRequestData.CODEC, registries, requestData).orElseThrow());
 		if (owner != null)
@@ -345,7 +345,8 @@ public class TableClothBlockEntity extends SmartBlockEntity implements Transform
 	@Override
 	protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
 		super.read(tag, registries, clientPacket);
-		manuallyAddedItems = NBTHelper.readItemList(tag.getListOrEmpty("Items"), registries);
+		manuallyAddedItems = new ArrayList<>(tag.read("Items", ItemStack.OPTIONAL_CODEC.listOf(),
+			RegistryNbt.ops(registries)).orElse(List.of()));
 		requestData = CatnipCodecUtils.decode(AutoRequestData.CODEC, registries, tag.get("RequestData"))
 			.orElse(new AutoRequestData());
 		owner = tag.contains("OwnerUUID") ? tag.read("OwnerUUID", UUIDUtil.CODEC).orElse(null) : null;
