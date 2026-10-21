@@ -1287,7 +1287,7 @@
 	"create.bogey.style.no_other_sizes": "No other sizes",
 	"create.bogey.style.invalid": "Unnamed style",
 	"create.bogey.style.standard": "Standard",
-	"create.jei.netherite_golem.info": "Netherite Golem: place a Carved Pumpkin or Jack o'Lantern on a Netherite Block. Guards 25 blocks from its chest, attacks all hostile monsters in sight, sleeps on its chest by day when safe and slowly heals while asleep, stores accepted kill drops. Right-click it with a Netherite Ingot to repair 20 HP (Ancient Debris: 10 HP); Netherite Ingots kept in its chest are used the same way out of combat.",
+	"create.jei.netherite_golem.info": "Netherite Golem: place a Carved Pumpkin or Jack o'Lantern on a Netherite Block. Guards 25 blocks from its chest, attacks all hostile monsters in sight, sleeps on its chest by day when safe and slowly heals while asleep, stores accepted kill drops. Creepers fear it like a cat; its hits throw creepers far back, and a creeper fighting it explodes without breaking blocks. Right-click it with a Netherite Ingot to repair 20 HP (Ancient Debris: 10 HP); Netherite Ingots kept in its chest are used the same way out of combat.",
 	"create.jei.netherite_golem_chest.info": "Unfiltered chest stores all kill drops; a filter limits only stored loot. Shift + Wrench packs a live golem. Dead chest presses into six Netherite Ingots.",
 	"create.jei.packed_netherite_golem_chest.info": "Moving the packed chest preserves age, health, contents and filter, but resets monster kills.",
 	"create.clipboard.golem_info.days": "Days since creation: %1$s",

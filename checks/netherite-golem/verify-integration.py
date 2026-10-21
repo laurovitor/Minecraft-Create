@@ -80,6 +80,12 @@ for f in ['content/equipment/andesiteGolem/AndesiteGolemChestBlock.java', 'conte
     assert 'getToolModifiedState' in (root/f).read_text() and 'boolean simulate) {\n\t\treturn null;' in (root/f).read_text(), f
 for dm in Path('src').rglob('data_maps/block/*.json'):
     assert 'golem_chest' not in dm.read_text(), dm
+# Creeper vs Netherite golem: blocks spared only for creepers in golem combat; fear; knockback.
+assert 'ExplosionEvent.Detonate' in loot and 'getDirectSourceEntity() instanceof Creeper creeper && inGolemCombat(creeper)' in loot
+assert 'event.getAffectedBlocks().clear()' in loot and 'getAffectedEntities' not in loot
+assert 'super(creeper, NetheriteGolem.class, 6.0F, 1.0, 1.2)' in loot and 'addGoal(3, new AvoidGolemGoal' in loot
+assert 'getPersistentData().putLong(NetheriteGolemRules.CREEPER_COMBAT_KEY' in loot
+assert 'creeper.knockback(NetheriteGolemRules.CREEPER_KNOCKBACK' in entity and 'NetheriteGolemEvents.markCombat(creeper)' in entity
 recipe = json.loads(Path('src/generated/resources/data/create/recipe/pressing/netherite_ingot_from_golem_chest.json').read_text())
 assert recipe['ingredients'] == ['create:netherite_golem_chest']
 assert recipe['results'] == [{'count': 6, 'id': 'minecraft:netherite_ingot'}]

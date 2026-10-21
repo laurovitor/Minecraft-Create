@@ -83,6 +83,19 @@ public class NetheriteGolem extends AndesiteGolem {
 			getTarget() != null, wakeCooldown);
 	}
 
+	/** Creeper hits throw it out of fuse range (see NetheriteGolemRules.CREEPER_KNOCKBACK). */
+	@Override
+	public boolean doHurtTarget(ServerLevel level, net.minecraft.world.entity.Entity target) {
+		boolean hit = super.doHurtTarget(level, target);
+		if (hit && target instanceof net.minecraft.world.entity.monster.Creeper creeper && creeper.isAlive()) {
+			NetheriteGolemEvents.markCombat(creeper);
+			creeper.knockback(NetheriteGolemRules.CREEPER_KNOCKBACK, getX() - creeper.getX(), getZ() - creeper.getZ(),
+				level.damageSources().mobAttack(this), 0);
+			creeper.setSwellDir(-1);
+		}
+		return hit;
+	}
+
 	@Override
 	public boolean isRepairItem(ItemStack stack) {
 		return stack.is(Items.NETHERITE_INGOT);
@@ -160,6 +173,8 @@ public class NetheriteGolem extends AndesiteGolem {
 		if (!wantsRest()) setSleeping(false);
 		// Sleep regeneration and chest repairs run in AndesiteGolem.tickCare for both golems.
 		if (isAsleep()) getNavigation().stop();
+		if (getTarget() instanceof net.minecraft.world.entity.monster.Creeper creeper)
+			NetheriteGolemEvents.markCombat(creeper);
 		int sinceAttack = getLastHurtMob() == null ? -1 : tickCount - getLastHurtMobTimestamp();
 		entityData.set(COMBAT, NetheriteGolemRules.inCombat(getTarget() != null && getTarget().isAlive(), sinceAttack));
 
