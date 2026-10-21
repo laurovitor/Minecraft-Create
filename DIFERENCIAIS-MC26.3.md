@@ -12,8 +12,8 @@ Ao combinar **2 andesitos** com **2 pepitas de ferro ou de zinco** na bancada de
 
 Um cofre novo, revestido com chapas resistentes. Receita na bancada, em coluna: **chapa resistente / cofre de itens / chapa resistente**.
 
-- Forma estruturas maiores que o cofre comum: base de até **5×5** e comprimento de até **3× a largura**, chegando a **5×5×15**. O cofre comum continua com base máxima de 3×3 e comprimento máximo de 9.
-- Cada bloco guarda **10% a mais** que um bloco do cofre comum. Na configuração padrão são **22 espaços por bloco** em vez de 20, o que dá até 8.250 espaços num 5×5×15.
+- Forma estruturas maiores que o cofre comum. O comum cresce em passos de 3 (3, 6 e 9 de comprimento conforme a largura); o revestido cresce em passos de 5: **largura 1 → até 5 de comprimento, largura 2 → até 10, larguras 3 a 5 → até 15**. O maior é **5×5×15**. O cofre comum continua com máximo de 3×3×9.
+- Cada bloco guarda **25% a mais** que um bloco do cofre comum. Na configuração padrão são **25 espaços por bloco** em vez de 20, o que dá até 9.375 espaços num 5×5×15.
 - Tem o mesmo desenho do cofre comum, mas com o corpo bem escuro, no tom da chapa resistente, e as bordas prateadas. Assim dá pra diferenciar um do outro de longe.
 - Segurando **Shift** sobre o item aparece a descrição dele, em inglês e em português.
 - Funciona como o cofre comum: encaixe automático ao colocar blocos, separação com a chave inglesa, comparador, funis, packager e montagem em contraptions. Cofres comuns e revestidos não se juntam na mesma estrutura.
@@ -26,13 +26,13 @@ Um cofre novo, revestido com chapas resistentes. Receita na bancada, em coluna: 
 
 ### Cofre de Itens Revestido — evidência técnica
 
-- Implementação: commit `ad5d932ea238655d3e61adae2b5c8e3851213ae7` na branch `mc26.3/dev`. Novo bloco `create:reinforced_item_vault` (`ReinforcedItemVaultBlock`) e block entity próprio (`ReinforcedItemVaultBlockEntity`). O block entity usa `getMaxWidth() = 5` e mantém o comprimento máximo como 3× a largura. Espaços por bloco: `floor(vaultCapacity × 11 / 10)`; com o padrão 20, dá 22. O cofre comum não mudou.
+- Implementação: commit `ad5d932ea238655d3e61adae2b5c8e3851213ae7` na branch `mc26.3/dev`. Novo bloco `create:reinforced_item_vault` (`ReinforcedItemVaultBlock`) e block entity próprio (`ReinforcedItemVaultBlockEntity`). O block entity usa `getMaxWidth() = 5` e comprimento máximo `min(largura × 5, 15)`. Espaços por bloco: `floor(vaultCapacity × 5 / 4)`; com o padrão 20, dá 25. Comprimento e capacidade foram ajustados no commit `0bbafb2456fc9a128952feff657168109ef3ec31`, a pedido do Lauro, depois do primeiro teste em jogo. O cofre comum não mudou.
 - O cofre comum e o revestido não se misturam porque `ConnectivityHandler.partAt` compara o tipo do block entity. O auto-place e o eixo de colocação também só seguem blocos do mesmo tipo.
 - Registro de capacidade de itens, identificador de inventário do packager, mounted storage (`VAULT`, com a mesma proteção contra uso como combustível) e tags do Ponder foram estendidos ao bloco novo.
 - Receita gerada: `src/generated/resources/data/create/recipe/crafting/kinetics/reinforced_item_vault.json`. Loot table, blockstate, modelo de item, tag de picareta e lang (en_us, en_ud e pt_br) foram escritos à mão, espelhando o cofre comum, porque o datagen client/Registrate desta port falha (`LootContextParamSets.REGISTRY`).
 - Texturas: 12 sprites em `textures/block/reinforced_vault/`, recoloridos a partir das texturas do cofre. Pixels com luminância até 110 (o corpo azul) viram tons escuros da `sturdy_sheet`; acima de 110 (as bordas) viram prata. Modelo em `models/block/reinforced_item_vault.json`.
 - Descrição no Shift: chave `block.create.reinforced_item_vault.tooltip.summary` em `lang/default/tooltips.json`, `en_us.json` (gerado, editado à mão) e `pt_br.json`. Ela é exibida pelo `ItemDescription.Modifier` padrão do Create.
-- Verificação: `./gradlew --offline build` passou e os recursos foram conferidos dentro do JAR. **Não houve teste em jogo.** Ainda falta ver no jogo: formação 5×5×15, divisão com a chave, comparador, contraption e as texturas conectadas nas larguras 4 e 5. O Ponder não ganhou cena própria, e as cenas do cofre comum não foram associadas ao revestido porque citam o limite de 3.
+- Verificação: `./gradlew --offline build` passou e os recursos foram conferidos dentro do JAR. Primeiro teste em jogo pelo Lauro: o 5×5 grande formou certo, mas o pequeno seguia os passos de 3, o que levou ao ajuste acima. Ainda falta confirmar no jogo: os passos de 5 nas larguras 1 e 2, divisão com a chave, comparador, contraption e as texturas conectadas nas larguras 4 e 5. O Ponder não ganhou cena própria, e as cenas do cofre comum não foram associadas ao revestido porque citam o limite de 3.
 
 ## Critério para novos diferenciais
 
