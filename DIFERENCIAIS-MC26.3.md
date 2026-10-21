@@ -86,7 +86,7 @@ Um ajudante novo para fazendas automáticas, com o corpo do golem de cobre na co
   - Baú registrado no `InventoryIdentifier` da empacotadora.
   - Correção da mensagem de erro no Shift (`ItemDescription.holdKeyParts`), que afetava as descrições com Shift, inclusive a do cofre revestido.
   - Verificado no servidor de desenvolvimento via RCON: árvore com ninho foi ignorada e, depois de remover o ninho, foi cortada e replantada; um hopper inseriu itens no baú.
-  - Commit `REPLACE_COMMIT`: ovo gerador (`andesite_golem_spawn_egg`, via `spawnEgg()` do Registrate) e `AndesiteGolem.finalizeSpawn`, que coloca o baú quando o golem vem de ovo ou dispenser; páginas de info no JEI (`CreateJEI.registerRecipes`, chaves `create.jei.*`); moldura de latão na tampa das texturas `active`/`inactive`. Build passou; nada disso testado em jogo.
+  - Commit `af5cc63c0b86ffb98178d98072749ca05240e01e`: ovo gerador (`andesite_golem_spawn_egg`, via `spawnEgg()` do Registrate) e `AndesiteGolem.finalizeSpawn`, que coloca o baú quando o golem vem de ovo ou dispenser; páginas de info no JEI (`CreateJEI.registerRecipes`, chaves `create.jei.*`); moldura de latão na tampa das texturas `active`/`inactive`. Build passou; nada disso testado em jogo.
   - Não verificados em jogo: quebrar e recolocar o baú com golem (precisa de jogador), cura e prancheta (precisam de clique de jogador), empacotadora e a correção do Shift (cliente).
 - **Ainda não verificado:** o visual no cliente (modelo e texturas do golem e do baú, animações, slot de filtro na tampa) e a receita da prensa rodando numa prensa de verdade.
 
