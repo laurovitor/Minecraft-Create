@@ -1534,7 +1534,7 @@
   "create.item_attributes.washable.inverted": "Não pode ser lavado",
   "create.item_hatch.deposit_inventory": "Itens do inventário depositados",
   "create.item_hatch.deposit_item": "Itens da mão depositados",
-  "create.jei.andesite_golem.info": "Golem de Andesito: coloque uma Abóbora Esculpida (ou Lanterna de Abóbora) sobre um Bloco de Liga de Andesito. O golem nasce e o bloco vira o baú dele. Num raio de 15 blocos do baú ele corta árvores (menos as que têm colmeia ou ninho de abelha) e colhe plantações maduras, replanta e guarda o que o filtro do baú aceitar. Shift + clique direito nele com Liga de Andesito cura 5% por liga. Clique direito nele ou no baú com uma Prancheta em branco para anotar o estado dele. À noite, se a área de trabalho não estiver iluminada, ele dorme ao lado do baú até amanhecer e os monstros o ignoram. Shift + Chave Inglesa recolhe o baú com o golem.",
+  "create.jei.andesite_golem.info": "Golem de Andesito: coloque uma Abóbora Esculpida (ou Lanterna de Abóbora) sobre um Bloco de Liga de Andesito. O golem nasce e o bloco vira o baú dele. Num raio de 15 blocos do baú ele corta árvores (menos as que têm colmeia ou ninho de abelha) e colhe plantações maduras, replanta e guarda o que o filtro do baú aceitar. Clique direito nele com Liga de Andesito para reparar 25% da vida por liga; Ligas de Andesito guardadas no baú dele são usadas do mesmo jeito quando ele perdeu pelo menos isso e não apanhou nos últimos segundos. Clique direito nele ou no baú com uma Prancheta em branco para anotar o estado dele. À noite, se a área de trabalho não estiver iluminada, ele dorme ao lado do baú até amanhecer, se cura devagar enquanto dorme e os monstros o ignoram. Shift + Chave Inglesa recolhe o baú com o golem.",
   "create.jei.andesite_golem_chest.info": "O slot de filtro é o pequeno rebaixo no meio da tampa. Funciona com funis, hoppers, empacotadoras e comparadores. Um baú cujo golem morreu fica rachado e pode ir na Prensa Mecânica, virando 6 Ligas de Andesito.",
   "create.jei.packed_andesite_golem_chest.info": "Baú de golem recolhido com o golem vivo. Ao colocar, o golem volta com a mesma vida, os itens do baú, o filtro e o que estava carregando.",
   "create.keyinfo.rotate_menu": "Abrir Menu de Rotação de Blocos",
@@ -3653,7 +3653,7 @@
   "create.clipboard.golem_info.state.sleeping": "dormindo",
   "create.clipboard.golem_info.state.patrol": "patrulha",
   "create.clipboard.golem_info.state.combat": "combate",
-  "create.jei.netherite_golem.info": "Golem de Netherita: abóbora esculpida ou lanterna sobre bloco de netherita. Guarda 25 blocos do baú e ataca todos os monstros hostis. Minério ancestral cura 10 pontos de vida.",
+  "create.jei.netherite_golem.info": "Golem de Netherita: abóbora esculpida ou lanterna sobre bloco de netherita. Guarda 25 blocos do baú, ataca todos os monstros hostis que avista, de dia dorme sobre o baú quando é seguro e se cura devagar enquanto dorme, e guarda os espólios aceitos. Clique direito nele com Lingote de Netherita para reparar 20 de vida (Minério Ancestral: 10); Lingotes de Netherita guardados no baú dele são usados do mesmo jeito fora de combate.",
   "create.jei.netherite_golem_chest.info": "Sem filtro guarda todos os espólios; filtro restringe só o que entra no baú. Baú sem golem pode ser prensado em 6 lingotes de netherita.",
   "create.jei.packed_netherite_golem_chest.info": "Mover o baú mantém idade, vida, conteúdo e filtro, mas zera os abates."
 }

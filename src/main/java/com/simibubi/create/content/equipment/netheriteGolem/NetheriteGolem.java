@@ -45,6 +45,8 @@ public class NetheriteGolem extends AndesiteGolem {
 	private long awayTicks;
 	/** Ticks left awake after taking damage; see NetheriteGolemRules.WAKE_AFTER_HURT_TICKS. */
 	private int wakeCooldown;
+	/** Ticks the current target has been out of sight; see NetheriteGolemRules.TARGET_UNSEEN_TICKS. */
+	private int targetUnseenTicks;
 
 	public NetheriteGolem(EntityType<? extends net.minecraft.world.entity.animal.golem.AbstractGolem> type, Level level) {
 		super(type, level);
@@ -79,6 +81,16 @@ public class NetheriteGolem extends AndesiteGolem {
 	public boolean wantsRest() {
 		return NetheriteGolemRules.wantsRest(NetheriteGolemRules.isDay(level().getOverworldClockTime()),
 			getTarget() != null, wakeCooldown);
+	}
+
+	@Override
+	public boolean isRepairItem(ItemStack stack) {
+		return stack.is(Items.NETHERITE_INGOT);
+	}
+
+	@Override
+	protected boolean isFighting() {
+		return isInCombat();
 	}
 
 	@Override
@@ -122,13 +134,20 @@ public class NetheriteGolem extends AndesiteGolem {
 		if (getChest() == null) { setTarget(null); getNavigation().stop(); return; }
 		if (getTarget() != null && (!getTarget().isAlive() || !(getTarget() instanceof Enemy)
 			|| !inTerritory(getTarget().blockPosition()))) setTarget(null);
+		// A hostile hidden in a cave or behind walls inside the 25-block sphere used to stay the
+		// target forever: purple eyes and no daytime sleep. Only mobs in sight are acquired, and
+		// a target out of sight for TARGET_UNSEEN_TICKS is dropped.
+		targetUnseenTicks = getTarget() == null || getSensing().hasLineOfSight(getTarget()) ? 0 : targetUnseenTicks + 1;
 		if (tickCount % 10 == 0) {
 			BlockPos center = getChestPos();
 			Mob nearest = level().getEntitiesOfClass(Mob.class,
 				new net.minecraft.world.phys.AABB(center).inflate(GUARD_RADIUS),
-				m -> NetheriteGolemRules.shouldTarget(m instanceof Enemy, m.isAlive(), inTerritory(m.blockPosition()))).stream()
+				m -> NetheriteGolemRules.shouldTarget(m instanceof Enemy, m.isAlive(), inTerritory(m.blockPosition()))
+					&& getSensing().hasLineOfSight(m)).stream()
 				.min(java.util.Comparator.comparingDouble(this::distanceToSqr)).orElse(null);
-			setTarget(nearest); // No filter lookup: all hostile Monsters, including creepers.
+			// No filter lookup: all hostile Monsters, including creepers.
+			if (nearest != null) setTarget(nearest);
+			else if (!NetheriteGolemRules.keepUnseenTarget(getTarget() != null, targetUnseenTicks)) setTarget(null);
 		}
 		if (!inTerritory(blockPosition())) {
 			setTarget(null);
@@ -139,11 +158,8 @@ public class NetheriteGolem extends AndesiteGolem {
 		if (wakeCooldown > 0) wakeCooldown--;
 		// NetheriteGolemRestGoal walks home and falls asleep; this only wakes it.
 		if (!wantsRest()) setSleeping(false);
-		if (isAsleep()) {
-			getNavigation().stop();
-			if (tickCount % NetheriteGolemRules.REGEN_INTERVAL == 0 && getHealth() < getMaxHealth())
-				heal(NetheriteGolemRules.sleepRegen(true, getMaxHealth()));
-		}
+		// Sleep regeneration and chest repairs run in AndesiteGolem.tickCare for both golems.
+		if (isAsleep()) getNavigation().stop();
 		int sinceAttack = getLastHurtMob() == null ? -1 : tickCount - getLastHurtMobTimestamp();
 		entityData.set(COMBAT, NetheriteGolemRules.inCombat(getTarget() != null && getTarget().isAlive(), sinceAttack));
 
@@ -173,10 +189,11 @@ public class NetheriteGolem extends AndesiteGolem {
 	@Override
 	protected InteractionResult mobInteract(Player player, InteractionHand hand) {
 		ItemStack held = player.getItemInHand(hand);
-		if (held.is(Items.ANCIENT_DEBRIS) && player.isShiftKeyDown() && getHealth() < getMaxHealth()) {
-			if (!level().isClientSide()) {
-				heal(10.0f); // One ancient debris restores 10 HP, capped at 80.
-				if (!player.hasInfiniteMaterials()) held.shrink(1);
+		// Netherite ingots are handled by AndesiteGolem.mobInteract via isRepairItem.
+		if (held.is(Items.ANCIENT_DEBRIS) && getHealth() < getMaxHealth()) {
+			if (level() instanceof ServerLevel serverLevel) {
+				repair(serverLevel, 10.0f); // One ancient debris restores 10 HP, capped at 80.
+				held.consume(1, player);
 			}
 			return InteractionResult.SUCCESS;
 		}

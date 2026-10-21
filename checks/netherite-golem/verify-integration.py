@@ -41,7 +41,13 @@ renderer = (root/'content/equipment/netheriteGolem/NetheriteGolemRenderer.java')
 assert 'output.putLong("AwayTicks", awayTicks)' in entity and 'input.getLongOr("AwayTicks", 0L)' in entity
 assert 'builder.define(COMBAT, false)' in entity and 'entityData.set(COMBAT' in entity
 assert 'new NetheriteGolemRestGoal(this)' in entity and 'setSleeping(day && getTarget() == null)' not in entity
-assert 'sleepRegen(true, getMaxHealth())' in entity and 'if (isAsleep()) {' in entity
+# Sleep regen and chest repair live in AndesiteGolem.tickCare for both golems (no double regen).
+assert 'sleepRegen(true, getMaxHealth())' in andesite and 'sleepRegen' not in entity
+assert 'tickCare(serverLevel)' in andesite and 'chest.takeOne(this::isRepairItem)' in andesite
+assert 'isShiftKeyDown() && AllItems.ANDESITE_ALLOY' not in andesite and 'held.consume(1, player)' in andesite
+assert andesite.index('isCopperCareTool(held)') < andesite.index('isRepairItem(held)')
+assert 'stack.is(Items.NETHERITE_INGOT)' in entity and 'return isInCombat();' in entity
+assert 'getSensing().hasLineOfSight(m)' in entity and 'keepUnseenTarget' in entity
 assert 'WAKE_AFTER_HURT_TICKS' in entity and 'teleportTo(at.x, at.y, at.z)' in entity
 assert 'golem.setSleeping(true)' in rest and 'getNavigation().isDone()' in rest
 assert 'netherite_golem_eyes_white.png' in renderer and 'Eyes.CLOSED ? 0.0F' in renderer

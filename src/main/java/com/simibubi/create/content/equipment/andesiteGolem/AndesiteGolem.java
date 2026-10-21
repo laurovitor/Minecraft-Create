@@ -62,6 +62,9 @@ public class AndesiteGolem extends AbstractGolem {
 
 	private @Nullable BlockPos chestPos;
 	private long createdGameTime = -1;
+	/** tickCount of the last damage taken; far in the past until the first hit. */
+	private int lastHurtTick = -100_000;
+	private int autoRepairCooldown;
 	/** Gathered items not yet stored in the chest. */
 	private final List<ItemStack> carried = new ArrayList<>();
 
@@ -147,16 +150,58 @@ public class AndesiteGolem extends AbstractGolem {
 			}
 			return InteractionResult.SUCCESS;
 		}
-		if (player.isShiftKeyDown() && AllItems.ANDESITE_ALLOY.isIn(held)
-			&& getHealth() < getMaxHealth()) {
-			if (!level().isClientSide()) {
-				heal(getMaxHealth() * 0.05f);
-				if (!player.hasInfiniteMaterials())
-					held.shrink(1);
+		// Repair with or without Shift, like the vanilla iron golem. Health is synced, so the
+		// client predicts the same result and the server applies it.
+		if (isRepairItem(held) && getHealth() < getMaxHealth()) {
+			if (level() instanceof ServerLevel serverLevel) {
+				repair(serverLevel);
+				held.consume(1, player);
 			}
 			return InteractionResult.SUCCESS;
 		}
 		return super.mobInteract(player, hand);
+	}
+
+	// ---- repair and healing
+
+	/** The ingot this golem is repaired with, by hand or from its chest. */
+	public boolean isRepairItem(ItemStack stack) {
+		return AllItems.ANDESITE_ALLOY.isIn(stack);
+	}
+
+	/** Out of combat for auto-repair. The Andesite golem never fights. */
+	protected boolean isFighting() {
+		return false;
+	}
+
+	/** One repair step: {@link GolemCareRules#REPAIR_FRACTION} of max health, sound and particles. */
+	protected void repair(ServerLevel level) {
+		repair(level, GolemCareRules.repairAmount(getMaxHealth()));
+	}
+
+	protected void repair(ServerLevel level, float amount) {
+		heal(amount);
+		playSound(SoundEvents.IRON_GOLEM_REPAIR, 1.0F, 1.0F + (random.nextFloat() - random.nextFloat()) * 0.2F);
+		level.sendParticles(net.minecraft.core.particles.ParticleTypes.HAPPY_VILLAGER,
+			getX(), getY() + getBbHeight() * 0.6, getZ(), 6, 0.3, 0.3, 0.3, 0);
+	}
+
+	/** Sleep regeneration, then repair from the chest's reserve of repair items. */
+	private void tickCare(ServerLevel level) {
+		if (isAsleep() && tickCount % GolemCareRules.REGEN_INTERVAL == 0 && getHealth() < getMaxHealth())
+			heal(GolemCareRules.sleepRegen(true, getMaxHealth()));
+		if (autoRepairCooldown > 0) {
+			autoRepairCooldown--;
+			return;
+		}
+		if (!GolemCareRules.shouldAutoRepair(getHealth(), getMaxHealth(), isFighting(), tickCount - lastHurtTick, 0))
+			return;
+		// The chest is used remotely, as for saplings when replanting: no trip home needed.
+		AndesiteGolemChestBlockEntity chest = getChest();
+		if (chest == null || chest.takeOne(this::isRepairItem).isEmpty())
+			return;
+		repair(level);
+		autoRepairCooldown = GolemCareRules.AUTO_REPAIR_COOLDOWN;
 	}
 
 	/** Honeycomb and axes: what a copper golem is waxed, scraped and un-waxed with. */
@@ -244,6 +289,8 @@ public class AndesiteGolem extends AbstractGolem {
 		if (!level().isClientSide())
 			updateMovementSpeed();
 		super.tick();
+		if (level() instanceof ServerLevel serverLevel && isAlive())
+			tickCare(serverLevel);
 		if (level().isClientSide() && !isNoAi())
 			setupAnimationStates();
 	}
@@ -281,6 +328,7 @@ public class AndesiteGolem extends AbstractGolem {
 	@Override
 	protected void actuallyHurt(ServerLevel level, DamageSource source, float amount) {
 		super.actuallyHurt(level, source, amount);
+		lastHurtTick = tickCount;
 		setState(CopperGolemState.IDLE);
 		setSleeping(false);
 	}

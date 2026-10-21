@@ -1,5 +1,7 @@
 package com.simibubi.create.content.equipment.netheriteGolem;
 
+import com.simibubi.create.content.equipment.andesiteGolem.GolemCareRules;
+
 /** Side-effect-free policy used by combat, chest and packed-movement paths. */
 public final class NetheriteGolemRules {
 	private NetheriteGolemRules() {}
@@ -7,15 +9,17 @@ public final class NetheriteGolemRules {
 	/** Daytime sleep window per day cycle, ticks: isDay spans 23500 -> 24000 -> 12500 = 13000. */
 	public static final int DAY_WINDOW_TICKS = 13000;
 	/**
-	 * Ticks of sleep for a 0 -> 100% heal. Walking home eats into each 13000-tick day window, so
-	 * a realistic day gives ~11000 ticks of sleep; two of them = 22000. With 80 max HP:
-	 * 80 / 22000 = 0.00364 HP/tick = 0.0727 HP/s = ~3.6 HP per in-game hour (1000 ticks).
-	 * Even a perfect day (13000 ticks asleep) restores only 47.3 HP (59%), so a full heal always
-	 * needs two days of undisturbed sleep. Raise to slow regen, lower to speed it up.
+	 * Ticks of sleep for a 0 -> 100% heal (shared with the Andesite golem, see GolemCareRules).
+	 * Walking home eats into each 13000-tick day window, so a realistic day gives ~11000 ticks of
+	 * sleep; two of them = 22000. With 80 max HP: 80 / 22000 = 0.00364 HP/tick = 0.0727 HP/s =
+	 * ~3.6 HP per in-game hour (1000 ticks). Even a perfect day (13000 ticks asleep) restores only
+	 * 47.3 HP (59%), so a full heal always needs two days of undisturbed sleep.
 	 */
-	public static final int FULL_HEAL_SLEEP_TICKS = 22000;
+	public static final int FULL_HEAL_SLEEP_TICKS = GolemCareRules.FULL_HEAL_SLEEP_TICKS;
 	/** How often sleep regeneration is applied, ticks (20 = once a second, 0.0727 HP at 80 max). */
-	public static final int REGEN_INTERVAL = 20;
+	public static final int REGEN_INTERVAL = GolemCareRules.REGEN_INTERVAL;
+	/** A target out of sight this long, ticks, is dropped (5 s): purple eyes turn white again. */
+	public static final int TARGET_UNSEEN_TICKS = 100;
 	/** One full Minecraft day, ticks: longer than this away from the chest teleports the golem home. */
 	public static final long AWAY_TELEPORT_TICKS = 24000;
 	/** Retry delay, ticks, when the chest has no free spot to teleport onto (10 s). */
@@ -56,7 +60,11 @@ public final class NetheriteGolemRules {
 	}
 	/** HP healed per {@link #REGEN_INTERVAL}; nothing while awake. */
 	public static float sleepRegen(boolean asleep, float maxHealth) {
-		return asleep ? maxHealth * REGEN_INTERVAL / FULL_HEAL_SLEEP_TICKS : 0;
+		return GolemCareRules.sleepRegen(asleep, maxHealth);
+	}
+	/** No visible hostile left: keep chasing the current target only while it was seen recently. */
+	public static boolean keepUnseenTarget(boolean hasTarget, int unseenTicks) {
+		return hasTarget && unseenTicks < TARGET_UNSEEN_TICKS;
 	}
 	/** On the chest or in one of the eight columns around it, feet from one below to two above. */
 	public static boolean nearChest(int dx, int dy, int dz) {

@@ -18,6 +18,7 @@ public class GolemWorkGeometryCheck {
 		assert !GolemWorkGeometry.closeToBed(4.5, 65, 0.5, 1, 65, 0) : "distant partial route must not qualify";
 		assert GolemWorkGeometry.canHaveWideTrunk("oak_log") : "complete planted giant oak must use 2x2 arrival";
 		assert GolemWorkGeometry.canHaveWideTrunk("dark_oak_log") : "dark oak retains 2x2 arrival";
+		assert GolemWorkGeometry.canHaveWideTrunk("pale_oak_log") : "pale oak (same trunk placer as dark oak) is 2x2";
 		assert !GolemWorkGeometry.canHaveWideTrunk("birch_log") : "ordinary species must not merge adjacent trees";
 		assert at2x2(-0.45, 64, 0.5) : "standing at dark-oak west face must enter WORK";
 		assert at2x2(1.5, 64, 2.45) : "standing at south face must enter WORK";

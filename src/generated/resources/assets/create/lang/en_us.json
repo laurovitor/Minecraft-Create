@@ -1543,7 +1543,7 @@
   "create.item_attributes.washable.inverted": "cannot be Washed",
   "create.item_hatch.deposit_inventory": "Inventory items deposited",
   "create.item_hatch.deposit_item": "Held item deposited",
-  "create.jei.andesite_golem.info": "Andesite Golem: place a Carved Pumpkin (or Jack o'Lantern) on an Andesite Alloy Block. The golem appears and the block becomes its chest. Within 15 blocks of the chest it cuts trees (except ones with bee nests or hives) and harvests grown crops, replants them and stores what the chest filter accepts. Shift + right-click it with Andesite Alloy to heal 5% per alloy. Right-click it or its chest with a blank Clipboard to note its status. At night, if its work area is not lit, it sleeps beside its chest until morning and hostile mobs leave it alone. Shift + Wrench picks up the chest with the golem.",
+  "create.jei.andesite_golem.info": "Andesite Golem: place a Carved Pumpkin (or Jack o'Lantern) on an Andesite Alloy Block. The golem appears and the block becomes its chest. Within 15 blocks of the chest it cuts trees (except ones with bee nests or hives) and harvests grown crops, replants them and stores what the chest filter accepts. Right-click it with Andesite Alloy to repair 25% of its health per alloy; Andesite Alloy kept in its chest is used the same way when it has lost at least that much and has not been hit for a few seconds. Right-click it or its chest with a blank Clipboard to note its status. At night, if its work area is not lit, it sleeps beside its chest until morning, slowly heals while asleep and hostile mobs leave it alone. Shift + Wrench picks up the chest with the golem.",
   "create.jei.andesite_golem_chest.info": "The filter slot is the small inset pad on the lid. Works with funnels, hoppers, packagers and comparators. A chest whose golem died turns cracked and can be pressed in a Mechanical Press into 6 Andesite Alloy.",
   "create.jei.packed_andesite_golem_chest.info": "A golem's chest picked up while its golem was alive. Placing it brings the golem back with the same health, its chest contents, filter and carried items.",
   "create.keyinfo.alt_modifier": "Alt Modifier",
@@ -3673,7 +3673,7 @@
   "create.clipboard.golem_info.state.sleeping": "sleeping",
   "create.clipboard.golem_info.state.patrol": "patrolling",
   "create.clipboard.golem_info.state.combat": "in combat",
-  "create.jei.netherite_golem.info": "Netherite Golem: place a Carved Pumpkin or Jack o'Lantern on a Netherite Block. Guards 25 blocks from its chest, attacks all hostile monsters, sleeps by day when safe, stores accepted kill drops. Ancient Debris heals 10 HP.",
+  "create.jei.netherite_golem.info": "Netherite Golem: place a Carved Pumpkin or Jack o'Lantern on a Netherite Block. Guards 25 blocks from its chest, attacks all hostile monsters in sight, sleeps on its chest by day when safe and slowly heals while asleep, stores accepted kill drops. Right-click it with a Netherite Ingot to repair 20 HP (Ancient Debris: 10 HP); Netherite Ingots kept in its chest are used the same way out of combat.",
   "create.jei.netherite_golem_chest.info": "Unfiltered chest stores all kill drops; a filter limits only stored loot. Shift + Wrench packs a live golem. Dead chest presses into six Netherite Ingots.",
   "create.jei.packed_netherite_golem_chest.info": "Moving the packed chest preserves age, health, contents and filter, but resets monster kills."
 }

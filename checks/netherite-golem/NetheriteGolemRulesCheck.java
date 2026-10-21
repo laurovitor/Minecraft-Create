@@ -58,6 +58,25 @@ public class NetheriteGolemRulesCheck {
   assert NetheriteGolemRules.inCombat(true, -1);
   assert NetheriteGolemRules.inCombat(false, 99) && !NetheriteGolemRules.inCombat(false, 100);
   assert !NetheriteGolemRules.inCombat(false, -1) : "never attacked = calm";
+  // Repair: one item = 25% of max health; Andesite alloy 3 of 12, netherite ingot 20 of 80.
+  assert com.simibubi.create.content.equipment.andesiteGolem.GolemCareRules.repairAmount(12f) == 3f;
+  assert com.simibubi.create.content.equipment.andesiteGolem.GolemCareRules.repairAmount(80f) == 20f;
+  // Auto-repair from the chest: needs a full step missing, out of combat, 100 ticks calm, no cooldown.
+  assert com.simibubi.create.content.equipment.andesiteGolem.GolemCareRules.shouldAutoRepair(60f, 80f, false, 100, 0);
+  assert !com.simibubi.create.content.equipment.andesiteGolem.GolemCareRules.shouldAutoRepair(61f, 80f, false, 100, 0) : "would waste an ingot";
+  assert !com.simibubi.create.content.equipment.andesiteGolem.GolemCareRules.shouldAutoRepair(10f, 80f, true, 1000, 0) : "never during combat";
+  assert !com.simibubi.create.content.equipment.andesiteGolem.GolemCareRules.shouldAutoRepair(10f, 80f, false, 99, 0) : "just hit";
+  assert !com.simibubi.create.content.equipment.andesiteGolem.GolemCareRules.shouldAutoRepair(10f, 80f, false, 1000, 1) : "cooldown";
+  assert com.simibubi.create.content.equipment.andesiteGolem.GolemCareRules.shouldAutoRepair(9f, 12f, false, 1000, 0) : "Andesite: 3 HP missing";
+  // Andesite sleep regen: same two-sleeps rule; a full 11000-tick night heals half of 12 HP.
+  double andesitePerTick = com.simibubi.create.content.equipment.andesiteGolem.GolemCareRules.sleepRegen(true, 12f)
+   / com.simibubi.create.content.equipment.andesiteGolem.GolemCareRules.REGEN_INTERVAL;
+  assert Math.abs(andesitePerTick * 11000 - 6.0) < 1e-3 && andesitePerTick * 11000 < 12;
+  assert com.simibubi.create.content.equipment.andesiteGolem.GolemCareRules.sleepRegen(false, 12f) == 0f;
+  // Combat exit: unseen target dropped after 100 ticks, so eyes return to white.
+  assert NetheriteGolemRules.keepUnseenTarget(true, 99) && !NetheriteGolemRules.keepUnseenTarget(true, 100);
+  assert !NetheriteGolemRules.keepUnseenTarget(false, 0);
+  assert NetheriteGolemRules.eyes(false, NetheriteGolemRules.inCombat(false, -1)) == NetheriteGolemRules.Eyes.WHITE;
   System.out.println("Netherite policy checks passed");
  }
 }
