@@ -154,6 +154,13 @@ public class AndesiteGolemChestBlock extends HorizontalDirectionalBlock
 		return SHAPE;
 	}
 
+	/** Not copper: an axe never scrapes, strips or un-waxes the chest (NeoForge tool hook). */
+	@Override
+	public @org.jetbrains.annotations.Nullable BlockState getToolModifiedState(BlockState state, UseOnContext context,
+		net.neoforged.neoforge.common.ItemAbility itemAbility, boolean simulate) {
+		return null;
+	}
+
 	@Override
 	protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
 		if (level.isClientSide())

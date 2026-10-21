@@ -51,6 +51,22 @@ for f in ['src/main/resources/assets/create/lang/pt_br.json', 'src/generated/res
     for k in ['', '.sleeping', '.patrol', '.combat']:
         assert 'create.clipboard.golem_info.state' + k in lang, (f, k)
 assert 'clipboard.golem_info.state' in clipboard
+# Not copper: no vanilla CopperGolem inheritance/weathering, honeycomb/axe refused, chests not tool-modifiable.
+golem_dir = [root/'content/equipment/andesiteGolem', root/'content/equipment/netheriteGolem']
+for d in golem_dir:
+    for f in d.glob('*.java'):
+        src = f.read_text()
+        assert 'extends CopperGolem ' not in src and 'extends CopperGolem{' not in src, f
+        for bad in ['WeatheringCopper', 'nextWeatheringTick', 'updateWeathering', 'DATA_WEATHER_STATE', 'CopperGolemOxidation']:
+            assert bad not in src, (f, bad)
+assert 'extends AbstractGolem' in andesite and 'class NetheriteGolem extends AndesiteGolem' in entity
+assert 'if (isCopperCareTool(held))\n\t\t\treturn InteractionResult.FAIL;' in andesite
+assert 'Items.HONEYCOMB' in andesite and 'ItemTags.AXES' in andesite
+assert entity.index('return super.mobInteract(player, hand)') > 0  # Netherite falls through to the guard
+for f in ['content/equipment/andesiteGolem/AndesiteGolemChestBlock.java', 'content/equipment/netheriteGolem/NetheriteGolemChestBlock.java']:
+    assert 'getToolModifiedState' in (root/f).read_text() and 'boolean simulate) {\n\t\treturn null;' in (root/f).read_text(), f
+for dm in Path('src').rglob('data_maps/block/*.json'):
+    assert 'golem_chest' not in dm.read_text(), dm
 recipe = json.loads(Path('src/generated/resources/data/create/recipe/pressing/netherite_ingot_from_golem_chest.json').read_text())
 assert recipe['ingredients'] == ['create:netherite_golem_chest']
 assert recipe['results'] == [{'count': 6, 'id': 'minecraft:netherite_ingot'}]

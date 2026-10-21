@@ -136,6 +136,9 @@ public class AndesiteGolem extends AbstractGolem {
 	@Override
 	protected InteractionResult mobInteract(Player player, InteractionHand hand) {
 		ItemStack held = player.getItemInHand(hand);
+		// Copper golem body, but not copper: never waxed, scraped or un-waxed (also for Netherite).
+		if (isCopperCareTool(held))
+			return InteractionResult.FAIL;
 		if (AllBlocks.CLIPBOARD.isIn(held)) {
 			if (!level().isClientSide()) {
 				AndesiteGolemChestBlockEntity chest = getChest();
@@ -154,6 +157,11 @@ public class AndesiteGolem extends AbstractGolem {
 			return InteractionResult.SUCCESS;
 		}
 		return super.mobInteract(player, hand);
+	}
+
+	/** Honeycomb and axes: what a copper golem is waxed, scraped and un-waxed with. */
+	public static boolean isCopperCareTool(ItemStack stack) {
+		return stack.is(net.minecraft.world.item.Items.HONEYCOMB) || stack.is(net.minecraft.tags.ItemTags.AXES);
 	}
 
 	/**
