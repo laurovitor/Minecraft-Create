@@ -13,6 +13,9 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import com.simibubi.create.AllBlocks;
+import com.simibubi.create.AllItems;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AnimationState;
 import net.minecraft.world.entity.EntityType;
@@ -110,6 +113,29 @@ public class AndesiteGolem extends AbstractGolem {
 		if (level().getBlockEntity(chestPos) instanceof AndesiteGolemChestBlockEntity chest && chest.isHomeOf(getUUID()))
 			return chest;
 		return null;
+	}
+
+	@Override
+	protected InteractionResult mobInteract(Player player, InteractionHand hand) {
+		ItemStack held = player.getItemInHand(hand);
+		if (AllBlocks.CLIPBOARD.isIn(held)) {
+			if (!level().isClientSide()) {
+				AndesiteGolemChestBlockEntity chest = getChest();
+				if (chest != null)
+					AndesiteGolemClipboardInfo.write(player, held, this, chest);
+			}
+			return InteractionResult.SUCCESS;
+		}
+		if (player.isShiftKeyDown() && AllItems.ANDESITE_ALLOY.isIn(held)
+			&& getHealth() < getMaxHealth()) {
+			if (!level().isClientSide()) {
+				heal(getMaxHealth() * 0.05f);
+				if (!player.hasInfiniteMaterials())
+					held.shrink(1);
+			}
+			return InteractionResult.SUCCESS;
+		}
+		return super.mobInteract(player, hand);
 	}
 
 	// ---- carried items

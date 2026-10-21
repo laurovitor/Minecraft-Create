@@ -167,12 +167,8 @@ public record ItemDescription(ImmutableList<Component> lines, ImmutableList<Comp
 			boolean hasControls = !linesOnCtrl.isEmpty();
 
 			if (hasDescription || hasControls) {
-				String[] holdDesc = CreateLang.translateDirect("tooltip.holdForDescription", "$")
-					.getString()
-					.split("\\$");
-				String[] holdCtrl = CreateLang.translateDirect("tooltip.holdForControls", "$")
-					.getString()
-					.split("\\$");
+				String[] holdDesc = holdKeyParts("create.tooltip.holdForDescription");
+				String[] holdCtrl = holdKeyParts("create.tooltip.holdForControls");
 				MutableComponent keyShift = CreateLang.translateDirect("tooltip.keyShift");
 				MutableComponent keyCtrl = CreateLang.translateDirect("tooltip.keyCtrl");
 				for (List<Component> list : Arrays.asList(lines, linesOnShift, linesOnCtrl)) {
@@ -217,6 +213,20 @@ public record ItemDescription(ImmutableList<Component> lines, ImmutableList<Comp
 			}
 
 			return new ItemDescription(ImmutableList.copyOf(lines), ImmutableList.copyOf(linesOnShift), ImmutableList.copyOf(linesOnCtrl));
+		}
+
+		/** Split the translated placeholder itself, avoiding Component formatting differences. */
+		private static String[] holdKeyParts(String key) {
+			String pattern = Language.getInstance().getOrDefault(key);
+			int marker = pattern.indexOf("%1$s");
+			int length = 4;
+			if (marker < 0) {
+				marker = pattern.indexOf("%s");
+				length = 2;
+			}
+			if (marker < 0)
+				return new String[] { "", "" };
+			return new String[] { pattern.substring(0, marker), pattern.substring(marker + length) };
 		}
 	}
 

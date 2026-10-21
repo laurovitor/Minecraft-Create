@@ -1856,6 +1856,8 @@ public class AllBlocks {
 				.sound(SoundType.STONE)
 				.strength(2.5F))
 			.transform(pickaxeOnly())
+			// Player mining creates either a live packed home or a dead recyclable chest.
+			.loot((lt, block) -> lt.add(block, BlockLootSubProvider.noDrop()))
 			.blockstate(() -> (c, p) -> BlockStateGen.horizontalBlock(c, p,
 				s -> AssetLookup.partialBaseVariant(c, p, s.getValue(AndesiteGolemChestBlock.ACTIVE) ? "active" : "inactive")))
 			.lang("Andesite Golem Chest")

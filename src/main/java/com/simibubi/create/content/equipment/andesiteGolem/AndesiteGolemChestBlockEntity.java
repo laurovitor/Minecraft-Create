@@ -22,6 +22,7 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.server.level.ServerLevel;
 
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
@@ -95,6 +96,13 @@ public class AndesiteGolemChestBlockEntity extends SmartBlockEntity implements C
 		return golemId.equals(golem);
 	}
 
+	/** The linked entity, if its chunk is currently loaded. */
+	public @Nullable AndesiteGolem getGolem() {
+		if (golem == null || !(level instanceof ServerLevel server))
+			return null;
+		return server.getEntity(golem) instanceof AndesiteGolem entity ? entity : null;
+	}
+
 	public void linkGolem(UUID golemId) {
 		golem = golemId;
 		notifyUpdate();
@@ -135,6 +143,11 @@ public class AndesiteGolemChestBlockEntity extends SmartBlockEntity implements C
 
 	@Override
 	public void destroy() {
+		// Breaking the home packs the live golem; this is not a death and must not
+		// turn the chest into the recyclable, inactive variant.
+		AndesiteGolem linked = getGolem();
+		if (linked != null)
+			linked.discard();
 		super.destroy();
 		if (level != null)
 			Containers.dropContents(level, worldPosition, container);

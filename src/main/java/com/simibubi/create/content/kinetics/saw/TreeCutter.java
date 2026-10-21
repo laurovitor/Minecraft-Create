@@ -337,6 +337,22 @@ public class TreeCutter {
 			return !leaves.isEmpty();
 		}
 
+		/**
+		 * Lauro edition: the Andesite Golem leaves trees with a bee nest or hive alone. Checks the
+		 * found attachments and every block touching a log or leaf.
+		 */
+		public boolean hasBeeHome(BlockGetter level) {
+			for (BlockPos pos : attachments)
+				if (level.getBlockState(pos).is(BlockTags.BEEHIVES))
+					return true;
+			for (List<BlockPos> part : List.of(logs, leaves))
+				for (BlockPos pos : part)
+					for (Direction direction : Iterate.directions)
+						if (level.getBlockState(pos.relative(direction)).is(BlockTags.BEEHIVES))
+							return true;
+			return false;
+		}
+
 		@Override
 		public void destroyBlocks(Level world, ItemStack toDamage, @Nullable Player playerEntity,
 								  BiConsumer<BlockPos, ItemStack> drop) {

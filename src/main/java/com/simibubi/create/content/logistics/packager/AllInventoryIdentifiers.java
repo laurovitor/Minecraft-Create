@@ -55,6 +55,9 @@ public class AllInventoryIdentifiers {
 		};
 		InventoryIdentifier.REGISTRY.register(AllBlocks.ITEM_VAULT.get(), vaultId);
 		InventoryIdentifier.REGISTRY.register(AllBlocks.REINFORCED_ITEM_VAULT.get(), vaultId);
+		// The golem's home is one inventory on every face, like a single chest.
+		InventoryIdentifier.REGISTRY.register(AllBlocks.ANDESITE_GOLEM_CHEST.get(),
+			(level, state, face) -> single(level, state, face));
 	}
 
 	private static InventoryIdentifier single(Level level, BlockState state, BlockFace face) {

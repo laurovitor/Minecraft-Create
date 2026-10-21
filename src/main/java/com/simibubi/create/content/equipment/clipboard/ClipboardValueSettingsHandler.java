@@ -6,6 +6,8 @@ import java.util.List;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllDataComponents;
 import com.simibubi.create.content.equipment.clipboard.ClipboardOverrides.ClipboardType;
+import com.simibubi.create.content.equipment.andesiteGolem.AndesiteGolemChestBlockEntity;
+import com.simibubi.create.content.equipment.andesiteGolem.AndesiteGolemClipboardInfo;
 import com.simibubi.create.content.logistics.vault.ItemVaultBlockEntity;
 import com.simibubi.create.content.logistics.vault.ItemVaultClipboardInfo;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
@@ -72,6 +74,15 @@ public class ClipboardValueSettingsHandler {
 			rightClickBlock.setCancellationResult(InteractionResult.SUCCESS);
 			if (!world.isClientSide())
 				ItemVaultClipboardInfo.write(world, pos, vault, player, itemStack);
+			return;
+		}
+		if (!paste && smartBE instanceof AndesiteGolemChestBlockEntity chest
+			&& event instanceof RightClickBlock rightClickBlock && chest.getBlockState()
+				.getValue(com.simibubi.create.content.equipment.andesiteGolem.AndesiteGolemChestBlock.ACTIVE)) {
+			rightClickBlock.setCanceled(true);
+			rightClickBlock.setCancellationResult(InteractionResult.SUCCESS);
+			if (!world.isClientSide() && chest.getGolem() != null)
+				AndesiteGolemClipboardInfo.write(player, itemStack, chest.getGolem(), chest);
 			return;
 		}
 

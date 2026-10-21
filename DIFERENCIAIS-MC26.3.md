@@ -29,10 +29,14 @@ Um ajudante novo para fazendas automáticas, com o corpo do golem de cobre na co
 - **Como criar:** coloque uma **abóbora esculpida** (ou lanterna de abóbora) sobre um **bloco de liga de andesito**. O golem nasce e o bloco vira o **Baú do Golem de Andesito**, a casa dele.
 - **O que ele faz:** num raio de **10 blocos** do baú, em qualquer altura, ele **corta árvores inteiras** e **colhe plantações maduras** (trigo, cenoura, batata, beterraba e fungo do Nether). Sempre **replanta** o que tirou: a muda ou semente vem do que ele colheu ou, se faltar, do próprio baú.
 - **Filtro:** a tampa do baú tem um **slot de filtro do Create**, igual ao dos funis. Sem filtro, ele trabalha em tudo e guarda tudo. Com filtro, só corta e colhe o que produz os itens do filtro e só guarda esses itens; o resto é descartado.
+- **Abelhas em paz:** ele também não corta árvore que tenha colmeia ou ninho de abelha.
+- **Levar o golem junto:** quebrando o baú com o golem vivo, o golem some e o baú vira o item "Baú do Golem de Andesito (Com Golem)". Ao colocar esse item de novo, o golem volta com a mesma vida, os itens do baú, o filtro e o que estava carregando.
+- **Cura:** com **Shift + clique direito** usando **liga de andesito**, cada liga recupera **5%** da vida do golem.
+- **Prancheta:** com uma prancheta em branco, clique direito no golem ou no baú dele para anotar a vida, a capacidade do baú, os espaços usados e os livres.
 - **Descanso:** com o baú cheio ou sem nada maduro por perto, ele passeia num raio de **5 blocos** do baú.
 - **Perigos:** toma **dano de queda** e é **alvo de monstros hostis**. Mantenha a fazenda iluminada e protegida. Se cair num buraco, fica preso até o jogador ajudar.
 - **Quando o golem morre**, o baú fica **rachado** e sem uso. Ele ainda guarda os itens e pode ir na **prensa mecânica**, que devolve **6 ligas de andesito**.
-- O baú abre como um baú comum (27 espaços) e funciona com funis, hoppers e comparador.
+- O baú abre como um baú comum (27 espaços) e funciona com funis, hoppers, empacotadora e comparador. Só o baú **sem golem** entra na prensa mecânica.
 
 ## Evidência técnica (não é copy de publicação)
 
@@ -73,6 +77,14 @@ Um ajudante novo para fazendas automáticas, com o corpo do golem de cobre na co
   - com filtro `oak_log`, ele só guardou toras e deixou o trigo maduro em paz, e a muda de replantio saiu do baú;
   - um zumbi matou o golem, e o baú ficou inativo; o mesmo aconteceu com a morte por queda;
   - sem trabalho, ele passeou a até cerca de 5 blocos do baú.
+- Complementos (commit `REPLACE_COMMIT`):
+  - `Tree.hasBeeHome()` checa ninhos e colmeias nas anexações e ao redor de troncos e folhas; o golem pula essas árvores.
+  - Item `packed_andesite_golem_chest`, que guarda vida, itens, filtro e o que o golem carregava, e recria o golem ao ser colocado. O drop normal do baú ativo quebrado por jogador é esse item; o loot table do bloco ficou vazio porque o drop é feito em `playerWillDestroy`.
+  - Cura com liga em `AndesiteGolem.mobInteract`; prancheta no golem e no baú via `AndesiteGolemClipboardInfo`.
+  - Baú registrado no `InventoryIdentifier` da empacotadora.
+  - Correção da mensagem de erro no Shift (`ItemDescription.holdKeyParts`), que afetava as descrições com Shift, inclusive a do cofre revestido.
+  - Verificado no servidor de desenvolvimento via RCON: árvore com ninho foi ignorada e, depois de remover o ninho, foi cortada e replantada; um hopper inseriu itens no baú.
+  - Não verificados em jogo: quebrar e recolocar o baú com golem (precisa de jogador), cura e prancheta (precisam de clique de jogador), empacotadora e a correção do Shift (cliente).
 - **Ainda não verificado:** o visual no cliente (modelo e texturas do golem e do baú, animações, slot de filtro na tampa) e a receita da prensa rodando numa prensa de verdade.
 
 ## Critério para novos diferenciais

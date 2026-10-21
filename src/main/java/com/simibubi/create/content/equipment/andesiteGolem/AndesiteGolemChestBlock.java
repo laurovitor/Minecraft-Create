@@ -1,6 +1,10 @@
 package com.simibubi.create.content.equipment.andesiteGolem;
 
 import com.simibubi.create.AllBlockEntityTypes;
+import com.simibubi.create.AllItems;
+import com.simibubi.create.AllEntityTypes;
+import com.simibubi.create.foundation.utility.RegistryNbt;
+import java.util.List;
 import com.simibubi.create.foundation.block.IBE;
 
 import net.minecraft.core.BlockPos;
@@ -17,6 +21,13 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -44,6 +55,70 @@ public class AndesiteGolemChestBlock extends HorizontalDirectionalBlock implemen
 	@Override
 	public BlockState getStateForPlacement(BlockPlaceContext context) {
 		return defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
+	}
+
+	@Override
+	public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+		if (!level.isClientSide() && !player.isCreative()) {
+			ItemStack drop;
+			if (state.getValue(ACTIVE) && level.getBlockEntity(pos) instanceof AndesiteGolemChestBlockEntity chest
+				&& chest.getGolem() instanceof AndesiteGolem golem) {
+				drop = new ItemStack(AllItems.PACKED_ANDESITE_GOLEM_CHEST.get());
+				CompoundTag data = new CompoundTag();
+				data.putFloat("Health", golem.getHealth());
+				data.store("Items", ItemStack.OPTIONAL_CODEC.listOf(), RegistryNbt.ops(level.registryAccess()),
+					chest.getContainer().getItems());
+				data.store("Filter", ItemStack.OPTIONAL_CODEC, RegistryNbt.ops(level.registryAccess()),
+					chest.filtering.getFilter());
+				data.putInt("FilterAmount", chest.filtering.count);
+				data.putBoolean("UpTo", chest.filtering.upTo);
+				data.store("Carried", ItemStack.CODEC.listOf(), RegistryNbt.ops(level.registryAccess()),
+					golem.getCarried());
+				drop.set(DataComponents.CUSTOM_DATA, CustomData.of(data));
+				// These now live inside the packed item; do not drop duplicates on removal.
+				chest.getContainer().clearContent();
+				chest.filtering.setFilter(ItemStack.EMPTY);
+				golem.getCarried().clear();
+			} else {
+				drop = new ItemStack(this);
+			}
+			Block.popResource(level, pos, drop);
+		}
+		return super.playerWillDestroy(level, pos, state, player);
+	}
+
+	@Override
+	public void setPlacedBy(Level level, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
+		super.setPlacedBy(level, pos, state, placer, stack);
+		if (!(level instanceof ServerLevel) || !AllItems.PACKED_ANDESITE_GOLEM_CHEST.isIn(stack))
+			return;
+		AndesiteGolem golem = AllEntityTypes.ANDESITE_GOLEM.get().create(level, EntitySpawnReason.TRIGGERED);
+		if (golem == null)
+			return;
+		float health = stack.get(DataComponents.CUSTOM_DATA) instanceof CustomData custom
+			? custom.copyTag().getFloat("Health").orElse(golem.getMaxHealth()) : golem.getMaxHealth();
+		golem.setHealth(Math.clamp(health, 0.01f, golem.getMaxHealth()));
+		golem.snapTo(pos.getX() + 0.5, pos.getY() + 1.05, pos.getZ() + 0.5, state.getValue(FACING).toYRot(), 0);
+		golem.setChest(pos);
+		if (level.getBlockEntity(pos) instanceof AndesiteGolemChestBlockEntity chest) {
+			chest.linkGolem(golem.getUUID());
+			if (stack.get(DataComponents.CUSTOM_DATA) instanceof CustomData custom) {
+				CompoundTag data = custom.copyTag();
+				List<ItemStack> items = data.read("Items", ItemStack.OPTIONAL_CODEC.listOf(),
+					RegistryNbt.ops(level.registryAccess())).orElse(List.of());
+				for (int i = 0; i < Math.min(items.size(), chest.getContainer().getContainerSize()); i++)
+					chest.getContainer().setItem(i, items.get(i));
+				chest.filtering.setFilter(data.read("Filter", ItemStack.OPTIONAL_CODEC,
+					RegistryNbt.ops(level.registryAccess())).orElse(ItemStack.EMPTY));
+				chest.filtering.count = data.getIntOr("FilterAmount", chest.filtering.count);
+				chest.filtering.upTo = data.getBooleanOr("UpTo", chest.filtering.upTo);
+				data.read("Carried", ItemStack.CODEC.listOf(), RegistryNbt.ops(level.registryAccess()))
+					.ifPresent(golem.getCarried()::addAll);
+				golem.updateHeldItem();
+			}
+		}
+		level.setBlockAndUpdate(pos, state.setValue(ACTIVE, true));
+		level.addFreshEntity(golem);
 	}
 
 	@Override

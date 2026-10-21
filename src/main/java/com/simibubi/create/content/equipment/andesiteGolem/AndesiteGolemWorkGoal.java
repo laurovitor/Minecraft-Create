@@ -221,10 +221,10 @@ public class AndesiteGolemWorkGoal extends Goal {
 		return true;
 	}
 
-	/** Logs with leaves on them; log walls and pillars without leaves are left alone. */
+	/** Logs with leaves on them and no bee nest or hive; log walls and bee trees are left alone. */
 	private boolean isTree(BlockPos base) {
 		TreeCutter.Tree tree = TreeCutter.findTree(golem.level(), base, golem.level().getBlockState(base));
-		return tree != TreeCutter.NO_TREE && tree.hasLeaves();
+		return tree != TreeCutter.NO_TREE && tree.hasLeaves() && !tree.hasBeeHome(golem.level());
 	}
 
 	private boolean isValidTarget(AndesiteGolemChestBlockEntity chest, BlockPos pos) {
@@ -282,7 +282,7 @@ public class AndesiteGolemWorkGoal extends Goal {
 
 	private void cutTree(AndesiteGolemChestBlockEntity chest, BlockPos base, List<ItemStack> gathered) {
 		TreeCutter.Tree tree = TreeCutter.findTree(golem.level(), base, golem.level().getBlockState(base));
-		if (tree == TreeCutter.NO_TREE || !tree.hasLeaves())
+		if (tree == TreeCutter.NO_TREE || !tree.hasLeaves() || tree.hasBeeHome(golem.level()))
 			return;
 		// the tree found from the base log holds everything above it; the base itself goes first
 		BlockHelper.destroyBlockAs(golem.level(), base, null, ItemStack.EMPTY, 1, gathered::add);

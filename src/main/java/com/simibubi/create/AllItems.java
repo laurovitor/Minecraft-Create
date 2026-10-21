@@ -27,6 +27,8 @@ import com.simibubi.create.content.contraptions.glue.SuperGlueItem;
 import com.simibubi.create.content.contraptions.minecart.MinecartCouplingItem;
 import com.simibubi.create.content.contraptions.mounted.MinecartContraptionItem;
 import com.simibubi.create.content.equipment.BuildersTeaItem;
+import com.simibubi.create.content.equipment.andesiteGolem.AndesiteGolemChestBlock;
+import com.simibubi.create.content.equipment.andesiteGolem.PackedAndesiteGolemChestItem;
 import com.simibubi.create.content.equipment.TreeFertilizerItem;
 import com.simibubi.create.content.equipment.armor.AllArmorMaterials;
 import com.simibubi.create.content.equipment.armor.BacktankItem;
@@ -72,6 +74,7 @@ import net.minecraft.client.data.models.model.TextureMapping;
 import net.minecraft.client.renderer.item.properties.select.DisplayContext;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.BlockItem;
 import com.simibubi.create.content.legacy.ChromaticCompoundColor;
 import com.simibubi.create.foundation.data.AssetLookup;
 import com.simibubi.create.content.equipment.armor.TrimmableArmorModelGenerator;
@@ -203,6 +206,15 @@ public class AllItems {
 	public static final ItemEntry<Item> ANDESITE_ALLOY = taggedIngredient("andesite_alloy", CREATE_INGOTS.tag),
 		ZINC_INGOT = taggedIngredient("zinc_ingot", CommonMetal.ZINC.ingots, CREATE_INGOTS.tag),
 		BRASS_INGOT = taggedIngredient("brass_ingot", CommonMetal.BRASS.ingots, CREATE_INGOTS.tag);
+
+	/** A picked-up live home; deliberately distinct from the dead chest pressed into alloy. */
+	public static final ItemEntry<PackedAndesiteGolemChestItem> PACKED_ANDESITE_GOLEM_CHEST =
+		REGISTRATE.item("packed_andesite_golem_chest",
+			p -> new PackedAndesiteGolemChestItem(AllBlocks.ANDESITE_GOLEM_CHEST.get(), p))
+			.properties(p -> p.stacksTo(1))
+			.lang("Andesite Golem Chest (With Golem)")
+			.model(() -> AssetLookup.customBlockItemModel("andesite_golem_chest", "block_active"))
+			.register();
 
 	public static final ItemEntry<ChromaticCompoundItem> CHROMATIC_COMPOUND =
 		REGISTRATE.item("chromatic_compound", ChromaticCompoundItem::new)
