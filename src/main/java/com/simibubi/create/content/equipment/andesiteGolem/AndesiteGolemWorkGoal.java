@@ -51,6 +51,8 @@ public class AndesiteGolemWorkGoal extends Goal {
 	private static final int GIVE_UP_TICKS = 300;
 	private static final int BLACKLIST_TICKS = 1200;
 	private static final double REACH = 2.5;
+	/** How often a golem walking to a tree checks whether leaves are blocking it. */
+	private static final int LEAF_CHECK_INTERVAL = 20;
 
 	private final AndesiteGolem golem;
 	private final Map<BlockPos, Long> blacklist = new HashMap<>();
@@ -61,6 +63,7 @@ public class AndesiteGolemWorkGoal extends Goal {
 	private int timer;
 	private int travelTicks;
 	private int searchCooldown;
+	private double lastDistance = Double.MAX_VALUE;
 
 	public AndesiteGolemWorkGoal(AndesiteGolem golem) {
 		this.golem = golem;
@@ -91,6 +94,7 @@ public class AndesiteGolemWorkGoal extends Goal {
 	@Override
 	public void start() {
 		travelTicks = 0;
+		lastDistance = Double.MAX_VALUE;
 		phase = golem.getCarried().isEmpty() ? Phase.GO_TO_TARGET : Phase.RETURN;
 	}
 
@@ -125,7 +129,10 @@ public class AndesiteGolemWorkGoal extends Goal {
 				phase = Phase.WORK;
 				timer = WORK_TICKS;
 				golem.setState(CopperGolemState.GETTING_ITEM);
+				return;
 			}
+			if (kind == Kind.TREE && phase == Phase.GO_TO_TARGET)
+				clearLeavesIfStuck(chest);
 		}
 		case WORK -> {
 			golem.getLookControl().setLookAt(Vec3.atCenterOf(target));
@@ -176,6 +183,47 @@ public class AndesiteGolemWorkGoal extends Goal {
 			golem.getNavigation().moveTo(path, 1.0);
 		}
 		return false;
+	}
+
+	/**
+	 * Leaves hanging down to the ground can wall the trunk off. When the golem stops getting closer
+	 * to a tree it is about to cut anyway, it clears the leaves right in front of it, towards the
+	 * trunk. Their drops go through the chest filter like the rest of the tree.
+	 */
+	private void clearLeavesIfStuck(AndesiteGolemChestBlockEntity chest) {
+		if (travelTicks % LEAF_CHECK_INTERVAL != 0)
+			return;
+		double distance = golem.position().distanceTo(Vec3.atCenterOf(target));
+		boolean stuck = distance > lastDistance - 0.3;
+		lastDistance = distance;
+		if (!stuck)
+			return;
+
+		Vec3 toTrunk = Vec3.atCenterOf(target).subtract(golem.position());
+		// one block towards the trunk; diagonal when both axes matter
+		double major = Math.max(Math.abs(toTrunk.x), Math.abs(toTrunk.z));
+		int stepX = (int) Math.round(toTrunk.x / major);
+		int stepZ = (int) Math.round(toTrunk.z / major);
+		BlockPos feet = golem.blockPosition();
+		List<ItemStack> gathered = new ArrayList<>();
+		boolean cleared = false;
+		for (BlockPos ahead : List.of(feet.offset(stepX, 0, stepZ), feet.offset(stepX, 0, 0), feet.offset(0, 0, stepZ))) {
+			for (int dy = 0; dy <= 1; dy++) {
+				BlockPos pos = ahead.above(dy);
+				if (!golem.level().getBlockState(pos).is(BlockTags.LEAVES))
+					continue;
+				BlockHelper.destroyBlockAs(golem.level(), pos, null, ItemStack.EMPTY, 1, gathered::add);
+				cleared = true;
+			}
+		}
+		if (!cleared)
+			return;
+		for (ItemStack stack : gathered)
+			if (!stack.isEmpty() && chest.accepts(stack))
+				golem.carry(stack);
+		// clearing is progress, give the walk more time and a fresh path
+		travelTicks = Math.max(0, travelTicks - LEAF_CHECK_INTERVAL);
+		golem.getNavigation().stop();
 	}
 
 	// ---- finding work
