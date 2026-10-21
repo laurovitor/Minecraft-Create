@@ -27,7 +27,7 @@ Com uma **prancheta em branco** na mão, clique com o botão direito num **Cofre
 Um ajudante novo para fazendas automáticas, com o corpo do golem de cobre na cor da liga de andesito.
 
 - **Como criar:** coloque uma **abóbora esculpida** (ou lanterna de abóbora) sobre um **bloco de liga de andesito**. O golem nasce e o bloco vira o **Baú do Golem de Andesito**, a casa dele.
-- **O que ele faz:** num raio de **10 blocos** do baú, em qualquer altura, ele **corta árvores inteiras** e **colhe plantações maduras** (trigo, cenoura, batata, beterraba e fungo do Nether). Sempre **replanta** o que tirou: a muda ou semente vem do que ele colheu ou, se faltar, do próprio baú.
+- **O que ele faz:** num raio de **15 blocos** do baú, em qualquer altura, ele **corta árvores inteiras** e **colhe plantações maduras** (trigo, cenoura, batata, beterraba e fungo do Nether). Sempre **replanta** o que tirou: a muda ou semente vem do que ele colheu ou, se faltar, do próprio baú.
 - **Filtro:** a tampa do baú tem um **slot de filtro do Create**, igual ao dos funis. Sem filtro, ele trabalha em tudo e guarda tudo. Com filtro, só corta e colhe o que produz os itens do filtro e só guarda esses itens; o resto é descartado.
 - **Árvores 2x2:** carvalho escuro, pinheiro gigante e selva gigante voltam com **4 mudas** iguais no lugar do tronco 2x2. As mudas vêm da própria árvore e, se faltar, do baú.
 - **Folhas no caminho:** se as folhas de uma árvore que ele vai cortar chegam até o chão e bloqueiam o tronco, ele quebra as folhas à frente até alcançar o tronco. O que cair dessas folhas passa pelo filtro como o resto.
@@ -36,9 +36,13 @@ Um ajudante novo para fazendas automáticas, com o corpo do golem de cobre na co
 - **Cura:** com **Shift + clique direito** usando **liga de andesito**, cada liga recupera **5%** da vida do golem.
 - **Prancheta:** com uma prancheta em branco, clique direito no golem ou no baú dele para anotar a vida, a capacidade do baú, os espaços usados e os livres.
 - **Descanso:** com o baú cheio ou sem nada maduro por perto, ele passeia num raio de **5 blocos** do baú.
+- **Limite visível:** ao criar o golem (pela abóbora ou pelo ovo), a grama e a terra no limite dos 15 blocos e em volta do baú viram caminho de terra, marcando a área de trabalho. Recolher e recolocar o baú não repete isso.
+- **Mangue:** árvores de mangue, que ficam sobre raízes, também são cortadas e replantadas com propágulo.
+- **Dorme à noite:** se a área de trabalho não estiver iluminada, à noite ele vai para o lado do baú e dorme até clarear. Dormindo, os monstros o ignoram. Uma pancada acorda ele.
+- **Chave inglesa:** Shift + chave inglesa no baú recolhe direto para o inventário, com o golem junto quando ele está vivo.
 - **Perigos:** toma **dano de queda** e é **alvo de monstros hostis**. Mantenha a fazenda iluminada e protegida. Se cair num buraco, fica preso até o jogador ajudar.
-- **Quando o golem morre**, o baú fica **rachado** e sem uso. Ele ainda guarda os itens e pode ir na **prensa mecânica**, que devolve **6 ligas de andesito**.
-- **Slot de filtro destacado:** a tampa do baú tem uma moldura de latão marcando onde o filtro vai.
+- **Quando o golem morre**, ele deixa **2 ligas de andesito** e às vezes uma **semente de abóbora**, e o baú fica **rachado** e sem uso. Ele ainda guarda os itens e pode ir na **prensa mecânica**, que devolve **6 ligas de andesito**.
+- **Slot de filtro:** um rebaixo discreto no meio da tampa marca onde o filtro vai, no estilo dos blocos do Create.
 - **JEI e criativo:** existe o **Ovo Gerador de Golem de Andesito**, que coloca o golem já com o baú dele. O JEI tem uma página de informação para o ovo, o baú e o baú com golem, explicando como criar e usar.
 - O baú abre como um baú comum (27 espaços) e funciona com funis, hoppers, empacotadora e comparador. Só o baú **sem golem** entra na prensa mecânica.
 
@@ -91,6 +95,15 @@ Um ajudante novo para fazendas automáticas, com o corpo do golem de cobre na co
   - Commit `af5cc63c0b86ffb98178d98072749ca05240e01e`: ovo gerador (`andesite_golem_spawn_egg`, via `spawnEgg()` do Registrate) e `AndesiteGolem.finalizeSpawn`, que coloca o baú quando o golem vem de ovo ou dispenser; páginas de info no JEI (`CreateJEI.registerRecipes`, chaves `create.jei.*`); moldura de latão na tampa das texturas `active`/`inactive`. Build passou; nada disso testado em jogo.
   - Commit `4b8c9c8198cb8d22a85268991fc103015bfa4795`: `AndesiteGolemWorkGoal.clearLeavesIfStuck` — a cada 20 ticks andando até uma árvore, se não chegou 0,3 bloco mais perto, quebra folhas na direção do tronco (altura dos pés e da cabeça). Build passou; não testado em jogo.
   - Commit `e29ea3a146c6f7b7c00cff810de173e271bc48f6`: replantio do tronco inteiro. Todas as toras da camada de baixo (`TreeCutter.Tree.getLogs()`) recebem muda do mesmo tipo, vinda dos drops e depois do baú. Build passou; não testado em jogo.
+  - Commit `REPLACE_COMMIT`:
+    - raio de trabalho de 15;
+    - `AndesiteGolemArea.markBoundary` (anel de caminho de terra só sobre `#minecraft:dirt` com ar em cima, mais os 8 blocos ao redor do baú), chamado só em `AndesiteGolemSpawning` e no `finalizeSpawn` do ovo;
+    - `AndesiteGolemSleepGoal`: noite, com menos de 6 de 9 pontos da área com luz de bloco ≥ 8, faz o golem dormir ao lado do baú; `canBeSeenAsEnemy` é falso enquanto dorme, os olhos apagam e a cabeça abaixa;
+    - base de tronco aceita raízes (`TreeCutter.isRoot`), e o replantio desce até o chão quando as raízes foram cortadas;
+    - drops de morte: 2 ligas e 50% de chance de semente de abóbora;
+    - `IWrenchable.onSneakWrenched` no baú;
+    - textura do slot de filtro mais discreta.
+    - Build passou; nada disso testado em jogo.
   - Não verificados em jogo: quebrar e recolocar o baú com golem (precisa de jogador), cura e prancheta (precisam de clique de jogador), empacotadora e a correção do Shift (cliente).
 - **Ainda não verificado:** o visual no cliente (modelo e texturas do golem e do baú, animações, slot de filtro na tampa) e a receita da prensa rodando numa prensa de verdade.
 

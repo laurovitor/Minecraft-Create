@@ -51,10 +51,12 @@ import net.minecraft.world.level.storage.ValueOutput;
 public class AndesiteGolem extends AbstractGolem {
 
 	/** Horizontal distance from the chest the golem works in, any height. */
-	public static final int WORK_RADIUS = 10;
+	public static final int WORK_RADIUS = 15;
 	/** Horizontal distance from the chest the golem strolls in while idle. */
 	public static final int IDLE_RADIUS = 5;
 
+	private static final EntityDataAccessor<Boolean> SLEEPING =
+		SynchedEntityData.defineId(AndesiteGolem.class, EntityDataSerializers.BOOLEAN);
 	private static final EntityDataAccessor<CopperGolemState> STATE =
 		SynchedEntityData.defineId(AndesiteGolem.class, EntityDataSerializers.COPPER_GOLEM_STATE);
 
@@ -88,7 +90,8 @@ public class AndesiteGolem extends AbstractGolem {
 	@Override
 	protected void registerGoals() {
 		goalSelector.addGoal(0, new FloatGoal(this));
-		goalSelector.addGoal(1, new AndesiteGolemWorkGoal(this));
+		goalSelector.addGoal(1, new AndesiteGolemSleepGoal(this));
+		goalSelector.addGoal(2, new AndesiteGolemWorkGoal(this));
 		goalSelector.addGoal(5, new AndesiteGolemStrollGoal(this));
 		goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 6.0F));
 		goalSelector.addGoal(7, new RandomLookAroundGoal(this));
@@ -98,6 +101,7 @@ public class AndesiteGolem extends AbstractGolem {
 	protected void defineSynchedData(SynchedEntityData.Builder builder) {
 		super.defineSynchedData(builder);
 		builder.define(STATE, CopperGolemState.IDLE);
+		builder.define(SLEEPING, false);
 	}
 
 	// ---- home chest
@@ -160,6 +164,7 @@ public class AndesiteGolem extends AbstractGolem {
 				setChest(pos);
 				if (level.getBlockEntity(pos) instanceof AndesiteGolemChestBlockEntity chest)
 					chest.linkGolem(getUUID());
+				AndesiteGolemArea.markBoundary(level, pos);
 				snapTo(pos.getX() + 0.5, pos.getY() + 0.9, pos.getZ() + 0.5, getYRot(), 0);
 			}
 		}
@@ -248,6 +253,23 @@ public class AndesiteGolem extends AbstractGolem {
 	protected void actuallyHurt(ServerLevel level, DamageSource source, float amount) {
 		super.actuallyHurt(level, source, amount);
 		setState(CopperGolemState.IDLE);
+		setSleeping(false);
+	}
+
+	// ---- sleeping
+
+	public boolean isAsleep() {
+		return entityData.get(SLEEPING);
+	}
+
+	public void setSleeping(boolean sleeping) {
+		entityData.set(SLEEPING, sleeping);
+	}
+
+	/** A sleeping golem is left alone by hostile mobs. */
+	@Override
+	public boolean canBeSeenAsEnemy() {
+		return !isAsleep() && super.canBeSeenAsEnemy();
 	}
 
 	@Override
@@ -266,6 +288,10 @@ public class AndesiteGolem extends AbstractGolem {
 		for (ItemStack stack : carried)
 			spawnAtLocation(level, stack);
 		carried.clear();
+		// what is left of the golem: two alloy, and sometimes the pumpkin's seeds
+		spawnAtLocation(level, new ItemStack(AllItems.ANDESITE_ALLOY.get(), 2));
+		if (random.nextBoolean())
+			spawnAtLocation(level, new ItemStack(net.minecraft.world.item.Items.PUMPKIN_SEEDS));
 	}
 
 	@Override
@@ -274,6 +300,7 @@ public class AndesiteGolem extends AbstractGolem {
 		if (chestPos != null)
 			output.store("Chest", BlockPos.CODEC, chestPos);
 		output.store("Carried", ItemStack.CODEC.listOf(), carried);
+		output.putBoolean("Sleeping", isAsleep());
 	}
 
 	@Override
@@ -282,6 +309,7 @@ public class AndesiteGolem extends AbstractGolem {
 		input.read("Chest", BlockPos.CODEC).ifPresent(this::setChest);
 		carried.clear();
 		input.read("Carried", ItemStack.CODEC.listOf()).ifPresent(carried::addAll);
+		setSleeping(input.getBooleanOr("Sleeping", false));
 	}
 
 	// ---- copper golem sounds

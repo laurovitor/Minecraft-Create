@@ -288,7 +288,8 @@ public class AndesiteGolemWorkGoal extends Goal {
 			return cropAccepted(chest, state, pos) ? Kind.CROP : null;
 		if (state.is(BlockTags.LOGS)) {
 			BlockState below = golem.level().getBlockState(pos.below());
-			if (below.is(BlockTags.LOGS) || !below.is(BlockTags.DIRT))
+			// on soil, or on roots like the mangrove
+			if (below.is(BlockTags.LOGS) || !(below.is(BlockTags.DIRT) || TreeCutter.isRoot(below)))
 				return null;
 			return chest.accepts(new ItemStack(state.getBlock())) ? Kind.TREE : null;
 		}
@@ -346,8 +347,9 @@ public class AndesiteGolemWorkGoal extends Goal {
 		// replant the whole footprint with one kind of sapling, taken from the tree first, then the chest;
 		// a 2x2 tree only grows back when all four are planted
 		net.minecraft.world.item.Item kind = null;
-		for (BlockPos spot : footprint) {
-			if (!golem.level().getBlockState(spot).isAir())
+		for (BlockPos trunk : footprint) {
+			BlockPos spot = groundSpot(trunk);
+			if (spot == null)
 				continue;
 			ItemStack sapling = takeSapling(chest, gathered, spot, kind);
 			if (sapling.isEmpty())
@@ -355,6 +357,20 @@ public class AndesiteGolemWorkGoal extends Goal {
 			kind = sapling.getItem();
 			plantSapling(sapling, spot);
 		}
+	}
+
+	/**
+	 * Where a sapling goes for a trunk position: the trunk spot itself, or further down when the
+	 * tree stood on roots that were cut with it (mangrove). Null if there is no free spot.
+	 */
+	private @Nullable BlockPos groundSpot(BlockPos trunk) {
+		BlockPos pos = trunk;
+		for (int i = 0; i < 6 && golem.level().getBlockState(pos).isAir(); i++) {
+			if (!golem.level().getBlockState(pos.below()).isAir())
+				return pos;
+			pos = pos.below();
+		}
+		return golem.level().getBlockState(pos).isAir() ? pos : null;
 	}
 
 	/** One sapling of the given kind (any kind when null) that can grow at the spot. */

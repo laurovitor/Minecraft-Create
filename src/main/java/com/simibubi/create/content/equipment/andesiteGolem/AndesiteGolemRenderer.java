@@ -20,8 +20,10 @@ public class AndesiteGolemRenderer extends MobRenderer<AndesiteGolem, CopperGole
 	private static final Identifier EYES = Create.asResource("textures/entity/andesite_golem/andesite_golem_eyes.png");
 
 	public AndesiteGolemRenderer(EntityRendererProvider.Context context) {
-		super(context, new CopperGolemModel(context.bakeLayer(ModelLayers.COPPER_GOLEM)), 0.5F);
-		addLayer(new LivingEntityEmissiveLayer<>(this, state -> EYES, (state, ageInTicks) -> 1.0F,
+		super(context, new SleepyModel(context.bakeLayer(ModelLayers.COPPER_GOLEM)), 0.5F);
+		// eyes go dark while it sleeps
+		addLayer(new LivingEntityEmissiveLayer<>(this, state -> EYES,
+			(state, ageInTicks) -> state instanceof SleepyState sleepy && sleepy.sleeping ? 0.0F : 1.0F,
 			new CopperGolemModel(context.bakeLayer(ModelLayers.COPPER_GOLEM)), RenderTypes::eyes, false));
 		addLayer(new ItemInHandLayer<>(this));
 	}
@@ -33,7 +35,7 @@ public class AndesiteGolemRenderer extends MobRenderer<AndesiteGolem, CopperGole
 
 	@Override
 	public CopperGolemRenderState createRenderState() {
-		return new CopperGolemRenderState();
+		return new SleepyState();
 	}
 
 	@Override
@@ -45,5 +47,27 @@ public class AndesiteGolemRenderer extends MobRenderer<AndesiteGolem, CopperGole
 		state.interactionGetNoItem.copyFrom(entity.getWorkAnimationState());
 		state.interactionDropItem.copyFrom(entity.getDepositAnimationState());
 		state.blockOnAntenna.clear();
+		if (state instanceof SleepyState sleepy)
+			sleepy.sleeping = entity.isAsleep();
+	}
+
+	public static class SleepyState extends CopperGolemRenderState {
+		public boolean sleeping;
+	}
+
+	/** The copper golem model, with the head dropped forward while asleep. */
+	public static class SleepyModel extends CopperGolemModel {
+		public SleepyModel(net.minecraft.client.model.geom.ModelPart root) {
+			super(root);
+		}
+
+		@Override
+		public void setupAnim(CopperGolemRenderState state) {
+			super.setupAnim(state);
+			if (state instanceof SleepyState sleepy && sleepy.sleeping) {
+				getHead().xRot = 0.6F;
+				getHead().yRot = 0;
+			}
+		}
 	}
 }

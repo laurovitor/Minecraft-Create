@@ -5,7 +5,7 @@
 	
 	"block.create.reinforced_item_vault.tooltip.summary": "A _sturdier Item Vault_ lined with _Sturdy Sheets_. Grows _5 blocks_ longer per block of width, up to _5x5_ wide and _15_ long, and each block holds _25% more_ items than a regular vault. Does not connect to regular vaults.",
 
-	"block.create.andesite_golem_chest.tooltip.summary": "Home of an _Andesite Golem_, made by placing a _Carved Pumpkin_ on an _Andesite Alloy Block_. The golem cuts _trees_ and harvests _crops_ within _10 blocks_, _replants_ them and stores what the _filter_ on the lid accepts; everything else is discarded. Without a golem the chest turns _cracked_ and can only be _pressed_ back into _6 Andesite Alloy_.",
+	"block.create.andesite_golem_chest.tooltip.summary": "Home of an _Andesite Golem_, made by placing a _Carved Pumpkin_ on an _Andesite Alloy Block_. The golem cuts _trees_ and harvests _crops_ within _15 blocks_, _replants_ them and stores what the _filter_ on the lid accepts; everything else is discarded. Without a golem the chest turns _cracked_ and can only be _pressed_ back into _6 Andesite Alloy_.",
 
 	"block.create.seat.tooltip.summary": "Sit yourself down and enjoy the ride! Will anchor a player onto a moving _contraption_. Great for static furniture too! Comes in a variety of colours.",
 	"block.create.seat.tooltip.condition1": "Right click on Seat",
