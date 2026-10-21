@@ -18,6 +18,10 @@ Um cofre novo, revestido com chapas resistentes. Receita na bancada, em coluna: 
 - Segurando **Shift** sobre o item aparece a descrição dele, em inglês e em português.
 - Funciona como o cofre comum: encaixe automático ao colocar blocos, separação com a chave inglesa, comparador, funis, packager e montagem em contraptions. Cofres comuns e revestidos não se juntam na mesma estrutura.
 
+### Prancheta anota a ocupação do cofre
+
+Com uma **prancheta em branco** na mão, clique com o botão direito num **Cofre de Itens** ou num **Cofre de Itens Revestido** e a prancheta anota as informações dele: tamanho (ex.: 5x5x15), espaços usados e total, espaços livres e porcentagem de ocupação. Os itens não são listados, só os totais, pra saber quando é hora de montar um cofre novo. A anotação é uma foto do momento do clique; pra atualizar, use outra prancheta em branco ou limpe a atual. Se a prancheta já tiver algo escrito, aparece um aviso e nada é sobrescrito.
+
 ## Evidência técnica (não é copy de publicação)
 
 - Implementação: commit `a3a37707ccbb1a440f6dc46372705af57b29a705` (`Double shaped andesite alloy recipe yield`) na branch `mc26.3/dev`. O gerador `src/main/java/com/simibubi/create/foundation/data/recipe/CreateStandardRecipeGen.java` passou a definir retorno de 2 para ambas as variantes de crafting.
@@ -33,6 +37,13 @@ Um cofre novo, revestido com chapas resistentes. Receita na bancada, em coluna: 
 - Texturas: 12 sprites em `textures/block/reinforced_vault/`, recoloridos a partir das texturas do cofre. Pixels com luminância até 110 (o corpo azul) viram tons escuros da `sturdy_sheet`; acima de 110 (as bordas) viram prata. Modelo em `models/block/reinforced_item_vault.json`.
 - Descrição no Shift: chave `block.create.reinforced_item_vault.tooltip.summary` em `lang/default/tooltips.json`, `en_us.json` (gerado, editado à mão) e `pt_br.json`. Ela é exibida pelo `ItemDescription.Modifier` padrão do Create.
 - Verificação: `./gradlew --offline build` passou e os recursos foram conferidos dentro do JAR. Primeiro teste em jogo pelo Lauro: o 5×5 grande formou certo, mas o pequeno seguia os passos de 3, o que levou ao ajuste acima. Ainda falta confirmar no jogo: os passos de 5 nas larguras 1 e 2, divisão com a chave, comparador, contraption e as texturas conectadas nas larguras 4 e 5. O Ponder não ganhou cena própria, e as cenas do cofre comum não foram associadas ao revestido porque citam o limite de 3.
+
+### Prancheta anota a ocupação do cofre — evidência técnica
+
+- Implementação: commit `654222384ffbb06b32f5c195316cd59c2885fa91`. Classe nova `content/logistics/vault/ItemVaultClipboardInfo.java`, chamada em `ClipboardValueSettingsHandler.interact` só no clique direito (não sobrescreve colar com clique esquerdo). Funciona com os dois tipos de cofre, porque checa `ItemVaultBlockEntity`.
+- "Em branco" quer dizer nenhuma entrada escrita e nenhuma configuração copiada. O cálculo é feito no servidor, pela capability de itens do multibloco inteiro. A ocupação usa a mesma medida do comparador: média de quanto cada slot está cheio em relação ao limite do slot e da pilha.
+- Lang: chaves `create.clipboard.vault_info.*` em `lang/default/interface.json`, `en_us.json` (gerado, editado à mão) e `pt_br.json`. As entradas ficam como texto traduzível, então aparecem no idioma de quem lê.
+- Verificação: `./gradlew --offline build` passou. **Sem teste em jogo** até agora.
 
 ## Critério para novos diferenciais
 
