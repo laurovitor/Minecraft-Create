@@ -20,7 +20,7 @@ Um cofre novo, revestido com chapas resistentes. Receita na bancada, em coluna: 
 
 ### Prancheta anota a ocupação do cofre
 
-Com uma **prancheta em branco** na mão, clique com o botão direito num **Cofre de Itens** ou num **Cofre de Itens Revestido** e a prancheta anota as informações dele: tamanho (ex.: 5x5x15), espaços usados e total, espaços livres e porcentagem de ocupação. Os itens não são listados, só os totais, pra saber quando é hora de montar um cofre novo. A anotação é uma foto do momento do clique; pra atualizar, use outra prancheta em branco ou limpe a atual. Se a prancheta já tiver algo escrito, aparece um aviso e nada é sobrescrito.
+Com uma **prancheta em branco** na mão, clique com o botão direito num **Cofre de Itens** ou num **Cofre de Itens Revestido** e a prancheta anota as informações dele: tamanho (ex.: 5x5x15), capacidade total em espaços, espaços livres e porcentagem de ocupação. Os itens não são listados, só os totais, pra saber quando é hora de montar um cofre novo. A anotação é uma foto do momento do clique; pra atualizar, use outra prancheta em branco ou limpe a atual. Se a prancheta já tiver algo escrito, aparece um aviso e nada é sobrescrito.
 
 ## Evidência técnica (não é copy de publicação)
 

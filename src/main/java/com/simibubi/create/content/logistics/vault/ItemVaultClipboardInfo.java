@@ -79,7 +79,7 @@ public class ItemVaultClipboardInfo {
 		List<ClipboardEntry> page = new ArrayList<>();
 		page.add(entry(level.getBlockState(pos).getBlock().getName().copy()));
 		page.add(entry(CreateLang.translate("clipboard.vault_info.size", size).component()));
-		page.add(entry(CreateLang.translate("clipboard.vault_info.slots_used", usedSlots, totalSlots).component()));
+		page.add(entry(CreateLang.translate("clipboard.vault_info.capacity", totalSlots).component()));
 		page.add(entry(CreateLang.translate("clipboard.vault_info.slots_free", totalSlots - usedSlots).component()));
 		page.add(entry(CreateLang.translate("clipboard.vault_info.fill", fillPercent + "%").component()));
 

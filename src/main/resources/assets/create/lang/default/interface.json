@@ -399,7 +399,7 @@
 	"create.clipboard.vault_info.written": "Vault info written to the clipboard",
 	"create.clipboard.vault_info.not_blank": "Use a blank clipboard to note vault info",
 	"create.clipboard.vault_info.size": "Size: %1$s",
-	"create.clipboard.vault_info.slots_used": "Slots used: %1$s / %2$s",
+	"create.clipboard.vault_info.capacity": "Total capacity: %1$s",
 	"create.clipboard.vault_info.slots_free": "Slots free: %1$s",
 	"create.clipboard.vault_info.fill": "Filled: %1$s",
 	"create.clipboard.copied_from_clipboard": "Added entries from Clipboard",
