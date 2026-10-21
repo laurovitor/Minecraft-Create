@@ -25,7 +25,7 @@ Um cofre novo, revestido com chapas resistentes. Receita na bancada, em coluna: 
 
 ### Cofre de Itens Revestido — evidência técnica
 
-- Implementação: commit `REPLACE_COMMIT` na branch `mc26.3/dev`. Novo bloco `create:reinforced_item_vault` (`ReinforcedItemVaultBlock`) e block entity próprio (`ReinforcedItemVaultBlockEntity`). O block entity usa `getMaxWidth() = 5` e mantém o comprimento máximo como 3× a largura. Espaços por bloco: `floor(vaultCapacity × 11 / 10)`; com o padrão 20, dá 22. O cofre comum não mudou.
+- Implementação: commit `ad5d932ea238655d3e61adae2b5c8e3851213ae7` na branch `mc26.3/dev`. Novo bloco `create:reinforced_item_vault` (`ReinforcedItemVaultBlock`) e block entity próprio (`ReinforcedItemVaultBlockEntity`). O block entity usa `getMaxWidth() = 5` e mantém o comprimento máximo como 3× a largura. Espaços por bloco: `floor(vaultCapacity × 11 / 10)`; com o padrão 20, dá 22. O cofre comum não mudou.
 - O cofre comum e o revestido não se misturam porque `ConnectivityHandler.partAt` compara o tipo do block entity. O auto-place e o eixo de colocação também só seguem blocos do mesmo tipo.
 - Registro de capacidade de itens, identificador de inventário do packager, mounted storage (`VAULT`, com a mesma proteção contra uso como combustível) e tags do Ponder foram estendidos ao bloco novo.
 - Receita gerada: `src/generated/resources/data/create/recipe/crafting/kinetics/reinforced_item_vault.json`. Loot table, blockstate, modelo de item, tag de picareta e lang (en_us, en_ud e pt_br) foram escritos à mão, espelhando o cofre comum, porque o datagen client/Registrate desta port falha (`LootContextParamSets.REGISTRY`).
