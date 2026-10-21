@@ -214,5 +214,5 @@
 	"block.create.clipboard.tooltip.behaviour1": "Opens the _Interface_. _Sneak-Click_ to _place_ it on a surface.",
 	"block.create.clipboard.tooltip.condition2": "When Used on Blocks",
 	"block.create.clipboard.tooltip.behaviour2": "Some blocks' _settings_, such as filters, can be _copied (R-Click)_ and _applied (L-Click)_ elsewhere.",
-	"block.create.netherite_golem_chest.tooltip.summary": "Home of a _Netherite Golem_, created with a pumpkin on a Netherite Block. Guards _25 blocks_, attacks every hostile monster, and stores filtered kill drops. No filter accepts all drops. Dead chest presses into _6 Netherite Ingots_."
+	"block.create.netherite_golem_chest.tooltip.summary": "Home of a _Netherite Golem_, created with a _Carved Pumpkin_ on a _Netherite Block_. Guards _25 blocks_, attacks every _hostile monster_ and stores the drops of its kills (all of them without a filter). By day it _sleeps on the chest_ and slowly heals. Dead chest presses into _6 Netherite Ingots_."
 }

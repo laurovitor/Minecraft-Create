@@ -3641,6 +3641,7 @@
   "tag.item.create.valve_handles": "Válvulas",
   "tag.recipe_serializer.create.automation_ignore": "Não-automatizável",
   "block.create.netherite_golem_chest": "Baú do Golem de Netherita",
+  "block.create.netherite_golem_chest.tooltip.summary": "Casa de um _Golem de Netherita_, criado ao colocar uma _Abóbora Esculpida_ sobre um _Bloco de Netherita_. Guarda _25 blocos_, ataca todo _monstro hostil_ e guarda os espólios do que abate (todos, se não houver filtro). De dia _dorme sobre o baú_ e se cura devagar. Baú sem golem pode ser prensado em _6 Lingotes de Netherita_.",
   "entity.create.netherite_golem": "Golem de Netherita",
   "item.create.netherite_golem_spawn_egg": "Ovo Gerador de Golem de Netherita",
   "item.create.packed_netherite_golem_chest": "Baú de Netherita (com Golem)",
