@@ -147,6 +147,11 @@ Um ajudante novo para fazendas automáticas, com o corpo do golem de cobre na co
 - Implementação no commit `d63475ce48987f01a81cbfb428fefe65c3dd468a`. Correção defensiva: `AndesiteGolem.mobInteract` (herdado pelo Netherita após minério ancestral/prancheta) devolve `InteractionResult.FAIL` para favo de mel e `#minecraft:axes`, impedindo também a predição no cliente. Os dois baús sobrescrevem `getToolModifiedState` → `null` (sem raspar/remover cera/descascar). Golem de cobre vanilla intocado.
 - `verify-integration.py` agora garante: sem herança de `CopperGolem`, sem referências de oxidação nos pacotes dos golems, guarda de favo/machado, gancho dos baús e ausência nos data maps. Build offline passou. **Sem teste in-game.**
 
+### Golems em português e inglês — evidência técnica
+
+- Relato de Lauro em jogo: a descrição do Golem de Netherita aparecia em inglês com o jogo em português. **Causa comprovada:** `block.create.netherite_golem_chest.tooltip.summary` existia em `lang/default/tooltips.json`/`en_us.json`, mas faltava em `pt_br.json`, e o jogo usava o inglês como fallback. O `en_us.json` gerado também divergia do texto-fonte. As duas versões foram adicionadas/sincronizadas (agora citando o sono diurno sobre o baú).
+- Implementação no commit `5aa94eb3e164caedea0f24c83d723d7af72c9aa1`. Auditoria: nenhum `Component.literal` nos pacotes dos golems; todas as 30 chaves dos dois golems (nomes de entidade/bloco/item, ovos, baú empacotado, tooltips, JEI, prancheta, estados, mensagens de sobreposição) existem em `en_us` e `pt_br`, com texto português diferente do inglês, tanto nas fontes quanto no JAR empacotado. `checks/golem-lang/verify-golem-lang.py <jar>` automatiza isso e falha se faltar chave, se o pt_br repetir o inglês, se `en_us` divergir de `lang/default` ou se aparecer texto fixo. **Regra permanente: toda descrição nova sai em pt_br e en_us.** Exibição no jogo não testada.
+
 ## Critério para novos diferenciais
 
 Adicionar uma funcionalidade à seção publicável somente depois de ela estar implementada no código/recursos da branch-alvo e de sua configuração ou comportamento relevante ter sido verificado com evidência rastreável (commit, arquivos e verificação executada). Ideias, pedidos e itens ainda não implementados não entram como funcionalidades; registrar limites de teste sem convertê-los em alegações de validação em jogo.
