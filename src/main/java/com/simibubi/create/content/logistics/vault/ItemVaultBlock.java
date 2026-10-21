@@ -3,7 +3,6 @@ package com.simibubi.create.content.logistics.vault;
 import org.jetbrains.annotations.Nullable;
 
 import com.simibubi.create.AllBlockEntityTypes;
-import com.simibubi.create.AllBlocks;
 import com.simibubi.create.api.connectivity.ConnectivityHandler;
 import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import com.simibubi.create.foundation.block.IBE;
@@ -58,7 +57,8 @@ public class ItemVaultBlock extends Block implements IWrenchable, IBE<ItemVaultB
 				.getBlockState(pContext.getClickedPos()
 					.relative(pContext.getClickedFace()
 						.getOpposite()));
-			Axis preferredAxis = getVaultBlockAxis(placedOn);
+			// only follow vaults of the same kind, regular and reinforced vaults never merge
+			Axis preferredAxis = placedOn.is(this) ? getVaultBlockAxis(placedOn) : null;
 			if (preferredAxis != null)
 				return this.defaultBlockState()
 					.setValue(HORIZONTAL_AXIS, preferredAxis);
@@ -95,7 +95,7 @@ public class ItemVaultBlock extends Block implements IWrenchable, IBE<ItemVaultB
 	}
 
 	public static boolean isVault(BlockState state) {
-		return AllBlocks.ITEM_VAULT.has(state);
+		return state.getBlock() instanceof ItemVaultBlock;
 	}
 
 	@Nullable

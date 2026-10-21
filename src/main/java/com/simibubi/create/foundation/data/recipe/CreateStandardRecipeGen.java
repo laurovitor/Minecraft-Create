@@ -680,6 +680,13 @@ public final class CreateStandardRecipeGen extends BaseRecipeProvider {
 			.pattern("C")
 			.pattern("B")),
 
+	REINFORCED_ITEM_VAULT = create(AllBlocks.REINFORCED_ITEM_VAULT).unlockedBy(AllBlocks.ITEM_VAULT::get)
+		.viaShaped(b -> b.define('S', AllItems.STURDY_SHEET)
+			.define('V', AllBlocks.ITEM_VAULT)
+			.pattern("S")
+			.pattern("V")
+			.pattern("S")),
+
 	TRAIN_SIGNAL = create(AllBlocks.TRACK_SIGNAL).unlockedBy(I::railwayCasing)
 		.returns(4)
 		.viaShapeless(b -> b.requires(I.railwayCasing())

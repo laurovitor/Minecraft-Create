@@ -525,6 +525,7 @@
   "block.create.item_hatch.tooltip.condition1": "Ao clicar com o botão direito",
   "block.create.item_hatch.tooltip.summary": "Se livre da bagunça do seu inventário o colocando no inventário de algum otário.",
   "block.create.item_vault": "Cofre de Itens",
+  "block.create.reinforced_item_vault": "Cofre de Itens Revestido",
   "block.create.jungle_window": "Janela da Selva",
   "block.create.jungle_window_pane": "Painel da Selva",
   "block.create.large_bogey": "Roda Grande de Trem",

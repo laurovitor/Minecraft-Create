@@ -78,6 +78,9 @@ public class AllSpriteShifts {
 
 	public static final Couple<CTSpriteShiftEntry> VAULT_TOP = vault("top"), VAULT_FRONT = vault("front"),
 		VAULT_SIDE = vault("side"), VAULT_BOTTOM = vault("bottom");
+	public static final Couple<CTSpriteShiftEntry> REINFORCED_VAULT_TOP = reinforcedVault("top"),
+		REINFORCED_VAULT_FRONT = reinforcedVault("front"), REINFORCED_VAULT_SIDE = reinforcedVault("side"),
+		REINFORCED_VAULT_BOTTOM = reinforcedVault("bottom");
 
 	public static final SpriteShiftEntry ELEVATOR_BELT =
 		get("block/elevator_pulley_belt", "block/elevator_pulley_belt_scroll"),
@@ -122,7 +125,15 @@ public class AllSpriteShifts {
 	}
 
 	private static Couple<CTSpriteShiftEntry> vault(String name) {
-		final String prefixed = "block/vault/vault_" + name;
+		return vault("block/vault/vault_", name);
+	}
+
+	private static Couple<CTSpriteShiftEntry> reinforcedVault(String name) {
+		return vault("block/reinforced_vault/reinforced_vault_", name);
+	}
+
+	private static Couple<CTSpriteShiftEntry> vault(String prefix, String name) {
+		final String prefixed = prefix + name;
 		return Couple.createWithContext(
 			medium -> CTSpriteShifter.getCT(AllCTTypes.RECTANGLE, Create.asResource(prefixed + "_small"),
 				Create.asResource(medium ? prefixed + "_medium" : prefixed + "_large")));

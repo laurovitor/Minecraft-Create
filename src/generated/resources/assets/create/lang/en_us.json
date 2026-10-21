@@ -525,6 +525,7 @@
   "block.create.item_hatch.tooltip.condition1": "When R-Clicked",
   "block.create.item_hatch.tooltip.summary": "_Quickly solves_ your _inventory_ clutter and makes it someone else's problem.",
   "block.create.item_vault": "Item Vault",
+  "block.create.reinforced_item_vault": "Reinforced Item Vault",
   "block.create.jungle_window": "Jungle Window",
   "block.create.jungle_window_pane": "Jungle Window Pane",
   "block.create.large_bogey": "Large Bogey",

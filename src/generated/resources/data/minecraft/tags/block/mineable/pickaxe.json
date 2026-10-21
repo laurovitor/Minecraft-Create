@@ -131,6 +131,7 @@
     "create:stockpile_switch",
     "create:creative_crate",
     "create:item_vault",
+    "create:reinforced_item_vault",
     "create:item_hatch",
     "create:packager",
     "create:repackager",

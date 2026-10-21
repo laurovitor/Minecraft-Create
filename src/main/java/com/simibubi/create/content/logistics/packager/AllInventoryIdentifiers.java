@@ -49,10 +49,12 @@ public class AllInventoryIdentifiers {
 		});
 
 		// connect vaults
-		InventoryIdentifier.REGISTRY.register(AllBlocks.ITEM_VAULT.get(), (level, state, face) -> {
+		InventoryIdentifier.Finder vaultId = (level, state, face) -> {
 			BlockEntity be = level.getBlockEntity(face.getPos());
 			return be instanceof ItemVaultBlockEntity vault ? vault.getInvId() : null;
-		});
+		};
+		InventoryIdentifier.REGISTRY.register(AllBlocks.ITEM_VAULT.get(), vaultId);
+		InventoryIdentifier.REGISTRY.register(AllBlocks.REINFORCED_ITEM_VAULT.get(), vaultId);
 	}
 
 	private static InventoryIdentifier single(Level level, BlockState state, BlockFace face) {

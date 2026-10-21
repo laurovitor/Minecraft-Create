@@ -1,7 +1,6 @@
 package com.simibubi.create.content.logistics.vault;
 
 import com.simibubi.create.foundation.item.BlockEntityDataHelper;
-import com.simibubi.create.AllBlockEntityTypes;
 import com.simibubi.create.api.connectivity.ConnectivityHandler;
 import com.simibubi.create.content.equipment.symmetryWand.SymmetryWandItem;
 
@@ -69,11 +68,11 @@ public class ItemVaultItem extends BlockItem {
 		BlockPos placedOnPos = pos.relative(face.getOpposite());
 		BlockState placedOnState = world.getBlockState(placedOnPos);
 
-		if (!ItemVaultBlock.isVault(placedOnState))
+		if (!placedOnState.is(getBlock()))
 			return;
 		if (SymmetryWandItem.presentInHotbar(player))
 			return;
-		ItemVaultBlockEntity tankAt = ConnectivityHandler.partAt(AllBlockEntityTypes.ITEM_VAULT.get(), world, placedOnPos);
+		ItemVaultBlockEntity tankAt = ConnectivityHandler.partAt(((IBE<?>) getBlock()).getBlockEntityType(), world, placedOnPos);
 		if (tankAt == null)
 			return;
 		ItemVaultBlockEntity controllerBE = tankAt.getControllerBE();
@@ -105,7 +104,7 @@ public class ItemVaultItem extends BlockItem {
 				BlockPos offsetPos = vaultBlockAxis == Axis.X ? startPos.offset(0, xOffset, zOffset)
 					: startPos.offset(xOffset, zOffset, 0);
 				BlockState blockState = world.getBlockState(offsetPos);
-				if (ItemVaultBlock.isVault(blockState))
+				if (blockState.is(getBlock()))
 					continue;
 				if (!blockState.canBeReplaced())
 					return;
@@ -121,7 +120,7 @@ public class ItemVaultItem extends BlockItem {
 				BlockPos offsetPos = vaultBlockAxis == Axis.X ? startPos.offset(0, xOffset, zOffset)
 					: startPos.offset(xOffset, zOffset, 0);
 				BlockState blockState = world.getBlockState(offsetPos);
-				if (ItemVaultBlock.isVault(blockState))
+				if (blockState.is(getBlock()))
 					continue;
 				BlockPlaceContext context = BlockPlaceContext.at(ctx, offsetPos, face);
 				player.getPersistentData()

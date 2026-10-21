@@ -187,6 +187,7 @@ import com.simibubi.create.content.logistics.tunnel.BeltTunnelBlock;
 import com.simibubi.create.content.logistics.tunnel.BrassTunnelBlock;
 import com.simibubi.create.content.logistics.tunnel.BrassTunnelCTBehaviour;
 import com.simibubi.create.content.logistics.vault.ItemVaultBlock;
+import com.simibubi.create.content.logistics.vault.ReinforcedItemVaultBlock;
 import com.simibubi.create.content.logistics.vault.ItemVaultCTBehaviour;
 import com.simibubi.create.content.logistics.vault.ItemVaultItem;
 import com.simibubi.create.content.materials.ExperienceBlock;
@@ -1827,6 +1828,24 @@ public class AllBlocks {
 		.item(ItemVaultItem::new)
 		.build()
 		.register();
+
+	// Lauro edition: sturdy-sheet lined vault, up to 5x5x15 with 10% more slots per block
+	public static final BlockEntry<ReinforcedItemVaultBlock> REINFORCED_ITEM_VAULT =
+		REGISTRATE.block("reinforced_item_vault", ReinforcedItemVaultBlock::new)
+			.initialProperties(SharedProperties::softMetal)
+			.properties(p -> p.mapColor(MapColor.COLOR_BLACK)
+				.sound(SoundType.NETHERITE_BLOCK)
+				.explosionResistance(1200))
+			.transform(pickaxeOnly())
+			.blockstate(() -> (c, p) -> BlockStateGen.forAllStates(c, p,
+				state -> BlockStateGen.rotateY(AssetLookup.standardVariant(c, p),
+					state.getValue(ItemVaultBlock.HORIZONTAL_AXIS) == Axis.X ? 90 : 0)))
+			.onRegister(connectedTextures(ItemVaultCTBehaviour::reinforced))
+			.transform(mountedItemStorage(AllMountedStorageTypes.VAULT))
+			.lang("Reinforced Item Vault")
+			.item(ItemVaultItem::new)
+			.build()
+			.register();
 
 	public static final BlockEntry<ItemHatchBlock> ITEM_HATCH = REGISTRATE.block("item_hatch", ItemHatchBlock::new)
 		.initialProperties(SharedProperties::softMetal)

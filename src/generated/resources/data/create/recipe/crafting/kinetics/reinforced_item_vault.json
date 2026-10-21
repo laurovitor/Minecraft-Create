@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "key": {
+    "S": "create:sturdy_sheet",
+    "V": "create:item_vault"
+  },
+  "pattern": [
+    "S",
+    "V",
+    "S"
+  ],
+  "result": {
+    "id": "create:reinforced_item_vault"
+  }
+}

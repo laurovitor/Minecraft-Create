@@ -7,6 +7,7 @@ import com.simibubi.create.api.connectivity.ConnectivityHandler;
 import com.simibubi.create.foundation.block.connected.CTSpriteShiftEntry;
 import com.simibubi.create.foundation.block.connected.ConnectedTextureBehaviour;
 
+import net.createmod.catnip.api.data.Couple;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -17,6 +18,26 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public class ItemVaultCTBehaviour extends ConnectedTextureBehaviour.Base {
 
+	private final Couple<CTSpriteShiftEntry> front, top, bottom, side;
+
+	public ItemVaultCTBehaviour() {
+		this(AllSpriteShifts.VAULT_FRONT, AllSpriteShifts.VAULT_TOP, AllSpriteShifts.VAULT_BOTTOM,
+			AllSpriteShifts.VAULT_SIDE);
+	}
+
+	public ItemVaultCTBehaviour(Couple<CTSpriteShiftEntry> front, Couple<CTSpriteShiftEntry> top,
+		Couple<CTSpriteShiftEntry> bottom, Couple<CTSpriteShiftEntry> side) {
+		this.front = front;
+		this.top = top;
+		this.bottom = bottom;
+		this.side = side;
+	}
+
+	public static ItemVaultCTBehaviour reinforced() {
+		return new ItemVaultCTBehaviour(AllSpriteShifts.REINFORCED_VAULT_FRONT, AllSpriteShifts.REINFORCED_VAULT_TOP,
+			AllSpriteShifts.REINFORCED_VAULT_BOTTOM, AllSpriteShifts.REINFORCED_VAULT_SIDE);
+	}
+
 	@Override
 	public CTSpriteShiftEntry getShift(BlockState state, Direction direction, @Nullable TextureAtlasSprite sprite) {
 		Axis vaultBlockAxis = ItemVaultBlock.getVaultBlockAxis(state);
@@ -25,13 +46,13 @@ public class ItemVaultCTBehaviour extends ConnectedTextureBehaviour.Base {
 			return null;
 
 		if (direction.getAxis() == vaultBlockAxis)
-			return AllSpriteShifts.VAULT_FRONT.get(small);
+			return front.get(small);
 		if (direction == Direction.UP)
-			return AllSpriteShifts.VAULT_TOP.get(small);
+			return top.get(small);
 		if (direction == Direction.DOWN)
-			return AllSpriteShifts.VAULT_BOTTOM.get(small);
+			return bottom.get(small);
 
-		return AllSpriteShifts.VAULT_SIDE.get(small);
+		return side.get(small);
 	}
 
 	@Override

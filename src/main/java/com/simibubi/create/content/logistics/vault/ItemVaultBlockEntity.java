@@ -53,9 +53,17 @@ public class ItemVaultBlockEntity extends SmartBlockEntity implements IMultiBloc
 	protected int length;
 
 	public ItemVaultBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
+		this(type, pos, state, AllConfigs.server().logistics.vaultCapacity.get());
+	}
+
+	/**
+	 * @param slotsPerBlock stack slots owned by this single block; the multiblock exposes the
+	 *                      combined slots of all of its blocks. Variants pass their own amount here.
+	 */
+	protected ItemVaultBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state, int slotsPerBlock) {
 		super(type, pos, state);
 
-		inventory = new ItemStacksResourceHandler(AllConfigs.server().logistics.vaultCapacity.get()) {
+		inventory = new ItemStacksResourceHandler(slotsPerBlock) {
 			@Override
 			protected void onContentsChanged(int slot, ItemStack previousContents) {
 				super.onContentsChanged(slot, previousContents);
@@ -69,14 +77,20 @@ public class ItemVaultBlockEntity extends SmartBlockEntity implements IMultiBloc
 	}
 
 	public static void registerCapabilities(RegisterCapabilitiesEvent event) {
+		registerCapabilities(event, AllBlockEntityTypes.ITEM_VAULT.get());
+		registerCapabilities(event, AllBlockEntityTypes.REINFORCED_ITEM_VAULT.get());
+	}
+
+	private static void registerCapabilities(RegisterCapabilitiesEvent event, BlockEntityType<? extends ItemVaultBlockEntity> type) {
 		event.registerBlockEntity(
 				Capabilities.Item.BLOCK,
-				AllBlockEntityTypes.ITEM_VAULT.get(),
+				type,
 				(be, context) -> {
-					be.initCapability();
-					if (be.itemCapability == null)
+					ItemVaultBlockEntity vault = be;
+					vault.initCapability();
+					if (vault.itemCapability == null)
 						return null;
-					return be.itemCapability.getCapability();
+					return vault.itemCapability.getCapability();
 				}
 		);
 	}
@@ -369,7 +383,7 @@ public class ItemVaultBlockEntity extends SmartBlockEntity implements IMultiBloc
 					BlockPos vaultPos = alongZ ? worldPosition.offset(xOffset, zOffset, yOffset)
 						: worldPosition.offset(yOffset, xOffset, zOffset);
 					ItemVaultBlockEntity vaultAt =
-						ConnectivityHandler.partAt(AllBlockEntityTypes.ITEM_VAULT.get(), level, vaultPos);
+						ConnectivityHandler.partAt(getType(), level, vaultPos);
 					invs[yOffset * radius * radius + xOffset * radius + zOffset] =
 						vaultAt != null ? vaultAt.inventory : EmptyResourceHandler.instance();
 				}

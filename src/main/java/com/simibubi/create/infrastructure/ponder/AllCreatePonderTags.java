@@ -282,6 +282,7 @@ public class AllCreatePonderTags {
 				.add(AllBlocks.CHUTE)
 				.add(AllBlocks.SMART_CHUTE)
 				.add(AllBlocks.ITEM_VAULT)
+				.add(AllBlocks.REINFORCED_ITEM_VAULT)
 				.add(AllBlocks.DEPOT)
 				.add(AllBlocks.WEIGHTED_EJECTOR)
 				.add(AllBlocks.MECHANICAL_ARM)
@@ -414,6 +415,7 @@ public class AllCreatePonderTags {
 		HELPER.addToTag(THRESHOLD_SWITCH_TARGETS)
 			.add(AllBlocks.ROPE_PULLEY)
 			.add(AllBlocks.ITEM_VAULT)
+			.add(AllBlocks.REINFORCED_ITEM_VAULT)
 			.add(AllBlocks.FLUID_TANK);
 
 		itemHelper.addToTag(THRESHOLD_SWITCH_TARGETS)
