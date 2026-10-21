@@ -3,7 +3,7 @@
   "category": "misc",
   "key": {
     "M": "minecraft:redstone",
-    "P": "minecraft:pumpkin"
+    "P": "minecraft:carved_pumpkin"
   },
   "pattern": [
     " P ",

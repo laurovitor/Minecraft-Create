@@ -3,7 +3,7 @@
   "category": "misc",
   "key": {
     "M": "create:andesite_alloy",
-    "P": "minecraft:pumpkin"
+    "P": "minecraft:carved_pumpkin"
   },
   "pattern": [
     " P ",

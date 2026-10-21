@@ -3,7 +3,7 @@
   "category": "misc",
   "key": {
     "M": "minecraft:netherite_ingot",
-    "P": "minecraft:pumpkin"
+    "P": "minecraft:carved_pumpkin"
   },
   "pattern": [
     " P ",

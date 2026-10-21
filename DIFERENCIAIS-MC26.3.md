@@ -78,7 +78,7 @@ Um ajudante novo para fazendas automáticas, com o corpo do golem de cobre na co
 
 ### Abóboras de Renascimento (uma por golem)
 
-- **Receita:** uma **Abóbora** no meio e três unidades do material do bloco-base do golem na linha de baixo: **Liga de Andesito**, **Lingote de Netherita** ou **Pó de Redstone**. O resultado é uma abóbora esculpida na cor do material.
+- **Receita:** uma **Abóbora Esculpida** no meio e três unidades do material do bloco-base do golem na linha de baixo: **Liga de Andesito**, **Lingote de Netherita** ou **Pó de Redstone**. O resultado é uma abóbora esculpida na cor do material.
 - **Uso:** colocada sobre um **baú de golem do mesmo material sem golem** (baú colocado à mão ou cujo golem morreu), vira um novo golem morando nesse baú. O baú mantém **tudo**: conteúdo, filtro, rede de Conectores de Estoque (Redstone) e demais dados.
 - **Um golem por baú:** num baú que ainda tem golem (mesmo que ele esteja numa área não carregada) ou de outro material, a abóbora **não é colocada** e fica na mão, com uma mensagem. Em qualquer outro lugar é um bloco decorativo.
 
@@ -218,6 +218,8 @@ Um ajudante novo para fazendas automáticas, com o corpo do golem de cobre na co
 - **"Baú tem golem":** UUID vinculado no block entity (sincronizado ao cliente). Golem em chunk não carregado mantém o vínculo → conta como vivo. Morte com o baú carregado libera o vínculo (`AndesiteGolem#die` → `releaseGolem`, baú fica inativo); morte com o baú descarregado é registrada em `GolemGraveyard` (`LivingDeathEvent`), e esse UUID passa a contar como livre no servidor. Revivendo: o UUID antigo sai do cemitério, o estado `ACTIVE` volta a verdadeiro (mesmo bloco → mesmo block entity com itens, filtro, `Freq`), novo golem vinculado e posicionado sobre o baú.
 - **Recusa:** `getStateForPlacement` devolve `null` (bloco não colocado, item não consumido) + mensagem de sobreposição en_us/pt_br. Receitas `crafting/curiosities/<material>_revival_pumpkin.json`, padrão `[" P ", "MMM"]` (receita moldada do vanilla encolhe linhas vazias: também aceita abóbora na 1ª linha e material na 2ª).
 - Verificações: `checks/golem-revival/GolemRevivalCheck.java` (matriz de decisão, cenário morto/descarregado/cemitério, 20000 passos aleatórios sem dois golems vivos num baú, dados do baú intactos), `verify-integration.py` (estrutura, receitas/material, assets, tag machado, getter), `verify-golem-lang.py` com o JAR (67 chaves), checagens anteriores e build offline passaram. **Sem teste in-game.**
+
+- **Follow-up (decisão de Lauro):** as três receitas usam `minecraft:carved_pumpkin` (antes `minecraft:pumpkin`); textos de tooltip/JEI en_us/pt_br atualizados. Posição exata no centro **não é imponível** com receita moldada padrão: `ShapedRecipePattern.shrink` (26.3) remove linhas/colunas vazias, então `[" P ", "MMM"]` também casa uma linha acima; mantido o comportamento padrão, sem tipo de receita próprio. As receitas são JSON escritos à mão em `src/generated` (não há fonte de datagen para elas).
 
 ## Critério para novos diferenciais
 

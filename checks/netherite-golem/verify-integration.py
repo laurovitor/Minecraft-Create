@@ -165,7 +165,7 @@ blocks_src = (root/'AllBlocks.java').read_text()
 for m in ['andesite', 'netherite', 'redstone']:
     assert f'{m.upper()}_REVIVAL_PUMPKIN =\n\t\trevivalPumpkin(GolemKind.{m.upper()}' in blocks_src, m
     r = json.loads(Path(f'src/generated/resources/data/create/recipe/crafting/curiosities/{m}_revival_pumpkin.json').read_text())
-    assert r['pattern'] == [' P ', 'MMM'] and r['key']['P'] == 'minecraft:pumpkin', m
+    assert r['pattern'] == [' P ', 'MMM'] and r['key']['P'] == 'minecraft:carved_pumpkin', m
     assert r['key']['M'] == {'andesite': 'create:andesite_alloy', 'netherite': 'minecraft:netherite_ingot', 'redstone': 'minecraft:redstone'}[m]
     for f in [f'assets/create/blockstates/{m}_revival_pumpkin.json', f'assets/create/items/{m}_revival_pumpkin.json',
               f'data/create/loot_table/blocks/{m}_revival_pumpkin.json']:
@@ -176,4 +176,8 @@ for m in ['andesite', 'netherite', 'redstone']:
 # the base-block materials the recipes use
 assert '"C": "create:andesite_alloy"' in Path('src/generated/resources/data/create/recipe/crafting/materials/andesite_alloy_block.json').read_text()
 assert 'public @Nullable UUID getGolemId()' in Path('src/main/java/com/simibubi/create/content/equipment/andesiteGolem/AndesiteGolemChestBlockEntity.java').read_text()
+for lang_file in ['src/generated/resources/assets/create/lang/en_us.json', 'src/main/resources/assets/create/lang/pt_br.json']:
+    for k, v in json.loads(Path(lang_file).read_text()).items():
+        if 'revival_pumpkin' in k:
+            assert ('Carved Pumpkin' in v or 'Abóbora Esculpida' in v or 'tooltip' not in k and 'jei' not in k), (k, v)
 print('Offline integration/serialization wiring checks passed (runtime unverified)')
