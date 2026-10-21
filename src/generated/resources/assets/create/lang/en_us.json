@@ -726,7 +726,7 @@
   "block.create.redstone_link": "Redstone Link",
   "block.create.redstone_requester": "Redstone Requester",
   "block.create.refined_radiance_casing": "Radiant Casing",
-  "block.create.reinforced_item_vault.tooltip.summary": "A _sturdier Item Vault_ lined with _Sturdy Sheets_. Forms vaults up to _5x5_ wide and _15_ long, and each block holds _10% more_ items than a regular vault. Does not connect to regular vaults.",
+  "block.create.reinforced_item_vault.tooltip.summary": "A _sturdier Item Vault_ lined with _Sturdy Sheets_. Grows _5 blocks_ longer per block of width, up to _5x5_ wide and _15_ long, and each block holds _25% more_ items than a regular vault. Does not connect to regular vaults.",
   "block.create.repackager": "Re-Packager",
   "block.create.rope": "Rope",
   "block.create.rope_pulley": "Rope Pulley",

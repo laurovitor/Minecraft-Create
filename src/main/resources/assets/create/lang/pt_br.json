@@ -726,7 +726,7 @@
   "block.create.redstone_link": "Conexão de Redstone",
   "block.create.redstone_requester": "Solicitador de Redstone",
   "block.create.refined_radiance_casing": "Revestimento Brilhante",
-  "block.create.reinforced_item_vault.tooltip.summary": "Um _Cofre de Itens_ revestido com _Chapas Resistentes_. Forma cofres de até _5x5_ de base e _15_ de comprimento, e cada bloco guarda _10% a mais_ de itens que um cofre comum. Não se conecta a cofres comuns.",
+  "block.create.reinforced_item_vault.tooltip.summary": "Um _Cofre de Itens_ revestido com _Chapas Resistentes_. Cresce _5 blocos_ de comprimento por bloco de largura, até _5x5_ de base e _15_ de comprimento, e cada bloco guarda _25% a mais_ de itens que um cofre comum. Não se conecta a cofres comuns.",
   "block.create.repackager": "Reempacotadora",
   "block.create.rope": "Corda",
   "block.create.rope_pulley": "Polia de Corda",
