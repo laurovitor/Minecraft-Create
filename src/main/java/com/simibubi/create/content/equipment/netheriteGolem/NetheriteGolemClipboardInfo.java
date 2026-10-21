@@ -41,7 +41,10 @@ public class NetheriteGolemClipboardInfo {
 		page.add(entry(CreateLang.translate("clipboard.golem_info.health",
 			String.format(java.util.Locale.ROOT, "%.1f", health),
 			String.format(java.util.Locale.ROOT, "%.1f", max), healthPercent).component()));
-		page.add(entry(CreateLang.translate("clipboard.golem_info.days", golem.getDaysSinceCreation()).component()));
+		String state = golem.isAsleep() ? "sleeping" : golem.isInCombat() ? "combat" : "patrol";
+		page.add(entry(CreateLang.translate("clipboard.golem_info.state",
+			CreateLang.translate("clipboard.golem_info.state." + state).component()).component()));
+		page.add(entry(CreateLang.translate("clipboard.golem_info.days",golem.getDaysSinceCreation()).component()));
 		page.add(entry(CreateLang.translate("clipboard.golem_info.attack", golem.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ATTACK_DAMAGE)).component()));
 		page.add(entry(CreateLang.translate("clipboard.golem_info.armor", golem.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR)).component()));
 		page.add(entry(CreateLang.translate("clipboard.golem_info.kills", golem.getMonsterKills()).component()));

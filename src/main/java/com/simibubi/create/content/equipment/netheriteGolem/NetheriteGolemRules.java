@@ -3,6 +3,29 @@ package com.simibubi.create.content.equipment.netheriteGolem;
 /** Side-effect-free policy used by combat, chest and packed-movement paths. */
 public final class NetheriteGolemRules {
 	private NetheriteGolemRules() {}
+
+	/** Daytime sleep window per day cycle, ticks: isDay spans 23500 -> 24000 -> 12500 = 13000. */
+	public static final int DAY_WINDOW_TICKS = 13000;
+	/**
+	 * Ticks of sleep for a 0 -> 100% heal. Walking home eats into each 13000-tick day window, so
+	 * a realistic day gives ~11000 ticks of sleep; two of them = 22000. With 80 max HP:
+	 * 80 / 22000 = 0.00364 HP/tick = 0.0727 HP/s = ~3.6 HP per in-game hour (1000 ticks).
+	 * Even a perfect day (13000 ticks asleep) restores only 47.3 HP (59%), so a full heal always
+	 * needs two days of undisturbed sleep. Raise to slow regen, lower to speed it up.
+	 */
+	public static final int FULL_HEAL_SLEEP_TICKS = 22000;
+	/** How often sleep regeneration is applied, ticks (20 = once a second, 0.0727 HP at 80 max). */
+	public static final int REGEN_INTERVAL = 20;
+	/** One full Minecraft day, ticks: longer than this away from the chest teleports the golem home. */
+	public static final long AWAY_TELEPORT_TICKS = 24000;
+	/** Retry delay, ticks, when the chest has no free spot to teleport onto (10 s). */
+	public static final long TELEPORT_RETRY_TICKS = 200;
+	/** After taking damage the golem stays awake (no sleep, no regen) this many ticks (10 s). */
+	public static final int WAKE_AFTER_HURT_TICKS = 200;
+	/** Eyes stay purple this many ticks after the golem's last hit on a mob (5 s). */
+	public static final int COMBAT_LINGER_TICKS = 100;
+
+	public enum Eyes { CLOSED, WHITE, PURPLE }
 	public static boolean inTerritory(int dx, int dy, int dz) {
 		return (long)dx * dx + (long)dy * dy + (long)dz * dz <= 25L * 25;
 	}
@@ -25,5 +48,31 @@ public final class NetheriteGolemRules {
 	}
 	public static int deathIngots(boolean chance, boolean secondIngot) {
 		return chance ? (secondIngot ? 2 : 1) : 0;
+	}
+
+	/** Day, nothing hostile targeted and not recently hit: walk home and sleep. */
+	public static boolean wantsRest(boolean day, boolean hasTarget, int wakeCooldown) {
+		return day && !hasTarget && wakeCooldown <= 0;
+	}
+	/** HP healed per {@link #REGEN_INTERVAL}; nothing while awake. */
+	public static float sleepRegen(boolean asleep, float maxHealth) {
+		return asleep ? maxHealth * REGEN_INTERVAL / FULL_HEAL_SLEEP_TICKS : 0;
+	}
+	/** On the chest or in one of the eight columns around it, feet from one below to two above. */
+	public static boolean nearChest(int dx, int dy, int dz) {
+		return Math.abs(dx) <= 1 && Math.abs(dz) <= 1 && dy >= -1 && dy <= 2;
+	}
+	public static long nextAwayTicks(long awayTicks, boolean nearChest) {
+		return nearChest ? 0 : awayTicks + 1;
+	}
+	public static boolean shouldTeleportHome(long awayTicks) {
+		return awayTicks > AWAY_TELEPORT_TICKS;
+	}
+	/** Live target, or hit a mob within the last {@link #COMBAT_LINGER_TICKS}; -1 = never hit one. */
+	public static boolean inCombat(boolean liveTarget, int ticksSinceAttack) {
+		return liveTarget || ticksSinceAttack >= 0 && ticksSinceAttack < COMBAT_LINGER_TICKS;
+	}
+	public static Eyes eyes(boolean sleeping, boolean combat) {
+		return sleeping ? Eyes.CLOSED : combat ? Eyes.PURPLE : Eyes.WHITE;
 	}
 }

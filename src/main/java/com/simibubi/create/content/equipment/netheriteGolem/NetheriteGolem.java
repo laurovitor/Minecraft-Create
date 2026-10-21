@@ -4,6 +4,9 @@ import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllEntityTypes;
 import com.simibubi.create.content.equipment.andesiteGolem.AndesiteGolem;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
@@ -27,13 +30,21 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 /** A separate guardian: 25-block chest-centered territory, combat only, no Andesite work goals. */
 public class NetheriteGolem extends AndesiteGolem {
 	public static final int GUARD_RADIUS = 25;
 	public static final double BASE_SPEED = 0.22; // 10% faster than healthy Andesite (0.20).
+	/** Synced so the client can pick purple (combat) or white (calm) eyes. */
+	private static final EntityDataAccessor<Boolean> COMBAT =
+		SynchedEntityData.defineId(NetheriteGolem.class, EntityDataSerializers.BOOLEAN);
 	private int monsterKills;
+	/** Ticks spent continuously away from the chest; persisted so reloads do not reset it. */
+	private long awayTicks;
+	/** Ticks left awake after taking damage; see NetheriteGolemRules.WAKE_AFTER_HURT_TICKS. */
+	private int wakeCooldown;
 
 	public NetheriteGolem(EntityType<? extends net.minecraft.world.entity.animal.golem.AbstractGolem> type, Level level) {
 		super(type, level);
@@ -49,8 +60,31 @@ public class NetheriteGolem extends AndesiteGolem {
 	protected void registerGoals() {
 		goalSelector.addGoal(0, new FloatGoal(this));
 		goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.1, true));
+		goalSelector.addGoal(2, new NetheriteGolemRestGoal(this));
 		goalSelector.addGoal(5, new NetheriteGolemGuardGoal(this));
 		goalSelector.addGoal(7, new RandomLookAroundGoal(this));
+	}
+
+	@Override
+	protected void defineSynchedData(SynchedEntityData.Builder builder) {
+		super.defineSynchedData(builder);
+		builder.define(COMBAT, false);
+	}
+
+	public boolean isInCombat() { return entityData.get(COMBAT); }
+	public NetheriteGolemRules.Eyes getEyes() { return NetheriteGolemRules.eyes(isAsleep(), isInCombat()); }
+	public long getAwayTicks() { return awayTicks; }
+
+	/** Server side: day, no target, not just hit. */
+	public boolean wantsRest() {
+		return NetheriteGolemRules.wantsRest(NetheriteGolemRules.isDay(level().getOverworldClockTime()),
+			getTarget() != null, wakeCooldown);
+	}
+
+	@Override
+	protected void actuallyHurt(ServerLevel level, DamageSource source, float amount) {
+		super.actuallyHurt(level, source, amount); // wakes it up
+		wakeCooldown = NetheriteGolemRules.WAKE_AFTER_HURT_TICKS;
 	}
 
 	@Override
@@ -102,10 +136,38 @@ public class NetheriteGolem extends AndesiteGolem {
 			BlockPos home = getChestPos();
 			getNavigation().moveTo(home.getX() + .5, home.getY() + 1, home.getZ() + .5, 1);
 		}
-		long time = Math.floorMod(level().getOverworldClockTime(), 24000);
-		boolean day = NetheriteGolemRules.isDay(time);
-		setSleeping(day && getTarget() == null);
-		if (isAsleep()) getNavigation().stop();
+		if (wakeCooldown > 0) wakeCooldown--;
+		// NetheriteGolemRestGoal walks home and falls asleep; this only wakes it.
+		if (!wantsRest()) setSleeping(false);
+		if (isAsleep()) {
+			getNavigation().stop();
+			if (tickCount % NetheriteGolemRules.REGEN_INTERVAL == 0 && getHealth() < getMaxHealth())
+				heal(NetheriteGolemRules.sleepRegen(true, getMaxHealth()));
+		}
+		int sinceAttack = getLastHurtMob() == null ? -1 : tickCount - getLastHurtMobTimestamp();
+		entityData.set(COMBAT, NetheriteGolemRules.inCombat(getTarget() != null && getTarget().isAlive(), sinceAttack));
+
+		BlockPos home = getChestPos();
+		BlockPos feet = blockPosition();
+		awayTicks = NetheriteGolemRules.nextAwayTicks(awayTicks,
+			NetheriteGolemRules.nearChest(feet.getX() - home.getX(), feet.getY() - home.getY(), feet.getZ() - home.getZ()));
+		if (NetheriteGolemRules.shouldTeleportHome(awayTicks))
+			awayTicks = teleportHome() ? 0 : NetheriteGolemRules.AWAY_TELEPORT_TICKS - NetheriteGolemRules.TELEPORT_RETRY_TICKS;
+	}
+
+	/** Stuck in a crater or cave for a whole day: back onto the chest, or the free spot beside it. */
+	private boolean teleportHome() {
+		BlockPos home = getChestPos();
+		NetheriteGolemRestGoal.RestSpot spot = home == null ? null : NetheriteGolemRestGoal.restSpot(level(), home, position());
+		if (spot == null)
+			return false;
+		Vec3 at = spot.standing();
+		stopRiding();
+		setTarget(null);
+		getNavigation().stop();
+		teleportTo(at.x, at.y, at.z);
+		resetFallDistance();
+		return true;
 	}
 
 	@Override
@@ -159,10 +221,12 @@ public class NetheriteGolem extends AndesiteGolem {
 	public void addAdditionalSaveData(ValueOutput output) {
 		super.addAdditionalSaveData(output);
 		output.putInt("MonsterKills", monsterKills);
+		output.putLong("AwayTicks", awayTicks);
 	}
 	@Override
 	public void readAdditionalSaveData(ValueInput input) {
 		super.readAdditionalSaveData(input);
 		monsterKills = Math.max(0, input.getIntOr("MonsterKills", 0));
+		awayTicks = Math.max(0, input.getLongOr("AwayTicks", 0L));
 	}
 }

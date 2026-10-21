@@ -1293,5 +1293,9 @@
 	"create.clipboard.golem_info.days": "Days since creation: %1$s",
 	"create.clipboard.golem_info.attack": "Attack strength: %1$s",
 	"create.clipboard.golem_info.armor": "Armor: %1$s",
-	"create.clipboard.golem_info.kills": "Monster kills: %1$s"
+	"create.clipboard.golem_info.kills": "Monster kills: %1$s",
+	"create.clipboard.golem_info.state": "State: %1$s",
+	"create.clipboard.golem_info.state.sleeping": "sleeping",
+	"create.clipboard.golem_info.state.patrol": "patrolling",
+	"create.clipboard.golem_info.state.combat": "in combat"
 }

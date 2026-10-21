@@ -17,13 +17,16 @@ import net.minecraft.resources.Identifier;
 public class NetheriteGolemRenderer extends MobRenderer<NetheriteGolem, CopperGolemRenderState, CopperGolemModel> {
 
 	private static final Identifier TEXTURE = Create.asResource("textures/entity/netherite_golem/netherite_golem.png");
+	/** Purple: fighting. White: awake and calm. Same UV layout; closed (hidden) while asleep. */
 	private static final Identifier EYES = Create.asResource("textures/entity/netherite_golem/netherite_golem_eyes.png");
+	private static final Identifier EYES_CALM = Create.asResource("textures/entity/netherite_golem/netherite_golem_eyes_white.png");
 
 	public NetheriteGolemRenderer(EntityRendererProvider.Context context) {
 		super(context, new SleepyModel(context.bakeLayer(ModelLayers.COPPER_GOLEM)), 0.5F);
-		// eyes go dark while it sleeps
-		addLayer(new LivingEntityEmissiveLayer<>(this, state -> EYES,
-			(state, ageInTicks) -> state instanceof SleepyState sleepy && sleepy.sleeping ? 0.0F : 1.0F,
+		// purple in combat, white when calm, dark while it sleeps
+		addLayer(new LivingEntityEmissiveLayer<>(this,
+			state -> state instanceof SleepyState sleepy && sleepy.eyes == NetheriteGolemRules.Eyes.WHITE ? EYES_CALM : EYES,
+			(state, ageInTicks) -> state instanceof SleepyState sleepy && sleepy.eyes == NetheriteGolemRules.Eyes.CLOSED ? 0.0F : 1.0F,
 			new CopperGolemModel(context.bakeLayer(ModelLayers.COPPER_GOLEM)), RenderTypes::eyes, false));
 		addLayer(new ItemInHandLayer<>(this));
 	}
@@ -47,12 +50,15 @@ public class NetheriteGolemRenderer extends MobRenderer<NetheriteGolem, CopperGo
 		state.interactionGetNoItem.copyFrom(entity.getWorkAnimationState());
 		state.interactionDropItem.copyFrom(entity.getDepositAnimationState());
 		state.blockOnAntenna.clear();
-		if (state instanceof SleepyState sleepy)
+		if (state instanceof SleepyState sleepy) {
 			sleepy.sleeping = entity.isAsleep();
+			sleepy.eyes = entity.getEyes();
+		}
 	}
 
 	public static class SleepyState extends CopperGolemRenderState {
 		public boolean sleeping;
+		public NetheriteGolemRules.Eyes eyes = NetheriteGolemRules.Eyes.WHITE;
 	}
 
 	/** The copper golem model, with the head dropped forward while asleep. */

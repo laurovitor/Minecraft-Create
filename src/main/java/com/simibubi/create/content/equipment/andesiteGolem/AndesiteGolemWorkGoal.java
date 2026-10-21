@@ -420,12 +420,10 @@ public class AndesiteGolemWorkGoal extends Goal {
 	 */
 	private TreeCutter.Tree findTree(BlockPos base, List<BlockPos> cluster) {
 		net.minecraft.world.level.Level level = golem.level();
-		// Natural dark oak can branch from any of its four columns. Masking three base
-		// logs can disconnect a canopy from the cutter search, leaving hasLeaves false
-		// despite a complete 2x2 trunk. Search the real tree and let
-		// the cutter harvest all four base logs itself (see cutTree below).
-		if (cluster.size() == 4 && level.getBlockState(base).is(Blocks.DARK_OAK_LOG))
-			return TreeCutter.findTreeForGolem(level, base, level.getBlockState(base));
+		// Every 2x2 species, natural dark oak included, uses this masked search: the cutter's
+		// first frontier covers the layer above all four base logs, so the canopy stays
+		// connected (checks/golem-work/NaturalDarkOakCheck). An unmasked search never
+		// returns `base` itself, which left one trunk log standing after each dark oak cut.
 		net.minecraft.world.level.BlockGetter masked = new net.minecraft.world.level.BlockGetter() {
 			@Override
 			public @Nullable net.minecraft.world.level.block.entity.BlockEntity getBlockEntity(BlockPos pos) {
@@ -540,9 +538,8 @@ public class AndesiteGolemWorkGoal extends Goal {
 		net.minecraft.world.item.Item kind = saplingFor(golem.level().getBlockState(base));
 
 		// the tree found holds everything above the bottom layer; that layer goes first
-		if (!(footprint.size() == 4 && golem.level().getBlockState(base).is(Blocks.DARK_OAK_LOG)))
-			for (BlockPos log : footprint)
-				BlockHelper.destroyBlockAs(golem.level(), log, null, ItemStack.EMPTY, 1, gathered::add);
+		for (BlockPos log : footprint)
+			BlockHelper.destroyBlockAs(golem.level(), log, null, ItemStack.EMPTY, 1, gathered::add);
 		tree.destroyBlocks(golem.level(), golem, (p, stack) -> gathered.add(stack));
 		// Mangroves can have a column of roots immediately below the trunk. The cutter's
 		// upward search does not always include those roots; clear only this footprint.
