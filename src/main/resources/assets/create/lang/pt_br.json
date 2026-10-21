@@ -3664,7 +3664,7 @@
   "create.clipboard.golem_info.tree.bees": "tem colmeia ou ninho de abelha",
   "create.clipboard.golem_info.tree.unreachable": "não conseguiu chegar, tenta de novo depois",
   "create.clipboard.golem_info.tree.chest_full": "baú cheio, sem trabalhar",
-  "create.jei.netherite_golem.info": "Golem de Netherita: abóbora esculpida ou lanterna sobre bloco de netherita. Guarda 25 blocos do baú, ataca todos os monstros hostis que avista, de dia dorme sobre o baú quando é seguro e se cura devagar enquanto dorme, e guarda os espólios aceitos. Creepers o temem como a um gato; seus golpes arremessam creepers para longe, e um creeper lutando com ele explode sem quebrar blocos. Clique direito nele com Lingote de Netherita para reparar 20 de vida (Minério Ancestral: 10); Lingotes de Netherita guardados no baú dele são usados do mesmo jeito fora de combate.",
+  "create.jei.netherite_golem.info": "Golem de Netherita: abóbora esculpida ou lanterna sobre bloco de netherita. Guarda 25 blocos do baú, ataca todos os monstros hostis que avista, de dia dorme sobre o baú quando é seguro e se cura devagar enquanto dorme, e guarda os espólios aceitos. Um creeper lutando com ele explode sem quebrar blocos. Clique direito nele com Lingote de Netherita para reparar 20 de vida (Minério Ancestral: 10); Lingotes de Netherita guardados no baú dele são usados do mesmo jeito fora de combate.",
   "create.jei.netherite_golem_chest.info": "Sem filtro guarda todos os espólios; filtro restringe só o que entra no baú. Baú sem golem pode ser prensado em 6 lingotes de netherita.",
   "create.jei.packed_netherite_golem_chest.info": "Mover o baú mantém idade, vida, conteúdo e filtro, mas zera os abates."
 }

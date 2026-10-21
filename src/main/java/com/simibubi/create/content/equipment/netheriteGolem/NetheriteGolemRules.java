@@ -35,12 +35,6 @@ public final class NetheriteGolemRules {
 	public static final double CREEPER_NEAR_GOLEM = 4.0;
 	/** Persistent-data key (game time of the last mark); saved with the creeper. */
 	public static final String CREEPER_COMBAT_KEY = "CreateNetheriteGolemCombat";
-	/**
-	 * Knockback strength the golem adds on a creeper hit (vanilla melee is 0.4). Per the vanilla
-	 * motion rules (see knockbackDistance) 1.2 throws a creeper ~8 blocks, so one hit at reach
-	 * (~2.5 blocks) lands it ~10 blocks away: beyond the 7-block SwellGoal range, fuse winding down.
-	 */
-	public static final double CREEPER_KNOCKBACK = 1.2;
 
 	public enum Eyes { CLOSED, WHITE, PURPLE }
 	public static boolean inTerritory(int dx, int dy, int dz) {
@@ -96,26 +90,6 @@ public final class NetheriteGolemRules {
 	/** Explosion of a creeper fighting a Netherite golem: no blocks broken. -1 = never marked. */
 	public static boolean creeperInGolemCombat(boolean targetsGolem, long ticksSinceMark, boolean nearGolemTargetingIt) {
 		return targetsGolem || nearGolemTargetingIt || ticksSinceMark >= 0 && ticksSinceMark <= CREEPER_COMBAT_TICKS;
-	}
-	/**
-	 * Horizontal blocks travelled after LivingEntity.knockback(power) from the ground, using vanilla
-	 * per-tick motion: lift min(0.4, power), gravity 0.08, vertical drag 0.98, air drag 0.91, then a
-	 * ground slide at friction 0.6 * 0.91. Offline estimate; ignores collisions and AI movement.
-	 */
-	public static double knockbackDistance(double power) {
-		double vx = power, vy = Math.min(0.4, power), x = 0, y = 0;
-		for (int tick = 0; tick < 200; tick++) {
-			x += vx;
-			y += vy;
-			if (y <= 0 && tick > 0) {
-				for (vx *= 0.546; vx > 0.003; vx *= 0.546)
-					x += vx;
-				return x;
-			}
-			vy = (vy - 0.08) * 0.98;
-			vx *= 0.91;
-		}
-		return x;
 	}
 	public static Eyes eyes(boolean sleeping, boolean combat) {
 		return sleeping ? Eyes.CLOSED : combat ? Eyes.PURPLE : Eyes.WHITE;

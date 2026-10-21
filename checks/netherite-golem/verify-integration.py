@@ -83,9 +83,16 @@ for dm in Path('src').rglob('data_maps/block/*.json'):
 # Creeper vs Netherite golem: blocks spared only for creepers in golem combat; fear; knockback.
 assert 'ExplosionEvent.Detonate' in loot and 'getDirectSourceEntity() instanceof Creeper creeper && inGolemCombat(creeper)' in loot
 assert 'event.getAffectedBlocks().clear()' in loot and 'getAffectedEntities' not in loot
-assert 'super(creeper, NetheriteGolem.class, 6.0F, 1.0, 1.2)' in loot and 'addGoal(3, new AvoidGolemGoal' in loot
 assert 'getPersistentData().putLong(NetheriteGolemRules.CREEPER_COMBAT_KEY' in loot
-assert 'creeper.knockback(NetheriteGolemRules.CREEPER_KNOCKBACK' in entity and 'NetheriteGolemEvents.markCombat(creeper)' in entity
+assert entity.count('NetheriteGolemEvents.markCombat(creeper)') == 2  # while targeted + on every hit
+# Round 7 scope: no creeper fear, no extra knockback/fuse change in the Netherite golem package
+# (AndesiteGolemEvents has its own, older EntityJoinLevelEvent use and is not touched).
+for d in [root/'content/equipment/netheriteGolem']:
+    for f in d.glob('*.java'):
+        src = f.read_text()
+        for gone in ['AvoidEntityGoal', 'AvoidGolemGoal', 'EntityJoinLevelEvent', '.knockback(', 'CREEPER_KNOCKBACK',
+                     'setSwellDir', 'knockbackDistance', 'goalSelector.addGoal(3']:
+            assert gone not in src, (f.name, gone)
 recipe = json.loads(Path('src/generated/resources/data/create/recipe/pressing/netherite_ingot_from_golem_chest.json').read_text())
 assert recipe['ingredients'] == ['create:netherite_golem_chest']
 assert recipe['results'] == [{'count': 6, 'id': 'minecraft:netherite_ingot'}]

@@ -83,16 +83,12 @@ public class NetheriteGolem extends AndesiteGolem {
 			getTarget() != null, wakeCooldown);
 	}
 
-	/** Creeper hits throw it out of fuse range (see NetheriteGolemRules.CREEPER_KNOCKBACK). */
+	/** A hit marks the creeper for block-safe explosions; vanilla knockback and fuse are untouched. */
 	@Override
 	public boolean doHurtTarget(ServerLevel level, net.minecraft.world.entity.Entity target) {
 		boolean hit = super.doHurtTarget(level, target);
-		if (hit && target instanceof net.minecraft.world.entity.monster.Creeper creeper && creeper.isAlive()) {
+		if (hit && target instanceof net.minecraft.world.entity.monster.Creeper creeper)
 			NetheriteGolemEvents.markCombat(creeper);
-			creeper.knockback(NetheriteGolemRules.CREEPER_KNOCKBACK, getX() - creeper.getX(), getZ() - creeper.getZ(),
-				level.damageSources().mobAttack(this), 0);
-			creeper.setSwellDir(-1);
-		}
 		return hit;
 	}
 

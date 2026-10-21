@@ -82,11 +82,6 @@ public class NetheriteGolemRulesCheck {
   assert NetheriteGolemRules.creeperInGolemCombat(false, -1, true) : "next to a golem that targets it";
   assert NetheriteGolemRules.creeperInGolemCombat(false, 200, false) && !NetheriteGolemRules.creeperInGolemCombat(false, 201, false);
   assert !NetheriteGolemRules.creeperInGolemCombat(false, -1, false) : "unrelated creeper: vanilla explosion";
-  // Knockback: vanilla melee 0.4 leaves it within the 7-block swell range; 1.2 from ~2.5 blocks clears it.
-  double vanilla = NetheriteGolemRules.knockbackDistance(0.4), strong = NetheriteGolemRules.knockbackDistance(NetheriteGolemRules.CREEPER_KNOCKBACK);
-  assert 2.5 + vanilla < 7 : "vanilla " + vanilla;
-  assert 2.5 + strong > 7 && strong < 14 : "strong " + strong;
-  System.out.printf("knockback estimate: vanilla 0.4 -> %.1f blocks, creeper hit %.1f -> %.1f blocks%n", vanilla, NetheriteGolemRules.CREEPER_KNOCKBACK, strong);
   System.out.println("Netherite policy checks passed");
  }
 }

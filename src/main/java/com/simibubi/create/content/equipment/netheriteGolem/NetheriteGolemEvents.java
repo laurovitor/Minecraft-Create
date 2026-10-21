@@ -1,6 +1,5 @@
 package com.simibubi.create.content.equipment.netheriteGolem;
 
-import net.minecraft.world.entity.ai.goal.AvoidEntityGoal;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.monster.Enemy;
@@ -8,7 +7,6 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
-import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.level.ExplosionEvent;
 
 @EventBusSubscriber
@@ -29,18 +27,6 @@ public class NetheriteGolemEvents {
 			if (remainder.isEmpty()) it.remove();
 			else drop.setItem(remainder); // Preserve overflow as a normal world drop.
 		}
-	}
-
-	/** Creepers fear Netherite golems as they fear cats: vanilla Creeper#registerGoals parameters. */
-	@SubscribeEvent public static void creeperFearsGolem(EntityJoinLevelEvent event) {
-		if (event.getLevel().isClientSide() || !(event.getEntity() instanceof Creeper creeper)) return;
-		boolean present = creeper.goalSelector.getAvailableGoals().stream().anyMatch(g -> g.getGoal() instanceof AvoidGolemGoal);
-		if (!present) creeper.goalSelector.addGoal(3, new AvoidGolemGoal(creeper));
-	}
-
-	/** Marker subclass so a creeper re-joining a level does not get the goal twice. */
-	static class AvoidGolemGoal extends AvoidEntityGoal<NetheriteGolem> {
-		AvoidGolemGoal(Creeper creeper) { super(creeper, NetheriteGolem.class, 6.0F, 1.0, 1.2); }
 	}
 
 	/**
