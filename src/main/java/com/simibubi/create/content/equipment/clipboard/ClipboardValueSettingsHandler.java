@@ -6,6 +6,8 @@ import java.util.List;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllDataComponents;
 import com.simibubi.create.content.equipment.clipboard.ClipboardOverrides.ClipboardType;
+import com.simibubi.create.content.logistics.vault.ItemVaultBlockEntity;
+import com.simibubi.create.content.logistics.vault.ItemVaultClipboardInfo;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.foundation.utility.CreateLang;
@@ -63,6 +65,15 @@ public class ClipboardValueSettingsHandler {
 			return;
 		if (!(world.getBlockEntity(pos) instanceof SmartBlockEntity smartBE))
 			return;
+
+		// Lauro edition: right-click a vault to note its fill level on a blank clipboard
+		if (!paste && smartBE instanceof ItemVaultBlockEntity vault && event instanceof RightClickBlock rightClickBlock) {
+			rightClickBlock.setCanceled(true);
+			rightClickBlock.setCancellationResult(InteractionResult.SUCCESS);
+			if (!world.isClientSide())
+				ItemVaultClipboardInfo.write(world, pos, vault, player, itemStack);
+			return;
+		}
 
 		ClipboardContent clipboardContent = itemStack.getOrDefault(AllDataComponents.CLIPBOARD_CONTENT, ClipboardContent.EMPTY);
 
