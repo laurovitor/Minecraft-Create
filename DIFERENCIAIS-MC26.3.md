@@ -77,7 +77,7 @@ Um ajudante novo para fazendas automáticas, com o corpo do golem de cobre na co
   - com filtro `oak_log`, ele só guardou toras e deixou o trigo maduro em paz, e a muda de replantio saiu do baú;
   - um zumbi matou o golem, e o baú ficou inativo; o mesmo aconteceu com a morte por queda;
   - sem trabalho, ele passeou a até cerca de 5 blocos do baú.
-- Complementos (commit `REPLACE_COMMIT`):
+- Complementos (commit `da507618c42a9584acceff883b4261a2d51de4b3`):
   - `Tree.hasBeeHome()` checa ninhos e colmeias nas anexações e ao redor de troncos e folhas; o golem pula essas árvores.
   - Item `packed_andesite_golem_chest`, que guarda vida, itens, filtro e o que o golem carregava, e recria o golem ao ser colocado. O drop normal do baú ativo quebrado por jogador é esse item; o loot table do bloco ficou vazio porque o drop é feito em `playerWillDestroy`.
   - Cura com liga em `AndesiteGolem.mobInteract`; prancheta no golem e no baú via `AndesiteGolemClipboardInfo`.
