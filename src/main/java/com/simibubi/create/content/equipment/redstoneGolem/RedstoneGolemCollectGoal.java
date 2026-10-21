@@ -25,7 +25,7 @@ import net.minecraft.world.level.ClipContext;
 /**
  * The Redstone Golem's only job: run to the fullest chest on its network, take up to
  * {@link RedstoneGolemRules#CARRY_SLOTS} stacks, walk home and put them in its own chest. Idle while
- * its own chest has no empty slot; what does not fit stays carried until there is room.
+ * its own chest cannot accept any more source items; what does not fit stays carried until there is room.
  */
 public class RedstoneGolemCollectGoal extends Goal {
 
@@ -64,13 +64,14 @@ public class RedstoneGolemCollectGoal extends Goal {
 				golem.setTask(RedstoneGolem.Task.RETURNING);
 				return false;
 			}
-			golem.setTask(chest.hasEmptySlot() ? RedstoneGolem.Task.RETURNING : RedstoneGolem.Task.CHEST_FULL);
-			return chest.hasEmptySlot();
+			boolean room = golem.getCarried().stream().anyMatch(chest::hasRoomFor);
+			golem.setTask(room ? RedstoneGolem.Task.RETURNING : RedstoneGolem.Task.CHEST_FULL);
+			return room;
 		}
 		if (searchCooldown-- > 0)
 			return false;
 		searchCooldown = RedstoneGolemRules.SEARCH_INTERVAL;
-		if (!RedstoneGolemRules.shouldCollect(chest.hasEmptySlot(), golem.getCarried().size())) {
+		if (!RedstoneGolemRules.shouldCollect(hasTransferableSource(chest), 0)) {
 			golem.setTask(RedstoneGolem.Task.CHEST_FULL);
 			return false;
 		}
@@ -86,10 +87,26 @@ public class RedstoneGolemCollectGoal extends Goal {
 		golem.setNetworkChests(sources.size());
 		List<RedstoneGolemRules.Candidate> candidates = new ArrayList<>();
 		for (RedstoneGolemNetwork.Source s : sources)
-			candidates.add(new RedstoneGolemRules.Candidate(RedstoneGolemNetwork.occupiedSlots(s.container()),
+			candidates.add(new RedstoneGolemRules.Candidate(transferableSlots(s.container(), chest),
 				s.container().getContainerSize(), golem.distanceToSqr(Vec3.atCenterOf(s.pos())), blacklist.containsKey(s.pos())));
 		int best = RedstoneGolemRules.chooseSource(candidates);
 		return best < 0 ? null : sources.get(best).pos();
+	}
+
+	private boolean hasTransferableSource(RedstoneGolemChestBlockEntity chest) {
+		// No empty slot is not equivalent to no capacity: existing partial stacks may still merge.
+		for (int i = 0; i < chest.getContainer().getContainerSize(); i++)
+			if (chest.getContainer().getItem(i).isEmpty()) return true;
+		for (RedstoneGolemNetwork.Source source : RedstoneGolemNetwork.sources(golem.level(), chest))
+			if (transferableSlots(source.container(), chest) > 0) return true;
+		return false;
+	}
+
+	private int transferableSlots(Container source, RedstoneGolemChestBlockEntity chest) {
+		int count = 0;
+		for (int i = 0; i < source.getContainerSize(); i++)
+			if (chest.hasRoomFor(source.getItem(i))) count++;
+		return count;
 	}
 
 	@Override
@@ -150,7 +167,7 @@ public class RedstoneGolemCollectGoal extends Goal {
 			golem.setState(CopperGolemState.IDLE);
 			Container container = sourceContainer(chest);
 			if (container != null)
-				take(container);
+				take(container, chest);
 			travelTicks = 0;
 			standSpot = null;
 			phase = golem.getCarried().isEmpty() ? Phase.DONE : Phase.RETURN;
@@ -169,9 +186,25 @@ public class RedstoneGolemCollectGoal extends Goal {
 			if (--timer > 0)
 				return;
 			deposit(chest);
+			golem.closeOpenedBarriers(); // continuous goals still finish each trip's doors
 			golem.setState(CopperGolemState.IDLE);
-			golem.setTask(golem.getCarried().isEmpty() ? RedstoneGolem.Task.IDLE : RedstoneGolem.Task.CHEST_FULL);
-			phase = Phase.DONE;
+			if (!golem.getCarried().isEmpty()) {
+				golem.setTask(RedstoneGolem.Task.CHEST_FULL);
+				phase = Phase.DONE;
+			} else {
+				// Select the next source as part of this goal's transition. Otherwise the goal
+				// stops at home and relies on an idle cooldown to restart the entire run.
+				source = chooseSource(chest);
+				if (source != null) {
+					travelTicks = 0;
+					standSpot = null;
+					golem.setTask(RedstoneGolem.Task.COLLECTING);
+					phase = Phase.GO;
+				} else {
+					golem.setTask(hasTransferableSource(chest) ? RedstoneGolem.Task.NO_SOURCE : RedstoneGolem.Task.CHEST_FULL);
+					phase = Phase.DONE;
+				}
+			}
 		}
 		default -> {
 		}
@@ -246,10 +279,10 @@ public class RedstoneGolemCollectGoal extends Goal {
 		return spots;
 	}
 
-	private void take(Container container) {
+	private void take(Container container, RedstoneGolemChestBlockEntity chest) {
 		List<Boolean> occupied = new ArrayList<>();
 		for (int i = 0; i < container.getContainerSize(); i++)
-			occupied.add(!container.getItem(i).isEmpty());
+			occupied.add(chest.hasRoomFor(container.getItem(i)));
 		for (int slot : RedstoneGolemRules.pickupSlots(occupied, golem.getCarried().size()))
 			golem.carry(container.removeItemNoUpdate(slot));
 		container.setChanged();

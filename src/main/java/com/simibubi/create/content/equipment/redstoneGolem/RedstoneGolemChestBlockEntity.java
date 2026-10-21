@@ -41,6 +41,18 @@ public class RedstoneGolemChestBlockEntity extends AndesiteGolemChestBlockEntity
 		behaviours.add(link = new LogisticallyLinkedBehaviour(this, false));
 	}
 
+	/** A full set of slots can still accept more of an existing stack. */
+	public boolean hasRoomFor(ItemStack incoming) {
+		if (incoming.isEmpty()) return false;
+		for (int i = 0; i < getContainer().getContainerSize(); i++) {
+			ItemStack stored = getContainer().getItem(i);
+			if (stored.isEmpty() || ItemStack.isSameItemSameComponents(stored, incoming)
+				&& stored.getCount() < Math.min(stored.getMaxStackSize(), getContainer().getMaxStackSize(incoming)))
+				return true;
+		}
+		return false;
+	}
+
 	/** No filter: everything is accepted. */
 	@Override
 	public boolean accepts(ItemStack stack) {

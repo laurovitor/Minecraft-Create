@@ -60,7 +60,40 @@ public class RedstoneGolemSimulation {
 		}
 	}
 
+	/** Exact post-deposit decisions for two trips, a full home, and an emptied source. */
+	static void lifecycleCases() {
+		Inv home = new Inv(3), source = new Inv(9);
+		for (int i = 0; i < 6; i++) { source.id[i] = i + 1; source.count[i] = 1; }
+		int completed = 0;
+		while (home.hasEmpty() && source.occupied() > 0) {
+			List<Integer> pickup = RedstoneGolemRules.pickupSlots(source.occupiedSlots(), 0);
+			for (int slot : pickup) {
+				for (int dest = 0; dest < home.id.length; dest++) {
+					if (home.id[dest] != 0) continue;
+					home.id[dest] = source.id[slot]; home.count[dest] = source.count[slot];
+					source.id[slot] = source.count[slot] = 0;
+					break;
+				}
+			}
+			completed++;
+		}
+		assert completed == 1 && source.occupied() == 3 && !home.hasEmpty() : "full destination blocks next trip";
+		for (int i = 0; i < home.id.length; i++) home.id[i] = home.count[i] = 0;
+		while (source.occupied() > 0) {
+			List<Integer> pickup = RedstoneGolemRules.pickupSlots(source.occupiedSlots(), 0);
+			for (int slot : pickup) {
+				int dest = slot % home.id.length;
+				home.id[dest] = source.id[slot]; home.count[dest] = source.count[slot];
+				source.id[slot] = source.count[slot] = 0;
+			}
+			completed++;
+		}
+		assert completed == 2 && source.occupied() == 0 : "second trip drains source, then stops";
+		assert RedstoneGolemRules.chooseSource(List.of(new Candidate(0, 9, 1, false))) == -1;
+	}
+
 	public static void main(String[] args) {
+		lifecycleCases();
 		// --- rules: fullest first, ties nearer, empty and skipped ignored
 		assert RedstoneGolemRules.chooseSource(List.of(new Candidate(3, 27, 4, false), new Candidate(10, 27, 400, false),
 			new Candidate(0, 27, 1, false))) == 1 : "fullest wins even when farther";

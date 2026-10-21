@@ -108,6 +108,7 @@ public class RedstoneGolemChestBlock extends HorizontalDirectionalBlock
 		// these now live inside the packed item; do not drop duplicates on removal
 		chest.getContainer().clearContent();
 		golem.getCarried().clear();
+		golem.updateHeldItem();
 		return drop;
 	}
 

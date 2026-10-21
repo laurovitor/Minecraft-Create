@@ -3,6 +3,9 @@ package com.simibubi.create.content.equipment.redstoneGolem;
 import org.jetbrains.annotations.Nullable;
 
 import com.simibubi.create.AllBlocks;
+import com.simibubi.create.AllDataComponents;
+import com.simibubi.create.content.logistics.box.PackageItem;
+import com.simibubi.create.content.logistics.box.PackageStyles;
 import com.simibubi.create.content.equipment.andesiteGolem.AndesiteGolem;
 
 import net.minecraft.core.BlockPos;
@@ -25,6 +28,8 @@ import net.minecraft.world.entity.animal.golem.AbstractGolem;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.ItemContainerContents;
+import java.util.List;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Block;
@@ -146,12 +151,45 @@ public class RedstoneGolem extends AndesiteGolem {
 		return result;
 	}
 
+	/** Show Create's real cardboard box while the internal inventory carries any stacks. */
+	@Override
+	public void carry(ItemStack stack) {
+		super.carry(stack);
+		updateHeldItem();
+	}
+
+	@Override
+	public void updateHeldItem() {
+		setItemInHand(InteractionHand.MAIN_HAND,
+			getCarried().isEmpty() ? ItemStack.EMPTY : PackageStyles.getDefaultBox());
+	}
+
+	@Override
+	public void readAdditionalSaveData(net.minecraft.world.level.storage.ValueInput input) {
+		super.readAdditionalSaveData(input);
+		updateHeldItem();
+	}
+
 	/** What it carried, and two redstone dust from its body (the Andesite golem leaves two alloy). */
 	@Override
 	protected void dropCustomDeathLoot(ServerLevel level, DamageSource source, boolean killedByPlayer) {
-		for (ItemStack stack : getCarried())
-			spawnAtLocation(level, stack);
-		getCarried().clear();
+		if (!getCarried().isEmpty()) {
+			// The carried list is the only inventory of record. The hand box is visual only.
+			// Create unpacks PACKAGE_CONTENTS through PackageItem.getContents. Preserve the
+			// four carried stacks exactly, rather than relying on a lossy insertion attempt.
+			List<ItemStack> contents = getCarried().stream().filter(stack -> !stack.isEmpty())
+				.map(ItemStack::copy).toList();
+			for (int i = 0; i < contents.size(); i += PackageItem.SLOTS) {
+				// Normally one cardboard box: the golem can carry at most four of nine slots.
+				// Split only an oversized list restored from external/old data, never lose stacks.
+				ItemStack box = PackageStyles.getDefaultBox();
+				box.set(AllDataComponents.PACKAGE_CONTENTS,
+					ItemContainerContents.fromItems(contents.subList(i, Math.min(i + PackageItem.SLOTS, contents.size()))));
+				spawnAtLocation(level, box);
+			}
+			getCarried().clear();
+			updateHeldItem();
+		}
 		spawnAtLocation(level, new ItemStack(Items.REDSTONE, 2));
 	}
 }

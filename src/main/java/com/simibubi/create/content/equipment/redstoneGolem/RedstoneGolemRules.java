@@ -71,9 +71,9 @@ public final class RedstoneGolemRules {
 		return slots;
 	}
 
-	/** A new trip starts only with empty hands and at least one empty slot in its own chest. */
-	public static boolean shouldCollect(boolean ownChestHasEmptySlot, int carriedStacks) {
-		return ownChestHasEmptySlot && carriedStacks == 0;
+	/** A new trip starts only with empty hands and capacity for at least one source stack. */
+	public static boolean shouldCollect(boolean hasTransferableSource, int carriedStacks) {
+		return hasTransferableSource && carriedStacks == 0;
 	}
 
 	/** A real standing place near the chest, with a clear interaction ray. No roof shortcuts. */
