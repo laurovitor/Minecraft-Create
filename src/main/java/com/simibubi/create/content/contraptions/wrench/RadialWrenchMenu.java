@@ -351,6 +351,7 @@ public class RadialWrenchMenu extends AbstractSimiScreen {
 			.scaleAlpha(Math.min(1, (ticksOpen + AnimationTickHolder.getPartialTicks()) / 20f));
 
 		guiGraphics.fillGradient(0, 0, this.width, this.height, color.getRGB(), color.getRGB());
+		renderWindow(guiGraphics, mouseX, mouseY, AnimationTickHolder.getGuiPartialTicks());
 	}
 
 	@Override

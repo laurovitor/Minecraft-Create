@@ -216,6 +216,7 @@ public class RadialToolboxMenu extends AbstractSimiScreen {
 				.scaleAlpha(Math.min(1, (ticksOpen + AnimationTickHolder.getPartialTicks()) / 20f));
 
 		pGuiGraphics.fillGradient(0, 0, this.width, this.height, color.getRGB(), color.getRGB());
+		renderWindow(pGuiGraphics, pMouseX, pMouseY, AnimationTickHolder.getGuiPartialTicks());
 	}
 
 	@Override

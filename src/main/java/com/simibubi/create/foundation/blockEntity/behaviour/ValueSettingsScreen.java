@@ -272,6 +272,7 @@ public class ValueSettingsScreen extends AbstractSimiScreen {
 	public void extractBackground(@NotNull GuiGraphicsExtractor graphics, int pMouseX, int pMouseY, float pPartialTick) {
 		int a = ((int) (0x50 * Math.min(1, (ticksOpen + AnimationTickHolder.getPartialTicks()) / 20f))) << 24;
 		graphics.fillGradient(0, 0, this.width, this.height, 0x101010 | a, 0x101010 | a);
+		renderWindow(graphics, pMouseX, pMouseY, AnimationTickHolder.getGuiPartialTicks());
 	}
 
 	@Override

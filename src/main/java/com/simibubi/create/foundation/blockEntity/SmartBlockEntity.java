@@ -180,6 +180,11 @@ public abstract class SmartBlockEntity extends CachedRenderBBBlockEntity
 	}
 
 	@Override
+	public void readPonderClientData(CompoundTag tag, HolderLookup.Provider registries) {
+		readClient(tag, registries);
+	}
+
+	@Override
 	public final CompoundTag writeClient(CompoundTag tag, HolderLookup.Provider registries) {
 		write(tag, registries, true);
 		return tag;
