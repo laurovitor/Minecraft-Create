@@ -79,7 +79,13 @@ public class AllEntityTypes {
 	// Lauro edition
 	public static final EntityEntry<AndesiteGolem> ANDESITE_GOLEM =
 		register("andesite_golem", AndesiteGolem::new, () -> AndesiteGolemRenderer::new, MobCategory.MISC, 10, 3,
-			true, false, b -> b.sized(0.49F, 0.98F).eyeHeight(0.8125F)).register();
+			true, false, b -> b.sized(0.49F, 0.98F).eyeHeight(0.8125F))
+			// the egg also sets down the golem's chest, a golem without one has nothing to do
+			.spawnEgg()
+			.model(() -> (c, p) -> {})
+			.lang("Andesite Golem Spawn Egg")
+			.build()
+			.register();
 
 	public static final EntityEntry<PackageEntity> PACKAGE = register("package", PackageEntity::new, () -> PackageRenderer::new,
 		MobCategory.MISC, 10, 3, true, false, PackageEntity::build)

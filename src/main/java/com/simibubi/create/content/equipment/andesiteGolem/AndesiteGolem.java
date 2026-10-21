@@ -16,6 +16,11 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllItems;
+import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.SpawnGroupData;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AnimationState;
 import net.minecraft.world.entity.EntityType;
@@ -136,6 +141,30 @@ public class AndesiteGolem extends AbstractGolem {
 			return InteractionResult.SUCCESS;
 		}
 		return super.mobInteract(player, hand);
+	}
+
+	/**
+	 * A golem from a spawn egg or dispenser gets its chest set down where it appears, and stands on
+	 * top of it, as if it had been built.
+	 */
+	@Override
+	public @Nullable SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty,
+		EntitySpawnReason reason, @Nullable SpawnGroupData groupData) {
+		SpawnGroupData data = super.finalizeSpawn(level, difficulty, reason, groupData);
+		if (chestPos == null && (reason == EntitySpawnReason.SPAWN_ITEM_USE || reason == EntitySpawnReason.DISPENSER)) {
+			BlockPos pos = blockPosition();
+			if (level.getBlockState(pos).canBeReplaced() && level.getBlockState(pos.above()).canBeReplaced()) {
+				level.setBlock(pos, AllBlocks.ANDESITE_GOLEM_CHEST.getDefaultState()
+					.setValue(AndesiteGolemChestBlock.FACING, getDirection().getOpposite())
+					.setValue(AndesiteGolemChestBlock.ACTIVE, true), Block.UPDATE_ALL);
+				setChest(pos);
+				if (level.getBlockEntity(pos) instanceof AndesiteGolemChestBlockEntity chest)
+					chest.linkGolem(getUUID());
+				snapTo(pos.getX() + 0.5, pos.getY() + 0.9, pos.getZ() + 0.5, getYRot(), 0);
+			}
+		}
+		playSpawnSound();
+		return data;
 	}
 
 	// ---- carried items

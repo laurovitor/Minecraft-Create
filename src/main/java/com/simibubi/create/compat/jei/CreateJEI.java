@@ -1,5 +1,7 @@
 package com.simibubi.create.compat.jei;
 
+import net.minecraft.network.chat.Component;
+import com.simibubi.create.AllEntityTypes;
 import com.simibubi.create.foundation.recipe.ClientRecipes;
 import com.simibubi.create.foundation.recipe.RecipeAccessors;
 import org.jspecify.annotations.NullMarked;
@@ -347,6 +349,15 @@ public class CreateJEI implements IModPlugin {
 		allCategories.forEach(c -> c.registerRecipes(registration));
 
 		registration.addRecipes(RecipeTypes.CRAFTING, ToolboxColoringRecipeMaker.createRecipes().toList());
+
+		// Lauro edition: how to get an Andesite Golem and its chest
+		Component golemInfo = Component.translatable("create.jei.andesite_golem.info");
+		registration.addIngredientInfo(AllBlocks.ANDESITE_GOLEM_CHEST.get(), golemInfo,
+			Component.translatable("create.jei.andesite_golem_chest.info"));
+		registration.addIngredientInfo(AllItems.PACKED_ANDESITE_GOLEM_CHEST.get(),
+			Component.translatable("create.jei.packed_andesite_golem_chest.info"));
+		net.minecraft.world.item.SpawnEggItem.byId(AllEntityTypes.ANDESITE_GOLEM.get())
+			.ifPresent(egg -> registration.addIngredientInfo(egg.value(), golemInfo));
 	}
 
 	@Override

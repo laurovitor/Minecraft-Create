@@ -36,6 +36,8 @@ Um ajudante novo para fazendas automáticas, com o corpo do golem de cobre na co
 - **Descanso:** com o baú cheio ou sem nada maduro por perto, ele passeia num raio de **5 blocos** do baú.
 - **Perigos:** toma **dano de queda** e é **alvo de monstros hostis**. Mantenha a fazenda iluminada e protegida. Se cair num buraco, fica preso até o jogador ajudar.
 - **Quando o golem morre**, o baú fica **rachado** e sem uso. Ele ainda guarda os itens e pode ir na **prensa mecânica**, que devolve **6 ligas de andesito**.
+- **Slot de filtro destacado:** a tampa do baú tem uma moldura de latão marcando onde o filtro vai.
+- **JEI e criativo:** existe o **Ovo Gerador de Golem de Andesito**, que coloca o golem já com o baú dele. O JEI tem uma página de informação para o ovo, o baú e o baú com golem, explicando como criar e usar.
 - O baú abre como um baú comum (27 espaços) e funciona com funis, hoppers, empacotadora e comparador. Só o baú **sem golem** entra na prensa mecânica.
 
 ## Evidência técnica (não é copy de publicação)
@@ -84,6 +86,7 @@ Um ajudante novo para fazendas automáticas, com o corpo do golem de cobre na co
   - Baú registrado no `InventoryIdentifier` da empacotadora.
   - Correção da mensagem de erro no Shift (`ItemDescription.holdKeyParts`), que afetava as descrições com Shift, inclusive a do cofre revestido.
   - Verificado no servidor de desenvolvimento via RCON: árvore com ninho foi ignorada e, depois de remover o ninho, foi cortada e replantada; um hopper inseriu itens no baú.
+  - Commit `REPLACE_COMMIT`: ovo gerador (`andesite_golem_spawn_egg`, via `spawnEgg()` do Registrate) e `AndesiteGolem.finalizeSpawn`, que coloca o baú quando o golem vem de ovo ou dispenser; páginas de info no JEI (`CreateJEI.registerRecipes`, chaves `create.jei.*`); moldura de latão na tampa das texturas `active`/`inactive`. Build passou; nada disso testado em jogo.
   - Não verificados em jogo: quebrar e recolocar o baú com golem (precisa de jogador), cura e prancheta (precisam de clique de jogador), empacotadora e a correção do Shift (cliente).
 - **Ainda não verificado:** o visual no cliente (modelo e texturas do golem e do baú, animações, slot de filtro na tampa) e a receita da prensa rodando numa prensa de verdade.
 
