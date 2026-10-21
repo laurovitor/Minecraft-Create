@@ -90,7 +90,7 @@ Um ajudante novo para fazendas automáticas, com o corpo do golem de cobre na co
   - Verificado no servidor de desenvolvimento via RCON: árvore com ninho foi ignorada e, depois de remover o ninho, foi cortada e replantada; um hopper inseriu itens no baú.
   - Commit `af5cc63c0b86ffb98178d98072749ca05240e01e`: ovo gerador (`andesite_golem_spawn_egg`, via `spawnEgg()` do Registrate) e `AndesiteGolem.finalizeSpawn`, que coloca o baú quando o golem vem de ovo ou dispenser; páginas de info no JEI (`CreateJEI.registerRecipes`, chaves `create.jei.*`); moldura de latão na tampa das texturas `active`/`inactive`. Build passou; nada disso testado em jogo.
   - Commit `4b8c9c8198cb8d22a85268991fc103015bfa4795`: `AndesiteGolemWorkGoal.clearLeavesIfStuck` — a cada 20 ticks andando até uma árvore, se não chegou 0,3 bloco mais perto, quebra folhas na direção do tronco (altura dos pés e da cabeça). Build passou; não testado em jogo.
-  - Commit `REPLACE_COMMIT`: replantio do tronco inteiro. Todas as toras da camada de baixo (`TreeCutter.Tree.getLogs()`) recebem muda do mesmo tipo, vinda dos drops e depois do baú. Build passou; não testado em jogo.
+  - Commit `e29ea3a146c6f7b7c00cff810de173e271bc48f6`: replantio do tronco inteiro. Todas as toras da camada de baixo (`TreeCutter.Tree.getLogs()`) recebem muda do mesmo tipo, vinda dos drops e depois do baú. Build passou; não testado em jogo.
   - Não verificados em jogo: quebrar e recolocar o baú com golem (precisa de jogador), cura e prancheta (precisam de clique de jogador), empacotadora e a correção do Shift (cliente).
 - **Ainda não verificado:** o visual no cliente (modelo e texturas do golem e do baú, animações, slot de filtro na tampa) e a receita da prensa rodando numa prensa de verdade.
 
