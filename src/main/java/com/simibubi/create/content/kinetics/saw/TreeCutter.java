@@ -69,6 +69,17 @@ public class TreeCutter {
 	 */
 	@NotNull
 	public static Tree findTree(@Nullable BlockGetter reader, BlockPos pos, BlockState brokenState) {
+		return findTree(reader, pos, brokenState, true);
+	}
+
+	/** The golem removes a complete trunk footprint, so another standing root/log must not veto its cut. */
+	@NotNull
+	public static Tree findTreeForGolem(@Nullable BlockGetter reader, BlockPos pos, BlockState brokenState) {
+		return findTree(reader, pos, brokenState, false);
+	}
+
+	private static Tree findTree(@Nullable BlockGetter reader, BlockPos pos, BlockState brokenState,
+		boolean requireUnsupportedCanopy) {
 		if (reader == null)
 			return NO_TREE;
 
@@ -119,7 +130,7 @@ public class TreeCutter {
 		}
 
 		// Regular Tree
-		if (!validateCut(reader, pos))
+		if (requireUnsupportedCanopy && !validateCut(reader, pos))
 			return NO_TREE;
 
 		visited.add(pos);

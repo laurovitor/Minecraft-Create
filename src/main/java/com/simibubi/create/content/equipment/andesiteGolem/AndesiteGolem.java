@@ -164,7 +164,7 @@ public class AndesiteGolem extends AbstractGolem {
 				setChest(pos);
 				if (level.getBlockEntity(pos) instanceof AndesiteGolemChestBlockEntity chest)
 					chest.linkGolem(getUUID());
-				AndesiteGolemArea.markBoundary(level, pos);
+				AndesiteGolemArea.paveAroundChest(level, pos);
 				snapTo(pos.getX() + 0.5, pos.getY() + 0.9, pos.getZ() + 0.5, getYRot(), 0);
 			}
 		}
@@ -212,8 +212,21 @@ public class AndesiteGolem extends AbstractGolem {
 		return depositAnimationState;
 	}
 
+	/** Five percent of normal speed per full ten percent of health lost, down to half speed. */
+	private void updateMovementSpeed() {
+		var speed = getAttribute(Attributes.MOVEMENT_SPEED);
+		if (speed == null)
+			return;
+		int steps = Math.min(10, (int) Math.floor((1.0 - getHealth() / getMaxHealth()) * 10.0 + 1e-6));
+		double expected = 0.2 * (1.0 - 0.05 * Math.max(0, steps));
+		if (Math.abs(speed.getBaseValue() - expected) > 1e-7)
+			speed.setBaseValue(expected);
+	}
+
 	@Override
 	public void tick() {
+		if (!level().isClientSide())
+			updateMovementSpeed();
 		super.tick();
 		if (level().isClientSide() && !isNoAi())
 			setupAnimationStates();

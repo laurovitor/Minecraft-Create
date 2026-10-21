@@ -249,7 +249,7 @@ public class AndesiteGolemWorkGoal extends Goal {
 					if (found == null || blacklist.containsKey(pos))
 						continue;
 					double distance = golem.distanceToSqr(Vec3.atCenterOf(pos));
-					if (distance >= bestDistance)
+					if (distance >= bestDistance || found == Kind.TREE && !isTree(pos))
 						continue;
 					best = pos.immutable();
 					bestKind = found;
@@ -260,10 +260,6 @@ public class AndesiteGolemWorkGoal extends Goal {
 
 		if (best == null)
 			return false;
-		if (bestKind == Kind.TREE && !isTree(best)) {
-			blacklist.put(best, now + BLACKLIST_TICKS);
-			return false;
-		}
 		target = best;
 		kind = bestKind;
 		return true;
@@ -330,7 +326,7 @@ public class AndesiteGolemWorkGoal extends Goal {
 				return level.getMinY();
 			}
 		};
-		return TreeCutter.findTree(masked, base, level.getBlockState(base));
+		return TreeCutter.findTreeForGolem(masked, base, level.getBlockState(base));
 	}
 
 	private boolean isValidTarget(AndesiteGolemChestBlockEntity chest, BlockPos pos) {
@@ -347,11 +343,15 @@ public class AndesiteGolemWorkGoal extends Goal {
 		if (state.is(BlockTags.LOGS)) {
 			BlockState below = golem.level().getBlockState(pos.below());
 			// on soil, or on roots like the mangrove
-			if (below.is(BlockTags.LOGS) || !(below.is(BlockTags.DIRT) || TreeCutter.isRoot(below)))
+			if (below.is(BlockTags.LOGS) || !(below.is(BlockTags.DIRT) || below.is(Blocks.MUD) || isMangroveRoot(below)))
 				return null;
 			return chest.accepts(new ItemStack(state.getBlock())) ? Kind.TREE : null;
 		}
 		return null;
+	}
+
+	private static boolean isMangroveRoot(BlockState state) {
+		return TreeCutter.isRoot(state) || state.is(Blocks.MUDDY_MANGROVE_ROOTS);
 	}
 
 	private static boolean isGrownCrop(BlockState state) {
@@ -398,9 +398,18 @@ public class AndesiteGolemWorkGoal extends Goal {
 		for (BlockPos log : footprint)
 			BlockHelper.destroyBlockAs(golem.level(), log, null, ItemStack.EMPTY, 1, gathered::add);
 		tree.destroyBlocks(golem.level(), golem, (p, stack) -> gathered.add(stack));
+		// Mangroves can have a column of roots immediately below the trunk. The cutter's
+		// upward search does not always include those roots; clear only this footprint.
+		for (BlockPos trunk : footprint) {
+			BlockPos root = trunk.below();
+			for (int depth = 0; depth < 6 && isMangroveRoot(golem.level().getBlockState(root)); depth++, root = root.below())
+				BlockHelper.destroyBlockAs(golem.level(), root, null, ItemStack.EMPTY, 1, gathered::add);
+		}
 
 		// replant the whole footprint with one kind of sapling, taken from the tree first, then the chest;
 		// the same kind as the tree when there is one, a 2x2 tree only grows back when all four are planted
+		if (kind == null)
+			return; // Unknown wood: never plant a different species.
 		for (BlockPos trunk : footprint) {
 			BlockPos spot = groundSpot(trunk);
 			if (spot == null)
@@ -408,7 +417,6 @@ public class AndesiteGolemWorkGoal extends Goal {
 			ItemStack sapling = takeSapling(chest, gathered, spot, kind);
 			if (sapling.isEmpty())
 				continue;
-			kind = sapling.getItem();
 			plantSapling(sapling, spot);
 		}
 	}
@@ -457,7 +465,8 @@ public class AndesiteGolemWorkGoal extends Goal {
 	}
 
 	private boolean canPlantSapling(ItemStack stack, BlockPos pos) {
-		return stack.is(ItemTags.SAPLINGS) && stack.getItem() instanceof BlockItem blockItem
+		return (stack.is(ItemTags.SAPLINGS) || stack.is(net.minecraft.world.item.Items.MANGROVE_PROPAGULE))
+			&& stack.getItem() instanceof BlockItem blockItem
 			&& blockItem.getBlock().defaultBlockState().canSurvive(golem.level(), pos);
 	}
 
