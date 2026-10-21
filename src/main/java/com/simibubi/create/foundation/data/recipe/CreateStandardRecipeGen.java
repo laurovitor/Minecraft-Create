@@ -191,13 +191,14 @@ public final class CreateStandardRecipeGen extends BaseRecipeProvider {
 	ROSE_QUARTZ_CYCLE =
 		conversionCycle(ImmutableList.of(AllBlocks.ROSE_QUARTZ_TILES, AllBlocks.SMALL_ROSE_QUARTZ_TILES)),
 
-	ANDESITE_ALLOY = create(AllItems.ANDESITE_ALLOY).unlockedByTag(I::iron)
+	ANDESITE_ALLOY = create(AllItems.ANDESITE_ALLOY).returns(2).unlockedByTag(I::iron)
 		.viaShaped(b -> b.define('A', Blocks.ANDESITE)
 			.define('B', Tags.Items.NUGGETS_IRON)
 			.pattern("BA")
 			.pattern("AB")),
 
 	ANDESITE_ALLOY_FROM_ZINC = create(AllItems.ANDESITE_ALLOY).withSuffix("_from_zinc")
+		.returns(2)
 		.unlockedByTag(I::zinc)
 		.viaShaped(b -> b.define('A', Blocks.ANDESITE)
 			.define('B', I.zincNugget())
