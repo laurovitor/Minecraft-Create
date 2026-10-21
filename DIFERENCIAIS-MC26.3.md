@@ -95,7 +95,7 @@ Um ajudante novo para fazendas automáticas, com o corpo do golem de cobre na co
   - Commit `af5cc63c0b86ffb98178d98072749ca05240e01e`: ovo gerador (`andesite_golem_spawn_egg`, via `spawnEgg()` do Registrate) e `AndesiteGolem.finalizeSpawn`, que coloca o baú quando o golem vem de ovo ou dispenser; páginas de info no JEI (`CreateJEI.registerRecipes`, chaves `create.jei.*`); moldura de latão na tampa das texturas `active`/`inactive`. Build passou; nada disso testado em jogo.
   - Commit `4b8c9c8198cb8d22a85268991fc103015bfa4795`: `AndesiteGolemWorkGoal.clearLeavesIfStuck` — a cada 20 ticks andando até uma árvore, se não chegou 0,3 bloco mais perto, quebra folhas na direção do tronco (altura dos pés e da cabeça). Build passou; não testado em jogo.
   - Commit `e29ea3a146c6f7b7c00cff810de173e271bc48f6`: replantio do tronco inteiro. Todas as toras da camada de baixo (`TreeCutter.Tree.getLogs()`) recebem muda do mesmo tipo, vinda dos drops e depois do baú. Build passou; não testado em jogo.
-  - Commit `REPLACE_COMMIT`:
+  - Commit `f3bbd7c6f0b29ad9b8c7c48ed56af5f4ddca48ac`:
     - raio de trabalho de 15;
     - `AndesiteGolemArea.markBoundary` (anel de caminho de terra só sobre `#minecraft:dirt` com ar em cima, mais os 8 blocos ao redor do baú), chamado só em `AndesiteGolemSpawning` e no `finalizeSpawn` do ovo;
     - `AndesiteGolemSleepGoal`: noite, com menos de 6 de 9 pontos da área com luz de bloco ≥ 8, faz o golem dormir ao lado do baú; `canBeSeenAsEnemy` é falso enquanto dorme, os olhos apagam e a cabeça abaixa;
