@@ -50,7 +50,6 @@ public class AndesiteGolemSpawning {
 		golem.setChest(chestPos);
 		if (level.getBlockEntity(chestPos) instanceof AndesiteGolemChestBlockEntity chest)
 			chest.linkGolem(golem.getUUID());
-		AndesiteGolemArea.paveAroundChest(level, chestPos);
 		level.addFreshEntity(golem);
 		golem.playSpawnSound();
 

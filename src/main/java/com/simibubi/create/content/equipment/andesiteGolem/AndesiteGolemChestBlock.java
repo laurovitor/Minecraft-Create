@@ -115,8 +115,6 @@ public class AndesiteGolemChestBlock extends HorizontalDirectionalBlock
 	@Override
 	public void setPlacedBy(Level level, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
 		super.setPlacedBy(level, pos, state, placer, stack);
-		if (level instanceof ServerLevel)
-			AndesiteGolemArea.paveAroundChest(level, pos);
 		if (!(level instanceof ServerLevel) || !AllItems.PACKED_ANDESITE_GOLEM_CHEST.isIn(stack))
 			return;
 		AndesiteGolem golem = AllEntityTypes.ANDESITE_GOLEM.get().create(level, EntitySpawnReason.TRIGGERED);

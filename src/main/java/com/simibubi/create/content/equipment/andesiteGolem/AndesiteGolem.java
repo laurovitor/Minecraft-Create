@@ -164,7 +164,6 @@ public class AndesiteGolem extends AbstractGolem {
 				setChest(pos);
 				if (level.getBlockEntity(pos) instanceof AndesiteGolemChestBlockEntity chest)
 					chest.linkGolem(getUUID());
-				AndesiteGolemArea.paveAroundChest(level, pos);
 				snapTo(pos.getX() + 0.5, pos.getY() + 0.9, pos.getZ() + 0.5, getYRot(), 0);
 			}
 		}

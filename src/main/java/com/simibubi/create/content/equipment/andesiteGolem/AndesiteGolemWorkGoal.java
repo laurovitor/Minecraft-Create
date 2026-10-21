@@ -15,6 +15,7 @@ import com.simibubi.create.foundation.item.ItemHelper;
 import com.simibubi.create.foundation.utility.BlockHelper;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -40,7 +41,7 @@ import net.minecraft.world.phys.Vec3;
  */
 public class AndesiteGolemWorkGoal extends Goal {
 
-	private enum Phase { GO_TO_TARGET, WORK, RETURN, DEPOSIT, DONE }
+	private enum Phase { GO_TO_TARGET, WORK, RETURN, DEPOSIT, GO_TO_PATH, DONE }
 
 	private enum Kind { TREE, CROP, TALL_PLANT }
 
@@ -61,6 +62,8 @@ public class AndesiteGolemWorkGoal extends Goal {
 
 	private Phase phase = Phase.DONE;
 	private @Nullable BlockPos target;
+	private @Nullable BlockPos pathTarget;
+	private @Nullable BlockPos approach;
 	private Kind kind = Kind.CROP;
 	private int timer;
 	private int travelTicks;
@@ -83,9 +86,15 @@ public class AndesiteGolemWorkGoal extends Goal {
 		if (searchCooldown-- > 0)
 			return false;
 		searchCooldown = SEARCH_INTERVAL;
-		if (!chest.hasEmptySlot())
-			return false;
-		return findTarget(chest);
+		if (chest.hasEmptySlot() && findTarget(chest))
+			return true;
+		pathTarget = AndesiteGolemArea.nextPaveSpot(golem.level(), chest.getBlockPos(), feet -> {
+			if (golem.position().distanceToSqr(Vec3.atBottomCenterOf(feet)) <= 0.8)
+				return true;
+			Path path = golem.getNavigation().createPath(feet, 0);
+			return path != null && path.canReach();
+		});
+		return pathTarget != null;
 	}
 
 	@Override
@@ -97,13 +106,16 @@ public class AndesiteGolemWorkGoal extends Goal {
 	public void start() {
 		travelTicks = 0;
 		lastDistance = Double.MAX_VALUE;
-		phase = golem.getCarried().isEmpty() ? Phase.GO_TO_TARGET : Phase.RETURN;
+		phase = !golem.getCarried().isEmpty() ? Phase.RETURN
+			: pathTarget != null ? Phase.GO_TO_PATH : Phase.GO_TO_TARGET;
 	}
 
 	@Override
 	public void stop() {
 		phase = Phase.DONE;
 		target = null;
+		pathTarget = null;
+		approach = null;
 		golem.setState(CopperGolemState.IDLE);
 		golem.getNavigation().stop();
 	}
@@ -127,7 +139,7 @@ public class AndesiteGolemWorkGoal extends Goal {
 				phase = golem.getCarried().isEmpty() ? Phase.DONE : Phase.RETURN;
 				return;
 			}
-			if (walkTo(target)) {
+			if (kind == Kind.TREE ? walkToTree(target) : walkTo(target)) {
 				phase = Phase.WORK;
 				timer = WORK_TICKS;
 				golem.setState(CopperGolemState.GETTING_ITEM);
@@ -146,6 +158,16 @@ public class AndesiteGolemWorkGoal extends Goal {
 			target = null;
 			travelTicks = 0;
 			phase = golem.getCarried().isEmpty() ? Phase.DONE : Phase.RETURN;
+		}
+		case GO_TO_PATH -> {
+			if (pathTarget == null || !AndesiteGolemArea.canPave(golem.level(), pathTarget)) {
+				phase = Phase.DONE;
+				return;
+			}
+			if (walkToPath(pathTarget.above())) {
+				AndesiteGolemArea.pave(golem.level(), pathTarget);
+				phase = Phase.DONE;
+			}
 		}
 		case RETURN -> {
 			if (walkTo(chest.getBlockPos())) {
@@ -185,6 +207,74 @@ public class AndesiteGolemWorkGoal extends Goal {
 			golem.getNavigation().moveTo(path, 1.0);
 		}
 		return false;
+	}
+
+	/** Path paving requires arrival at the chest perimeter, not the general work reach. */
+	private boolean walkToPath(BlockPos feet) {
+		if (golem.position().distanceToSqr(Vec3.atBottomCenterOf(feet)) <= 0.8) {
+			golem.getNavigation().stop();
+			return true;
+		}
+		if (travelTicks++ > GIVE_UP_TICKS) {
+			phase = Phase.DONE;
+			return false;
+		}
+		if (travelTicks % 20 == 1 || golem.getNavigation().isDone())
+			golem.getNavigation().moveTo(golem.getNavigation().createPath(feet, 0), 1.0);
+		return false;
+	}
+
+	/** Reach an accessible outside edge, not the solid trunk's center. Mangrove logs may be
+	 * several blocks above the ground on roots: the working position is at ground level. */
+	private boolean walkToTree(BlockPos base) {
+		if (approach == null || travelTicks % 20 == 0 || golem.getNavigation().isDone()) {
+			BlockPos best = null;
+			Path bestPath = null;
+			double bestDistance = Double.MAX_VALUE;
+			for (BlockPos trunk : baseCluster(base))
+				for (Direction side : Direction.Plane.HORIZONTAL)
+					for (int outward = 1; outward <= 3; outward++) {
+					BlockPos edge = trunk.relative(side, outward);
+					for (int dy = 1; dy >= -7; dy--) {
+						BlockPos feet = edge.offset(0, dy, 0);
+						if (!canStandAt(feet))
+							continue;
+						if (golem.position().distanceToSqr(Vec3.atBottomCenterOf(feet)) <= 2.0) {
+							approach = feet;
+							golem.getNavigation().stop();
+							return true;
+						}
+						Path path = golem.getNavigation().createPath(feet, 0);
+						if (path == null || !path.canReach())
+							continue;
+						double distance = golem.distanceToSqr(Vec3.atBottomCenterOf(feet));
+						if (distance < bestDistance) {
+							best = feet;
+							bestPath = path;
+							bestDistance = distance;
+						}
+					}
+				}
+			approach = best;
+			if (bestPath != null)
+				golem.getNavigation().moveTo(bestPath, 1.0);
+		}
+		if (approach != null && golem.position().distanceToSqr(Vec3.atBottomCenterOf(approach)) <= 2.0) {
+			golem.getNavigation().stop();
+			return true;
+		}
+		if (travelTicks++ > GIVE_UP_TICKS) {
+			blacklist.put(base, golem.level().getGameTime() + BLACKLIST_TICKS);
+			phase = Phase.DONE;
+		}
+		return false;
+	}
+
+	private boolean canStandAt(BlockPos feet) {
+		return golem.level().isLoaded(feet) && golem.level().isLoaded(feet.below())
+			&& golem.level().getBlockState(feet).getCollisionShape(golem.level(), feet).isEmpty()
+			&& golem.level().getBlockState(feet.above()).getCollisionShape(golem.level(), feet.above()).isEmpty()
+			&& golem.level().getBlockState(feet.below()).isFaceSturdy(golem.level(), feet.below(), Direction.UP);
 	}
 
 	/**
@@ -359,12 +449,14 @@ public class AndesiteGolemWorkGoal extends Goal {
 		return state.is(Blocks.SUGAR_CANE) || state.is(Blocks.CACTUS);
 	}
 
-	/** Only the rooted bottom of a plant at least two blocks tall is a work target. */
+	/** Only the rooted bottom of a plant at least three blocks tall is a work target. */
 	private boolean isHarvestableTallPlant(BlockPos pos, BlockState state) {
-		BlockPos above = pos.above();
+		BlockPos second = pos.above();
+		BlockPos third = pos.above(2);
 		return !golem.level().getBlockState(pos.below()).is(state.getBlock())
-			&& golem.level().isLoaded(above)
-			&& golem.level().getBlockState(above).is(state.getBlock());
+			&& golem.level().isLoaded(second) && golem.level().isLoaded(third)
+			&& golem.level().getBlockState(second).is(state.getBlock())
+			&& golem.level().getBlockState(third).is(state.getBlock());
 	}
 
 	private static boolean isMangroveRoot(BlockState state) {
@@ -498,8 +590,9 @@ public class AndesiteGolemWorkGoal extends Goal {
 		return true;
 	}
 
-	/** Cut from the top down so cactus and sugar cane updates cannot break upper blocks as
-	 * uncaptured world drops. Never touch the bottom block: it remains rooted to regrow. */
+	/** At normal three-block height, cut the top two from the top down so updates cannot break upper blocks as
+	 * uncaptured world drops. Extra-tall columns also lose every segment above the base.
+	 * Never touch the bottom block: it remains rooted to regrow. */
 	private void harvestTallPlant(BlockPos root, List<ItemStack> gathered) {
 		Block block = golem.level().getBlockState(root).getBlock();
 		List<BlockPos> upper = new ArrayList<>();
