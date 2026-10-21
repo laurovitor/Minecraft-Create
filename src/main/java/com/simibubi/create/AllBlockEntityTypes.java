@@ -511,6 +511,12 @@ public class AllBlockEntityTypes {
 		.renderer(() -> SmartBlockEntityRenderer::new)
 		.register();
 
+	public static final BlockEntityEntry<com.simibubi.create.content.equipment.redstoneGolem.RedstoneGolemChestBlockEntity> REDSTONE_GOLEM_CHEST = REGISTRATE
+		.blockEntity("redstone_golem_chest", com.simibubi.create.content.equipment.redstoneGolem.RedstoneGolemChestBlockEntity::new)
+		.validBlocks(AllBlocks.REDSTONE_GOLEM_CHEST)
+		.renderer(() -> SmartBlockEntityRenderer::new)
+		.register();
+
 	public static final BlockEntityEntry<ItemHatchBlockEntity> ITEM_HATCH = REGISTRATE
 		.blockEntity("item_hatch", ItemHatchBlockEntity::new)
 		.validBlocks(AllBlocks.ITEM_HATCH)

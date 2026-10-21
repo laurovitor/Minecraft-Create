@@ -100,6 +100,18 @@ public class AllEntityTypes {
 			.build()
 			.register();
 
+	// Lauro edition
+	public static final EntityEntry<com.simibubi.create.content.equipment.redstoneGolem.RedstoneGolem> REDSTONE_GOLEM =
+		register("redstone_golem", com.simibubi.create.content.equipment.redstoneGolem.RedstoneGolem::new,
+			() -> com.simibubi.create.content.equipment.redstoneGolem.RedstoneGolemRenderer::new, MobCategory.MISC, 10, 3,
+			true, false, b -> b.sized(0.49F, 0.98F).eyeHeight(0.8125F))
+			// the egg also sets down the golem's chest, a golem without one has nothing to do
+			.spawnEgg()
+			.model(() -> (c, p) -> {})
+			.lang("Redstone Golem Spawn Egg")
+			.build()
+			.register();
+
 	public static final EntityEntry<PackageEntity> PACKAGE = register("package", PackageEntity::new, () -> PackageRenderer::new,
 		MobCategory.MISC, 10, 3, true, false, PackageEntity::build)
 		.visual(() -> PackageVisual::new, true)
@@ -143,6 +155,7 @@ public class AllEntityTypes {
 		event.put(ANDESITE_GOLEM.get(), AndesiteGolem.createAttributes()
 			.build());
 		event.put(NETHERITE_GOLEM.get(), NetheriteGolem.createAttributes().build());
+		event.put(REDSTONE_GOLEM.get(), com.simibubi.create.content.equipment.redstoneGolem.RedstoneGolem.createAttributes().build());
 	}
 
 	public static void register() {

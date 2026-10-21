@@ -365,6 +365,13 @@ public class CreateJEI implements IModPlugin {
 			Component.translatable("create.jei.packed_netherite_golem_chest.info"));
 		net.minecraft.world.item.SpawnEggItem.byId(AllEntityTypes.NETHERITE_GOLEM.get())
 			.ifPresent(egg -> registration.addIngredientInfo(egg.value(), netheriteInfo));
+		Component redstoneInfo = Component.translatable("create.jei.redstone_golem.info");
+		registration.addIngredientInfo(AllBlocks.REDSTONE_GOLEM_CHEST.get(), redstoneInfo,
+			Component.translatable("create.jei.redstone_golem_chest.info"));
+		registration.addIngredientInfo(AllItems.PACKED_REDSTONE_GOLEM_CHEST.get(),
+			Component.translatable("create.jei.packed_redstone_golem_chest.info"));
+		net.minecraft.world.item.SpawnEggItem.byId(AllEntityTypes.REDSTONE_GOLEM.get())
+			.ifPresent(egg -> registration.addIngredientInfo(egg.value(), redstoneInfo));
 	}
 
 	@Override

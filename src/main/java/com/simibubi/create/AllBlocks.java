@@ -188,6 +188,7 @@ import com.simibubi.create.content.logistics.tunnel.BrassTunnelBlock;
 import com.simibubi.create.content.logistics.tunnel.BrassTunnelCTBehaviour;
 import com.simibubi.create.content.logistics.vault.ItemVaultBlock;
 import com.simibubi.create.content.equipment.netheriteGolem.NetheriteGolemChestBlock;
+import com.simibubi.create.content.equipment.redstoneGolem.RedstoneGolemChestBlock;
 import com.simibubi.create.content.equipment.andesiteGolem.AndesiteGolemChestBlock;
 import com.simibubi.create.content.logistics.vault.ReinforcedItemVaultBlock;
 import com.simibubi.create.content.logistics.vault.ItemVaultCTBehaviour;
@@ -1879,6 +1880,23 @@ public class AllBlocks {
 			.blockstate(() -> (c, p) -> BlockStateGen.horizontalBlock(c, p,
 				s -> AssetLookup.partialBaseVariant(c, p, s.getValue(NetheriteGolemChestBlock.ACTIVE) ? "active" : "inactive")))
 			.lang("Netherite Golem Chest")
+			.item()
+			.transform(customItemModel("_", "block_active"))
+			.register();
+
+	// Lauro edition: home chest of the Redstone Golem, made when a pumpkin goes on a block of redstone
+	public static final BlockEntry<RedstoneGolemChestBlock> REDSTONE_GOLEM_CHEST =
+		REGISTRATE.block("redstone_golem_chest", RedstoneGolemChestBlock::new)
+			.initialProperties(() -> Blocks.CHEST)
+			.properties(p -> p.mapColor(MapColor.FIRE)
+				.sound(SoundType.METAL)
+				.strength(5.0F))
+			.transform(pickaxeOnly())
+			// Player mining creates either a live packed home or a dead recyclable chest.
+			.loot((lt, block) -> lt.add(block, BlockLootSubProvider.noDrop()))
+			.blockstate(() -> (c, p) -> BlockStateGen.horizontalBlock(c, p,
+				s -> AssetLookup.partialBaseVariant(c, p, s.getValue(RedstoneGolemChestBlock.ACTIVE) ? "active" : "inactive")))
+			.lang("Redstone Golem Chest")
 			.item()
 			.transform(customItemModel("_", "block_active"))
 			.register();

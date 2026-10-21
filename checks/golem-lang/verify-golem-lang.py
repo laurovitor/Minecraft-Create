@@ -21,7 +21,7 @@ en = json.loads(Path('src/generated/resources/assets/create/lang/en_us.json').re
 pt = json.loads(Path('src/main/resources/assets/create/lang/pt_br.json').read_text())
 
 keys = {k for d in (default, en, pt) for k in d if GOLEM.search(k)}
-code = [f for d in ('andesiteGolem', 'netheriteGolem') for f in (src / 'content/equipment' / d).glob('*.java')]
+code = [f for d in ('andesiteGolem', 'netheriteGolem', 'redstoneGolem') for f in (src / 'content/equipment' / d).glob('*.java')]
 for f in code + [src / 'compat/jei/CreateJEI.java']:
     text = f.read_text()
     if f.parent.name.endswith('Golem'):
@@ -37,6 +37,10 @@ keys |= {f'create.clipboard.golem_info.state.{s}' for s in ('sleeping', 'patrol'
 statuses = re.search(r'enum TreeStatus \{(.*?);', (src / 'content/equipment/andesiteGolem/AndesiteGolem.java').read_text(), re.S)
 keys |= {f'create.clipboard.golem_info.tree.{k}' for k in re.findall(r'\("([a-z_]+)"\)', statuses.group(1))}
 assert len([k for k in keys if '.tree.' in k]) == 9
+# Redstone golem task names: "clipboard.golem_info.task." + RedstoneGolem.Task.key.
+tasks = re.search(r'enum Task \{(.*?);', (src / 'content/equipment/redstoneGolem/RedstoneGolem.java').read_text(), re.S)
+keys |= {f'create.clipboard.golem_info.task.{k}' for k in re.findall(r'\("([a-z_]+)"\)', tasks.group(1))}
+assert len([k for k in keys if '.task.' in k]) == 5
 
 def check(label, en_map, pt_map):
     bad = [k for k in sorted(keys) if k not in en_map or k not in pt_map or en_map[k] == pt_map[k]]

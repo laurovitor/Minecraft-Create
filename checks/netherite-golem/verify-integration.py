@@ -96,4 +96,56 @@ for d in [root/'content/equipment/netheriteGolem']:
 recipe = json.loads(Path('src/generated/resources/data/create/recipe/pressing/netherite_ingot_from_golem_chest.json').read_text())
 assert recipe['ingredients'] == ['create:netherite_golem_chest']
 assert recipe['results'] == [{'count': 6, 'id': 'minecraft:netherite_ingot'}]
+
+# ---- Redstone golem (structural; runtime unverified)
+rg = root/'content/equipment/redstoneGolem'
+rg_entity = (rg/'RedstoneGolem.java').read_text()
+rg_goal = (rg/'RedstoneGolemCollectGoal.java').read_text()
+rg_net = (rg/'RedstoneGolemNetwork.java').read_text()
+rg_be = (rg/'RedstoneGolemChestBlockEntity.java').read_text()
+rg_block = (rg/'RedstoneGolemChestBlock.java').read_text()
+# only its own job: no sleep, regen, repair, combat, filter or work goals of the other golems
+for gone in ['SleepGoal', 'MeleeAttackGoal', 'GuardGoal', 'WorkGoal', 'StrollGoal', 'FilteringBehaviour', 'filtering']:
+    for src in (rg_entity, rg_goal, rg_be, rg_block):
+        assert gone not in src, gone
+assert 'public boolean isRepairItem(ItemStack stack) {\n\t\treturn false;' in rg_entity
+assert 'new RedstoneGolemCollectGoal(this)' in rg_entity and 'RedstoneGolemRules.MAX_HEALTH' in rg_entity
+# network: Create logistics frequency, Stock Links only, attached block, own chest excluded, chests/golem chests
+assert 'new LogisticallyLinkedBehaviour(this, false)' in rg_be and 'return true;' in rg_be
+assert 'LogisticallyLinkedBehaviour.getAllPresent(home.link.freqId, false)' in rg_net
+assert 'link.blockEntity instanceof PackagerLinkBlockEntity stockLink' in rg_net
+assert '.relative(PackagerLinkBlock.getConnectedDirection(stockLink.getBlockState()).getOpposite())' in rg_net
+assert 'seen.add(homePos); // its own chest is never a source' in rg_net
+assert 'instanceof AndesiteGolemChestBlockEntity golemChest' in rg_net and 'ChestBlock.getContainer(chest, state, level, pos, true)' in rg_net
+assert 'RedstoneGolemRules.inRange(' in rg_net
+# behaviour: fullest-first, 4 slots, run there, stop when full
+assert 'RedstoneGolemRules.chooseSource(candidates)' in rg_goal and 'RedstoneGolemRules.pickupSlots(occupied' in rg_goal
+assert 'walkTo(source, RedstoneGolemRules.RUN_SPEED)' in rg_goal and 'RedstoneGolemRules.shouldCollect(chest.hasEmptySlot()' in rg_goal
+# tuning a Stock Link on the chest instead of opening it; network survives packing
+assert 'instanceof com.simibubi.create.content.logistics.packagerLink.LogisticallyLinkedBlockItem)\n\t\t\treturn InteractionResult.PASS;' in rg_block
+assert 'data.store("Freq"' in rg_block and 'chest.link.freqId = freq' in rg_block
+mixin = Path('src/main/java/com/simibubi/create/foundation/mixin/CarvedPumpkinBlockMixin.java').read_text()
+assert 'RedstoneGolemSpawning.trySpawn(level, topPos)' in mixin and 'Blocks.REDSTONE_BLOCK' in mixin
+assert 'Blocks.REDSTONE_BLOCK' in (rg/'RedstoneGolemSpawning.java').read_text()
+for reg, needle in [('AllBlocks.java', 'REDSTONE_GOLEM_CHEST ='), ('AllItems.java', 'PACKED_REDSTONE_GOLEM_CHEST ='),
+                    ('AllEntityTypes.java', 'REDSTONE_GOLEM ='), ('AllBlockEntityTypes.java', 'REDSTONE_GOLEM_CHEST = REGISTRATE'),
+                    ('compat/jei/CreateJEI.java', 'create.jei.redstone_golem.info'),
+                    ('foundation/events/CommonEvents.java', 'RedstoneGolemChestBlockEntity.registerCapabilities(event)'),
+                    ('content/logistics/packager/AllInventoryIdentifiers.java', 'AllBlocks.REDSTONE_GOLEM_CHEST.get()'),
+                    ('content/equipment/clipboard/ClipboardValueSettingsHandler.java', 'RedstoneGolemClipboardInfo.write')]:
+    assert needle in (root/reg).read_text(), (reg, needle)
+handler_src = (root/'content/equipment/clipboard/ClipboardValueSettingsHandler.java').read_text()
+assert handler_src.index('RedstoneGolemChestBlockEntity redstoneChest') < handler_src.index('AndesiteGolemChestBlockEntity chest'), 'subclass branch first'
+rrecipe = json.loads(Path('src/generated/resources/data/create/recipe/pressing/redstone_from_golem_chest.json').read_text())
+assert rrecipe['ingredients'] == ['create:redstone_golem_chest'] and rrecipe['results'] == [{'count': 6, 'id': 'minecraft:redstone'}]
+assert 'create:redstone_golem_chest' in Path('src/generated/resources/data/minecraft/tags/block/mineable/pickaxe.json').read_text()
+for f in ['assets/create/blockstates/redstone_golem_chest.json', 'assets/create/items/redstone_golem_chest.json',
+          'assets/create/items/redstone_golem_spawn_egg.json', 'assets/create/items/packed_redstone_golem_chest.json',
+          'data/create/loot_table/blocks/redstone_golem_chest.json']:
+    json.loads(Path('src/generated/resources/' + f).read_text())
+for f in ['models/block/redstone_golem_chest/block_active.json', 'models/block/redstone_golem_chest/block_inactive.json',
+          'models/item/redstone_golem_spawn_egg.json', 'textures/block/redstone_golem_chest/active.png',
+          'textures/block/redstone_golem_chest/inactive.png', 'textures/entity/redstone_golem/redstone_golem.png',
+          'textures/entity/redstone_golem/redstone_golem_eyes.png', 'textures/item/redstone_golem_spawn_egg.png']:
+    assert Path('src/main/resources/assets/create/' + f).exists(), f
 print('Offline integration/serialization wiring checks passed (runtime unverified)')

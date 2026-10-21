@@ -1308,5 +1308,15 @@
 	"create.clipboard.golem_info.tree.no_leaves": "no leaves found, treated as a build",
 	"create.clipboard.golem_info.tree.bees": "has a bee nest or hive",
 	"create.clipboard.golem_info.tree.unreachable": "could not reach it, retrying later",
-	"create.clipboard.golem_info.tree.chest_full": "chest full, not working"
+	"create.clipboard.golem_info.tree.chest_full": "chest full, not working",
+	"create.jei.redstone_golem.info": "Redstone Golem: place a Carved Pumpkin or Jack o'Lantern on a Block of Redstone; the block becomes its chest. Its only job is collecting: it runs to the fullest chest on its network, takes up to 4 stacks, walks back and stores them in its chest. It stops while its chest has no empty slot. The fastest and most fragile golem. Right-click it or its chest with a blank Clipboard to note its status. Shift + Wrench picks up the chest with the golem.",
+	"create.jei.redstone_golem_chest.info": "Network: right-click this chest with a Stock Link to tune the link to its network, then Shift + right-click the tuned link onto a chest or another golem's chest to make it a source. Only loaded chests within 48 blocks are visited; its own chest never is. No filter: everything is stored. Works with funnels, hoppers, packagers and comparators. A chest whose golem died can be pressed into 6 Redstone Dust.",
+	"create.jei.packed_redstone_golem_chest.info": "Moving the packed chest keeps the golem's health and age, the chest contents, what it carried and its network: tuned Stock Links keep working.",
+	"create.clipboard.golem_info.task": "Task: %1$s",
+	"create.clipboard.golem_info.task.idle": "waiting",
+	"create.clipboard.golem_info.task.collecting": "running to collect",
+	"create.clipboard.golem_info.task.returning": "bringing items home",
+	"create.clipboard.golem_info.task.chest_full": "chest full, not collecting",
+	"create.clipboard.golem_info.task.no_source": "no network chest with items",
+	"create.clipboard.golem_info.network": "Network chests: %1$s"
 }

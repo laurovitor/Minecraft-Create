@@ -511,6 +511,7 @@
     "create:small_veridium_brick_wall",
     "create:layered_veridium",
     "create:veridium_pillar",
-    "create:netherite_golem_chest"
+    "create:netherite_golem_chest",
+    "create:redstone_golem_chest"
   ]
 }

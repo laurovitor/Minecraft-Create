@@ -79,6 +79,16 @@ public class ClipboardValueSettingsHandler {
 				ItemVaultClipboardInfo.write(world, pos, vault, player, itemStack);
 			return;
 		}
+		if (!paste && smartBE instanceof com.simibubi.create.content.equipment.redstoneGolem.RedstoneGolemChestBlockEntity redstoneChest
+			&& event instanceof RightClickBlock redstoneClick && redstoneChest.getBlockState()
+				.getValue(com.simibubi.create.content.equipment.redstoneGolem.RedstoneGolemChestBlock.ACTIVE)) {
+			redstoneClick.setCanceled(true);
+			redstoneClick.setCancellationResult(InteractionResult.SUCCESS);
+			if (!world.isClientSide() && redstoneChest.getGolem() != null)
+				com.simibubi.create.content.equipment.redstoneGolem.RedstoneGolemClipboardInfo.write(player, itemStack,
+					redstoneChest.getGolem(), redstoneChest);
+			return;
+		}
 		if (!paste && smartBE instanceof NetheriteGolemChestBlockEntity netheriteChest
 			&& event instanceof RightClickBlock netheriteClick && netheriteChest.getBlockState()
 				.getValue(NetheriteGolemChestBlock.ACTIVE)) {

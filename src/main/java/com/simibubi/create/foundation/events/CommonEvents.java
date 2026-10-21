@@ -316,6 +316,7 @@ public class CommonEvents {
 			ItemVaultBlockEntity.registerCapabilities(event);
 			AndesiteGolemChestBlockEntity.registerCapabilities(event);
 			com.simibubi.create.content.equipment.netheriteGolem.NetheriteGolemChestBlockEntity.registerCapabilities(event);
+			com.simibubi.create.content.equipment.redstoneGolem.RedstoneGolemChestBlockEntity.registerCapabilities(event);
 			MechanicalCrafterBlockEntity.registerCapabilities(event);
 			MillstoneBlockEntity.registerCapabilities(event);
 			StressGaugeBlockEntity.registerCapabilities(event);

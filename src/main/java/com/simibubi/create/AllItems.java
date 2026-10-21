@@ -226,6 +226,15 @@ public class AllItems {
 			.model(() -> AssetLookup.customBlockItemModel("netherite_golem_chest", "block_active"))
 			.register();
 
+	/** A picked-up live home; deliberately distinct from the dead chest pressed into redstone. */
+	public static final ItemEntry<com.simibubi.create.content.equipment.redstoneGolem.PackedRedstoneGolemChestItem> PACKED_REDSTONE_GOLEM_CHEST =
+		REGISTRATE.item("packed_redstone_golem_chest",
+			p -> new com.simibubi.create.content.equipment.redstoneGolem.PackedRedstoneGolemChestItem(AllBlocks.REDSTONE_GOLEM_CHEST.get(), p))
+			.properties(p -> p.stacksTo(1))
+			.lang("Redstone Golem Chest (With Golem)")
+			.model(() -> AssetLookup.customBlockItemModel("redstone_golem_chest", "block_active"))
+			.register();
+
 	public static final ItemEntry<ChromaticCompoundItem> CHROMATIC_COMPOUND =
 		REGISTRATE.item("chromatic_compound", ChromaticCompoundItem::new)
 			.properties(p -> p.rarity(Rarity.UNCOMMON))

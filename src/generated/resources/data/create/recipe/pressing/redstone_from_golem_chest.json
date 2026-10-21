@@ -1,0 +1,5 @@
+{
+  "type": "create:pressing",
+  "ingredients": ["create:redstone_golem_chest"],
+  "results": [{"count": 6, "id": "minecraft:redstone"}]
+}
