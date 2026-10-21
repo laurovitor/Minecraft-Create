@@ -33,14 +33,16 @@ import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * The Andesite Golem's job: find a grown tree or crop near its chest, walk there, take it down,
- * replant, walk back and store what the chest filter accepts. Everything else is discarded.
+ * The Andesite Golem's job: find a grown tree, crop or tall sugar cane/cactus near its chest,
+ * walk there, harvest it, return and store what the chest filter accepts. Trees and crops are
+ * replanted; sugar cane and cactus keep their rooted bottom block and regrow naturally.
+ * Everything else is discarded.
  */
 public class AndesiteGolemWorkGoal extends Goal {
 
 	private enum Phase { GO_TO_TARGET, WORK, RETURN, DEPOSIT, DONE }
 
-	private enum Kind { TREE, CROP }
+	private enum Kind { TREE, CROP, TALL_PLANT }
 
 	/** Ticks spent chopping/harvesting and storing, roughly the copper golem chest animations. */
 	private static final int WORK_TICKS = 30;
@@ -338,6 +340,9 @@ public class AndesiteGolemWorkGoal extends Goal {
 		if (!golem.level().isLoaded(pos))
 			return null;
 		BlockState state = golem.level().getBlockState(pos);
+		if (isTallPlant(state))
+			return isHarvestableTallPlant(pos, state) && chest.accepts(new ItemStack(state.getBlock()))
+				? Kind.TALL_PLANT : null;
 		if (isGrownCrop(state))
 			return cropAccepted(chest, state, pos) ? Kind.CROP : null;
 		if (state.is(BlockTags.LOGS)) {
@@ -348,6 +353,18 @@ public class AndesiteGolemWorkGoal extends Goal {
 			return chest.accepts(new ItemStack(state.getBlock())) ? Kind.TREE : null;
 		}
 		return null;
+	}
+
+	private static boolean isTallPlant(BlockState state) {
+		return state.is(Blocks.SUGAR_CANE) || state.is(Blocks.CACTUS);
+	}
+
+	/** Only the rooted bottom of a plant at least two blocks tall is a work target. */
+	private boolean isHarvestableTallPlant(BlockPos pos, BlockState state) {
+		BlockPos above = pos.above();
+		return !golem.level().getBlockState(pos.below()).is(state.getBlock())
+			&& golem.level().isLoaded(above)
+			&& golem.level().getBlockState(above).is(state.getBlock());
 	}
 
 	private static boolean isMangroveRoot(BlockState state) {
@@ -378,6 +395,8 @@ public class AndesiteGolemWorkGoal extends Goal {
 		List<ItemStack> gathered = new ArrayList<>();
 		if (kind == Kind.TREE)
 			cutTree(chest, pos, gathered);
+		else if (kind == Kind.TALL_PLANT)
+			harvestTallPlant(pos, gathered);
 		else
 			harvestCrop(chest, pos, gathered);
 
@@ -477,6 +496,18 @@ public class AndesiteGolemWorkGoal extends Goal {
 		golem.level().setBlockAndUpdate(pos, sapling);
 		golem.level().playSound(null, pos, SoundEvents.GRASS_PLACE, SoundSource.BLOCKS, 1, 1);
 		return true;
+	}
+
+	/** Cut from the top down so cactus and sugar cane updates cannot break upper blocks as
+	 * uncaptured world drops. Never touch the bottom block: it remains rooted to regrow. */
+	private void harvestTallPlant(BlockPos root, List<ItemStack> gathered) {
+		Block block = golem.level().getBlockState(root).getBlock();
+		List<BlockPos> upper = new ArrayList<>();
+		for (BlockPos pos = root.above(); golem.level().isLoaded(pos)
+			&& golem.level().getBlockState(pos).is(block); pos = pos.above())
+			upper.add(pos);
+		for (int i = upper.size() - 1; i >= 0; i--)
+			BlockHelper.destroyBlockAs(golem.level(), upper.get(i), null, ItemStack.EMPTY, 1, gathered::add);
 	}
 
 	private void harvestCrop(AndesiteGolemChestBlockEntity chest, BlockPos pos, List<ItemStack> gathered) {
