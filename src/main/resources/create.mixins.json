@@ -10,6 +10,7 @@
     "OldMinecartBehaviorMixin",
     "ArmorTrimMixin",
     "BeehiveBlockMixin",
+    "CarvedPumpkinBlockMixin",
     "BlockItemMixin",
     "BlockMixin",
     "BuiltInRegistriesMixin",

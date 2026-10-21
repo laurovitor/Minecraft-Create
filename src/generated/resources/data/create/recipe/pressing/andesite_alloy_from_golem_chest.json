@@ -1,0 +1,12 @@
+{
+  "type": "create:pressing",
+  "ingredients": [
+    "create:andesite_golem_chest"
+  ],
+  "results": [
+    {
+      "count": 6,
+      "id": "create:andesite_alloy"
+    }
+  ]
+}

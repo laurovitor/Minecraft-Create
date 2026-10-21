@@ -187,6 +187,7 @@ import com.simibubi.create.content.logistics.tunnel.BeltTunnelBlock;
 import com.simibubi.create.content.logistics.tunnel.BrassTunnelBlock;
 import com.simibubi.create.content.logistics.tunnel.BrassTunnelCTBehaviour;
 import com.simibubi.create.content.logistics.vault.ItemVaultBlock;
+import com.simibubi.create.content.equipment.andesiteGolem.AndesiteGolemChestBlock;
 import com.simibubi.create.content.logistics.vault.ReinforcedItemVaultBlock;
 import com.simibubi.create.content.logistics.vault.ItemVaultCTBehaviour;
 import com.simibubi.create.content.logistics.vault.ItemVaultItem;
@@ -1845,6 +1846,21 @@ public class AllBlocks {
 			.lang("Reinforced Item Vault")
 			.item(ItemVaultItem::new)
 			.build()
+			.register();
+
+	// Lauro edition: home chest of the Andesite Golem, made when a pumpkin goes on an andesite alloy block
+	public static final BlockEntry<AndesiteGolemChestBlock> ANDESITE_GOLEM_CHEST =
+		REGISTRATE.block("andesite_golem_chest", AndesiteGolemChestBlock::new)
+			.initialProperties(() -> Blocks.CHEST)
+			.properties(p -> p.mapColor(MapColor.STONE)
+				.sound(SoundType.STONE)
+				.strength(2.5F))
+			.transform(pickaxeOnly())
+			.blockstate(() -> (c, p) -> BlockStateGen.horizontalBlock(c, p,
+				s -> AssetLookup.partialBaseVariant(c, p, s.getValue(AndesiteGolemChestBlock.ACTIVE) ? "active" : "inactive")))
+			.lang("Andesite Golem Chest")
+			.item()
+			.transform(customItemModel("_", "block_active"))
 			.register();
 
 	public static final BlockEntry<ItemHatchBlock> ITEM_HATCH = REGISTRATE.block("item_hatch", ItemHatchBlock::new)

@@ -332,6 +332,11 @@ public class TreeCutter {
 			this.attachments = attachments;
 		}
 
+		/** Lauro edition: used by the Andesite Golem to leave log builds without leaves alone. */
+		public boolean hasLeaves() {
+			return !leaves.isEmpty();
+		}
+
 		@Override
 		public void destroyBlocks(Level world, ItemStack toDamage, @Nullable Player playerEntity,
 								  BiConsumer<BlockPos, ItemStack> drop) {

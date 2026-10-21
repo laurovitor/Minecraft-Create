@@ -185,6 +185,7 @@ import com.simibubi.create.content.logistics.tunnel.BeltTunnelVisual;
 import com.simibubi.create.content.logistics.tunnel.BrassTunnelBlockEntity;
 import com.simibubi.create.content.logistics.vault.ItemVaultBlockEntity;
 import com.simibubi.create.content.logistics.vault.ReinforcedItemVaultBlockEntity;
+import com.simibubi.create.content.equipment.andesiteGolem.AndesiteGolemChestBlockEntity;
 import com.simibubi.create.content.processing.basin.BasinBlockEntity;
 import com.simibubi.create.content.processing.basin.BasinRenderer;
 import com.simibubi.create.content.processing.burner.BlazeBurnerBlockEntity;
@@ -495,6 +496,12 @@ public class AllBlockEntityTypes {
 	public static final BlockEntityEntry<ReinforcedItemVaultBlockEntity> REINFORCED_ITEM_VAULT = REGISTRATE
 		.blockEntity("reinforced_item_vault", ReinforcedItemVaultBlockEntity::new)
 		.validBlocks(AllBlocks.REINFORCED_ITEM_VAULT)
+		.register();
+
+	public static final BlockEntityEntry<AndesiteGolemChestBlockEntity> ANDESITE_GOLEM_CHEST = REGISTRATE
+		.blockEntity("andesite_golem_chest", AndesiteGolemChestBlockEntity::new)
+		.validBlocks(AllBlocks.ANDESITE_GOLEM_CHEST)
+		.renderer(() -> SmartBlockEntityRenderer::new)
 		.register();
 
 	public static final BlockEntityEntry<ItemHatchBlockEntity> ITEM_HATCH = REGISTRATE

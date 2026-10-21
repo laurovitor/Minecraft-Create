@@ -53,6 +53,7 @@ import com.simibubi.create.content.logistics.tableCloth.TableClothBlockEntity;
 import com.simibubi.create.content.logistics.tunnel.BeltTunnelBlockEntity;
 import com.simibubi.create.content.logistics.tunnel.BrassTunnelBlockEntity;
 import com.simibubi.create.content.logistics.vault.ItemVaultBlockEntity;
+import com.simibubi.create.content.equipment.andesiteGolem.AndesiteGolemChestBlockEntity;
 import com.simibubi.create.content.processing.basin.BasinBlockEntity;
 import com.simibubi.create.content.redstone.displayLink.DisplayLinkBlockEntity;
 import com.simibubi.create.content.redstone.link.controller.LinkedControllerServerHandler;
@@ -313,6 +314,7 @@ public class CommonEvents {
 			HosePulleyBlockEntity.registerCapabilities(event);
 			ItemDrainBlockEntity.registerCapabilities(event);
 			ItemVaultBlockEntity.registerCapabilities(event);
+			AndesiteGolemChestBlockEntity.registerCapabilities(event);
 			MechanicalCrafterBlockEntity.registerCapabilities(event);
 			MillstoneBlockEntity.registerCapabilities(event);
 			StressGaugeBlockEntity.registerCapabilities(event);

@@ -133,6 +133,7 @@
     "create:item_vault",
     "create:reinforced_item_vault",
     "create:item_hatch",
+    "create:andesite_golem_chest",
     "create:packager",
     "create:repackager",
     "create:package_frogport",

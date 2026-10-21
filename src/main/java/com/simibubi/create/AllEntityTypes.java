@@ -27,6 +27,9 @@ import com.tterrag.registrate.util.nullness.NonNullFunction;
 import com.tterrag.registrate.util.nullness.NonNullSupplier;
 
 import net.createmod.catnip.api.lang.Lang;
+import com.simibubi.create.content.equipment.andesiteGolem.AndesiteGolem;
+import com.simibubi.create.content.equipment.andesiteGolem.AndesiteGolemRenderer;
+
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.world.entity.Entity;
@@ -73,6 +76,11 @@ public class AllEntityTypes {
 	public static final EntityEntry<SeatEntity> SEAT = register("seat", SeatEntity::new, () -> SeatEntity.Render::new,
 		MobCategory.MISC, 5, Integer.MAX_VALUE, false, true, SeatEntity::build).register();
 
+	// Lauro edition
+	public static final EntityEntry<AndesiteGolem> ANDESITE_GOLEM =
+		register("andesite_golem", AndesiteGolem::new, () -> AndesiteGolemRenderer::new, MobCategory.MISC, 10, 3,
+			true, false, b -> b.sized(0.49F, 0.98F).eyeHeight(0.8125F)).register();
+
 	public static final EntityEntry<PackageEntity> PACKAGE = register("package", PackageEntity::new, () -> PackageRenderer::new,
 		MobCategory.MISC, 10, 3, true, false, PackageEntity::build)
 		.visual(() -> PackageVisual::new, true)
@@ -112,6 +120,8 @@ public class AllEntityTypes {
 
 	public static void registerEntityAttributes(EntityAttributeCreationEvent event) {
 		event.put(PACKAGE.get(), PackageEntity.createPackageAttributes()
+			.build());
+		event.put(ANDESITE_GOLEM.get(), AndesiteGolem.createAttributes()
 			.build());
 	}
 

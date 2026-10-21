@@ -22,6 +22,18 @@ Um cofre novo, revestido com chapas resistentes. Receita na bancada, em coluna: 
 
 Com uma **prancheta em branco** na mão, clique com o botão direito num **Cofre de Itens** ou num **Cofre de Itens Revestido** e a prancheta anota as informações dele: tamanho (ex.: 5x5x15), capacidade total em espaços, espaços livres e porcentagem de ocupação. Os itens não são listados, só os totais, pra saber quando é hora de montar um cofre novo. A anotação é uma foto do momento do clique; pra atualizar, use outra prancheta em branco ou limpe a atual. Se a prancheta já tiver algo escrito, aparece um aviso e nada é sobrescrito.
 
+### Golem de Andesito
+
+Um ajudante novo para fazendas automáticas, com o corpo do golem de cobre na cor da liga de andesito.
+
+- **Como criar:** coloque uma **abóbora esculpida** (ou lanterna de abóbora) sobre um **bloco de liga de andesito**. O golem nasce e o bloco vira o **Baú do Golem de Andesito**, a casa dele.
+- **O que ele faz:** num raio de **10 blocos** do baú, em qualquer altura, ele **corta árvores inteiras** e **colhe plantações maduras** (trigo, cenoura, batata, beterraba e fungo do Nether). Sempre **replanta** o que tirou: a muda ou semente vem do que ele colheu ou, se faltar, do próprio baú.
+- **Filtro:** a tampa do baú tem um **slot de filtro do Create**, igual ao dos funis. Sem filtro, ele trabalha em tudo e guarda tudo. Com filtro, só corta e colhe o que produz os itens do filtro e só guarda esses itens; o resto é descartado.
+- **Descanso:** com o baú cheio ou sem nada maduro por perto, ele passeia num raio de **5 blocos** do baú.
+- **Perigos:** toma **dano de queda** e é **alvo de monstros hostis**. Mantenha a fazenda iluminada e protegida. Se cair num buraco, fica preso até o jogador ajudar.
+- **Quando o golem morre**, o baú fica **rachado** e sem uso. Ele ainda guarda os itens e pode ir na **prensa mecânica**, que devolve **6 ligas de andesito**.
+- O baú abre como um baú comum (27 espaços) e funciona com funis, hoppers e comparador.
+
 ## Evidência técnica (não é copy de publicação)
 
 - Implementação: commit `a3a37707ccbb1a440f6dc46372705af57b29a705` (`Double shaped andesite alloy recipe yield`) na branch `mc26.3/dev`. O gerador `src/main/java/com/simibubi/create/foundation/data/recipe/CreateStandardRecipeGen.java` passou a definir retorno de 2 para ambas as variantes de crafting.
@@ -44,6 +56,24 @@ Com uma **prancheta em branco** na mão, clique com o botão direito num **Cofre
 - "Em branco" quer dizer nenhuma entrada escrita e nenhuma configuração copiada. O cálculo é feito no servidor, pela capability de itens do multibloco inteiro. A ocupação usa a mesma medida do comparador: média de quanto cada slot está cheio em relação ao limite do slot e da pilha.
 - Lang: chaves `create.clipboard.vault_info.*` em `lang/default/interface.json`, `en_us.json` (gerado, editado à mão) e `pt_br.json`. As entradas ficam como texto traduzível, então aparecem no idioma de quem lê.
 - Verificação: `./gradlew --offline build` passou. **Sem teste em jogo** até agora.
+
+### Golem de Andesito — evidência técnica
+
+- Implementação: commit `REPLACE_COMMIT`. Pacote `content/equipment/andesiteGolem/`:
+  - `AndesiteGolem` (entidade, `AbstractGolem`, atributos iguais aos do golem de cobre: 12 de vida, velocidade 0.2, step 1);
+  - `AndesiteGolemWorkGoal` (procura, anda até o alvo, trabalha 30 ticks, volta e guarda 20 ticks; desiste de alvos inalcançáveis por 60 s);
+  - `AndesiteGolemStrollGoal`, `AndesiteGolemChestBlock`/`BlockEntity` (27 slots, `FilteringBehaviour` na tampa, estado `active`), `AndesiteGolemRenderer` (modelo e animações do golem de cobre, textura própria), `AndesiteGolemSpawning` e `AndesiteGolemEvents` (monstros não neutros ganham alvo no golem).
+- Criação: mixin `CarvedPumpkinBlockMixin` em `trySpawnGolem` e `canSpawnGolem`. O `canSpawnGolem` deixa dispensers também colocarem a abóbora no bloco de liga.
+- Corte de árvore: reaproveita o `TreeCutter` da serra mecânica. Ganhou `Tree.hasLeaves()` para o golem ignorar construções de tronco sem folhas. Colheita: segue a lógica da colheitadeira (tira uma semente do drop para replantar).
+- Assets: textura do golem e do baú recoloridas a partir do golem de cobre e do baú de cobre do jogo base, com a paleta da liga de andesito. O baú inativo é mais escuro e tem rachaduras. Modelos em `models/block/andesite_golem_chest/`. Blockstate, item, loot, tag de picareta, receita de prensa (`recipe/pressing/andesite_alloy_from_golem_chest.json`) e lang (en_us, en_ud, pt_br e tooltip) foram escritos à mão, porque o datagen client desta port falha.
+- Verificação: `./gradlew --offline build` passou. Também foi testado num **servidor dedicado de desenvolvimento**, por comandos via RCON:
+  - o golem nasceu com abóbora e com lanterna de abóbora, e o bloco virou baú ativo ligado a ele;
+  - trigo e cenoura foram colhidos e replantados, e o carvalho foi derrubado e replantado com muda;
+  - os itens foram parar no baú;
+  - com filtro `oak_log`, ele só guardou toras e deixou o trigo maduro em paz, e a muda de replantio saiu do baú;
+  - um zumbi matou o golem, e o baú ficou inativo; o mesmo aconteceu com a morte por queda;
+  - sem trabalho, ele passeou a até cerca de 5 blocos do baú.
+- **Ainda não verificado:** o visual no cliente (modelo e texturas do golem e do baú, animações, slot de filtro na tampa) e a receita da prensa rodando numa prensa de verdade.
 
 ## Critério para novos diferenciais
 
