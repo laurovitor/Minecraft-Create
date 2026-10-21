@@ -24,8 +24,8 @@ public final class RedstoneGolemRules {
 	public static final int MAX_SOURCE_DISTANCE = 48;
 	/** How often an idle golem looks at its network again, ticks (2 s). */
 	public static final int SEARCH_INTERVAL = 40;
-	/** Gives up walking to a source after this long, ticks (20 s), and skips it for BLACKLIST_TICKS. */
-	public static final int GIVE_UP_TICKS = 400;
+	/** Gives up walking to a source after this long, ticks (60 s), and skips it for BLACKLIST_TICKS. */
+	public static final int GIVE_UP_TICKS = 1200;
 	public static final int BLACKLIST_TICKS = 1200;
 
 	/**
@@ -74,6 +74,14 @@ public final class RedstoneGolemRules {
 	/** A new trip starts only with empty hands and at least one empty slot in its own chest. */
 	public static boolean shouldCollect(boolean ownChestHasEmptySlot, int carriedStacks) {
 		return ownChestHasEmptySlot && carriedStacks == 0;
+	}
+
+	/** A real standing place near the chest, with a clear interaction ray. No roof shortcuts. */
+	public static boolean validStandSpot(int dx, int dy, int dz, boolean feetClear,
+		boolean headClear, boolean supported, boolean chestVisible) {
+		return Math.abs(dx) + Math.abs(dz) == 1 && Math.abs(dy) <= 1
+			&& dx * dx + dz * dz + (dy - .5) * (dy - .5) <= 2.5 * 2.5
+			&& feetClear && headClear && supported && chestVisible;
 	}
 
 	/** Within the network range of the golem's chest (3D). */

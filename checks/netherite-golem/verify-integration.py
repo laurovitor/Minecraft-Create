@@ -121,6 +121,20 @@ assert 'RedstoneGolemRules.inRange(' in rg_net
 # behaviour: fullest-first, 4 slots, run there, stop when full
 assert 'RedstoneGolemRules.chooseSource(candidates)' in rg_goal and 'RedstoneGolemRules.pickupSlots(occupied' in rg_goal
 assert 'walkTo(source, RedstoneGolemRules.RUN_SPEED)' in rg_goal and 'RedstoneGolemRules.shouldCollect(chest.hasEmptySlot()' in rg_goal
+# Round 11: both legs target reachable standing spots with 3D arrival and no partial roof paths.
+rg_nav = (rg/'RedstoneGolemNavigation.java').read_text()
+rg_barriers = (rg/'RedstoneGolemBarriers.java').read_text()
+for required in ['standingSpots(chestPos)', 'path.canReach()', 'BlockHitResult hit',
+                 'validStandSpot(', 'position().distanceTo(Vec3.atBottomCenterOf(standSpot))',
+                 'position().distanceTo(Vec3.atCenterOf(chestPos))', 'returnCooldown = 100']:
+    assert required in rg_goal, required
+assert 'walkTo(chest.getBlockPos(), RedstoneGolemRules.WALK_SPEED)' in rg_goal
+assert 'new RedstoneGolemNavigation(this, level)' in rg_entity and 'barriers.tick()' in rg_entity
+assert 'Attributes.FOLLOW_RANGE, 96.0' in rg_entity and 'setMaxVisitedNodesMultiplier(4)' in rg_nav
+for required in ['DoorBlock', 'FenceGateBlock', 'TrapDoorBlock', 'PathType.WALKABLE_DOOR', 'PathType.BLOCKED']:
+    assert required in rg_nav and required in rg_barriers or required in rg_nav, required
+assert 'setCanOpenDoors(true)' in rg_nav and 'setCanPassDoors(true)' in rg_nav
+assert 'opened' in rg_barriers and 'passed' in rg_barriers and 'close(pos)' in rg_barriers
 # tuning a Stock Link on the chest instead of opening it; network survives packing
 assert 'instanceof com.simibubi.create.content.logistics.packagerLink.LogisticallyLinkedBlockItem)\n\t\t\treturn InteractionResult.PASS;' in rg_block
 assert 'data.store("Freq"' in rg_block and 'chest.link.freqId = freq' in rg_block

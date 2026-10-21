@@ -6,16 +6,21 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Comparator;
 
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.Container;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.animal.golem.CopperGolemState;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.level.ClipContext;
 
 /**
  * The Redstone Golem's only job: run to the fullest chest on its network, take up to
@@ -39,6 +44,8 @@ public class RedstoneGolemCollectGoal extends Goal {
 	private int timer;
 	private int travelTicks;
 	private int searchCooldown;
+	private int returnCooldown;
+	private @Nullable BlockPos standSpot;
 
 	public RedstoneGolemCollectGoal(RedstoneGolem golem) {
 		this.golem = golem;
@@ -52,6 +59,11 @@ public class RedstoneGolemCollectGoal extends Goal {
 			return false;
 		// Loaded from a save or left over from a full chest: bring it home first.
 		if (!golem.getCarried().isEmpty()) {
+			if (returnCooldown > 0) {
+				returnCooldown--;
+				golem.setTask(RedstoneGolem.Task.RETURNING);
+				return false;
+			}
 			golem.setTask(chest.hasEmptySlot() ? RedstoneGolem.Task.RETURNING : RedstoneGolem.Task.CHEST_FULL);
 			return chest.hasEmptySlot();
 		}
@@ -88,16 +100,21 @@ public class RedstoneGolemCollectGoal extends Goal {
 	@Override
 	public void start() {
 		travelTicks = 0;
+		standSpot = null;
 		phase = golem.getCarried().isEmpty() ? Phase.GO : Phase.RETURN;
 	}
 
 	@Override
 	public void stop() {
 		phase = Phase.DONE;
+		standSpot = null;
 		source = null;
+		golem.closeOpenedBarriers();
 		golem.setState(CopperGolemState.IDLE);
 		golem.getNavigation().stop();
-		if (golem.getTask() == RedstoneGolem.Task.COLLECTING || golem.getTask() == RedstoneGolem.Task.RETURNING)
+		if (!golem.getCarried().isEmpty())
+			golem.setTask(RedstoneGolem.Task.RETURNING);
+		else if (golem.getTask() == RedstoneGolem.Task.COLLECTING || golem.getTask() == RedstoneGolem.Task.RETURNING)
 			golem.setTask(RedstoneGolem.Task.IDLE);
 	}
 
@@ -121,6 +138,7 @@ public class RedstoneGolemCollectGoal extends Goal {
 			}
 			if (walkTo(source, RedstoneGolemRules.RUN_SPEED)) {
 				phase = Phase.TAKE;
+				standSpot = null;
 				timer = TAKE_TICKS;
 				golem.setState(CopperGolemState.GETTING_ITEM);
 			}
@@ -134,12 +152,14 @@ public class RedstoneGolemCollectGoal extends Goal {
 			if (container != null)
 				take(container);
 			travelTicks = 0;
+			standSpot = null;
 			phase = golem.getCarried().isEmpty() ? Phase.DONE : Phase.RETURN;
 			golem.setTask(phase == Phase.RETURN ? RedstoneGolem.Task.RETURNING : RedstoneGolem.Task.IDLE);
 		}
 		case RETURN -> {
 			if (walkTo(chest.getBlockPos(), RedstoneGolemRules.WALK_SPEED)) {
 				phase = Phase.DEPOSIT;
+				standSpot = null;
 				timer = DEPOSIT_TICKS;
 				golem.setState(CopperGolemState.DROPPING_ITEM);
 			}
@@ -166,23 +186,64 @@ public class RedstoneGolemCollectGoal extends Goal {
 		return null;
 	}
 
-	/** @return true once within reach of the chest */
-	private boolean walkTo(BlockPos pos, double speed) {
-		if (golem.position().distanceTo(Vec3.atCenterOf(pos)) <= REACH) {
+	/**
+	 * Choose a reachable standing position next to the actual chest. Never accept a partial path
+	 * ending on the roof above it. Both source and home use the same 3D arrival rule.
+	 */
+	private boolean walkTo(BlockPos chestPos, double speed) {
+		if (standSpot != null && golem.position().distanceTo(Vec3.atBottomCenterOf(standSpot)) < 1.0
+			&& golem.position().distanceTo(Vec3.atCenterOf(chestPos)) <= REACH) {
 			golem.getNavigation().stop();
 			return true;
 		}
 		if (travelTicks++ > RedstoneGolemRules.GIVE_UP_TICKS) {
 			if (phase == Phase.GO)
-				blacklist.put(pos, golem.level().getGameTime() + RedstoneGolemRules.BLACKLIST_TICKS);
+				blacklist.put(chestPos, golem.level().getGameTime() + RedstoneGolemRules.BLACKLIST_TICKS);
+			else returnCooldown = 100; // retry home after 5 s; never discard carried items
 			phase = Phase.DONE;
+			golem.getNavigation().stop();
 			return false;
 		}
-		if (travelTicks % 20 == 1 || golem.getNavigation().isDone()) {
-			Path path = golem.getNavigation().createPath(pos, 1);
-			golem.getNavigation().moveTo(path, speed);
+		if (travelTicks % 40 != 1)
+			return false;
+		Path best = null;
+		BlockPos bestSpot = null;
+		for (BlockPos candidate : standingSpots(chestPos)) {
+			Path path = golem.getNavigation().createPath(candidate, 0);
+			if (path == null || !path.canReach()) continue;
+			if (best == null || path.getNodeCount() < best.getNodeCount()) {
+				best = path;
+				bestSpot = candidate;
+			}
 		}
+		standSpot = bestSpot;
+		if (best != null) golem.getNavigation().moveTo(best, speed);
 		return false;
+	}
+
+	/** Horizontal neighbors at chest Y and Y±1, including enclosed rooms; no heightmap lookup. */
+	private List<BlockPos> standingSpots(BlockPos chestPos) {
+		List<BlockPos> spots = new ArrayList<>();
+		for (int dy = -1; dy <= 1; dy++)
+			for (Direction direction : Direction.Plane.HORIZONTAL) {
+				BlockPos pos = chestPos.relative(direction).offset(0, dy, 0);
+				if (!golem.level().isLoaded(pos)) continue;
+				BlockState feet = golem.level().getBlockState(pos);
+				BlockState head = golem.level().getBlockState(pos.above());
+				BlockState floor = golem.level().getBlockState(pos.below());
+				// Reject a roof-side spot: it must have an unobstructed interaction ray to the chest.
+				Vec3 eye = Vec3.atBottomCenterOf(pos).add(0, golem.getEyeHeight(), 0);
+				BlockHitResult hit = golem.level().clip(new ClipContext(eye, Vec3.atCenterOf(chestPos),
+					ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, golem));
+				if (!RedstoneGolemRules.validStandSpot(pos.getX() - chestPos.getX(), dy,
+					pos.getZ() - chestPos.getZ(), feet.getCollisionShape(golem.level(), pos).isEmpty(),
+					head.getCollisionShape(golem.level(), pos.above()).isEmpty(),
+					!floor.getCollisionShape(golem.level(), pos.below()).isEmpty(),
+					hit.getBlockPos().equals(chestPos))) continue;
+				spots.add(pos);
+			}
+		spots.sort(Comparator.comparingDouble(p -> golem.distanceToSqr(Vec3.atBottomCenterOf(p))));
+		return spots;
 	}
 
 	private void take(Container container) {

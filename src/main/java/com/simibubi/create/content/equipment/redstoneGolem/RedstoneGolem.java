@@ -18,6 +18,7 @@ import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.animal.golem.AbstractGolem;
@@ -49,6 +50,7 @@ public class RedstoneGolem extends AndesiteGolem {
 	private Task task = Task.IDLE;
 	/** Network chests found by the last search (loaded and in range), for the clipboard. */
 	private int networkChests;
+	private final RedstoneGolemBarriers barriers = new RedstoneGolemBarriers(this);
 
 	public RedstoneGolem(EntityType<? extends AbstractGolem> type, Level level) {
 		super(type, level);
@@ -58,8 +60,22 @@ public class RedstoneGolem extends AndesiteGolem {
 		return Mob.createMobAttributes()
 			.add(Attributes.MOVEMENT_SPEED, RedstoneGolemRules.BASE_SPEED)
 			.add(Attributes.STEP_HEIGHT, 1.0)
+			.add(Attributes.FOLLOW_RANGE, 96.0)
 			.add(Attributes.MAX_HEALTH, RedstoneGolemRules.MAX_HEALTH);
 	}
+
+	@Override
+	protected PathNavigation createNavigation(Level level) {
+		return new RedstoneGolemNavigation(this, level);
+	}
+
+	@Override
+	public void aiStep() {
+		super.aiStep();
+		if (!level().isClientSide()) barriers.tick();
+	}
+
+	public void closeOpenedBarriers() { barriers.stop(); }
 
 	@Override
 	protected void registerGoals() {
