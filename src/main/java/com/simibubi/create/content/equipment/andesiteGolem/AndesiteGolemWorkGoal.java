@@ -393,12 +393,12 @@ public class AndesiteGolemWorkGoal extends Goal {
 
 	/**
 	 * The trunk's bottom layer: the base log plus the logs next to it at the same height. One block
-	 * for most trees, 2x2 for dark oak, pale oak, giant spruce and giant jungle trees.
+	 * for most trees, 2x2 for dark/pale oak, giant spruce/jungle trees and planted giant oak.
 	 */
 	private List<BlockPos> baseCluster(BlockPos base) {
 		BlockState log = golem.level().getBlockState(base);
 		String path = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(log.getBlock()).getPath();
-		if (!List.of("dark_oak_log", "pale_oak_log", "spruce_log", "jungle_log").contains(path))
+		if (!GolemWorkGeometry.canHaveWideTrunk(path))
 			return List.of(base);
 		// Accept only a complete 2x2 of the same wood at the bottom of the trunk.
 		// A flood-fill here can inadvertently take down adjacent trees or log builds.

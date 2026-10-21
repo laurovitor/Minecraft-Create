@@ -11,6 +11,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.pathfinder.Path;
 
 /**
  * Lauro edition: at night, if its work area is not lit, the golem walks to the side of its chest and
@@ -44,7 +45,7 @@ public class AndesiteGolemSleepGoal extends Goal {
 
 	@Override
 	public boolean canContinueToUse() {
-		if (golem.hurtTime > 0)
+		if (golem.hurtTime > 0 || bed == null)
 			return false;
 		// Recheck on every goal update: a light placed near the chest or /time set day
 		// must release the MOVE/LOOK flags promptly so work can resume.
@@ -89,17 +90,39 @@ public class AndesiteGolemSleepGoal extends Goal {
 		bed = null;
 	}
 
-	/** A free spot beside the chest, front first. */
-	private BlockPos bedNextTo(BlockPos chest) {
+	/** Prefer a supported, reachable bedside. A clear-looking block can still be a hole or
+	 * have no route from this golem; such a choice leaves it standing awake all night. */
+	private @Nullable BlockPos bedNextTo(BlockPos chest) {
 		Direction facing = golem.level().getBlockState(chest).getOptionalValue(AndesiteGolemChestBlock.FACING)
 			.orElse(Direction.NORTH);
+		BlockPos best = null;
+		double bestDistance = Double.MAX_VALUE;
 		for (Direction side : new Direction[] { facing, facing.getClockWise(), facing.getCounterClockWise(), facing.getOpposite() }) {
 			BlockPos spot = chest.relative(side);
-			if (golem.level().getBlockState(spot).getCollisionShape(golem.level(), spot).isEmpty()
-				&& golem.level().getBlockState(spot.above()).getCollisionShape(golem.level(), spot.above()).isEmpty())
-				return spot;
+			if (!canRestAt(spot))
+				continue;
+			double distance = golem.position().distanceToSqr(Vec3.atBottomCenterOf(spot));
+			Path path = golem.getNavigation().createPath(spot, 1);
+			if (distance > 1.2 * 1.2 && (path == null || path.getEndNode() == null
+				|| !GolemWorkGeometry.closeToBed(path.getEndNode().x + 0.5, path.getEndNode().y,
+					path.getEndNode().z + 0.5, spot.getX(), spot.getY(), spot.getZ())))
+				continue;
+			if (distance < bestDistance) {
+				best = spot;
+				bestDistance = distance;
+			}
 		}
-		return chest.above();
+		// A golem already on its chest can rest there if every side is blocked.
+		if (best == null && golem.position().distanceToSqr(Vec3.atBottomCenterOf(chest.above())) <= 1.2 * 1.2)
+			return chest.above();
+		return best;
+	}
+
+	private boolean canRestAt(BlockPos spot) {
+		return golem.level().isLoaded(spot) && golem.level().isLoaded(spot.below())
+			&& golem.level().getBlockState(spot).getCollisionShape(golem.level(), spot).isEmpty()
+			&& golem.level().getBlockState(spot.above()).getCollisionShape(golem.level(), spot.above()).isEmpty()
+			&& golem.level().getBlockState(spot.below()).isFaceSturdy(golem.level(), spot.below(), Direction.UP);
 	}
 
 	/** The chest spot and eight spots halfway to the edge of the work area, each at ground level. */

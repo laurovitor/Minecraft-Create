@@ -14,6 +14,11 @@ public class GolemWorkGeometryCheck {
 	}
 
 	public static void main(String[] args) {
+		assert GolemWorkGeometry.closeToBed(1.5, 65, 0.5, 1, 65, 0) : "partial path at bedside must be usable";
+		assert !GolemWorkGeometry.closeToBed(4.5, 65, 0.5, 1, 65, 0) : "distant partial route must not qualify";
+		assert GolemWorkGeometry.canHaveWideTrunk("oak_log") : "complete planted giant oak must use 2x2 arrival";
+		assert GolemWorkGeometry.canHaveWideTrunk("dark_oak_log") : "dark oak retains 2x2 arrival";
+		assert !GolemWorkGeometry.canHaveWideTrunk("birch_log") : "ordinary species must not merge adjacent trees";
 		assert at2x2(-0.45, 64, 0.5) : "standing at dark-oak west face must enter WORK";
 		assert at2x2(1.5, 64, 2.45) : "standing at south face must enter WORK";
 		assert !at2x2(1.0, 64, 1.0) : "inside trunk is not a usable perimeter";
