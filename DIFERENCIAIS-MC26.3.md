@@ -24,6 +24,8 @@ Com uma **prancheta em branco** na mão, clique com o botão direito num **Cofre
 
 ### Golem de Andesito
 
+- **Validado em jogo por Lauro em 2026-10-21** (inclusive o corte do carvalho escuro gigante com o JAR `965b404d`). Comportamento fechado: sem novas mudanças no Golem de Andesito.
+
 Um ajudante novo para fazendas automáticas, com o corpo do golem de cobre na cor da liga de andesito.
 
 - **Como criar:** coloque uma **abóbora esculpida** (ou lanterna de abóbora) sobre um **bloco de liga de andesito**. O golem nasce e o bloco vira o **Baú do Golem de Andesito**, a casa dele.
@@ -61,6 +63,7 @@ Um ajudante novo para fazendas automáticas, com o corpo do golem de cobre na co
 - **Olhos:** **brancos** acordado e sem combate, **roxos** em combate, **fechados** dormindo. A prancheta também mostra o estado (dormindo, patrulha ou combate).
 - **Espólios:** coleta no baú os drops dos hostis que ele próprio matou. **Sem filtro, aceita todos** até o limite dos 27 espaços; com filtro, aceita apenas os itens correspondentes, mas continua atacando todos os hostis. Itens recusados ou que não couberem permanecem como drops normais. O baú expõe inventário para funis/funnels e logística do Create.
 - **Combate:** só persegue hostis que consegue **ver**; um alvo escondido (caverna, atrás de parede) é largado após 5 s, e os olhos voltam a ficar brancos.
+- **Contra creepers:** creepers têm **medo** dele como de um gato; os golpes dele **arremessam o creeper para longe** (fora do alcance do pavio), e um creeper **em combate com ele explode sem quebrar blocos** (som, partículas, dano e empurrão continuam). Outras explosões continuam normais.
 - **Morte e transporte:** ao morrer, deixa o baú sem golem e há **50% de chance de soltar 1 ou 2 lingotes de netherita** (probabilidades 25%/25%). O baú sem golem pode ser prensado em **6 lingotes**. Shift + chave inglesa empacota o baú vivo com vida, idade, conteúdo e filtro; o contador de abates zera **somente se a posição do baú mudar**.
 - **Prancheta:** o golem de netherita anota vida, ataque, armadura, abates, dias desde a criação e uso do baú. O Golem de Andesito ganhou **apenas** a linha de dias desde a criação na prancheta; seu trabalho/combate pré-existente continua igual.
 
@@ -173,6 +176,14 @@ Um ajudante novo para fazendas automáticas, com o corpo do golem de cobre na co
 - **Inferido:** a árvore do Lauro está nesse caso (grama/podzol sob o tronco ou raízes enterradas). Confirmar com F3 o bloco sob o log mais baixo, ou com a nova linha da prancheta.
 - Implementação no commit `cf331fde771e12fd0c4eb85e5b5dfca676278b08`. Correções em `AndesiteGolemWorkGoal`: `isTreeGround` (substrate/dirt/grass/moss/mud/raízes + pedra-base/areia/cascalho para raízes enterradas; construções sem folhas continuam protegidas pela checagem de folhas); pontos de apoio até 8 blocos acima do log mais baixo, com rota calculada só para os 16 mais próximos (custo limitado); perímetro 2×2 comparado na altura do golem enquanto ela ainda é tronco; base 2×2 aceita mistura log/madeira da mesma espécie (`sameWood`, `GolemWorkGeometry.woodOf`); muda para troncos `*_wood`/`*_hyphae`. `TreeCutter` não tem limite de altura/quantidade — o tronco inteiro e a copa ligada são cortados. Diagnóstico `AndesiteGolem.TreeStatus` (não salvo) na prancheta, en_us/pt_br. Caminho ocioso intocado.
 - Verificações: `NaturalDarkOakCheck` ganhou árvore gigante 2×2 (30 e 34 de altura, galhos longos, copa larga) sobre grama/podzol/musgo (regra antiga rejeita, nova aceita e corta todos os logs) e enterrada 3 blocos sobre pedra com base de madeira (sem ponto de apoio e sem perímetro na regra antiga; com na nova); `GolemWorkGeometryCheck`, `verify-integration.py` (guardas de deriva), `NetheriteGolemRulesCheck`, `verify-golem-lang.py` com o JAR (41 chaves) e `./gradlew build --offline` passaram. **Sem teste in-game.**
+
+### Golem de Netherita contra creepers — evidência técnica
+
+- Implementação no commit `3deb90a2e17cdd90f612186fcece43e3f3e10c46`.
+- `NetheriteGolemEvents.creeperBlastSparesBlocks` (`ExplosionEvent.Detonate`): se a fonte direta da explosão é um `Creeper` em combate com um Golem de Netherita, esvazia apenas `getAffectedBlocks()` — sem blocos quebrados, logo sem drops de blocos; lista de entidades, dano, empurrão, som e partículas intactos; creeper carregado segue a mesma regra; demais explosões intocadas. "Em combate" (`NetheriteGolemRules.creeperInGolemCombat`): alvo do creeper é um golem, ou marcado por um golem há ≤ 200 ticks (persistent data `CreateNetheriteGolemCombat`, salvo com o creeper; marcado enquanto o golem o tem como alvo e a cada golpe), ou a ≤ 4 blocos de um golem que o tem como alvo. Não é área protegida em volta do baú.
+- Medo: `EntityJoinLevelEvent` adiciona ao creeper (servidor) `AvoidEntityGoal<NetheriteGolem>` prioridade 3, 6.0F/1.0/1.2 — mesmos parâmetros do gato no `Creeper#registerGoals`; subclasse marcadora evita duplicar ao recarregar. O golem continua mirando creepers.
+- Empurrão: `NetheriteGolem.doHurtTarget` em creeper aplica `knockback(1.2)` extra e `setSwellDir(-1)`. Estimativa offline com as regras de movimento vanilla (`knockbackDistance`): 0,4 vanilla ≈ 3,1 blocos; 1,2 ≈ 9,2 blocos → do alcance (~2,5) termina além dos 7 blocos do `SwellGoal`. **Estimativa, ignora colisões.**
+- Verificações: `NetheriteGolemRulesCheck` (janela de combate, limiar 200, estimativa de empurrão), `verify-integration.py` (estrutura), `verify-golem-lang.py` com o JAR e build offline passaram. **Sem teste in-game.**
 
 ## Critério para novos diferenciais
 
