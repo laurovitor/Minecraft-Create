@@ -59,7 +59,7 @@ Um ajudante novo para fazendas automáticas, com o corpo do golem de cobre na co
 
 ### Golem de Andesito — evidência técnica
 
-- Implementação: commit `REPLACE_COMMIT`. Pacote `content/equipment/andesiteGolem/`:
+- Implementação: commit `4e55aeca941578ffcebd13b1de9783512a20fa21`. Pacote `content/equipment/andesiteGolem/`:
   - `AndesiteGolem` (entidade, `AbstractGolem`, atributos iguais aos do golem de cobre: 12 de vida, velocidade 0.2, step 1);
   - `AndesiteGolemWorkGoal` (procura, anda até o alvo, trabalha 30 ticks, volta e guarda 20 ticks; desiste de alvos inalcançáveis por 60 s);
   - `AndesiteGolemStrollGoal`, `AndesiteGolemChestBlock`/`BlockEntity` (27 slots, `FilteringBehaviour` na tampa, estado `active`), `AndesiteGolemRenderer` (modelo e animações do golem de cobre, textura própria), `AndesiteGolemSpawning` e `AndesiteGolemEvents` (monstros não neutros ganham alvo no golem).
