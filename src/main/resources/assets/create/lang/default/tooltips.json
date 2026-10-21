@@ -3,6 +3,8 @@
 	
 	"block.create.metal_bracket.tooltip.summary": "_Decorate_ your _Shafts, Cogwheels_ and _Pipes_ with an industrial and sturdy bit of reinforcement.",
 	
+	"block.create.reinforced_item_vault.tooltip.summary": "A _sturdier Item Vault_ lined with _Sturdy Sheets_. Forms vaults up to _5x5_ wide and _15_ long, and each block holds _10% more_ items than a regular vault. Does not connect to regular vaults.",
+
 	"block.create.seat.tooltip.summary": "Sit yourself down and enjoy the ride! Will anchor a player onto a moving _contraption_. Great for static furniture too! Comes in a variety of colours.",
 	"block.create.seat.tooltip.condition1": "Right click on Seat",
 	"block.create.seat.tooltip.behaviour1": "Sits the player on the _Seat_. Press L-shift to leave the _Seat_.",

@@ -14,7 +14,8 @@ Um cofre novo, revestido com chapas resistentes. Receita na bancada, em coluna: 
 
 - Forma estruturas maiores que o cofre comum: base de até **5×5** e comprimento de até **3× a largura**, chegando a **5×5×15**. O cofre comum continua com base máxima de 3×3 e comprimento máximo de 9.
 - Cada bloco guarda **10% a mais** que um bloco do cofre comum. Na configuração padrão são **22 espaços por bloco** em vez de 20, o que dá até 8.250 espaços num 5×5×15.
-- Tem a mesma textura do cofre comum, só que no tom escuro da chapa resistente.
+- Tem o mesmo desenho do cofre comum, mas com o corpo bem escuro, no tom da chapa resistente, e as bordas prateadas. Assim dá pra diferenciar um do outro de longe.
+- Segurando **Shift** sobre o item aparece a descrição dele, em inglês e em português.
 - Funciona como o cofre comum: encaixe automático ao colocar blocos, separação com a chave inglesa, comparador, funis, packager e montagem em contraptions. Cofres comuns e revestidos não se juntam na mesma estrutura.
 
 ## Evidência técnica (não é copy de publicação)
@@ -29,7 +30,8 @@ Um cofre novo, revestido com chapas resistentes. Receita na bancada, em coluna: 
 - O cofre comum e o revestido não se misturam porque `ConnectivityHandler.partAt` compara o tipo do block entity. O auto-place e o eixo de colocação também só seguem blocos do mesmo tipo.
 - Registro de capacidade de itens, identificador de inventário do packager, mounted storage (`VAULT`, com a mesma proteção contra uso como combustível) e tags do Ponder foram estendidos ao bloco novo.
 - Receita gerada: `src/generated/resources/data/create/recipe/crafting/kinetics/reinforced_item_vault.json`. Loot table, blockstate, modelo de item, tag de picareta e lang (en_us, en_ud e pt_br) foram escritos à mão, espelhando o cofre comum, porque o datagen client/Registrate desta port falha (`LootContextParamSets.REGISTRY`).
-- Texturas: 12 sprites em `textures/block/reinforced_vault/`, recoloridos a partir das texturas do cofre com a paleta da `sturdy_sheet`, mais o modelo `models/block/reinforced_item_vault.json`.
+- Texturas: 12 sprites em `textures/block/reinforced_vault/`, recoloridos a partir das texturas do cofre. Pixels com luminância até 110 (o corpo azul) viram tons escuros da `sturdy_sheet`; acima de 110 (as bordas) viram prata. Modelo em `models/block/reinforced_item_vault.json`.
+- Descrição no Shift: chave `block.create.reinforced_item_vault.tooltip.summary` em `lang/default/tooltips.json`, `en_us.json` (gerado, editado à mão) e `pt_br.json`. Ela é exibida pelo `ItemDescription.Modifier` padrão do Create.
 - Verificação: `./gradlew --offline build` passou e os recursos foram conferidos dentro do JAR. **Não houve teste em jogo.** Ainda falta ver no jogo: formação 5×5×15, divisão com a chave, comparador, contraption e as texturas conectadas nas larguras 4 e 5. O Ponder não ganhou cena própria, e as cenas do cofre comum não foram associadas ao revestido porque citam o limite de 3.
 
 ## Critério para novos diferenciais
