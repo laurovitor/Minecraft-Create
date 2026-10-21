@@ -29,6 +29,7 @@ Um ajudante novo para fazendas automáticas, com o corpo do golem de cobre na co
 - **Como criar:** coloque uma **abóbora esculpida** (ou lanterna de abóbora) sobre um **bloco de liga de andesito**. O golem nasce e o bloco vira o **Baú do Golem de Andesito**, a casa dele.
 - **O que ele faz:** num raio de **10 blocos** do baú, em qualquer altura, ele **corta árvores inteiras** e **colhe plantações maduras** (trigo, cenoura, batata, beterraba e fungo do Nether). Sempre **replanta** o que tirou: a muda ou semente vem do que ele colheu ou, se faltar, do próprio baú.
 - **Filtro:** a tampa do baú tem um **slot de filtro do Create**, igual ao dos funis. Sem filtro, ele trabalha em tudo e guarda tudo. Com filtro, só corta e colhe o que produz os itens do filtro e só guarda esses itens; o resto é descartado.
+- **Árvores 2x2:** carvalho escuro, pinheiro gigante e selva gigante voltam com **4 mudas** iguais no lugar do tronco 2x2. As mudas vêm da própria árvore e, se faltar, do baú.
 - **Folhas no caminho:** se as folhas de uma árvore que ele vai cortar chegam até o chão e bloqueiam o tronco, ele quebra as folhas à frente até alcançar o tronco. O que cair dessas folhas passa pelo filtro como o resto.
 - **Abelhas em paz:** ele também não corta árvore que tenha colmeia ou ninho de abelha.
 - **Levar o golem junto:** quebrando o baú com o golem vivo, o golem some e o baú vira o item "Baú do Golem de Andesito (Com Golem)". Ao colocar esse item de novo, o golem volta com a mesma vida, os itens do baú, o filtro e o que estava carregando.
@@ -89,6 +90,7 @@ Um ajudante novo para fazendas automáticas, com o corpo do golem de cobre na co
   - Verificado no servidor de desenvolvimento via RCON: árvore com ninho foi ignorada e, depois de remover o ninho, foi cortada e replantada; um hopper inseriu itens no baú.
   - Commit `af5cc63c0b86ffb98178d98072749ca05240e01e`: ovo gerador (`andesite_golem_spawn_egg`, via `spawnEgg()` do Registrate) e `AndesiteGolem.finalizeSpawn`, que coloca o baú quando o golem vem de ovo ou dispenser; páginas de info no JEI (`CreateJEI.registerRecipes`, chaves `create.jei.*`); moldura de latão na tampa das texturas `active`/`inactive`. Build passou; nada disso testado em jogo.
   - Commit `4b8c9c8198cb8d22a85268991fc103015bfa4795`: `AndesiteGolemWorkGoal.clearLeavesIfStuck` — a cada 20 ticks andando até uma árvore, se não chegou 0,3 bloco mais perto, quebra folhas na direção do tronco (altura dos pés e da cabeça). Build passou; não testado em jogo.
+  - Commit `REPLACE_COMMIT`: replantio do tronco inteiro. Todas as toras da camada de baixo (`TreeCutter.Tree.getLogs()`) recebem muda do mesmo tipo, vinda dos drops e depois do baú. Build passou; não testado em jogo.
   - Não verificados em jogo: quebrar e recolocar o baú com golem (precisa de jogador), cura e prancheta (precisam de clique de jogador), empacotadora e a correção do Shift (cliente).
 - **Ainda não verificado:** o visual no cliente (modelo e texturas do golem e do baú, animações, slot de filtro na tampa) e a receita da prensa rodando numa prensa de verdade.
 

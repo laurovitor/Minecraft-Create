@@ -332,6 +332,11 @@ public class TreeCutter {
 			this.attachments = attachments;
 		}
 
+		/** Lauro edition: lets the Andesite Golem find the trunk footprint to replant. */
+		public List<BlockPos> getLogs() {
+			return logs;
+		}
+
 		/** Lauro edition: used by the Andesite Golem to leave log builds without leaves alone. */
 		public boolean hasLeaves() {
 			return !leaves.isEmpty();

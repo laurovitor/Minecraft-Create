@@ -332,22 +332,40 @@ public class AndesiteGolemWorkGoal extends Goal {
 		TreeCutter.Tree tree = TreeCutter.findTree(golem.level(), base, golem.level().getBlockState(base));
 		if (tree == TreeCutter.NO_TREE || !tree.hasLeaves() || tree.hasBeeHome(golem.level()))
 			return;
+		// the trunk's bottom layer: one block for most trees, 2x2 for dark oak, giant spruce and jungle
+		List<BlockPos> footprint = new ArrayList<>();
+		footprint.add(base);
+		for (BlockPos log : tree.getLogs())
+			if (log.getY() == base.getY() && !footprint.contains(log))
+				footprint.add(log.immutable());
+
 		// the tree found from the base log holds everything above it; the base itself goes first
 		BlockHelper.destroyBlockAs(golem.level(), base, null, ItemStack.EMPTY, 1, gathered::add);
 		tree.destroyBlocks(golem.level(), golem, (p, stack) -> gathered.add(stack));
 
-		// replant with a sapling from the tree, or from the chest
-		if (!golem.level().getBlockState(base).isAir())
-			return;
-		for (ItemStack stack : gathered) {
-			if (plantSapling(stack, base)) {
-				stack.shrink(1);
-				return;
-			}
+		// replant the whole footprint with one kind of sapling, taken from the tree first, then the chest;
+		// a 2x2 tree only grows back when all four are planted
+		net.minecraft.world.item.Item kind = null;
+		for (BlockPos spot : footprint) {
+			if (!golem.level().getBlockState(spot).isAir())
+				continue;
+			ItemStack sapling = takeSapling(chest, gathered, spot, kind);
+			if (sapling.isEmpty())
+				continue;
+			kind = sapling.getItem();
+			plantSapling(sapling, spot);
 		}
-		ItemStack fromChest = chest.takeOne(stack -> canPlantSapling(stack, base));
-		if (!fromChest.isEmpty())
-			plantSapling(fromChest, base);
+	}
+
+	/** One sapling of the given kind (any kind when null) that can grow at the spot. */
+	private ItemStack takeSapling(AndesiteGolemChestBlockEntity chest, List<ItemStack> gathered, BlockPos spot,
+		@Nullable net.minecraft.world.item.Item kind) {
+		for (ItemStack stack : gathered) {
+			if (stack.isEmpty() || (kind != null && !stack.is(kind)) || !canPlantSapling(stack, spot))
+				continue;
+			return stack.split(1);
+		}
+		return chest.takeOne(stack -> (kind == null || stack.is(kind)) && canPlantSapling(stack, spot));
 	}
 
 	private boolean canPlantSapling(ItemStack stack, BlockPos pos) {
