@@ -189,6 +189,8 @@ import com.simibubi.create.content.logistics.tunnel.BrassTunnelCTBehaviour;
 import com.simibubi.create.content.logistics.vault.ItemVaultBlock;
 import com.simibubi.create.content.equipment.netheriteGolem.NetheriteGolemChestBlock;
 import com.simibubi.create.content.equipment.redstoneGolem.RedstoneGolemChestBlock;
+import com.simibubi.create.content.equipment.golemRevival.GolemKind;
+import com.simibubi.create.content.equipment.golemRevival.RevivalPumpkinBlock;
 import com.simibubi.create.content.equipment.andesiteGolem.AndesiteGolemChestBlock;
 import com.simibubi.create.content.logistics.vault.ReinforcedItemVaultBlock;
 import com.simibubi.create.content.logistics.vault.ItemVaultCTBehaviour;
@@ -1901,6 +1903,14 @@ public class AllBlocks {
 			.transform(customItemModel("_", "block_active"))
 			.register();
 
+	// Lauro edition: revival pumpkins, one per golem kind (see GolemKind)
+	public static final BlockEntry<RevivalPumpkinBlock> ANDESITE_REVIVAL_PUMPKIN =
+		revivalPumpkin(GolemKind.ANDESITE, "Andesite Revival Pumpkin");
+	public static final BlockEntry<RevivalPumpkinBlock> NETHERITE_REVIVAL_PUMPKIN =
+		revivalPumpkin(GolemKind.NETHERITE, "Netherite Revival Pumpkin");
+	public static final BlockEntry<RevivalPumpkinBlock> REDSTONE_REVIVAL_PUMPKIN =
+		revivalPumpkin(GolemKind.REDSTONE, "Redstone Revival Pumpkin");
+
 	public static final BlockEntry<ItemHatchBlock> ITEM_HATCH = REGISTRATE.block("item_hatch", ItemHatchBlock::new)
 		.initialProperties(SharedProperties::softMetal)
 		.properties(p -> p.mapColor(MapColor.TERRACOTTA_BLUE)
@@ -2760,6 +2770,16 @@ public class AllBlocks {
 	 * The piston parts copy their properties from the vanilla piston head, which declares no loot table
 	 * at all, and 26.2's full copy carries that over. They do drop, so name their own table again.
 	 */
+	/** A carved pumpkin in a golem's material, block + item; assets are models/block/<id>_revival_pumpkin. */
+	private static BlockEntry<RevivalPumpkinBlock> revivalPumpkin(GolemKind kind, String englishName) {
+		return REGISTRATE.block(kind.id + "_revival_pumpkin", p -> new RevivalPumpkinBlock(p, kind))
+			.initialProperties(() -> Blocks.CARVED_PUMPKIN)
+			.blockstate(() -> (c, p) -> BlockStateGen.horizontalBlock(c, p, s -> AssetLookup.standardVariant(c, p)))
+			.lang(englishName)
+			.simpleItem()
+			.register();
+	}
+
 	private static <B extends Block, P> NonNullUnaryOperator<BlockBuilder<B, P>> ownLootTable(String name) {
 		return b -> b.properties(p -> p.overrideLootTable(
 			Optional.of(ResourceKey.create(Registries.LOOT_TABLE, Create.asResource("blocks/" + name)))));

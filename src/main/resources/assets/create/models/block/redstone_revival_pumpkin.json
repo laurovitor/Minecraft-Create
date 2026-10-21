@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/orientable",
+  "textures": {
+    "front": "create:block/redstone_revival_pumpkin/front",
+    "side": "create:block/redstone_revival_pumpkin/side",
+    "top": "create:block/redstone_revival_pumpkin/top"
+  }
+}

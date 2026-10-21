@@ -131,6 +131,9 @@
     "create:red_seat",
     "create:black_seat",
     "create:cardboard_block",
-    "create:bound_cardboard_block"
+    "create:bound_cardboard_block",
+    "create:andesite_revival_pumpkin",
+    "create:netherite_revival_pumpkin",
+    "create:redstone_revival_pumpkin"
   ]
 }

@@ -92,6 +92,11 @@ public class AndesiteGolemChestBlockEntity extends SmartBlockEntity implements C
 		return ItemStack.EMPTY;
 	}
 
+	/** The bound golem's UUID (synced to clients), or null when the chest has none. Read-only. */
+	public @Nullable UUID getGolemId() {
+		return golem;
+	}
+
 	public boolean isHomeOf(UUID golemId) {
 		return golemId.equals(golem);
 	}

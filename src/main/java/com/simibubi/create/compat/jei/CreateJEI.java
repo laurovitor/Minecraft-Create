@@ -372,6 +372,9 @@ public class CreateJEI implements IModPlugin {
 			Component.translatable("create.jei.packed_redstone_golem_chest.info"));
 		net.minecraft.world.item.SpawnEggItem.byId(AllEntityTypes.REDSTONE_GOLEM.get())
 			.ifPresent(egg -> registration.addIngredientInfo(egg.value(), redstoneInfo));
+		for (var pumpkin : java.util.List.of(AllBlocks.ANDESITE_REVIVAL_PUMPKIN, AllBlocks.NETHERITE_REVIVAL_PUMPKIN,
+			AllBlocks.REDSTONE_REVIVAL_PUMPKIN))
+			registration.addIngredientInfo(pumpkin.get(), Component.translatable("create.jei." + pumpkin.getId().getPath() + ".info"));
 	}
 
 	@Override

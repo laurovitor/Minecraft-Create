@@ -12,7 +12,7 @@ import sys
 import zipfile
 from pathlib import Path
 
-GOLEM = re.compile(r'golem')
+GOLEM = re.compile(r'golem|revival_pumpkin')
 src = Path('src/main/java/com/simibubi/create')
 default = {}
 for f in Path('src/main/resources/assets/create/lang/default').glob('*.json'):
@@ -21,10 +21,10 @@ en = json.loads(Path('src/generated/resources/assets/create/lang/en_us.json').re
 pt = json.loads(Path('src/main/resources/assets/create/lang/pt_br.json').read_text())
 
 keys = {k for d in (default, en, pt) for k in d if GOLEM.search(k)}
-code = [f for d in ('andesiteGolem', 'netheriteGolem', 'redstoneGolem') for f in (src / 'content/equipment' / d).glob('*.java')]
+code = [f for d in ('andesiteGolem', 'netheriteGolem', 'redstoneGolem', 'golemRevival') for f in (src / 'content/equipment' / d).glob('*.java')]
 for f in code + [src / 'compat/jei/CreateJEI.java']:
     text = f.read_text()
-    if f.parent.name.endswith('Golem'):
+    if f.parent.name.endswith('Golem') or f.parent.name == 'golemRevival':
         assert 'Component.literal' not in text, f'hardcoded text in {f}'
     for key in re.findall(r'translat(?:e|able)\("([^"]+)"', text):
         if f.name == 'CreateJEI.java' and not GOLEM.search(key):

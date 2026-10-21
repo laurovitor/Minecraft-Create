@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/orientable",
+  "textures": {
+    "front": "create:block/andesite_revival_pumpkin/front",
+    "side": "create:block/andesite_revival_pumpkin/side",
+    "top": "create:block/andesite_revival_pumpkin/top"
+  }
+}

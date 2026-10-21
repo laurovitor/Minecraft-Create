@@ -148,4 +148,32 @@ for f in ['models/block/redstone_golem_chest/block_active.json', 'models/block/r
           'textures/block/redstone_golem_chest/inactive.png', 'textures/entity/redstone_golem/redstone_golem.png',
           'textures/entity/redstone_golem/redstone_golem_eyes.png', 'textures/item/redstone_golem_spawn_egg.png']:
     assert Path('src/main/resources/assets/create/' + f).exists(), f
+
+# ---- Revival pumpkins (structural; runtime unverified)
+gr = root/'content/equipment/golemRevival'
+kinds = (gr/'GolemKind.java').read_text()
+pumpkin = (gr/'RevivalPumpkinBlock.java').read_text()
+for k in ['ANDESITE("andesite"', 'NETHERITE("netherite"', 'REDSTONE("redstone"']:
+    assert k in kinds, k
+assert 'return null; // not placed: the pumpkin stays in hand' in pumpkin
+assert 'GolemRevivalRules.decide(chestKind != null, chestKind == kind, bound != null, knownDead)' in pumpkin
+assert 'chest.getGolemId()' in pumpkin and 'GolemGraveyard.get(level.getServer()).forget(previous)' in pumpkin
+assert 'chestState.setValue(kind.active, true)' in pumpkin and 'chest.linkGolem(golem.getUUID())' in pumpkin
+assert 'extends CarvedPumpkinBlock' not in pumpkin  # vanilla/Create golem-building mixin must not see it
+assert '!level.isLoaded(chest)' in (gr/'GolemRevivalEvents.java').read_text()
+blocks_src = (root/'AllBlocks.java').read_text()
+for m in ['andesite', 'netherite', 'redstone']:
+    assert f'{m.upper()}_REVIVAL_PUMPKIN =\n\t\trevivalPumpkin(GolemKind.{m.upper()}' in blocks_src, m
+    r = json.loads(Path(f'src/generated/resources/data/create/recipe/crafting/curiosities/{m}_revival_pumpkin.json').read_text())
+    assert r['pattern'] == [' P ', 'MMM'] and r['key']['P'] == 'minecraft:pumpkin', m
+    assert r['key']['M'] == {'andesite': 'create:andesite_alloy', 'netherite': 'minecraft:netherite_ingot', 'redstone': 'minecraft:redstone'}[m]
+    for f in [f'assets/create/blockstates/{m}_revival_pumpkin.json', f'assets/create/items/{m}_revival_pumpkin.json',
+              f'data/create/loot_table/blocks/{m}_revival_pumpkin.json']:
+        json.loads(Path('src/generated/resources/' + f).read_text())
+    for t in ['front', 'side', 'top']:
+        assert Path(f'src/main/resources/assets/create/textures/block/{m}_revival_pumpkin/{t}.png').exists()
+    assert f'create:{m}_revival_pumpkin' in Path('src/generated/resources/data/minecraft/tags/block/mineable/axe.json').read_text()
+# the base-block materials the recipes use
+assert '"C": "create:andesite_alloy"' in Path('src/generated/resources/data/create/recipe/crafting/materials/andesite_alloy_block.json').read_text()
+assert 'public @Nullable UUID getGolemId()' in Path('src/main/java/com/simibubi/create/content/equipment/andesiteGolem/AndesiteGolemChestBlockEntity.java').read_text()
 print('Offline integration/serialization wiring checks passed (runtime unverified)')

@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "M": "minecraft:netherite_ingot",
+    "P": "minecraft:pumpkin"
+  },
+  "pattern": [
+    " P ",
+    "MMM"
+  ],
+  "result": {
+    "id": "create:netherite_revival_pumpkin"
+  }
+}
