@@ -35,29 +35,42 @@ public class AndesiteGolemArea {
 		for (BlockPos column : columns)
 			pave(level, surface(level, column));
 
-		// the eight blocks around the chest, on the chest's floor
+		// the eight ground blocks beside the alloy block (now the chest). The alloy
+		// may be flush with the soil or placed on top of it.
 		for (int dx = -1; dx <= 1; dx++)
 			for (int dz = -1; dz <= 1; dz++)
 				if (dx != 0 || dz != 0)
-					pave(level, chest.offset(dx, -1, dz));
+					paveAdjacent(level, chest.offset(dx, 0, dz));
+	}
+
+	private static void paveAdjacent(LevelAccessor level, BlockPos beside) {
+		if (canPave(level, beside))
+			pave(level, beside);
+		else
+			pave(level, beside.below());
+	}
+
+	private static boolean canPave(LevelAccessor level, BlockPos pos) {
+		BlockState state = level.getBlockState(pos);
+		return state.is(BlockTags.DIRT) && !state.is(Blocks.DIRT_PATH) && !state.is(Blocks.FARMLAND)
+			&& level.getBlockState(pos.above()).isAir();
 	}
 
 	private static BlockPos surface(LevelAccessor level, BlockPos column) {
-		BlockPos pos = column.above(SEARCH_HEIGHT);
-		for (int i = 0; i < SEARCH_HEIGHT * 2; i++) {
-			if (!level.getBlockState(pos).isAir())
+		// Canopies and other non-air blocks may be above the ground. Find the first
+		// eligible soil with open air above, not merely the first non-air block.
+		for (int dy = SEARCH_HEIGHT; dy >= -SEARCH_HEIGHT; dy--) {
+			BlockPos pos = column.offset(0, dy, 0);
+			BlockState state = level.getBlockState(pos);
+			if (state.is(BlockTags.DIRT) && !state.is(Blocks.FARMLAND)
+				&& level.getBlockState(pos.above()).isAir())
 				return pos;
-			pos = pos.below();
 		}
-		return pos;
+		return column;
 	}
 
 	private static void pave(LevelAccessor level, BlockPos pos) {
-		BlockState state = level.getBlockState(pos);
-		if (!state.is(BlockTags.DIRT) || state.is(Blocks.DIRT_PATH) || state.is(Blocks.FARMLAND))
-			return;
-		if (!level.getBlockState(pos.above()).isAir())
-			return;
-		level.setBlock(pos, Blocks.DIRT_PATH.defaultBlockState(), Block.UPDATE_ALL);
+		if (canPave(level, pos))
+			level.setBlock(pos, Blocks.DIRT_PATH.defaultBlockState(), Block.UPDATE_ALL);
 	}
 }

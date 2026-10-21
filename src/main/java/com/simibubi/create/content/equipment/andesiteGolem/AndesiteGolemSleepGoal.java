@@ -46,14 +46,16 @@ public class AndesiteGolemSleepGoal extends Goal {
 	public boolean canContinueToUse() {
 		if (golem.hurtTime > 0)
 			return false;
-		if (golem.tickCount % CHECK_INTERVAL != 0)
-			return true;
+		// Recheck on every goal update: a light placed near the chest or /time set day
+		// must release the MOVE/LOOK flags promptly so work can resume.
 		return shouldSleep();
 	}
 
 	private boolean shouldSleep() {
 		AndesiteGolemChestBlockEntity chest = golem.getChest();
-		return chest != null && golem.level().isDarkOutside() && !isWorkAreaLit(golem.level(), chest.getBlockPos());
+		long timeOfDay = Math.floorMod(golem.level().getOverworldClockTime(), 24000);
+		return chest != null && timeOfDay >= 12500 && timeOfDay < 23500
+			&& !isWorkAreaLit(golem.level(), chest.getBlockPos());
 	}
 
 	@Override

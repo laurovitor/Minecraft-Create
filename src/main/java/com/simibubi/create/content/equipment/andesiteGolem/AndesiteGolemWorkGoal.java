@@ -271,8 +271,66 @@ public class AndesiteGolemWorkGoal extends Goal {
 
 	/** Logs with leaves on them and no bee nest or hive; log walls and bee trees are left alone. */
 	private boolean isTree(BlockPos base) {
-		TreeCutter.Tree tree = TreeCutter.findTree(golem.level(), base, golem.level().getBlockState(base));
+		TreeCutter.Tree tree = findTree(base, baseCluster(base));
 		return tree != TreeCutter.NO_TREE && tree.hasLeaves() && !tree.hasBeeHome(golem.level());
+	}
+
+	/**
+	 * The trunk's bottom layer: the base log plus the logs next to it at the same height. One block
+	 * for most trees, 2x2 for dark oak, pale oak, giant spruce and giant jungle trees.
+	 */
+	private List<BlockPos> baseCluster(BlockPos base) {
+		BlockState log = golem.level().getBlockState(base);
+		String path = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(log.getBlock()).getPath();
+		if (!List.of("dark_oak_log", "pale_oak_log", "spruce_log", "jungle_log").contains(path))
+			return List.of(base);
+		// Accept only a complete 2x2 of the same wood at the bottom of the trunk.
+		// A flood-fill here can inadvertently take down adjacent trees or log builds.
+		for (int x = -1; x <= 0; x++)
+			for (int z = -1; z <= 0; z++) {
+				List<BlockPos> square = List.of(base.offset(x, 0, z), base.offset(x + 1, 0, z),
+					base.offset(x, 0, z + 1), base.offset(x + 1, 0, z + 1));
+				if (square.stream().allMatch(p -> golem.level().getBlockState(p).is(log.getBlock())
+					&& !golem.level().getBlockState(p.below()).is(BlockTags.LOGS)))
+					return square;
+			}
+		return List.of(base);
+	}
+
+	/**
+	 * Create's tree cutter only takes a tree from the last log standing under it, which is how a saw
+	 * fells a 2x2 trunk one log at a time. The golem cuts the whole bottom layer at once, so the
+	 * rest of that layer is hidden from the cutter as if already sawn.
+	 */
+	private TreeCutter.Tree findTree(BlockPos base, List<BlockPos> cluster) {
+		net.minecraft.world.level.Level level = golem.level();
+		net.minecraft.world.level.BlockGetter masked = new net.minecraft.world.level.BlockGetter() {
+			@Override
+			public @Nullable net.minecraft.world.level.block.entity.BlockEntity getBlockEntity(BlockPos pos) {
+				return level.getBlockEntity(pos);
+			}
+
+			@Override
+			public BlockState getBlockState(BlockPos pos) {
+				return !pos.equals(base) && cluster.contains(pos) ? Blocks.AIR.defaultBlockState() : level.getBlockState(pos);
+			}
+
+			@Override
+			public net.minecraft.world.level.material.FluidState getFluidState(BlockPos pos) {
+				return level.getFluidState(pos);
+			}
+
+			@Override
+			public int getHeight() {
+				return level.getHeight();
+			}
+
+			@Override
+			public int getMinY() {
+				return level.getMinY();
+			}
+		};
+		return TreeCutter.findTree(masked, base, level.getBlockState(base));
 	}
 
 	private boolean isValidTarget(AndesiteGolemChestBlockEntity chest, BlockPos pos) {
@@ -330,23 +388,19 @@ public class AndesiteGolemWorkGoal extends Goal {
 	}
 
 	private void cutTree(AndesiteGolemChestBlockEntity chest, BlockPos base, List<ItemStack> gathered) {
-		TreeCutter.Tree tree = TreeCutter.findTree(golem.level(), base, golem.level().getBlockState(base));
+		List<BlockPos> footprint = baseCluster(base);
+		TreeCutter.Tree tree = findTree(base, footprint);
 		if (tree == TreeCutter.NO_TREE || !tree.hasLeaves() || tree.hasBeeHome(golem.level()))
 			return;
-		// the trunk's bottom layer: one block for most trees, 2x2 for dark oak, giant spruce and jungle
-		List<BlockPos> footprint = new ArrayList<>();
-		footprint.add(base);
-		for (BlockPos log : tree.getLogs())
-			if (log.getY() == base.getY() && !footprint.contains(log))
-				footprint.add(log.immutable());
+		net.minecraft.world.item.Item kind = saplingFor(golem.level().getBlockState(base));
 
-		// the tree found from the base log holds everything above it; the base itself goes first
-		BlockHelper.destroyBlockAs(golem.level(), base, null, ItemStack.EMPTY, 1, gathered::add);
+		// the tree found holds everything above the bottom layer; that layer goes first
+		for (BlockPos log : footprint)
+			BlockHelper.destroyBlockAs(golem.level(), log, null, ItemStack.EMPTY, 1, gathered::add);
 		tree.destroyBlocks(golem.level(), golem, (p, stack) -> gathered.add(stack));
 
 		// replant the whole footprint with one kind of sapling, taken from the tree first, then the chest;
-		// a 2x2 tree only grows back when all four are planted
-		net.minecraft.world.item.Item kind = null;
+		// the same kind as the tree when there is one, a 2x2 tree only grows back when all four are planted
 		for (BlockPos trunk : footprint) {
 			BlockPos spot = groundSpot(trunk);
 			if (spot == null)
@@ -372,6 +426,24 @@ public class AndesiteGolemWorkGoal extends Goal {
 		}
 		return golem.level().getBlockState(pos).isAir() ? pos : null;
 	}
+
+	/** The sapling a log grows from: oak_log -> oak_sapling, mangrove_log -> mangrove_propagule. */
+	private static net.minecraft.world.item.@Nullable Item saplingFor(BlockState log) {
+		net.minecraft.resources.Identifier id = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(log.getBlock());
+		String path = id.getPath();
+		String wood = path.endsWith("_log") ? path.substring(0, path.length() - 4)
+			: path.endsWith("_stem") ? path.substring(0, path.length() - 5) : null;
+		if (wood == null)
+			return null;
+		for (String suffix : new String[] { "_sapling", "_propagule", "_fungus" }) {
+			var item = net.minecraft.core.registries.BuiltInRegistries.ITEM
+				.getOptional(net.minecraft.resources.Identifier.fromNamespaceAndPath(id.getNamespace(), wood + suffix));
+			if (item.isPresent())
+				return item.get();
+		}
+		return null;
+	}
+
 
 	/** One sapling of the given kind (any kind when null) that can grow at the spot. */
 	private ItemStack takeSapling(AndesiteGolemChestBlockEntity chest, List<ItemStack> gathered, BlockPos spot,
