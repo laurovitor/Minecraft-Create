@@ -80,6 +80,11 @@ public class AndesiteGolemWorkGoal extends Goal {
 		AndesiteGolemChestBlockEntity chest = golem.getChest();
 		if (chest == null)
 			return false;
+		// canUse may run while another goal owns MOVE. Do not retain an idle
+		// candidate that could override a newly found primary job in start().
+		target = null;
+		pathTarget = null;
+		blacklist.values().removeIf(until -> until < golem.level().getGameTime());
 		// things to store, and room for them
 		if (!golem.getCarried().isEmpty())
 			return chest.hasEmptySlot();
@@ -88,12 +93,12 @@ public class AndesiteGolemWorkGoal extends Goal {
 		searchCooldown = SEARCH_INTERVAL;
 		if (chest.hasEmptySlot() && findTarget(chest))
 			return true;
-		pathTarget = AndesiteGolemArea.nextPaveSpot(golem.level(), chest.getBlockPos(), feet -> {
-			if (golem.position().distanceToSqr(Vec3.atBottomCenterOf(feet)) <= 0.8)
-				return true;
-			Path path = golem.getNavigation().createPath(feet, 0);
-			return path != null && path.canReach();
-		});
+		// An exact canReach() check can veto every chest-edge block before the
+		// idle phase even starts. A partial route is worth trying; completion
+		// still requires the golem to occupy the selected ground column.
+		pathTarget = AndesiteGolemArea.nextPaveSpot(golem.level(), chest.getBlockPos(), feet ->
+			!blacklist.containsKey(feet.below()) && (golem.blockPosition().equals(feet)
+				|| golem.getNavigation().createPath(feet, 1) != null));
 		return pathTarget != null;
 	}
 
@@ -211,27 +216,38 @@ public class AndesiteGolemWorkGoal extends Goal {
 
 	/** Path paving requires arrival at the chest perimeter, not the general work reach. */
 	private boolean walkToPath(BlockPos feet) {
-		if (golem.position().distanceToSqr(Vec3.atBottomCenterOf(feet)) <= 0.8) {
+		// Path.canReach() can be false at the exact node beside the chest.
+		// Paving is allowed only once the golem is actually on that column.
+		if (GolemWorkGeometry.onPaveColumn(golem.getX(), golem.getY(), golem.getZ(),
+			feet.getX(), feet.getY(), feet.getZ())) {
 			golem.getNavigation().stop();
 			return true;
 		}
 		if (travelTicks++ > GIVE_UP_TICKS) {
+			blacklist.put(feet.below(), golem.level().getGameTime() + BLACKLIST_TICKS);
 			phase = Phase.DONE;
 			return false;
 		}
 		if (travelTicks % 20 == 1 || golem.getNavigation().isDone())
-			golem.getNavigation().moveTo(golem.getNavigation().createPath(feet, 0), 1.0);
+			golem.getNavigation().moveTo(feet.getX() + 0.5, feet.getY(), feet.getZ() + 0.5, 1.0);
 		return false;
 	}
 
 	/** Reach an accessible outside edge, not the solid trunk's center. Mangrove logs may be
 	 * several blocks above the ground on roots: the working position is at ground level. */
 	private boolean walkToTree(BlockPos base) {
+		List<BlockPos> footprint = baseCluster(base);
+		// On a complete 2x2 trunk, navigation can terminate alongside its solid
+		// face without ever reporting the exact requested node as reached.
+		if (footprint.size() == 4 && atTreePerimeter(base, footprint)) {
+			golem.getNavigation().stop();
+			return true;
+		}
 		if (approach == null || travelTicks % 20 == 0 || golem.getNavigation().isDone()) {
 			BlockPos best = null;
 			Path bestPath = null;
 			double bestDistance = Double.MAX_VALUE;
-			for (BlockPos trunk : baseCluster(base))
+			for (BlockPos trunk : footprint)
 				for (Direction side : Direction.Plane.HORIZONTAL)
 					for (int outward = 1; outward <= 3; outward++) {
 					BlockPos edge = trunk.relative(side, outward);
@@ -244,14 +260,17 @@ public class AndesiteGolemWorkGoal extends Goal {
 							golem.getNavigation().stop();
 							return true;
 						}
-						Path path = golem.getNavigation().createPath(feet, 0);
-						if (path == null || !path.canReach())
+						Path path = golem.getNavigation().createPath(feet, footprint.size() == 4 ? 1 : 0);
+						if (path == null || (footprint.size() != 4 && !path.canReach()))
 							continue;
-						double distance = golem.distanceToSqr(Vec3.atBottomCenterOf(feet));
-						if (distance < bestDistance) {
+						// A partial route is useful for a wide trunk if it ends at
+						// its face. Keep complete routes ahead of partial ones.
+						double score = golem.distanceToSqr(Vec3.atBottomCenterOf(feet))
+							+ (path.canReach() ? 0 : 1000);
+						if (score < bestDistance) {
 							best = feet;
 							bestPath = path;
-							bestDistance = distance;
+							bestDistance = score;
 						}
 					}
 				}
@@ -259,7 +278,8 @@ public class AndesiteGolemWorkGoal extends Goal {
 			if (bestPath != null)
 				golem.getNavigation().moveTo(bestPath, 1.0);
 		}
-		if (approach != null && golem.position().distanceToSqr(Vec3.atBottomCenterOf(approach)) <= 2.0) {
+		if (footprint.size() == 4 && atTreePerimeter(base, footprint)
+			|| approach != null && golem.position().distanceToSqr(Vec3.atBottomCenterOf(approach)) <= 2.0) {
 			golem.getNavigation().stop();
 			return true;
 		}
@@ -267,6 +287,14 @@ public class AndesiteGolemWorkGoal extends Goal {
 			blacklist.put(base, golem.level().getGameTime() + BLACKLIST_TICKS);
 			phase = Phase.DONE;
 		}
+		return false;
+	}
+
+	private boolean atTreePerimeter(BlockPos base, List<BlockPos> footprint) {
+		for (BlockPos trunk : footprint)
+			if (GolemWorkGeometry.atOuterTreeFace(golem.getX(), golem.getY(), golem.getZ(),
+				trunk.getX(), base.getY(), trunk.getZ()))
+				return true;
 		return false;
 	}
 

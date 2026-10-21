@@ -5,7 +5,6 @@ import java.util.function.Predicate;
 
 import org.jetbrains.annotations.Nullable;
 
-import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -30,7 +29,7 @@ public class AndesiteGolemArea {
 
 	public static boolean canPave(LevelAccessor level, BlockPos pos) {
 		BlockState state = level.getBlockState(pos);
-		return state.is(BlockTags.DIRT) && !state.is(Blocks.DIRT_PATH) && !state.is(Blocks.FARMLAND)
+		return (state.is(Blocks.DIRT) || state.is(Blocks.GRASS_BLOCK))
 			&& level.getBlockState(pos.above()).isAir();
 	}
 
