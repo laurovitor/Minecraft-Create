@@ -56,6 +56,14 @@ public class AndesiteGolemWorkGoal extends Goal {
 	private static final double REACH = 2.5;
 	/** How often a golem walking to a tree checks whether leaves are blocking it. */
 	private static final int LEAF_CHECK_INTERVAL = 20;
+	/** Standing spots around a trunk are tried from this far above its lowest log (buried giant-tree
+	 * roots) down to {@link #APPROACH_DOWN} below it (mangrove roots), in blocks. */
+	private static final int APPROACH_UP = 8;
+	private static final int APPROACH_DOWN = 7;
+	/** Only the nearest standing spots get a path computed per refresh: bounded pathfinding cost. */
+	private static final int MAX_APPROACH_PATHS = 16;
+	/** A cut can start beside the trunk up to this many blocks above its lowest log. */
+	private static final int PERIMETER_UP = APPROACH_UP + 2;
 
 	private final AndesiteGolem golem;
 	private final Map<BlockPos, Long> blacklist = new HashMap<>();
@@ -91,7 +99,9 @@ public class AndesiteGolemWorkGoal extends Goal {
 		if (searchCooldown-- > 0)
 			return false;
 		searchCooldown = SEARCH_INTERVAL;
-		if (chest.hasEmptySlot() && findTarget(chest))
+		if (!chest.hasEmptySlot())
+			golem.setTreeStatus(golem.getTreeStatusPos(), AndesiteGolem.TreeStatus.CHEST_FULL);
+		else if (findTarget(chest))
 			return true;
 		// An exact canReach() check can veto every chest-edge block before the
 		// idle phase even starts. A partial route is worth trying; completion
@@ -247,33 +257,38 @@ public class AndesiteGolemWorkGoal extends Goal {
 			BlockPos best = null;
 			Path bestPath = null;
 			double bestDistance = Double.MAX_VALUE;
+			List<BlockPos> spots = new ArrayList<>();
 			for (BlockPos trunk : footprint)
 				for (Direction side : Direction.Plane.HORIZONTAL)
 					for (int outward = 1; outward <= 3; outward++) {
 					BlockPos edge = trunk.relative(side, outward);
-					for (int dy = 1; dy >= -7; dy--) {
+					for (int dy = APPROACH_UP; dy >= -APPROACH_DOWN; dy--) {
 						BlockPos feet = edge.offset(0, dy, 0);
-						if (!canStandAt(feet))
+						if (spots.contains(feet) || footprint.contains(feet) || !canStandAt(feet))
 							continue;
 						if (golem.position().distanceToSqr(Vec3.atBottomCenterOf(feet)) <= 2.0) {
 							approach = feet;
 							golem.getNavigation().stop();
 							return true;
 						}
-						Path path = golem.getNavigation().createPath(feet, footprint.size() == 4 ? 1 : 0);
-						if (path == null || (footprint.size() != 4 && !path.canReach()))
-							continue;
-						// A partial route is useful for a wide trunk if it ends at
-						// its face. Keep complete routes ahead of partial ones.
-						double score = golem.distanceToSqr(Vec3.atBottomCenterOf(feet))
-							+ (path.canReach() ? 0 : 1000);
-						if (score < bestDistance) {
-							best = feet;
-							bestPath = path;
-							bestDistance = score;
-						}
+						spots.add(feet);
 					}
 				}
+			spots.sort(java.util.Comparator.comparingDouble(feet -> golem.distanceToSqr(Vec3.atBottomCenterOf(feet))));
+			for (BlockPos feet : spots.subList(0, Math.min(MAX_APPROACH_PATHS, spots.size()))) {
+				Path path = golem.getNavigation().createPath(feet, footprint.size() == 4 ? 1 : 0);
+				if (path == null || (footprint.size() != 4 && !path.canReach()))
+					continue;
+				// A partial route is useful for a wide trunk if it ends at
+				// its face. Keep complete routes ahead of partial ones.
+				double score = golem.distanceToSqr(Vec3.atBottomCenterOf(feet))
+					+ (path.canReach() ? 0 : 1000);
+				if (score < bestDistance) {
+					best = feet;
+					bestPath = path;
+					bestDistance = score;
+				}
+			}
 			approach = best;
 			if (bestPath != null)
 				golem.getNavigation().moveTo(bestPath, 1.0);
@@ -291,9 +306,14 @@ public class AndesiteGolemWorkGoal extends Goal {
 	}
 
 	private boolean atTreePerimeter(BlockPos base, List<BlockPos> footprint) {
+		// A giant tree's lowest logs can be buried below the surface the golem walks on: compare
+		// with the trunk at the golem's own height while that height is still part of the trunk.
+		int feetY = golem.getBlockY();
+		int trunkY = feetY > base.getY() && feetY - base.getY() <= PERIMETER_UP
+			&& golem.level().getBlockState(base.atY(feetY)).is(BlockTags.LOGS) ? feetY : base.getY();
 		for (BlockPos trunk : footprint)
 			if (GolemWorkGeometry.atOuterTreeFace(golem.getX(), golem.getY(), golem.getZ(),
-				trunk.getX(), base.getY(), trunk.getZ()))
+				trunk.getX(), trunkY, trunk.getZ()))
 				return true;
 		return false;
 	}
@@ -358,6 +378,9 @@ public class AndesiteGolemWorkGoal extends Goal {
 		Kind bestKind = null;
 		double bestDistance = Double.MAX_VALUE;
 		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+		// For the clipboard: the nearest standing trunk bottom, cut or not.
+		BlockPos nearestTrunk = null;
+		double nearestTrunkDistance = Double.MAX_VALUE;
 
 		for (int dx = -r; dx <= r; dx++) {
 			for (int dz = -r; dz <= r; dz++) {
@@ -365,6 +388,13 @@ public class AndesiteGolemWorkGoal extends Goal {
 					continue;
 				for (int dy = -r; dy <= r; dy++) {
 					pos.setWithOffset(home, dx, dy, dz);
+					if (isTrunkBottom(pos)) {
+						double d = golem.distanceToSqr(Vec3.atCenterOf(pos));
+						if (d < nearestTrunkDistance) {
+							nearestTrunk = pos.immutable();
+							nearestTrunkDistance = d;
+						}
+					}
 					Kind found = kindAt(chest, pos);
 					if (found == null || blacklist.containsKey(pos))
 						continue;
@@ -378,11 +408,40 @@ public class AndesiteGolemWorkGoal extends Goal {
 			}
 		}
 
+		golem.setTreeStatus(nearestTrunk, nearestTrunk == null ? AndesiteGolem.TreeStatus.NONE
+			: treeStatus(chest, nearestTrunk, best));
 		if (best == null)
 			return false;
 		target = best;
 		kind = bestKind;
 		return true;
+	}
+
+	/** A log standing on something solid, not on another log: a trunk, not a hanging branch. */
+	private boolean isTrunkBottom(BlockPos pos) {
+		if (!golem.level().isLoaded(pos) || !golem.level().getBlockState(pos).is(BlockTags.LOGS))
+			return false;
+		BlockState below = golem.level().getBlockState(pos.below());
+		return !below.isAir() && !below.is(BlockTags.LOGS) && !below.is(BlockTags.LEAVES);
+	}
+
+	/** Why the golem does or does not cut this trunk, for the clipboard. */
+	private AndesiteGolem.TreeStatus treeStatus(AndesiteGolemChestBlockEntity chest, BlockPos trunk, @Nullable BlockPos chosen) {
+		List<BlockPos> footprint = baseCluster(trunk);
+		if (chosen != null && (footprint.contains(chosen) || baseCluster(chosen).contains(trunk)))
+			return AndesiteGolem.TreeStatus.TARGETED;
+		if (!isTreeGround(golem.level().getBlockState(trunk.below())))
+			return AndesiteGolem.TreeStatus.NO_GROUND;
+		if (!chest.accepts(new ItemStack(golem.level().getBlockState(trunk).getBlock())))
+			return AndesiteGolem.TreeStatus.FILTER;
+		if (footprint.stream().anyMatch(blacklist::containsKey))
+			return AndesiteGolem.TreeStatus.UNREACHABLE;
+		TreeCutter.Tree tree = findTree(trunk, footprint);
+		if (tree == TreeCutter.NO_TREE || !tree.hasLeaves())
+			return AndesiteGolem.TreeStatus.NO_LEAVES;
+		if (tree.hasBeeHome(golem.level()))
+			return AndesiteGolem.TreeStatus.BEES;
+		return AndesiteGolem.TreeStatus.WAITING;
 	}
 
 	/** Logs with leaves on them and no bee nest or hive; log walls and bee trees are left alone. */
@@ -406,11 +465,22 @@ public class AndesiteGolemWorkGoal extends Goal {
 			for (int z = -1; z <= 0; z++) {
 				List<BlockPos> square = List.of(base.offset(x, 0, z), base.offset(x + 1, 0, z),
 					base.offset(x, 0, z + 1), base.offset(x + 1, 0, z + 1));
-				if (square.stream().allMatch(p -> golem.level().getBlockState(p).is(log.getBlock())
+				if (square.stream().allMatch(p -> sameWood(log, golem.level().getBlockState(p))
 					&& !golem.level().getBlockState(p.below()).is(BlockTags.LOGS)))
 					return square;
 			}
 		return List.of(base);
+	}
+
+	/** Same species of log or wood block (dark_oak_log next to dark_oak_wood), same mod. */
+	private static boolean sameWood(BlockState a, BlockState b) {
+		if (!b.is(BlockTags.LOGS))
+			return false;
+		net.minecraft.resources.Identifier ia = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(a.getBlock());
+		net.minecraft.resources.Identifier ib = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(b.getBlock());
+		String wood = GolemWorkGeometry.woodOf(ia.getPath());
+		return ia.equals(ib) || wood != null && ia.getNamespace().equals(ib.getNamespace())
+			&& wood.equals(GolemWorkGeometry.woodOf(ib.getPath()));
 	}
 
 	/**
@@ -469,12 +539,24 @@ public class AndesiteGolemWorkGoal extends Goal {
 			return cropAccepted(chest, state, pos) ? Kind.CROP : null;
 		if (state.is(BlockTags.LOGS)) {
 			BlockState below = golem.level().getBlockState(pos.below());
-			// on soil, or on roots like the mangrove
-			if (below.is(BlockTags.LOGS) || !(below.is(BlockTags.DIRT) || below.is(Blocks.MUD) || isMangroveRoot(below)))
+			if (below.is(BlockTags.LOGS) || !isTreeGround(below))
 				return null;
 			return chest.accepts(new ItemStack(state.getBlock())) ? Kind.TREE : null;
 		}
 		return null;
+	}
+
+	/**
+	 * What the lowest log of a tree can stand on. Since 26.x #minecraft:dirt holds only dirt,
+	 * coarse and rooted dirt: grass, podzol, mycelium and moss are separate tags. Vanilla growth turns
+	 * grass under a trunk into dirt but keeps podzol (giant spruce/jungle) and moss; mod and
+	 * structure trees often keep grass. Buried giant-tree roots can end on stone, sand or gravel.
+	 * Leafless log builds are still left alone by the leaves check in isTree.
+	 */
+	static boolean isTreeGround(BlockState below) {
+		return below.is(BlockTags.SUBSTRATE_OVERWORLD) || below.is(BlockTags.DIRT) || below.is(BlockTags.GRASS_BLOCKS)
+			|| below.is(BlockTags.MOSS_BLOCKS) || below.is(BlockTags.MUD) || below.is(Blocks.MUD) || isMangroveRoot(below)
+			|| below.is(BlockTags.BASE_STONE_OVERWORLD) || below.is(BlockTags.SAND) || below.is(Blocks.GRAVEL);
 	}
 
 	private static boolean isTallPlant(BlockState state) {
@@ -582,8 +664,7 @@ public class AndesiteGolemWorkGoal extends Goal {
 	private static net.minecraft.world.item.@Nullable Item saplingFor(BlockState log) {
 		net.minecraft.resources.Identifier id = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(log.getBlock());
 		String path = id.getPath();
-		String wood = path.endsWith("_log") ? path.substring(0, path.length() - 4)
-			: path.endsWith("_stem") ? path.substring(0, path.length() - 5) : null;
+		String wood = GolemWorkGeometry.woodOf(path);
 		if (wood == null)
 			return null;
 		for (String suffix : new String[] { "_sapling", "_propagule", "_fungus" }) {

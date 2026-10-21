@@ -33,6 +33,10 @@ for f in code + [src / 'compat/jei/CreateJEI.java']:
             keys.add(key if key.startswith(('create.', 'entity.', 'block.', 'item.')) else 'create.' + key)
 # Clipboard state names are built as "clipboard.golem_info.state." + state.
 keys |= {f'create.clipboard.golem_info.state.{s}' for s in ('sleeping', 'patrol', 'combat')}
+# Tree diagnosis names: "clipboard.golem_info.tree." + AndesiteGolem.TreeStatus.key.
+statuses = re.search(r'enum TreeStatus \{(.*?);', (src / 'content/equipment/andesiteGolem/AndesiteGolem.java').read_text(), re.S)
+keys |= {f'create.clipboard.golem_info.tree.{k}' for k in re.findall(r'\("([a-z_]+)"\)', statuses.group(1))}
+assert len([k for k in keys if '.tree.' in k]) == 9
 
 def check(label, en_map, pt_map):
     bad = [k for k in sorted(keys) if k not in en_map or k not in pt_map or en_map[k] == pt_map[k]]

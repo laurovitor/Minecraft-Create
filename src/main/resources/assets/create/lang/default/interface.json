@@ -1297,5 +1297,16 @@
 	"create.clipboard.golem_info.state": "State: %1$s",
 	"create.clipboard.golem_info.state.sleeping": "sleeping",
 	"create.clipboard.golem_info.state.patrol": "patrolling",
-	"create.clipboard.golem_info.state.combat": "in combat"
+	"create.clipboard.golem_info.state.combat": "in combat",
+	"create.clipboard.golem_info.tree": "Nearest tree: %1$s (%2$s)",
+	"create.clipboard.golem_info.tree_none": "Nearest tree: none in range (%1$s)",
+	"create.clipboard.golem_info.tree.none": "nothing to cut",
+	"create.clipboard.golem_info.tree.targeted": "cutting it",
+	"create.clipboard.golem_info.tree.waiting": "queued, something closer first",
+	"create.clipboard.golem_info.tree.no_ground": "its trunk does not stand on soil",
+	"create.clipboard.golem_info.tree.filter": "the chest filter rejects this wood",
+	"create.clipboard.golem_info.tree.no_leaves": "no leaves found, treated as a build",
+	"create.clipboard.golem_info.tree.bees": "has a bee nest or hive",
+	"create.clipboard.golem_info.tree.unreachable": "could not reach it, retrying later",
+	"create.clipboard.golem_info.tree.chest_full": "chest full, not working"
 }

@@ -65,6 +65,21 @@ public class AndesiteGolem extends AbstractGolem {
 	/** tickCount of the last damage taken; far in the past until the first hit. */
 	private int lastHurtTick = -100_000;
 	private int autoRepairCooldown;
+	/** Last work-search result for the nearest trunk; shown on the clipboard, not saved. */
+	private @Nullable BlockPos treeStatusPos;
+	private TreeStatus treeStatus = TreeStatus.NONE;
+
+	/** Why the nearest trunk is or is not being cut. Lang: create.clipboard.golem_info.tree.<key>. */
+	public enum TreeStatus {
+		NONE("none"), TARGETED("targeted"), WAITING("waiting"), NO_GROUND("no_ground"), FILTER("filter"),
+		NO_LEAVES("no_leaves"), BEES("bees"), UNREACHABLE("unreachable"), CHEST_FULL("chest_full");
+
+		public final String key;
+
+		TreeStatus(String key) {
+			this.key = key;
+		}
+	}
 	/** Gathered items not yet stored in the chest. */
 	private final List<ItemStack> carried = new ArrayList<>();
 
@@ -122,6 +137,14 @@ public class AndesiteGolem extends AbstractGolem {
 
 	public long getCreatedGameTime() { return createdGameTime; }
 	public void setCreatedGameTime(long time) { createdGameTime = time; }
+
+	public void setTreeStatus(@Nullable BlockPos pos, TreeStatus status) {
+		treeStatusPos = pos;
+		treeStatus = status;
+	}
+
+	public @Nullable BlockPos getTreeStatusPos() { return treeStatusPos; }
+	public TreeStatus getTreeStatus() { return treeStatus; }
 
 	public @Nullable BlockPos getChestPos() {
 		return chestPos;

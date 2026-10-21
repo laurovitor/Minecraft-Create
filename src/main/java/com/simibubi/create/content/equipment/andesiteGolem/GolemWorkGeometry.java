@@ -5,12 +5,22 @@ final class GolemWorkGeometry {
 
 	private GolemWorkGeometry() {}
 
-	/** Species with a supported complete 2x2 trunk; ordinary lone logs stay single-trunk. */
+	/** Species with a supported complete 2x2 trunk; ordinary lone logs stay single-trunk.
+	 * Bark-on-all-sides wood blocks count too: giant/mod trees often build trunks from them. */
 	static boolean canHaveWideTrunk(String blockPath) {
-		return switch (blockPath) {
-		case "oak_log", "dark_oak_log", "pale_oak_log", "spruce_log", "jungle_log" -> true;
+		String wood = woodOf(blockPath);
+		return wood != null && switch (wood) {
+		case "oak", "dark_oak", "pale_oak", "spruce", "jungle" -> true;
 		default -> false;
 		};
+	}
+
+	/** dark_oak_log / dark_oak_wood -> dark_oak; crimson_stem / crimson_hyphae -> crimson; else null. */
+	static String woodOf(String blockPath) {
+		for (String suffix : new String[] { "_log", "_wood", "_stem", "_hyphae" })
+			if (blockPath.endsWith(suffix) && blockPath.length() > suffix.length())
+				return blockPath.substring(0, blockPath.length() - suffix.length());
+		return null;
 	}
 
 	/** A navigation path may report a partial route despite ending within resting reach. */

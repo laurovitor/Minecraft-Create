@@ -11,6 +11,7 @@ import com.simibubi.create.content.logistics.vault.ItemVaultClipboardInfo;
 import com.simibubi.create.foundation.utility.CreateLang;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.entity.player.Player;
@@ -42,6 +43,11 @@ public class AndesiteGolemClipboardInfo {
 			String.format(java.util.Locale.ROOT, "%.1f", health),
 			String.format(java.util.Locale.ROOT, "%.1f", max), healthPercent).component()));
 		page.add(entry(CreateLang.translate("clipboard.golem_info.days", golem.getDaysSinceCreation()).component()));
+		BlockPos tree = golem.getTreeStatusPos();
+		MutableComponent reason = CreateLang.translate("clipboard.golem_info.tree." + golem.getTreeStatus().key).component();
+		page.add(entry(tree == null
+			? CreateLang.translate("clipboard.golem_info.tree_none", reason).component()
+			: CreateLang.translate("clipboard.golem_info.tree", tree.getX() + " " + tree.getY() + " " + tree.getZ(), reason).component()));
 		page.add(entry(CreateLang.translate("clipboard.golem_info.capacity", total).component()));
 		page.add(entry(CreateLang.translate("clipboard.golem_info.used", used).component()));
 		page.add(entry(CreateLang.translate("clipboard.golem_info.free", total - used).component()));

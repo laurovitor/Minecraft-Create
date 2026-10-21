@@ -22,7 +22,7 @@ import java.util.function.Predicate;
  * simulate Minecraft pathfinding, goal scheduling or the client.
  */
 public class NaturalDarkOakCheck {
-	enum B { AIR, DIRT, GRASS, DARK_OAK_LOG, OAK_LOG, DARK_OAK_LEAVES, LEAF_LITTER }
+	enum B { AIR, DIRT, GRASS, PODZOL, MOSS, STONE, DARK_OAK_LOG, DARK_OAK_WOOD, OAK_LOG, DARK_OAK_LEAVES, LEAF_LITTER }
 
 	static final class World {
 		final Map<Long, B> blocks = new HashMap<>();
@@ -37,7 +37,7 @@ public class NaturalDarkOakCheck {
 	static int ky(long k) { return (int) ((k >>> 20) & 0xFFFFF) - 1_000; }
 	static int kz(long k) { return (int) (k & 0xFFFFF) - 1_000; }
 
-	static boolean isLog(B b) { return b == B.DARK_OAK_LOG || b == B.OAK_LOG; }
+	static boolean isLog(B b) { return b == B.DARK_OAK_LOG || b == B.DARK_OAK_WOOD || b == B.OAK_LOG; }
 	static boolean isLeaf(B b) { return b == B.DARK_OAK_LEAVES; }
 	static boolean airOrLeaves(B b) { return b == B.AIR || isLeaf(b) || b == B.LEAF_LITTER; }
 	static boolean collides(B b) { return b != B.AIR && b != B.LEAF_LITTER; }
@@ -219,7 +219,21 @@ public class NaturalDarkOakCheck {
 				}
 	}
 
-	static String path(B b) { return b == B.DARK_OAK_LOG ? "dark_oak_log" : b == B.OAK_LOG ? "oak_log" : "other"; }
+	static String path(B b) {
+		return switch (b) { case DARK_OAK_LOG -> "dark_oak_log"; case DARK_OAK_WOOD -> "dark_oak_wood"; case OAK_LOG -> "oak_log"; default -> "other"; };
+	}
+
+	/** AndesiteGolemWorkGoal.sameWood: same species of log/wood (real GolemWorkGeometry.woodOf). */
+	static boolean sameWood(B a, B b) {
+		return isLog(b) && (a == b || java.util.Objects.equals(GolemWorkGeometry.woodOf(path(a)), GolemWorkGeometry.woodOf(path(b))));
+	}
+
+	/** 26.3 tags: #dirt = dirt/coarse/rooted only; grass blocks (grass, podzol, mycelium) and moss separate. */
+	static boolean oldGround(B below) { return below == B.DIRT; }
+	/** AndesiteGolemWorkGoal.isTreeGround. */
+	static boolean newGround(B below) {
+		return below == B.DIRT || below == B.GRASS || below == B.PODZOL || below == B.MOSS || below == B.STONE;
+	}
 
 	/** AndesiteGolemWorkGoal.baseCluster, using the real GolemWorkGeometry species gate. */
 	static List<Long> baseCluster(World w, int bx, int by, int bz) {
@@ -230,7 +244,7 @@ public class NaturalDarkOakCheck {
 			for (int z = -1; z <= 0; z++) {
 				List<Long> square = List.of(key(bx + x, by, bz + z), key(bx + x + 1, by, bz + z),
 					key(bx + x, by, bz + z + 1), key(bx + x + 1, by, bz + z + 1));
-				if (square.stream().allMatch(p -> w.get(kx(p), ky(p), kz(p)) == log
+				if (square.stream().allMatch(p -> sameWood(log, w.get(kx(p), ky(p), kz(p)))
 					&& !isLog(w.get(kx(p), ky(p) - 1, kz(p)))))
 					return square;
 			}
@@ -243,7 +257,7 @@ public class NaturalDarkOakCheck {
 		if (!isLog(state))
 			return false;
 		B below = w.get(x, y - 1, z);
-		if (isLog(below) || !(below == B.DIRT || below == B.GRASS))
+		if (isLog(below) || !newGround(below))
 			return false;
 		return filter.test(state);
 	}
@@ -289,18 +303,23 @@ public class NaturalDarkOakCheck {
 	}
 
 	static boolean canStandAt(World w, int x, int y, int z) {
+		B under = w.get(x, y - 1, z);
 		return !collides(w.get(x, y, z)) && !collides(w.get(x, y + 1, z))
-			&& (w.get(x, y - 1, z) == B.DIRT || w.get(x, y - 1, z) == B.GRASS || isLog(w.get(x, y - 1, z)));
+			&& (under == B.DIRT || under == B.GRASS || under == B.PODZOL || under == B.MOSS || under == B.STONE || isLog(under));
 	}
 
 	/** walkToTree's candidate standing spots (1-3 blocks out from each trunk face). */
 	static int approachSpots(World w, List<Long> fp) {
+		return approachSpots(w, fp, 8);
+	}
+
+	static int approachSpots(World w, List<Long> fp, int up) {
 		Set<Long> spots = new HashSet<>();
 		int[][] sides = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } };
 		for (long t : fp)
 			for (int[] s : sides)
 				for (int out = 1; out <= 3; out++)
-					for (int dy = 1; dy >= -7; dy--) {
+					for (int dy = up; dy >= -7; dy--) {
 						int x = kx(t) + s[0] * out, y = ky(t) + dy, z = kz(t) + s[1] * out;
 						if (canStandAt(w, x, y, z))
 							spots.add(key(x, y, z));
@@ -319,7 +338,90 @@ public class NaturalDarkOakCheck {
 		return out;
 	}
 
+	/**
+	 * A giant dark-oak-like tree as mods/datapacks generate them: 2x2 trunk {@code height} tall,
+	 * four long branches with leaf blobs and a wide crown. {@code buried} trunk layers sit below
+	 * the surface (y=63) on stone, the lowest one built from wood blocks; the ground under a
+	 * surface trunk is left as {@code ground} (no grass-to-dirt conversion).
+	 */
+	static World giantTree(int height, int buried, B ground) {
+		World w = flatGround(20);
+		for (int x = -20; x <= 20; x++)
+			for (int z = -20; z <= 20; z++)
+				w.set(x, 63, z, ground);
+		int y0 = 64 - buried;
+		for (int dx = 0; dx <= 1; dx++)
+			for (int dz = 0; dz <= 1; dz++) {
+				if (buried > 0)
+					w.set(dx, y0 - 1, dz, B.STONE);
+				for (int dy = 0; dy < height; dy++)
+					w.set(dx, y0 + dy, dz, buried > 0 && dy == 0 ? B.DARK_OAK_WOOD : B.DARK_OAK_LOG);
+			}
+		int top = y0 + height - 1;
+		int[][] dirs = { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } };
+		for (int i = 0; i < 4; i++) {
+			int by = top - 10 + i * 2, len = 5;
+			int sx = dirs[i][0] > 0 ? 1 : 0, sz = dirs[i][1] > 0 ? 1 : 0;
+			for (int l = 1; l <= len; l++)
+				w.set(sx + dirs[i][0] * l, by + l / 2, sz + dirs[i][1] * l, B.DARK_OAK_LOG);
+			blob(w, sx + dirs[i][0] * len, by + len / 2 + 1, sz + dirs[i][1] * len, 3);
+		}
+		blob(w, 0, top + 1, 0, 5);
+		updateLeafDistances(w);
+		return w;
+	}
+
+	static void blob(World w, int cx, int cy, int cz, int r) {
+		for (int x = -r; x <= r; x++)
+			for (int y = -2; y <= 2; y++)
+				for (int z = -r; z <= r; z++)
+					if (x * x + z * z + y * y * 2 <= r * r + 1 && w.get(cx + x, cy + y, cz + z) == B.AIR)
+						w.set(cx + x, cy + y, cz + z, B.DARK_OAK_LEAVES);
+	}
+
+	/** atTreePerimeter before/after this round, with the real GolemWorkGeometry.atOuterTreeFace. */
+	static boolean atPerimeter(World w, List<Long> fp, int baseY, double gx, double gy, double gz, boolean fixed) {
+		int feetY = (int) Math.floor(gy);
+		long b = fp.get(0);
+		int trunkY = fixed && feetY > baseY && feetY - baseY <= 10 && isLog(w.get(kx(b), feetY, kz(b))) ? feetY : baseY;
+		for (long t : fp)
+			if (GolemWorkGeometry.atOuterTreeFace(gx, gy, gz, kx(t), trunkY, kz(t)))
+				return true;
+		return false;
+	}
+
+	static void giantChecks() {
+		// tall 2x2 on unconverted grass / podzol / moss: the old #dirt-only ground rule rejected all three
+		for (B ground : new B[] { B.GRASS, B.PODZOL, B.MOSS }) {
+			World w = giantTree(30, 0, ground);
+			assert !oldGround(w.get(0, 63, 0)) : "old rule must reject " + ground + " (root cause)";
+			assert treeCandidate(w, 0, 64, 0, b -> true) : ground + " ground must be accepted";
+			List<Long> fp = baseCluster(w, 0, 64, 0);
+			assert fp.size() == 4;
+			Tree t = findTreeFixed(w, 0, 64, 0, fp);
+			assert !t.leaves.isEmpty() : "giant canopy must be found";
+			Set<Long> cut = cutFixed(w, 0, 64, 0);
+			long logs = w.blocks.entrySet().stream().filter(e -> isLog(e.getValue())).count();
+			assert cut.stream().filter(k -> isLog(w.blocks.getOrDefault(k, B.AIR))).count() == logs : "every giant log cut";
+			assert approachSpots(w, fp) > 0;
+		}
+		// trunk buried 3 deep on stone with a wood-block bottom layer
+		World w = giantTree(34, 3, B.GRASS);
+		assert !oldGround(B.STONE) && treeCandidate(w, 0, 61, 0, b -> true) : "buried trunk on stone";
+		List<Long> fp = baseCluster(w, 0, 61, 0);
+		assert fp.size() == 4 : "wood + log trunk is still one 2x2 species";
+		assert !findTreeFixed(w, 0, 61, 0, fp).leaves.isEmpty();
+		assert cutFixed(w, 0, 61, 0).containsAll(trunk(w, 0, 61, 0));
+		assert approachSpots(w, fp, 1) == 0 : "old +1 search height finds no surface spot beside a buried trunk";
+		assert approachSpots(w, fp, 8) > 0 : "surface spots found with the raised search";
+		// golem at the surface (feet y=64) against the west face
+		assert !atPerimeter(w, fp, 61, -0.45, 64, 0.5, false) : "old perimeter compared with the buried base";
+		assert atPerimeter(w, fp, 61, -0.45, 64, 0.5, true) : "perimeter at surface height beside the trunk";
+		assert !atPerimeter(w, fp, 61, -5.0, 64, 0.5, true);
+	}
+
 	public static void main(String[] args) {
+		giantChecks();
 		Predicate<B> anything = b -> true;
 		Predicate<B> oakOnly = b -> b == B.OAK_LOG;
 		int trees = 0, leftoverBefore = 0, leftoverFixed = 0, orphanLogs = 0;
@@ -375,6 +477,7 @@ public class NaturalDarkOakCheck {
 			assert approachSpots(w, fp) > 0 : "forest tree without standing spot";
 			assert cutFixed(w, o[0], o[1], o[2]).containsAll(trunk(w, o[0], o[1], o[2]));
 		}
+		System.out.printf("Giant 2x2 (30-34 high, grass/podzol/moss, buried on stone) checks passed.%n");
 		System.out.printf("Natural dark oak checks passed: %d single trees x4 bases, %d forest trees;"
 			+ " 3bc20b8bf left %d trunk logs standing (always incl. the target base), fixed cut left %d%n",
 			trees, origins.size(), leftoverBefore, leftoverFixed);

@@ -19,6 +19,9 @@ public class GolemWorkGeometryCheck {
 		assert GolemWorkGeometry.canHaveWideTrunk("oak_log") : "complete planted giant oak must use 2x2 arrival";
 		assert GolemWorkGeometry.canHaveWideTrunk("dark_oak_log") : "dark oak retains 2x2 arrival";
 		assert GolemWorkGeometry.canHaveWideTrunk("pale_oak_log") : "pale oak (same trunk placer as dark oak) is 2x2";
+		assert GolemWorkGeometry.canHaveWideTrunk("dark_oak_wood") : "giant trunks built from wood blocks";
+		assert "dark_oak".equals(GolemWorkGeometry.woodOf("dark_oak_wood")) && "crimson".equals(GolemWorkGeometry.woodOf("crimson_hyphae"));
+		assert GolemWorkGeometry.woodOf("stone") == null && GolemWorkGeometry.woodOf("_log") == null;
 		assert !GolemWorkGeometry.canHaveWideTrunk("birch_log") : "ordinary species must not merge adjacent trees";
 		assert at2x2(-0.45, 64, 0.5) : "standing at dark-oak west face must enter WORK";
 		assert at2x2(1.5, 64, 2.45) : "standing at south face must enter WORK";

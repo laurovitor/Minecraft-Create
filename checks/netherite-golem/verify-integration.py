@@ -32,6 +32,13 @@ assert 'NetheriteGolemClipboardInfo.write' in handler
 assert 'Blocks.DARK_OAK_LOG' not in work and 'TreeCutter.findTreeForGolem(masked, base' in work
 assert 'for (BlockPos log : footprint)\n\t\t\tBlockHelper.destroyBlockAs' in work
 cutter = (root/'content/kinetics/saw/TreeCutter.java').read_text()
+# Giant/mod trees: NaturalDarkOakCheck ports these rules; fail if the real code drifts.
+for line in ['below.is(BlockTags.GRASS_BLOCKS)', 'below.is(BlockTags.MOSS_BLOCKS)', 'below.is(BlockTags.SUBSTRATE_OVERWORLD)',
+             'below.is(BlockTags.BASE_STONE_OVERWORLD)', 'if (below.is(BlockTags.LOGS) || !isTreeGround(below))',
+             'APPROACH_UP = 8', 'sameWood(log, golem.level().getBlockState(p))', 'MAX_APPROACH_PATHS',
+             'feetY - base.getY() <= PERIMETER_UP', 'String wood = GolemWorkGeometry.woodOf(path);']:
+    assert line in work, line
+assert 'below.is(BlockTags.DIRT) || below.is(Blocks.MUD) || isMangroveRoot(below)))' not in work
 # NaturalDarkOakCheck ports these TreeCutter lines; fail if they drift.
 for line in ['visited.add(pos);', 'BlockPos.betweenClosedStream(pos.offset(-1, 0, -1), pos.offset(1, 1, 1))',
              'forNeighbours(currentPos, visited, SearchDirection.UP', 'getLeafDistance(state) > prevLeafDistance']:
