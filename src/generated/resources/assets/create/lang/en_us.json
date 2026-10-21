@@ -3659,5 +3659,17 @@
   "tag.item.create.upgrade_aquatic.coral": "Upgrade Aquatic Coral",
   "tag.item.create.upright_on_belt": "Upright on Belts",
   "tag.item.create.valve_handles": "Valve Handles",
-  "tag.recipe_serializer.create.automation_ignore": "Non-automatable"
+  "tag.recipe_serializer.create.automation_ignore": "Non-automatable",
+  "block.create.netherite_golem_chest": "Netherite Golem Chest",
+  "block.create.netherite_golem_chest.tooltip.summary": "Home of a _Netherite Golem_ created with a pumpkin on a Netherite Block. Guards _25 blocks_ and stores kill drops (all without a filter). Dead chest presses into _6 Netherite Ingots_.",
+  "entity.create.netherite_golem": "Netherite Golem",
+  "item.create.netherite_golem_spawn_egg": "Netherite Golem Spawn Egg",
+  "item.create.packed_netherite_golem_chest": "Netherite Golem Chest (With Golem)",
+  "create.clipboard.golem_info.days": "Days since creation: %1$s",
+  "create.clipboard.golem_info.attack": "Attack strength: %1$s",
+  "create.clipboard.golem_info.armor": "Armor: %1$s",
+  "create.clipboard.golem_info.kills": "Monster kills: %1$s",
+  "create.jei.netherite_golem.info": "Netherite Golem: place a Carved Pumpkin or Jack o'Lantern on a Netherite Block. Guards 25 blocks from its chest, attacks all hostile monsters, sleeps by day when safe, stores accepted kill drops. Ancient Debris heals 10 HP.",
+  "create.jei.netherite_golem_chest.info": "Unfiltered chest stores all kill drops; a filter limits only stored loot. Shift + Wrench packs a live golem. Dead chest presses into six Netherite Ingots.",
+  "create.jei.packed_netherite_golem_chest.info": "Moving the packed chest preserves age, health, contents and filter, but resets monster kills."
 }

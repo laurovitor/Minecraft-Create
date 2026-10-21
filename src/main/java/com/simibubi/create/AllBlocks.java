@@ -187,6 +187,7 @@ import com.simibubi.create.content.logistics.tunnel.BeltTunnelBlock;
 import com.simibubi.create.content.logistics.tunnel.BrassTunnelBlock;
 import com.simibubi.create.content.logistics.tunnel.BrassTunnelCTBehaviour;
 import com.simibubi.create.content.logistics.vault.ItemVaultBlock;
+import com.simibubi.create.content.equipment.netheriteGolem.NetheriteGolemChestBlock;
 import com.simibubi.create.content.equipment.andesiteGolem.AndesiteGolemChestBlock;
 import com.simibubi.create.content.logistics.vault.ReinforcedItemVaultBlock;
 import com.simibubi.create.content.logistics.vault.ItemVaultCTBehaviour;
@@ -1861,6 +1862,23 @@ public class AllBlocks {
 			.blockstate(() -> (c, p) -> BlockStateGen.horizontalBlock(c, p,
 				s -> AssetLookup.partialBaseVariant(c, p, s.getValue(AndesiteGolemChestBlock.ACTIVE) ? "active" : "inactive")))
 			.lang("Andesite Golem Chest")
+			.item()
+			.transform(customItemModel("_", "block_active"))
+			.register();
+
+	// Lauro edition: home chest of the Netherite Golem, made when a pumpkin goes on an andesite alloy block
+	public static final BlockEntry<NetheriteGolemChestBlock> NETHERITE_GOLEM_CHEST =
+		REGISTRATE.block("netherite_golem_chest", NetheriteGolemChestBlock::new)
+			.initialProperties(() -> Blocks.CHEST)
+			.properties(p -> p.mapColor(MapColor.COLOR_BLACK)
+				.sound(SoundType.NETHERITE_BLOCK)
+				.strength(50.0F))
+			.transform(pickaxeOnly())
+			// Player mining creates either a live packed home or a dead recyclable chest.
+			.loot((lt, block) -> lt.add(block, BlockLootSubProvider.noDrop()))
+			.blockstate(() -> (c, p) -> BlockStateGen.horizontalBlock(c, p,
+				s -> AssetLookup.partialBaseVariant(c, p, s.getValue(NetheriteGolemChestBlock.ACTIVE) ? "active" : "inactive")))
+			.lang("Netherite Golem Chest")
 			.item()
 			.transform(customItemModel("_", "block_active"))
 			.register();

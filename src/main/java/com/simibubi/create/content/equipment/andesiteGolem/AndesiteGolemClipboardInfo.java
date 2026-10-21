@@ -41,6 +41,7 @@ public class AndesiteGolemClipboardInfo {
 		page.add(entry(CreateLang.translate("clipboard.golem_info.health",
 			String.format(java.util.Locale.ROOT, "%.1f", health),
 			String.format(java.util.Locale.ROOT, "%.1f", max), healthPercent).component()));
+		page.add(entry(CreateLang.translate("clipboard.golem_info.days", golem.getDaysSinceCreation()).component()));
 		page.add(entry(CreateLang.translate("clipboard.golem_info.capacity", total).component()));
 		page.add(entry(CreateLang.translate("clipboard.golem_info.used", used).component()));
 		page.add(entry(CreateLang.translate("clipboard.golem_info.free", total - used).component()));

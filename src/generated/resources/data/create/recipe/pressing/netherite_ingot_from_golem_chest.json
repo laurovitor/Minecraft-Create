@@ -1,0 +1,5 @@
+{
+  "type": "create:pressing",
+  "ingredients": ["create:netherite_golem_chest"],
+  "results": [{"count": 6, "id": "minecraft:netherite_ingot"}]
+}

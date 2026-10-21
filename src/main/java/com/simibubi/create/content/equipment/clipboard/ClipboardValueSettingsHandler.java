@@ -8,6 +8,9 @@ import com.simibubi.create.AllDataComponents;
 import com.simibubi.create.content.equipment.clipboard.ClipboardOverrides.ClipboardType;
 import com.simibubi.create.content.equipment.andesiteGolem.AndesiteGolemChestBlockEntity;
 import com.simibubi.create.content.equipment.andesiteGolem.AndesiteGolemClipboardInfo;
+import com.simibubi.create.content.equipment.netheriteGolem.NetheriteGolemChestBlockEntity;
+import com.simibubi.create.content.equipment.netheriteGolem.NetheriteGolemClipboardInfo;
+import com.simibubi.create.content.equipment.netheriteGolem.NetheriteGolemChestBlock;
 import com.simibubi.create.content.logistics.vault.ItemVaultBlockEntity;
 import com.simibubi.create.content.logistics.vault.ItemVaultClipboardInfo;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
@@ -74,6 +77,15 @@ public class ClipboardValueSettingsHandler {
 			rightClickBlock.setCancellationResult(InteractionResult.SUCCESS);
 			if (!world.isClientSide())
 				ItemVaultClipboardInfo.write(world, pos, vault, player, itemStack);
+			return;
+		}
+		if (!paste && smartBE instanceof NetheriteGolemChestBlockEntity netheriteChest
+			&& event instanceof RightClickBlock netheriteClick && netheriteChest.getBlockState()
+				.getValue(NetheriteGolemChestBlock.ACTIVE)) {
+			netheriteClick.setCanceled(true);
+			netheriteClick.setCancellationResult(InteractionResult.SUCCESS);
+			if (!world.isClientSide() && netheriteChest.getGolem() != null)
+				NetheriteGolemClipboardInfo.write(player, itemStack, netheriteChest.getGolem(), netheriteChest);
 			return;
 		}
 		if (!paste && smartBE instanceof AndesiteGolemChestBlockEntity chest

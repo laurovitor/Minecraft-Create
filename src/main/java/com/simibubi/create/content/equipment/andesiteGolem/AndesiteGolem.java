@@ -61,6 +61,7 @@ public class AndesiteGolem extends AbstractGolem {
 		SynchedEntityData.defineId(AndesiteGolem.class, EntityDataSerializers.COPPER_GOLEM_STATE);
 
 	private @Nullable BlockPos chestPos;
+	private long createdGameTime = -1;
 	/** Gathered items not yet stored in the chest. */
 	private final List<ItemStack> carried = new ArrayList<>();
 
@@ -108,8 +109,16 @@ public class AndesiteGolem extends AbstractGolem {
 
 	public void setChest(BlockPos pos) {
 		chestPos = pos.immutable();
+		if (createdGameTime < 0) createdGameTime = level().getGameTime();
 		setHomeTo(chestPos, WORK_RADIUS);
 	}
+
+	public long getDaysSinceCreation() {
+		return Math.max(0, (level().getGameTime() - createdGameTime) / 24000);
+	}
+
+	public long getCreatedGameTime() { return createdGameTime; }
+	public void setCreatedGameTime(long time) { createdGameTime = time; }
 
 	public @Nullable BlockPos getChestPos() {
 		return chestPos;
@@ -212,7 +221,7 @@ public class AndesiteGolem extends AbstractGolem {
 	}
 
 	/** Five percent of normal speed per full ten percent of health lost, down to half speed. */
-	private void updateMovementSpeed() {
+	protected void updateMovementSpeed() {
 		var speed = getAttribute(Attributes.MOVEMENT_SPEED);
 		if (speed == null)
 			return;
@@ -313,6 +322,7 @@ public class AndesiteGolem extends AbstractGolem {
 			output.store("Chest", BlockPos.CODEC, chestPos);
 		output.store("Carried", ItemStack.CODEC.listOf(), carried);
 		output.putBoolean("Sleeping", isAsleep());
+		output.putLong("CreatedGameTime", createdGameTime);
 	}
 
 	@Override
@@ -322,6 +332,7 @@ public class AndesiteGolem extends AbstractGolem {
 		carried.clear();
 		input.read("Carried", ItemStack.CODEC.listOf()).ifPresent(carried::addAll);
 		setSleeping(input.getBooleanOr("Sleeping", false));
+		createdGameTime = input.getLongOr("CreatedGameTime", level().getGameTime());
 	}
 
 	// ---- copper golem sounds

@@ -28,6 +28,7 @@ import com.simibubi.create.content.contraptions.minecart.MinecartCouplingItem;
 import com.simibubi.create.content.contraptions.mounted.MinecartContraptionItem;
 import com.simibubi.create.content.equipment.BuildersTeaItem;
 import com.simibubi.create.content.equipment.andesiteGolem.AndesiteGolemChestBlock;
+import com.simibubi.create.content.equipment.netheriteGolem.PackedNetheriteGolemChestItem;
 import com.simibubi.create.content.equipment.andesiteGolem.PackedAndesiteGolemChestItem;
 import com.simibubi.create.content.equipment.TreeFertilizerItem;
 import com.simibubi.create.content.equipment.armor.AllArmorMaterials;
@@ -214,6 +215,15 @@ public class AllItems {
 			.properties(p -> p.stacksTo(1))
 			.lang("Andesite Golem Chest (With Golem)")
 			.model(() -> AssetLookup.customBlockItemModel("andesite_golem_chest", "block_active"))
+			.register();
+
+	/** A picked-up live home; deliberately distinct from the dead chest pressed into alloy. */
+	public static final ItemEntry<PackedNetheriteGolemChestItem> PACKED_NETHERITE_GOLEM_CHEST =
+		REGISTRATE.item("packed_netherite_golem_chest",
+			p -> new PackedNetheriteGolemChestItem(AllBlocks.NETHERITE_GOLEM_CHEST.get(), p))
+			.properties(p -> p.stacksTo(1))
+			.lang("Netherite Golem Chest (With Golem)")
+			.model(() -> AssetLookup.customBlockItemModel("netherite_golem_chest", "block_active"))
 			.register();
 
 	public static final ItemEntry<ChromaticCompoundItem> CHROMATIC_COMPOUND =

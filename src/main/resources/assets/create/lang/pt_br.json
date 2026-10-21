@@ -3639,5 +3639,16 @@
   "tag.item.create.upgrade_aquatic.coral": "Corais do Upgrade Aquatic",
   "tag.item.create.upright_on_belt": "De Pé nas Esteiras",
   "tag.item.create.valve_handles": "Válvulas",
-  "tag.recipe_serializer.create.automation_ignore": "Não-automatizável"
+  "tag.recipe_serializer.create.automation_ignore": "Não-automatizável",
+  "block.create.netherite_golem_chest": "Baú do Golem de Netherita",
+  "entity.create.netherite_golem": "Golem de Netherita",
+  "item.create.netherite_golem_spawn_egg": "Ovo Gerador de Golem de Netherita",
+  "item.create.packed_netherite_golem_chest": "Baú de Netherita (com Golem)",
+  "create.clipboard.golem_info.days": "Dias desde a criação: %1$s",
+  "create.clipboard.golem_info.attack": "Força de ataque: %1$s",
+  "create.clipboard.golem_info.armor": "Armadura: %1$s",
+  "create.clipboard.golem_info.kills": "Monstros abatidos: %1$s",
+  "create.jei.netherite_golem.info": "Golem de Netherita: abóbora esculpida ou lanterna sobre bloco de netherita. Guarda 25 blocos do baú e ataca todos os monstros hostis. Minério ancestral cura 10 pontos de vida.",
+  "create.jei.netherite_golem_chest.info": "Sem filtro guarda todos os espólios; filtro restringe só o que entra no baú. Baú sem golem pode ser prensado em 6 lingotes de netherita.",
+  "create.jei.packed_netherite_golem_chest.info": "Mover o baú mantém idade, vida, conteúdo e filtro, mas zera os abates."
 }

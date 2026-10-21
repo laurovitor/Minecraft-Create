@@ -96,6 +96,7 @@ public class AndesiteGolemChestBlock extends HorizontalDirectionalBlock
 		ItemStack drop = new ItemStack(AllItems.PACKED_ANDESITE_GOLEM_CHEST.get());
 		CompoundTag data = new CompoundTag();
 		data.putFloat("Health", golem.getHealth());
+		data.putLong("CreatedGameTime", golem.getCreatedGameTime());
 		data.store("Items", ItemStack.OPTIONAL_CODEC.listOf(), RegistryNbt.ops(level.registryAccess()),
 			chest.getContainer().getItems());
 		data.store("Filter", ItemStack.OPTIONAL_CODEC, RegistryNbt.ops(level.registryAccess()),
@@ -123,6 +124,8 @@ public class AndesiteGolemChestBlock extends HorizontalDirectionalBlock
 		float health = stack.get(DataComponents.CUSTOM_DATA) instanceof CustomData custom
 			? custom.copyTag().getFloat("Health").orElse(golem.getMaxHealth()) : golem.getMaxHealth();
 		golem.setHealth(Math.clamp(health, 0.01f, golem.getMaxHealth()));
+		if (stack.get(DataComponents.CUSTOM_DATA) instanceof CustomData ageData)
+			golem.setCreatedGameTime(ageData.copyTag().getLongOr("CreatedGameTime", level.getGameTime()));
 		golem.snapTo(pos.getX() + 0.5, pos.getY() + 1.05, pos.getZ() + 0.5, state.getValue(FACING).toYRot(), 0);
 		golem.setChest(pos);
 		if (level.getBlockEntity(pos) instanceof AndesiteGolemChestBlockEntity chest) {

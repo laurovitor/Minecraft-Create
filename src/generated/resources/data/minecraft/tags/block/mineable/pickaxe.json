@@ -510,6 +510,7 @@
     "create:small_veridium_brick_slab",
     "create:small_veridium_brick_wall",
     "create:layered_veridium",
-    "create:veridium_pillar"
+    "create:veridium_pillar",
+    "create:netherite_golem_chest"
   ]
 }

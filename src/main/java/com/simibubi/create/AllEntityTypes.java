@@ -27,6 +27,8 @@ import com.tterrag.registrate.util.nullness.NonNullFunction;
 import com.tterrag.registrate.util.nullness.NonNullSupplier;
 
 import net.createmod.catnip.api.lang.Lang;
+import com.simibubi.create.content.equipment.netheriteGolem.NetheriteGolem;
+import com.simibubi.create.content.equipment.netheriteGolem.NetheriteGolemRenderer;
 import com.simibubi.create.content.equipment.andesiteGolem.AndesiteGolem;
 import com.simibubi.create.content.equipment.andesiteGolem.AndesiteGolemRenderer;
 
@@ -87,6 +89,17 @@ public class AllEntityTypes {
 			.build()
 			.register();
 
+	// Lauro edition
+	public static final EntityEntry<NetheriteGolem> NETHERITE_GOLEM =
+		register("netherite_golem", NetheriteGolem::new, () -> NetheriteGolemRenderer::new, MobCategory.MISC, 10, 3,
+			true, false, b -> b.sized(0.49F, 0.98F).eyeHeight(0.8125F))
+			// the egg also sets down the golem's chest, a golem without one has nothing to do
+			.spawnEgg()
+			.model(() -> (c, p) -> {})
+			.lang("Netherite Golem Spawn Egg")
+			.build()
+			.register();
+
 	public static final EntityEntry<PackageEntity> PACKAGE = register("package", PackageEntity::new, () -> PackageRenderer::new,
 		MobCategory.MISC, 10, 3, true, false, PackageEntity::build)
 		.visual(() -> PackageVisual::new, true)
@@ -129,6 +142,7 @@ public class AllEntityTypes {
 			.build());
 		event.put(ANDESITE_GOLEM.get(), AndesiteGolem.createAttributes()
 			.build());
+		event.put(NETHERITE_GOLEM.get(), NetheriteGolem.createAttributes().build());
 	}
 
 	public static void register() {
