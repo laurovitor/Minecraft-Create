@@ -15,6 +15,7 @@ import com.simibubi.create.content.logistics.packagePort.frogport.FrogportBlockE
 import com.simibubi.create.content.logistics.packager.PackagerBlockEntity;
 import com.simibubi.create.foundation.ponder.CreateSceneBuilder;
 
+import net.createmod.catnip.api.level.wrapper.SchematicLevel;
 import net.createmod.catnip.api.math.AngleHelper;
 import net.createmod.catnip.api.math.Pointing;
 import net.createmod.catnip.api.client.render.SuperRenderTypeBuffer;
@@ -335,7 +336,8 @@ public class FrogAndConveyorScenes {
 			}
 
 			if (wrench == null) {
-				wrench = new ItemEntity(world, 0, 0, 0, AllItems.WRENCH.asStack());
+				// Rendered directly, never added to the level, so it needs a virtual ID on 26.3.
+				wrench = SchematicLevel.assignVirtualEntityId(new ItemEntity(world, 0, 0, 0, AllItems.WRENCH.asStack()));
 				wrench.setYRot(wrench.yRotO = 180);
 			}
 
