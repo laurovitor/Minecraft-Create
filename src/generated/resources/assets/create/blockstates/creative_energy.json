@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "create:block/creative_energy/block"
+    }
+  }
+}

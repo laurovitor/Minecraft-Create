@@ -1,0 +1,23 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:ingots/silver"
+      }
+    }
+  ],
+  "type": "create:mixing",
+  "heat_requirement": "heated",
+  "ingredients": [
+    "#c:ingots/gold",
+    "#c:ingots/silver"
+  ],
+  "results": [
+    {
+      "count": 2,
+      "id": "create:electrum_ingot"
+    }
+  ]
+}

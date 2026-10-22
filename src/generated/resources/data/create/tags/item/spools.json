@@ -1,0 +1,8 @@
+{
+  "values": [
+    "create:copper_spool",
+    "create:gold_spool",
+    "create:electrum_spool",
+    "create:festive_spool"
+  ]
+}

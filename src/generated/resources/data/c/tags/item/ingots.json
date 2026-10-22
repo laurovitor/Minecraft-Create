@@ -1,5 +1,6 @@
 {
   "values": [
-    "#create:create_ingots"
+    "#create:create_ingots",
+    "#c:ingots/electrum"
   ]
 }

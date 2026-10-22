@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "create:block/rolling_mill/block"
+    },
+    "facing=north": {
+      "model": "create:block/rolling_mill/block",
+      "y": 270
+    },
+    "facing=south": {
+      "model": "create:block/rolling_mill/block",
+      "y": 90
+    },
+    "facing=west": {
+      "model": "create:block/rolling_mill/block",
+      "y": 180
+    }
+  }
+}

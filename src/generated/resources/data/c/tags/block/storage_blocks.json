@@ -5,6 +5,7 @@
     "create:andesite_alloy_block",
     "create:brass_block",
     "create:cardboard_block",
-    "create:experience_block"
+    "create:experience_block",
+    "#c:storage_blocks/electrum"
   ]
 }

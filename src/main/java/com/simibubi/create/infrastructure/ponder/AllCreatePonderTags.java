@@ -38,7 +38,8 @@ public class AllCreatePonderTags {
 //	RECENTLY_UPDATED = loc("recently_updated"),
 	DISPLAY_SOURCES = loc("display_sources"),
 	DISPLAY_TARGETS = loc("display_targets"),
-	THRESHOLD_SWITCH_TARGETS = loc("threshold_switch_targets");
+	THRESHOLD_SWITCH_TARGETS = loc("threshold_switch_targets"),
+	ELECTRIC = loc("electric");
 
 	private static Identifier loc(String id) {
 		return Create.asResource(id);
@@ -63,6 +64,13 @@ public class AllCreatePonderTags {
 				.item(AllBlocks.WATER_WHEEL.get(), true, false)
 				.title("Kinetic Sources")
 				.description("Components which generate Rotational Force")
+				.register();
+
+		helper.registerTag(ELECTRIC)
+				.addToIndex()
+				.item(AllBlocks.ELECTRIC_MOTOR.get(), true, false)
+				.title("Electric Blocks")
+				.description("Components which generate, store, carry or use electric energy")
 				.register();
 
 		helper.registerTag(KINETIC_APPLIANCES)
@@ -197,6 +205,7 @@ public class AllCreatePonderTags {
 				.add(AllBlocks.ROTATION_SPEED_CONTROLLER);
 
 		HELPER.addToTag(KINETIC_SOURCES)
+				.add(AllBlocks.ELECTRIC_MOTOR)
 				.add(AllBlocks.HAND_CRANK)
 				.add(AllBlocks.COPPER_VALVE_HANDLE)
 				.add(AllBlocks.WATER_WHEEL)
@@ -216,7 +225,18 @@ public class AllCreatePonderTags {
 				.add(AllBlocks.TRAIN_TRAPDOOR)
 				.add(AllBlocks.RAILWAY_CASING);
 
+		HELPER.addToTag(ELECTRIC)
+				.add(AllBlocks.ELECTRIC_MOTOR)
+				.add(AllBlocks.ALTERNATOR)
+				.add(AllBlocks.MODULAR_ACCUMULATOR)
+				.add(AllBlocks.SMALL_CONNECTOR)
+				.add(AllBlocks.SMALL_LIGHT_CONNECTOR)
+				.add(AllBlocks.LARGE_CONNECTOR)
+				.add(AllBlocks.CREATIVE_ENERGY);
+
 		HELPER.addToTag(KINETIC_APPLIANCES)
+				.add(AllBlocks.ROLLING_MILL)
+				.add(AllBlocks.ALTERNATOR)
 				.add(AllBlocks.MILLSTONE)
 				.add(AllBlocks.TURNTABLE)
 				.add(AllBlocks.ENCASED_FAN)
@@ -404,6 +424,7 @@ public class AllCreatePonderTags {
 				.add(AllBlocks.SPEEDOMETER)
 				.add(AllBlocks.FLUID_TANK)
 				.add(AllBlocks.FACTORY_GAUGE)
+				.add(AllBlocks.MODULAR_ACCUMULATOR)
 				.add(AllItems.BELT_CONNECTOR);
 
 		itemHelper.addToTag(DISPLAY_SOURCES)

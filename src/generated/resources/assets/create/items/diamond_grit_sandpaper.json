@@ -1,0 +1,6 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "create:item/diamond_grit_sandpaper"
+  }
+}

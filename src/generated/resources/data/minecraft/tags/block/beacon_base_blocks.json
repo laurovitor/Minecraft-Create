@@ -2,6 +2,7 @@
   "values": [
     "create:zinc_block",
     "create:brass_block",
-    "create:experience_block"
+    "create:experience_block",
+    "create:electrum_block"
   ]
 }

@@ -512,6 +512,15 @@
     "create:layered_veridium",
     "create:veridium_pillar",
     "create:netherite_golem_chest",
-    "create:redstone_golem_chest"
+    "create:redstone_golem_chest",
+    "create:rolling_mill",
+    "create:electric_motor",
+    "create:alternator",
+    "create:connector",
+    "create:small_light_connector",
+    "create:large_connector",
+    "create:modular_accumulator",
+    "create:creative_energy",
+    "create:electrum_block"
   ]
 }

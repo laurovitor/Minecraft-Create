@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "P": "#c:plates/iron",
+    "R": "#c:rods/iron"
+  },
+  "pattern": [
+    "P",
+    "R",
+    "P"
+  ],
+  "result": {
+    "count": 24,
+    "id": "create:spool"
+  }
+}

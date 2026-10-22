@@ -1,0 +1,21 @@
+{
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "tag": "c:dusts/diamond"
+      }
+    }
+  ],
+  "type": "create:crushing",
+  "ingredients": [
+    "minecraft:diamond"
+  ],
+  "processing_time": 300,
+  "results": [
+    {
+      "id": "create:diamond_grit"
+    }
+  ]
+}

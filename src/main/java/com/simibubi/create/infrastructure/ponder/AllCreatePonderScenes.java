@@ -17,6 +17,7 @@ import com.simibubi.create.infrastructure.ponder.scenes.DeployerScenes;
 import com.simibubi.create.infrastructure.ponder.scenes.DetectorScenes;
 import com.simibubi.create.infrastructure.ponder.scenes.DisplayScenes;
 import com.simibubi.create.infrastructure.ponder.scenes.EjectorScenes;
+import com.simibubi.create.infrastructure.ponder.scenes.ElectricityScenes;
 import com.simibubi.create.infrastructure.ponder.scenes.ElevatorScenes;
 import com.simibubi.create.infrastructure.ponder.scenes.FanScenes;
 import com.simibubi.create.infrastructure.ponder.scenes.FunnelScenes;
@@ -431,6 +432,20 @@ public class AllCreatePonderScenes {
 			.addStoryBoard("steam_whistle", SteamScenes::whistle);
 		HELPER.forComponents(AllBlocks.STEAM_ENGINE)
 			.addStoryBoard("steam_engine", SteamScenes::engine);
+
+		// Electricity
+		HELPER.addStoryBoard(AllBlocks.ELECTRIC_MOTOR, "electric_motor", ElectricityScenes::electricMotor,
+			AllCreatePonderTags.KINETIC_SOURCES, AllCreatePonderTags.ELECTRIC);
+		HELPER.addStoryBoard(AllBlocks.ALTERNATOR, "alternator", ElectricityScenes::alternator,
+			AllCreatePonderTags.KINETIC_APPLIANCES, AllCreatePonderTags.ELECTRIC);
+		HELPER.forComponents(AllBlocks.ROLLING_MILL)
+			.addStoryBoard("rolling_mill", ElectricityScenes::rollingMill, AllCreatePonderTags.KINETIC_APPLIANCES)
+			.addStoryBoard("automate_rolling_mill", ElectricityScenes::automateRollingMill);
+		HELPER.addStoryBoard(AllBlocks.MODULAR_ACCUMULATOR, "modular_accumulator", ElectricityScenes::modularAccumulator,
+			AllCreatePonderTags.ELECTRIC);
+		HELPER.forComponents(AllBlocks.SMALL_CONNECTOR, AllBlocks.SMALL_LIGHT_CONNECTOR, AllBlocks.LARGE_CONNECTOR)
+			.addStoryBoard("connector", ElectricityScenes::connector, AllCreatePonderTags.ELECTRIC)
+			.addStoryBoard("connector", ElectricityScenes::connectorRemove, AllCreatePonderTags.ELECTRIC);
 
 	}
 }

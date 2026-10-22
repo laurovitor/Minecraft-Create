@@ -1,0 +1,29 @@
+{
+  "variants": {
+    "facing=down": {
+      "model": "create:block/alternator/block",
+      "x": 270,
+      "y": 90
+    },
+    "facing=east": {
+      "model": "create:block/alternator/block",
+      "y": 270
+    },
+    "facing=north": {
+      "model": "create:block/alternator/block",
+      "y": 180
+    },
+    "facing=south": {
+      "model": "create:block/alternator/block"
+    },
+    "facing=up": {
+      "model": "create:block/alternator/block",
+      "x": 90,
+      "y": 90
+    },
+    "facing=west": {
+      "model": "create:block/alternator/block",
+      "y": 90
+    }
+  }
+}

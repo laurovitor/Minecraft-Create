@@ -4,6 +4,7 @@
     "create:deepslate_zinc_ore",
     "create:raw_zinc_block",
     "create:zinc_block",
-    "create:brass_block"
+    "create:brass_block",
+    "create:electrum_block"
   ]
 }

@@ -1,0 +1,11 @@
+{
+  "type": "create:pressing",
+  "ingredients": [
+    "#c:ingots/electrum"
+  ],
+  "results": [
+    {
+      "id": "create:electrum_sheet"
+    }
+  ]
+}
