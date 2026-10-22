@@ -13,9 +13,8 @@
   "burn_time": 9600,
   "ingredients": [
     {
-      "type": "neoforge:tag",
       "amount": 1000,
-      "tag": "c:crude_oil"
+      "ingredient": "#c:crude_oil"
     }
   ],
   "results": []

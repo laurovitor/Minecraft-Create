@@ -142,7 +142,94 @@ for name in PONDER_SCHEMATICS:
     if not Path('src/main/resources/assets/create/ponder', name + '.nbt').exists():
         fail(f'missing ponder schematic {name}')
 
-# 4. No upstream namespace left behind.
+# 3b. Client assets resolve: item definitions and block states -> models -> parents/textures, and the
+# partial models Java loads. A missing file is only a log error plus a magenta cube in game, so check here.
+ASSET_ROOTS = [Path('src/main/resources/assets/create'), Path('src/generated/resources/assets/create')]
+
+
+def asset(kind, rel):
+    return next((r / kind / rel for r in ASSET_ROOTS if (r / kind / rel).exists()), None)
+
+
+def model_refs(obj):
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            if k == 'model' and isinstance(v, str):
+                yield v
+            else:
+                yield from model_refs(v)
+    elif isinstance(obj, list):
+        for v in obj:
+            yield from model_refs(v)
+
+
+seen_models = set()
+
+
+def check_model(ref, owner):
+    if ':' not in ref:
+        ref = 'minecraft:' + ref
+    ns, path = ref.split(':', 1)
+    if ns != 'create' or ref in seen_models:
+        return
+    seen_models.add(ref)
+    f = asset('models', path + '.json')
+    if f is None:
+        fail(f'missing model {ref} (used by {owner})')
+        return
+    model = json.loads(f.read_text())
+    if 'parent' in model:
+        check_model(model['parent'], ref)
+    for tex in model.get('textures', {}).values():
+        if isinstance(tex, str) and not tex.startswith('#'):
+            tns, tpath = (tex if ':' in tex else 'minecraft:' + tex).split(':', 1)
+            if tns == 'create' and asset('textures', tpath + '.png') is None:
+                fail(f'missing texture {tex} (used by {ref})')
+
+
+for i in BLOCKS + ITEMS:
+    f = asset('items', i + '.json')
+    if f is not None:
+        for ref in model_refs(json.loads(f.read_text())):
+            check_model(ref, f'items/{i}')
+for b in BLOCKS:
+    f = asset('blockstates', b + '.json')
+    if f is None:
+        fail(f'missing blockstate {b}')
+        continue
+    for ref in model_refs(json.loads(f.read_text())):
+        check_model(ref, f'blockstates/{b}')
+partials = (root / 'AllPartialModels.java').read_text()
+for path in re.findall(r'block\("((?:%s)[a-z_/]*)"\)' % '|'.join(BLOCKS), partials):
+    check_model('create:block/' + path, 'AllPartialModels')
+
+# 4. Imported recipes use 26.3 formats (a 1.21.1 recipe makes the server refuse to load the datapack).
+recipe_root = Path('src/generated/resources/data/create/recipe')
+imported_recipes = [f for k in RECIPE_KINDS for f in (recipe_root / k).glob('*.json')]
+imported_recipes += list((recipe_root / 'crafting/electricity').glob('*.json'))
+imported_recipes += [recipe_root / p for p in ('crafting/barbed_wire.json', 'crafting/digital_adapter.json',
+                                               'crafting/portable_energy_interface.json', 'crafting/redstone_relay.json',
+                                               'crafting/servo_motor.json', 'mechanical_crafting/electric_pump.json',
+                                               'mechanical_crafting/tesla_coil.json')]
+
+
+def old_format(recipe):
+    ingredients = list(recipe.get('ingredients', [])) + list(recipe.get('key', {}).values())
+    for i in ingredients:
+        if isinstance(i, dict) and ({'item', 'tag', 'fluid'} & set(i) or i.get('type') == 'neoforge:tag'):
+            return True
+    for r in recipe.get('results', []) + [recipe.get('result') or {}]:
+        for v in r.get('components', {}).values():
+            if isinstance(v, dict) and 'levels' in v:
+                return True
+    return False
+
+
+for f in imported_recipes:
+    if old_format(json.loads(f.read_text())):
+        fail(f'1.21.1 recipe format left in {f}')
+
+# 5. No upstream namespace left behind.
 for base in ('src/main/java', 'src/main/resources', 'src/generated/resources'):
     for f in Path(base).rglob('*'):
         if f.is_file() and f.suffix in ('.java', '.json', '.mcmeta', '.toml', '.txt'):
@@ -152,7 +239,7 @@ for base in ('src/main/java', 'src/main/resources', 'src/generated/resources'):
         if 'createaddition' in str(f):
             fail(f'upstream namespace in path {f}')
 
-# 5. Packaged JAR.
+# 6. Packaged JAR.
 if len(sys.argv) > 1:
     with zipfile.ZipFile(sys.argv[1]) as jar:
         names = set(jar.namelist())
@@ -200,5 +287,5 @@ if len(sys.argv) > 1:
 if failures:
     print('\n'.join(failures))
     sys.exit(f'{len(failures)} failure(s)')
-print(f'OK: {len(BLOCKS)} blocks, {len(ITEMS)} items, {len(keys)} lang keys, {ponder_scenes} ponder scenes, '
+print(f'OK: {len(BLOCKS)} blocks, {len(ITEMS)} items, {len(seen_models)} models, {len(keys)} lang keys, {ponder_scenes} ponder scenes, '
       f'{len(SOUNDS)} sounds')

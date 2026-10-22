@@ -2,9 +2,7 @@
   "type": "create:charging",
   "energy": 4000,
   "ingredients": [
-    {
-      "item": "minecraft:oxidized_chiseled_copper"
-    }
+    "minecraft:oxidized_chiseled_copper"
   ],
   "max_charge_rate": 200,
   "results": [

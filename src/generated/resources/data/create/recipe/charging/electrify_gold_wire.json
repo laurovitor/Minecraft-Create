@@ -2,9 +2,7 @@
   "type": "create:charging",
   "energy": 18000,
   "ingredients": [
-    {
-      "item": "create:gold_wire"
-    }
+    "create:gold_wire"
   ],
   "max_charge_rate": 360,
   "results": [

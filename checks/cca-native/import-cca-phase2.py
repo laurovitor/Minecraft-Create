@@ -4,6 +4,8 @@
 The phase-2 models, textures, block states, loot tables and recipes were copied by an earlier run;
 this script adds what that run left out and can be re-run safely (idempotent):
   - ponder schematics for the phase-2 scenes, renamed to the `create:` namespace;
+  - the phase-2 recipes, re-ported from upstream to the 26.3 formats (string item ingredients,
+    `{amount, ingredient}` fluid ingredients, unwrapped enchantment components);
   - the `has_fluid_tag` conditions of liquid burning recipes, as NeoForge `not(tag_empty)` on fluids;
   - block tags (pickaxe, fan catalysts/transparency, casing) for the phase-2 blocks;
   - an item application recipe for the Copper Wire Casing (upstream never registered one).
@@ -147,18 +149,88 @@ for name in PONDER:
     dst.write_bytes(data)
 print(f"import-cca-phase2: {len(PONDER)} ponder schematics")
 
-# Liquid burning: upstream gates fuels of other mods behind its own has_fluid_tag condition.
-for src in sorted((CA_DATA / "recipe/liquid_burning").glob("*.json")):
-    upstream = json.loads(src.read_text(encoding="utf-8"))
-    dst = GEN / "data/create/recipe/liquid_burning" / src.name
-    data = json.loads(dst.read_text(encoding="utf-8"))
-    tags = [c["fluidTag"] for c in upstream.get("neoforge:conditions", []) if c.get("type") == "createaddition:has_fluid_tag"]
-    if tags:
-        conditions = [{"type": "neoforge:not", "value": {"type": "neoforge:tag_empty", "registry": "minecraft:fluid", "tag": t}}
-                      for t in tags]
+def item_ingredient(v):
+    """1.21.1 item ingredient objects to the 26.x string form ("id", "#tag", or a list of those)."""
+    if isinstance(v, list):
+        return [item_ingredient(i) for i in v]
+    if isinstance(v, dict):
+        if set(v) == {"item"}:
+            return rename_ns(v["item"])
+        if set(v) == {"tag"}:
+            return "#" + v["tag"]
+        fail(f"unsupported ingredient {v}")
+    return rename_ns(v)
+
+
+def fluid_ingredient(v):
+    """NeoForge 21.1 sized fluid ingredients to the 26.x {amount, ingredient} form."""
+    if v.get("type") == "neoforge:tag":
+        return {"amount": v["amount"], "ingredient": "#" + v["tag"]}
+    if set(v) == {"fluid", "amount"}:
+        return {"amount": v["amount"], "ingredient": rename_ns(v["fluid"])}
+    fail(f"unsupported fluid ingredient {v}")
+
+
+def components(c):
+    """Item components whose codec changed: stored/applied enchantments lost their "levels" wrapper."""
+    out = {}
+    for k, v in c.items():
+        if k in ("minecraft:stored_enchantments", "minecraft:enchantments") and isinstance(v, dict) and "levels" in v:
+            v = v["levels"]
+        out[k] = v
+    return out
+
+
+def port_recipe(data, fluid=False):
+    data = json.loads(rename_ns(json.dumps(data)))
+    if "key" in data:
+        data["key"] = {k: item_ingredient(v) for k, v in data["key"].items()}
+    if "ingredients" in data:
+        data["ingredients"] = [fluid_ingredient(i) if fluid else item_ingredient(i) for i in data["ingredients"]]
+    for result in data.get("results", []) + ([data["result"]] if isinstance(data.get("result"), dict) else []):
+        if "components" in result:
+            result["components"] = components(result["components"])
+    conditions = []
+    for c in data.get("neoforge:conditions", []):
+        if c.get("type") == "create:has_fluid_tag":
+            # Upstream's own condition; NeoForge's tag_empty does the same on the fluid registry.
+            c = {"type": "neoforge:not", "value": {"type": "neoforge:tag_empty", "registry": "minecraft:fluid",
+                                                   "tag": c["fluidTag"]}}
+        conditions.append(c)
+    if fluid:
+        # 26.3 refuses a recipe whose fluid tag does not exist, so every fuel from another mod (or from
+        # the phase-3 fluids) waits for its tag to be filled; upstream only gated some of them.
+        for i in data["ingredients"]:
+            tag = i["ingredient"][1:] if i["ingredient"].startswith("#") else None
+            if tag and not tag.startswith("minecraft:") and not any(
+                    c.get("value", {}).get("tag") == tag for c in conditions):
+                conditions.append({"type": "neoforge:not", "value": {"type": "neoforge:tag_empty",
+                                                                      "registry": "minecraft:fluid", "tag": tag}})
+    if conditions:
         data = {"neoforge:conditions": conditions, **{k: v for k, v in data.items() if k != "neoforge:conditions"}}
-    write_json(dst, data)
-print("import-cca-phase2: liquid burning conditions")
+    if "create" + "addition" in json.dumps(data):
+        fail(f"namespace left in recipe {data}")
+    return data
+
+
+RECIPES = {
+    "charging": [p.stem for p in sorted((CA_DATA / "recipe/charging").glob("*.json"))],
+    "liquid_burning": [p.stem for p in sorted((CA_DATA / "recipe/liquid_burning").glob("*.json"))],
+    "crafting": ["barbed_wire", "digital_adapter", "portable_energy_interface", "redstone_relay", "servo_motor"],
+    "mechanical_crafting": ["electric_pump", "tesla_coil"],
+}
+count = 0
+for kind, names in RECIPES.items():
+    for name in names:
+        data = json.loads((CA_DATA / "recipe" / kind / f"{name}.json").read_text(encoding="utf-8"))
+        write_json(GEN / "data/create/recipe" / kind / f"{name}.json", port_recipe(data, fluid=kind == "liquid_burning"))
+        count += 1
+# Upstream ships the straw rolling recipes under the create namespace already.
+for name in ["bamboo", "paper"]:
+    data = json.loads((SRC / "src/generated/resources/data/create/recipe/rolling" / f"{name}.json").read_text(encoding="utf-8"))
+    write_json(GEN / "data/create/recipe/rolling" / f"{name}.json", port_recipe(data))
+    count += 1
+print(f"import-cca-phase2: {count} recipes ported")
 
 write_json(GEN / "data/create/recipe/item_application/copper_wire_casing.json", {
     "type": "create:item_application",

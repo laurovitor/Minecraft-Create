@@ -3,18 +3,10 @@
   "accept_mirrored": true,
   "category": "misc",
   "key": {
-    "C": {
-      "item": "create:capacitor"
-    },
-    "K": {
-      "item": "minecraft:dried_kelp"
-    },
-    "P": {
-      "item": "create:mechanical_pump"
-    },
-    "S": {
-      "item": "create:copper_spool"
-    }
+    "C": "create:capacitor",
+    "K": "minecraft:dried_kelp",
+    "P": "create:mechanical_pump",
+    "S": "create:copper_spool"
   },
   "pattern": [
     " K ",

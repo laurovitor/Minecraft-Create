@@ -1,11 +1,20 @@
 {
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "registry": "minecraft:fluid",
+        "tag": "c:plantoil"
+      }
+    }
+  ],
   "type": "create:liquid_burning",
   "burn_time": 4800,
   "ingredients": [
     {
-      "type": "neoforge:tag",
       "amount": 1000,
-      "tag": "c:plantoil"
+      "ingredient": "#c:plantoil"
     }
   ],
   "results": []

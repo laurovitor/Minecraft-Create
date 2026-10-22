@@ -24,6 +24,11 @@ public class ConfigRegistrationCheck {
 		assertPath(spec, "electricity", "feAtMaxRpm");
 		assertPath(spec, "electricity", "electricMotor", "motorCapacity");
 		assertPath(spec, "electricity", "items", "capacitorCapacity");
+		assertPath(spec, "electricity", "liquidBlazeBurner", "liquidBurnerCapacity");
+		assertPath(spec, "electricity", "portableEnergyInterface", "peiMaxInput");
+		assertPath(spec, "electricity", "teslaCoil", "teslaFireCooldown");
+		assertPath(spec, "electricity", "electricPump", "pumpCapacity");
+		assertPath(spec, "electricity", "barbedWire", "barbedWireDamage");
 		System.out.println("Config registration passed: all server sections are separate and electricity is complete");
 	}
 
