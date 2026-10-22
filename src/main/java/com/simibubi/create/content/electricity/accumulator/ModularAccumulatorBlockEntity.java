@@ -59,7 +59,6 @@ public class ModularAccumulatorBlockEntity extends SmartBlockEntity implements I
 
 	private final EnumSet<Direction> invalidSides = EnumSet.allOf(Direction.class);
 	private final EnumMap<Direction, BlockCapabilityCache<EnergyHandler, Direction>> cache = new EnumMap<>(Direction.class);
-	// protected LazyOptional<ModularAccumulatorPeripheral> peripheral;
 
 	public ModularAccumulatorBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
 		super(type, pos, state);
@@ -69,8 +68,6 @@ public class ModularAccumulatorBlockEntity extends SmartBlockEntity implements I
 		width = 1;
 		updateCapability = false;
 		refreshCapability();
-
-		// if (CreateAddition.CC_ACTIVE) this.peripheral = LazyOptional.of(() -> Peripherals.createModularAccumulatorPeripheral(this));
 	}
 
 	public static void registerCapabilities(RegisterCapabilitiesEvent event) {

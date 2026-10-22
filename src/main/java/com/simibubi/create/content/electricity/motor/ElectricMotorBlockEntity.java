@@ -34,7 +34,6 @@ public class ElectricMotorBlockEntity extends GeneratingKineticBlockEntity {
 	protected ScrollValueBehaviour generatedSpeed;
 	protected final InternalEnergyStorage energy;
 	private final EnergyHandler capability;
-	//private LazyOptional<ElectricMotorPeripheral> lazyPeripheral = null;
 
 	private boolean cc_update_rpm = false;
 	private float cc_new_rpm = 32.0f;
@@ -45,11 +44,6 @@ public class ElectricMotorBlockEntity extends GeneratingKineticBlockEntity {
 		super(type, pos, state);
 		energy = new InternalEnergyStorage(AllConfigs.server().electricity.motorCapacity.get(), AllConfigs.server().electricity.motorMaxInput.get(), 0);
 		capability = energy;
-		/*
-		if(CreateAddition.CC_ACTIVE) {
-			lazyPeripheral = LazyOptional.of(() -> Peripherals.createElectricMotorPeripheral(this));
-		}
-		*/
 		setLazyTickRate(20);
 	}
 
@@ -212,7 +206,7 @@ public class ElectricMotorBlockEntity extends GeneratingKineticBlockEntity {
 		return (float) ((1 - initialProgress) * dis / metersPerTick);
 	}
 
-	// This is the callback used by the CC Peripheral!
+	// Programmatic RPM setter (was the ComputerCraft peripheral callback upstream; CC compat is not ported).
 	public boolean setRPM(float rpm) {
 		if (!Float.isFinite(rpm)) return false;
 		rpm = Math.max(Math.min(rpm, AllConfigs.server().electricity.motorRpmRange.get()), -AllConfigs.server().electricity.motorRpmRange.get());

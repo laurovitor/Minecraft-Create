@@ -69,19 +69,6 @@ public abstract class AbstractElectricBlockEntity extends SmartBlockEntity {
 			escacheMap.put(side, null);
 			return;
 		}
-		/*
-		BlockEntity te = level.getBlockEntity(worldPosition.relative(side));
-		if(te == null) {
-			setCache(side, LazyOptional.empty());
-			return;
-		}
-		LazyOptional<EnergyHandler> le = te.getCapability(ForgeCapabilities.ENERGY, side.getOpposite());
-		if(ignoreCapSide() && !le.isPresent()) le = te.getCapability(ForgeCapabilities.ENERGY);
-		// Make sure the side isn't already cached.
-		if (le.equals(getCachedEnergy(side))) return;
-		setCache(side, le);
-		le.addListener((es) -> invalidCache(side));
-		*/
 
 		var cache = BlockCapabilityCache.create(
 				Capabilities.Energy.BLOCK, // capability to cache
