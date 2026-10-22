@@ -36,6 +36,10 @@ import com.simibubi.create.compat.jei.category.ItemDrainCategory;
 import com.simibubi.create.compat.jei.category.MechanicalCraftingCategory;
 import com.simibubi.create.compat.jei.category.MillingCategory;
 import com.simibubi.create.compat.jei.category.RollingMillCategory;
+import com.simibubi.create.compat.jei.category.ChargingCategory;
+import com.simibubi.create.compat.jei.category.LiquidBurningCategory;
+import com.simibubi.create.content.electricity.recipe.ChargingRecipe;
+import com.simibubi.create.content.electricity.recipe.LiquidBurningRecipe;
 import com.simibubi.create.content.kinetics.rollingMill.RollingRecipe;
 import com.simibubi.create.compat.jei.category.MixingCategory;
 import com.simibubi.create.compat.jei.category.MysteriousItemConversionCategory;
@@ -145,6 +149,20 @@ public class CreateJEI implements IModPlugin {
 				.doubleItemIcon(AllBlocks.ROLLING_MILL.get(), AllItems.COPPER_WIRE.get())
 				.emptyBackground(177, 53)
 				.build("rolling", RollingMillCategory::new),
+
+			charging = builder(ChargingRecipe.class)
+				.addTypedRecipes(AllRecipeTypes.CHARGING)
+				.catalyst(AllBlocks.TESLA_COIL::get)
+				.doubleItemIcon(AllBlocks.TESLA_COIL.get(), AllItems.CAPACITOR.get())
+				.emptyBackground(177, 53)
+				.build("charging", ChargingCategory::new),
+
+			liquidBurning = builder(LiquidBurningRecipe.class)
+				.addTypedRecipes(AllRecipeTypes.LIQUID_BURNING)
+				.catalyst(AllBlocks.LIQUID_BLAZE_BURNER::get)
+				.doubleItemIcon(AllBlocks.LIQUID_BLAZE_BURNER.get(), Items.LAVA_BUCKET)
+				.emptyBackground(177, 50)
+				.build("liquid_burning", LiquidBurningCategory::new),
 
 			crushing = builder(AbstractCrushingRecipe.class)
 				.addTypedRecipes(AllRecipeTypes.CRUSHING)
@@ -262,6 +280,7 @@ public class CreateJEI implements IModPlugin {
 				.addTypedRecipes(AllRecipeTypes.SANDPAPER_POLISHING)
 				.catalyst(AllItems.SAND_PAPER::get)
 				.catalyst(AllItems.RED_SAND_PAPER::get)
+				.catalyst(AllItems.DIAMOND_GRIT_SANDPAPER::get)
 				.itemIcon(AllItems.SAND_PAPER.get())
 				.emptyBackground(177, 55)
 				.build("sandpaper_polishing", PolishingCategory::new),
