@@ -50,8 +50,8 @@ RECIPES = {
     "rolling": ["brass_rod", "copper_ingot", "copper_plate", "electrum_ingot", "electrum_plate", "gold_ingot",
                 "gold_plate", "iron_ingot", "iron_plate"],
 }
-# Rolling recipes CC&A already shipped under the create namespace.
-CREATE_NS_RECIPES = {"rolling": ["bamboo", "paper"]}
+# Rolling recipes CC&A shipped under the create namespace (bamboo/paper -> straw) wait for the Straw (phase 2).
+CREATE_NS_RECIPES = {}
 # Recipe ids get a prefix where CC&A's file name would read badly next to Create's own recipes.
 RECIPE_RENAME = {
     ("crafting", "connector"): "small_connector",
@@ -343,6 +343,9 @@ for kind, names in RECIPES.items():
     for name in names:
         src = CA_DATA / "createaddition/recipe" / kind / f"{name}.json"
         data = port_recipe(fix_refs(json.loads(src.read_text(encoding="utf-8"))))
+        if (kind, name) == ("crafting", "festive_spool"):
+            # Biomass arrives in phase 3; leaves stand in for it until then.
+            data["ingredients"] = ["#minecraft:leaves" if i == "create:biomass" else i for i in data["ingredients"]]
         out_name = RECIPE_RENAME.get((kind, name), name)
         folder = kind
         if kind == "crafting":

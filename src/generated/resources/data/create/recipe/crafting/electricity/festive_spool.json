@@ -4,7 +4,7 @@
   "ingredients": [
     "create:copper_spool",
     "#c:dusts/redstone",
-    "create:biomass"
+    "#minecraft:leaves"
   ],
   "result": {
     "count": 1,

@@ -279,7 +279,7 @@ public class AllItems {
 		DIAMOND_GRIT = taggedIngredient("diamond_grit", AllTags.commonItemTag("dusts/diamond"));
 
 	public static final ItemEntry<WireSpool>
-		SPOOL = REGISTRATE.item("spool", WireSpool::new).register(),
+		SPOOL = REGISTRATE.item("spool", WireSpool::new).lang("Empty Spool").register(),
 		COPPER_SPOOL = REGISTRATE.item("copper_spool", WireSpool::new).register(),
 		GOLD_SPOOL = REGISTRATE.item("gold_spool", WireSpool::new).register(),
 		ELECTRUM_SPOOL = REGISTRATE.item("electrum_spool", WireSpool::new).register(),

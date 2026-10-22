@@ -105,13 +105,13 @@ public class ElectricityScenes {
 		scene.idle(60);
 
 		scene.overlay().showText(50)
-			.text("The Alternator requires at least 32 RPM to operate")
+			.text("Its energy production is determined by the input RPM")
 			.placeNearTarget()
 			.pointAt(util.vector().topOf(generator));
 		scene.idle(60);
 
 		scene.overlay().showText(50)
-			.text("Its energy production is determined by the input RPM")
+			.text("Use a connector in Pull mode to take the energy out")
 			.placeNearTarget()
 			.pointAt(util.vector().topOf(generator));
 		scene.idle(60);
