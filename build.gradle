@@ -257,6 +257,10 @@ jar {
     from("LICENSE.md") {
         rename { "${mod_name}_${it}" }
     }
+    // MIT notice of Create Crafts & Additions, whose electricity content is imported natively
+    from("THIRD_PARTY_NOTICES.md") {
+        rename { "${mod_name}_${it}" }
+    }
 }
 
 tasks.withType(Jar).configureEach {

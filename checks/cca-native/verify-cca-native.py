@@ -13,7 +13,8 @@ JAR (when given):
   - item definitions, block states and block loot tables exist for every id;
   - packaged en_us/pt_br carry the same keys;
   - every `create:` item referenced by a recipe of the imported recipe folders exists in the JAR;
-  - no entry name or text entry of the JAR mentions `createaddition`.
+  - no entry name or text entry of the JAR mentions `createaddition`;
+  - the MIT notice (THIRD_PARTY_NOTICES.md) is packaged.
 """
 import json
 import re
@@ -114,6 +115,8 @@ for base in ('src/main/java', 'src/main/resources', 'src/generated/resources'):
 if len(sys.argv) > 1:
     with zipfile.ZipFile(sys.argv[1]) as jar:
         names = set(jar.namelist())
+        if b'Copyright (c) 2024 MRH' not in jar.read('Create_THIRD_PARTY_NOTICES.md'):
+            fail('jar: Create Crafts & Additions MIT notice missing')
         for i in BLOCKS + ITEMS:
             if f'assets/create/items/{i}.json' not in names:
                 fail(f'jar: no item definition for {i}')
