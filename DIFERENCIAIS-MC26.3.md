@@ -91,6 +91,17 @@ Um ajudante novo para fazendas automáticas, com o corpo do golem de cobre na co
 - **Uso:** colocada sobre um **baú de golem do mesmo material sem golem** (baú colocado à mão ou cujo golem morreu), vira um novo golem morando nesse baú. O baú mantém **tudo**: conteúdo, filtro, rede de Conectores de Estoque (Redstone) e demais dados.
 - **Um golem por baú:** num baú que ainda tem golem (mesmo que ele esteja numa área não carregada) ou de outro material, a abóbora **não é colocada** e fica na mão, com uma mensagem. Em qualquer outro lugar é um bloco decorativo.
 
+### Eletricidade nativa (do Create Crafts & Additions)
+
+O conteúdo elétrico do **Create Crafts & Additions** (de MRH, licença MIT) agora faz parte do próprio Create: mesmo nome de mod, mesma aba criativa, descrições com **Shift**, cenas do Ponder (segure **W**), categorias no JEI e textos em português e inglês. Não é preciso instalar outro mod.
+
+- **Materiais:** lingote, pepita, chapa e bloco de **Electrum**; **chapa de zinco**; hastes de cobre, ferro, ouro, electrum e latão; fios de cobre, ferro, ouro e electrum; **grãos de diamante** e **lixa de diamante**; **capacitor**.
+- **Laminadora:** movida a força rotacional, transforma barras em **2 hastes** e chapas em **2 fios**. Aceita itens jogados ou inseridos por cima e funciona com esteiras e funis.
+- **Energia (FE):** o **Alternador** transforma rotação em energia; o **Motor Elétrico** faz o contrário, com RPM ajustável no painel traseiro; o **Acumulador Modular** guarda energia e forma estruturas de vários blocos; a **Fonte de Energia Criativa** fornece energia infinita.
+- **Fios e conectores:** **Conector Pequeno**, **Conector Pequeno com Lâmpada** e **Conector Grande**. Clique com um **carretel** (cobre, ouro, electrum ou festivo) em dois conectores para passar um fio; com a **chave inglesa** o conector alterna entre Empurrar, Puxar e Nenhum; um **Carretel Vazio** recolhe o fio.
+- A energia é FE padrão, compatível com máquinas de outros mods que usam energia do NeoForge.
+- **Electrum sem prata:** se nenhum mod adicionar prata, o electrum sai na mistura aquecida de **ouro + zinco**; com prata instalada, a receita original de **ouro + prata** volta a valer.
+
 ## Evidência técnica (não é copy de publicação)
 
 - Implementação: commit `a3a37707ccbb1a440f6dc46372705af57b29a705` (`Double shaped andesite alloy recipe yield`) na branch `mc26.3/dev`. O gerador `src/main/java/com/simibubi/create/foundation/data/recipe/CreateStandardRecipeGen.java` passou a definir retorno de 2 para ambas as variantes de crafting.
@@ -275,6 +286,23 @@ Um ajudante novo para fazendas automáticas, com o corpo do golem de cobre na co
 ### Alcance do Golem de Redstone 48 → 128 — evidência técnica
 
 - Decisão de Lauro: `RedstoneGolemRules.MAX_SOURCE_DISTANCE` 48 → 128 (coleta, alvos de distribuição e trava vermelha usam a mesma lista `RedstoneGolemNetwork.sources`; `setHomeTo` usa o mesmo valor). Navegação: `FOLLOW_RANGE` e `setRequiredPathLength` = `PATH_LENGTH` 160 (só no Redstone; Andesito segue 48), orçamento vanilla 160 × 16 × 4 = 10240 nós por busca; custo limitado a `MAX_STAND_SPOT_PATHS` = 4 buscas por renovação (antes até 12). Regras de desistência inalteradas (60 s total, 10 s sem progresso, desistência imediata sem lugar de pé). JEI do golem/baú e tooltip do baú citam 128 blocos (en_us/pt_br). Checagens atualizadas (link fora de alcance agora a 129). **Sem teste in-game.**
+
+### Eletricidade nativa (CC&A fase 1) — evidência técnica
+
+- Origem: `mrh0/createaddition` branch `1.21.1`, versão 1.7.2, commit `1c81fab9a`, licença MIT. Aviso em `THIRD_PARTY_NOTICES.md`, empacotado no JAR como `Create_THIRD_PARTY_NOTICES.md`.
+- Registro nativo no namespace `create` (Registrate do Create): blocos `rolling_mill`, `electric_motor`, `alternator`, `connector`, `small_light_connector`, `large_connector`, `modular_accumulator`, `creative_energy`, `electrum_block`; itens `electrum_ingot/nugget/sheet`, `zinc_sheet`, hastes `copper/iron/gold/electrum/brass_rod`, fios `copper/iron/gold/electrum_wire`, `diamond_grit`, `diamond_grit_sandpaper`, `spool`, `copper/gold/electrum/festive_spool`, `capacitor`. Nenhuma colisão de id com o Create (o importador `checks/cca-native/import-cca-assets.py` aborta em colisão); só ids de receita renomeados (`connector`→`small_connector`, `pressing/electrum_ingot`→`electrum_sheet`, `pressing/zinc_ingot`→`zinc_sheet`, `crushing/diamond`→`diamond_grit`) e a textura `guage`→`gauge`.
+- Código: `content/electricity/**` (rede/grafo de fios, conectores, motor, alternador, acumulador modular, energia criativa, carretéis, capacitor, pacotes de rede/observação, renderer de fios no modelo extract/submit do 26.3), `content/kinetics/rollingMill/**`, `RollingRecipe` + `AllRecipeTypes`, JEI `RollingMillCategory`, Ponder `ElectricityScenes` (7 cenas, tag `electric`), display source do acumulador, sons `electric_motor_buzz`/`electric_charge`.
+- Energia: `IEnergyStorage` do Forge portado para `net.neoforged.neoforge.transfer.energy.EnergyHandler`. `InternalEnergyStorage` estende `SimpleEnergyHandler`; `EnergyTransfers` faz a ponte simulate/execute ↔ transações (aninhadas na transação aberta); `DeferredEnergyHandler` para buffers que só aplicam no commit raiz; capacidades registradas em `CommonEvents` (`Capabilities.Energy.BLOCK`, e item para o capacitor).
+- Configuração: valores do CC&A fundidos em `CElectricity`, seção `electricity` da config de servidor do Create, com os padrões do CC&A.
+- Removidos (sem dependência): ComputerCraft, Mekanism, Immersive Engineering, Sable, Simulated. Upstream não registra Acumulador antigo, Carretel de Ferro nem Medidor de Energia em 1.7.2, então não entraram. Laminação de bambu/papel → palha fica para a fase 2 (junto com a Palha).
+- Decisão além da especificação: receita `mixing/electrum_without_silver` (ouro + zinco, aquecida) só quando `c:ingots/silver` está vazia; sem ela o electrum seria impossível no Create puro. Avançamentos do CC&A não foram importados.
+- Verificações: `./gradlew build --offline` passou; `checks/cca-native/verify-cca-native.py <jar>` (registro dos 30 ids, 154 chaves en_us/pt_br traduzidas e iguais a `lang/default`, sem `Component.literal`, sem `createaddition`/`com.mrh0` nas fontes e no JAR, definição de item/blockstate/loot no JAR, 33 receitas importadas sem referência a item inexistente, aviso MIT no JAR) passou; `checks/cca-native/run-energy-check.sh` (`EnergyTransferCheck`: limites de entrada/saída, capacidade, NBT, rollback de transação externa, criativo, buffer diferido e 20000 operações aleatórias conservando energia) passou; `verify-golem-lang.py` com o JAR passou. **Sem teste in-game.**
+
+### Ponder: crash do papagaio no 26.3 — evidência técnica
+
+- Crash relatado por Lauro (segurando W): `IllegalStateException: Tried to access entity ID before ID assignment` em `ParrotElementImpl.renderLast`. No 26.3 `Entity.getId()` lança exceção enquanto o id é 0, e só o nível atribui id; o papagaio (`ParrotPose.create`) e o carrinho (`MinecartElementImpl`) do Ponder nunca entram no nível.
+- Ponder `cafb5534d` (branch `mc26.3/dev` de `laurovitor/Minecraft-Ponder`): `SchematicLevel.assignVirtualEntityId` (ids negativos, sem colisão com o nível real) usado em `addFreshEntity`, `ParrotPose.create` e nas duas criações de `MinecartElementImpl`. Create: o `ItemEntity` da chave inglesa de `FrogAndConveyorScenes.ChainConveyorParrotElement`, também renderizado fora do nível, recebe id virtual. Demais entidades de cenas (`createEntity`, `createItemEntity`, blaze, ovelha) passam por `addFreshEntity` e já tinham id.
+- Ponder/Catnip republicados no mavenLocal como `1.0.100000+mc26.3`; o JAR do Create embute `ponder-neoforge` sha256 `85ea9aaf…e3281af` e `catnip-neoforge` `0738d2df…a1e76`, iguais aos publicados, e o bytecode embutido chama `assignVirtualEntityId`. **Sem teste in-game.**
 
 ## Critério para novos diferenciais
 
