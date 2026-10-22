@@ -232,7 +232,12 @@ public class AllCreatePonderTags {
 				.add(AllBlocks.SMALL_CONNECTOR)
 				.add(AllBlocks.SMALL_LIGHT_CONNECTOR)
 				.add(AllBlocks.LARGE_CONNECTOR)
-				.add(AllBlocks.CREATIVE_ENERGY);
+				.add(AllBlocks.CREATIVE_ENERGY)
+				.add(AllBlocks.TESLA_COIL)
+				.add(AllBlocks.PORTABLE_ENERGY_INTERFACE)
+				.add(AllBlocks.ELECTRIC_PUMP)
+				.add(AllBlocks.SERVO_MOTOR)
+				.add(AllBlocks.REDSTONE_RELAY);
 
 		HELPER.addToTag(KINETIC_APPLIANCES)
 				.add(AllBlocks.ROLLING_MILL)
@@ -261,6 +266,8 @@ public class AllCreatePonderTags {
 
 		HELPER.addToTag(FLUIDS)
 				.add(AllBlocks.FLUID_PIPE)
+				.add(AllBlocks.ELECTRIC_PUMP)
+				.add(AllBlocks.LIQUID_BLAZE_BURNER)
 				.add(AllBlocks.MECHANICAL_PUMP)
 				.add(AllBlocks.FLUID_VALVE)
 				.add(AllBlocks.SMART_FLUID_PIPE)
@@ -355,6 +362,7 @@ public class AllCreatePonderTags {
 
 		HELPER.addToTag(MOVEMENT_ANCHOR)
 				.add(AllBlocks.MECHANICAL_PISTON)
+				.add(AllBlocks.SERVO_MOTOR)
 				.add(AllBlocks.WINDMILL_BEARING)
 				.add(AllBlocks.MECHANICAL_BEARING)
 				.add(AllBlocks.CLOCKWORK_BEARING)
@@ -389,6 +397,7 @@ public class AllCreatePonderTags {
 
 		HELPER.addToTag(CONTRAPTION_ACTOR)
 				.add(AllBlocks.MECHANICAL_HARVESTER)
+				.add(AllBlocks.PORTABLE_ENERGY_INTERFACE)
 				.add(AllBlocks.MECHANICAL_PLOUGH)
 				.add(AllBlocks.MECHANICAL_DRILL)
 				.add(AllBlocks.MECHANICAL_SAW)

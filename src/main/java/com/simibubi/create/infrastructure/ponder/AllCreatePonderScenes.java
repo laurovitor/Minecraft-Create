@@ -18,6 +18,7 @@ import com.simibubi.create.infrastructure.ponder.scenes.DetectorScenes;
 import com.simibubi.create.infrastructure.ponder.scenes.DisplayScenes;
 import com.simibubi.create.infrastructure.ponder.scenes.EjectorScenes;
 import com.simibubi.create.infrastructure.ponder.scenes.ElectricityScenes;
+import com.simibubi.create.infrastructure.ponder.scenes.ElectricityScenes2;
 import com.simibubi.create.infrastructure.ponder.scenes.ElevatorScenes;
 import com.simibubi.create.infrastructure.ponder.scenes.FanScenes;
 import com.simibubi.create.infrastructure.ponder.scenes.FunnelScenes;
@@ -446,6 +447,20 @@ public class AllCreatePonderScenes {
 		HELPER.forComponents(AllBlocks.SMALL_CONNECTOR, AllBlocks.SMALL_LIGHT_CONNECTOR, AllBlocks.LARGE_CONNECTOR)
 			.addStoryBoard("connector", ElectricityScenes::connector, AllCreatePonderTags.ELECTRIC)
 			.addStoryBoard("connector", ElectricityScenes::connectorRemove, AllCreatePonderTags.ELECTRIC);
+		HELPER.forComponents(AllBlocks.TESLA_COIL)
+			.addStoryBoard("tesla_coil", ElectricityScenes2::teslaCoil, AllCreatePonderTags.ELECTRIC)
+			.addStoryBoard("tesla_coil_hurt", ElectricityScenes2::teslaCoilHurt, AllCreatePonderTags.ELECTRIC);
+		HELPER.forComponents(AllItems.STRAW, AllBlocks.LIQUID_BLAZE_BURNER, AllBlocks.BLAZE_BURNER)
+			.addStoryBoard("liquid_blaze_burner", ElectricityScenes2::liquidBlazeBurner, AllCreatePonderTags.FLUIDS);
+		HELPER.forComponents(AllBlocks.PORTABLE_ENERGY_INTERFACE)
+			.addStoryBoard("pei_transfer", ElectricityScenes2::peiTransfer, AllCreatePonderTags.CONTRAPTION_ACTOR,
+				AllCreatePonderTags.ELECTRIC)
+			.addStoryBoard("pei_redstone", ElectricityScenes2::peiRedstone, AllCreatePonderTags.CONTRAPTION_ACTOR,
+				AllCreatePonderTags.ELECTRIC);
+		HELPER.addStoryBoard(AllBlocks.ELECTRIC_PUMP, "electric_pump_flow", ElectricityScenes2::electricPumpFlow,
+			AllCreatePonderTags.FLUIDS, AllCreatePonderTags.ELECTRIC);
+		HELPER.addStoryBoard(AllBlocks.SERVO_MOTOR, "servo", ElectricityScenes2::servoMotor,
+			AllCreatePonderTags.MOVEMENT_ANCHOR, AllCreatePonderTags.ELECTRIC);
 
 	}
 }
