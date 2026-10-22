@@ -15,7 +15,17 @@ network = read(redstone / 'RedstoneGolemNetwork.java')
 barriers = read(redstone / 'RedstoneGolemBarriers.java')
 
 # Actual goal state transition, not merely a model of the old selection policy.
-assert 'source = chooseSource(chest);' in goal
+assert 'source = chooseSource(chest, true);' in goal
+# Round 12: game-time scheduling with own-chest wake, cached sources, reservations, network join.
+assert 'RedstoneGolemRules.shouldPlan(now, lastPlan, woken)' in goal and 'searchCooldown' not in goal
+assert 'chest.getContentVersion() != seenChestVersion' in goal and 'contentVersion++' in capacity
+assert goal.count('RedstoneGolemNetwork.sources(') == 1, 'network scanned only through the cache'
+assert 'RedstoneGolemReservations.SERVER.claim(key(chosen)' in goal and 'othersOn(key(s.pos())' in goal
+for where in ['public void stop()', 'case TAKE -> {', 'if (phase == Phase.GO) {']:
+    assert 'RedstoneGolemReservations.SERVER.release(golem.getUUID())' in goal.split(where, 1)[1][:900], where
+assert 'RedstoneGolemReservations.SERVER.release(getUUID())' in golem
+assert 'AllItems.PACKED_REDSTONE_GOLEM_CHEST.isIn(stack)' in chest and 'joinNetwork(stack, chest.link.freqId, player)' in chest
+assert 'chest.link.mayInteractMessage(player)' in chest
 assert 'phase = Phase.GO;' in goal.split('case DEPOSIT -> {', 1)[1]
 assert 'travelTicks = 0;' in goal.split('case DEPOSIT -> {', 1)[1]
 assert 'transferableSlots(s.container(), chest)' in goal

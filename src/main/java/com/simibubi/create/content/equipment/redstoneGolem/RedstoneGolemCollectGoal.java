@@ -43,9 +43,17 @@ public class RedstoneGolemCollectGoal extends Goal {
 	private @Nullable BlockPos source;
 	private int timer;
 	private int travelTicks;
-	private int searchCooldown;
+	/** Game time of the last idle network search. */
+	private long lastPlan = Long.MIN_VALUE / 2;
+	/** Own-chest contentVersion last planned for; a different value wakes the golem. */
+	private int seenChestVersion = Integer.MIN_VALUE;
+	private @Nullable List<RedstoneGolemNetwork.Source> cachedSources;
+	private long cachedSourcesAt;
+	private boolean sourceUnreachable;
+	private boolean sourceBusy;
 	private int returnCooldown;
 	private @Nullable BlockPos standSpot;
+	private boolean sourceBlockedByCapacity;
 
 	public RedstoneGolemCollectGoal(RedstoneGolem golem) {
 		this.golem = golem;
@@ -68,38 +76,67 @@ public class RedstoneGolemCollectGoal extends Goal {
 			golem.setTask(room ? RedstoneGolem.Task.RETURNING : RedstoneGolem.Task.CHEST_FULL);
 			return room;
 		}
-		if (searchCooldown-- > 0)
+		long now = golem.level().getGameTime();
+		boolean woken = chest.getContentVersion() != seenChestVersion;
+		if (!RedstoneGolemRules.shouldPlan(now, lastPlan, woken))
 			return false;
-		searchCooldown = RedstoneGolemRules.SEARCH_INTERVAL;
-		if (!RedstoneGolemRules.shouldCollect(hasTransferableSource(chest), 0)) {
-			golem.setTask(RedstoneGolem.Task.CHEST_FULL);
-			return false;
-		}
-		source = chooseSource(chest);
-		golem.setTask(source == null ? RedstoneGolem.Task.NO_SOURCE : RedstoneGolem.Task.COLLECTING);
+		lastPlan = now;
+		seenChestVersion = chest.getContentVersion();
+		// Choose from actual transferable stacks in one bounded network scan. An empty
+		// destination slot is not a source, and all 27 home slots are considered.
+		source = chooseSource(chest, true);
+		golem.setTask(source == null ? idleTask() : RedstoneGolem.Task.COLLECTING);
 		return source != null;
 	}
 
-	private @Nullable BlockPos chooseSource(RedstoneGolemChestBlockEntity chest) {
-		long now = golem.level().getGameTime();
-		blacklist.values().removeIf(until -> until < now);
-		List<RedstoneGolemNetwork.Source> sources = RedstoneGolemNetwork.sources(golem.level(), chest);
-		golem.setNetworkChests(sources.size());
-		List<RedstoneGolemRules.Candidate> candidates = new ArrayList<>();
-		for (RedstoneGolemNetwork.Source s : sources)
-			candidates.add(new RedstoneGolemRules.Candidate(transferableSlots(s.container(), chest),
-				s.container().getContainerSize(), golem.distanceToSqr(Vec3.atCenterOf(s.pos())), blacklist.containsKey(s.pos())));
-		int best = RedstoneGolemRules.chooseSource(candidates);
-		return best < 0 ? null : sources.get(best).pos();
+	private RedstoneGolem.Task idleTask() {
+		return sourceBusy ? RedstoneGolem.Task.NETWORK_BUSY : sourceUnreachable ? RedstoneGolem.Task.UNREACHABLE
+			: sourceBlockedByCapacity ? RedstoneGolem.Task.CHEST_FULL : RedstoneGolem.Task.NO_SOURCE;
 	}
 
-	private boolean hasTransferableSource(RedstoneGolemChestBlockEntity chest) {
-		// No empty slot is not equivalent to no capacity: existing partial stacks may still merge.
-		for (int i = 0; i < chest.getContainer().getContainerSize(); i++)
-			if (chest.getContainer().getItem(i).isEmpty()) return true;
-		for (RedstoneGolemNetwork.Source source : RedstoneGolemNetwork.sources(golem.level(), chest))
-			if (transferableSlots(source.container(), chest) > 0) return true;
-		return false;
+	/** Network sources, rescanned at most every SOURCE_CACHE_TICKS unless {@code fresh}. */
+	private List<RedstoneGolemNetwork.Source> sources(RedstoneGolemChestBlockEntity chest, boolean fresh) {
+		long now = golem.level().getGameTime();
+		if (fresh || cachedSources == null || now - cachedSourcesAt >= RedstoneGolemRules.SOURCE_CACHE_TICKS
+			|| now < cachedSourcesAt) {
+			cachedSources = RedstoneGolemNetwork.sources(golem.level(), chest);
+			cachedSourcesAt = now;
+		}
+		return cachedSources;
+	}
+
+	private net.minecraft.core.GlobalPos key(BlockPos pos) {
+		return net.minecraft.core.GlobalPos.of(golem.level().dimension(), pos);
+	}
+
+	/** Picks and claims the next source; null (and the reason flags set) when there is none. */
+	private @Nullable BlockPos chooseSource(RedstoneGolemChestBlockEntity chest, boolean fresh) {
+		long now = golem.level().getGameTime();
+		blacklist.values().removeIf(until -> until < now);
+		RedstoneGolemReservations.SERVER.release(golem.getUUID());
+		List<RedstoneGolemNetwork.Source> sources = sources(chest, fresh);
+		golem.setNetworkChests(sources.size());
+		List<RedstoneGolemRules.Candidate> candidates = new ArrayList<>();
+		sourceBlockedByCapacity = sourceUnreachable = sourceBusy = false;
+		for (RedstoneGolemNetwork.Source s : sources) {
+			int transferable = transferableSlots(s.container(), chest);
+			if (transferable == 0 && RedstoneGolemNetwork.occupiedSlots(s.container()) > 0)
+				sourceBlockedByCapacity = true;
+			boolean skipped = blacklist.containsKey(s.pos());
+			int others = RedstoneGolemReservations.SERVER.othersOn(key(s.pos()), golem.getUUID(), now);
+			if (transferable > 0 && skipped)
+				sourceUnreachable = true;
+			if (transferable > 0 && !skipped && others > 0 && !RedstoneGolemRules.canShare(transferable, others))
+				sourceBusy = true;
+			candidates.add(new RedstoneGolemRules.Candidate(transferable, s.container().getContainerSize(),
+				golem.distanceToSqr(Vec3.atCenterOf(s.pos())), skipped, others));
+		}
+		int best = RedstoneGolemRules.chooseSource(candidates);
+		if (best < 0)
+			return null;
+		BlockPos chosen = sources.get(best).pos();
+		RedstoneGolemReservations.SERVER.claim(key(chosen), golem.getUUID(), now);
+		return chosen;
 	}
 
 	private int transferableSlots(Container source, RedstoneGolemChestBlockEntity chest) {
@@ -126,6 +163,7 @@ public class RedstoneGolemCollectGoal extends Goal {
 		phase = Phase.DONE;
 		standSpot = null;
 		source = null;
+		RedstoneGolemReservations.SERVER.release(golem.getUUID());
 		golem.closeOpenedBarriers();
 		golem.setState(CopperGolemState.IDLE);
 		golem.getNavigation().stop();
@@ -153,6 +191,7 @@ public class RedstoneGolemCollectGoal extends Goal {
 				phase = Phase.DONE;
 				return;
 			}
+			RedstoneGolemReservations.SERVER.claim(key(source), golem.getUUID(), golem.level().getGameTime());
 			if (walkTo(source, RedstoneGolemRules.RUN_SPEED)) {
 				phase = Phase.TAKE;
 				standSpot = null;
@@ -168,6 +207,7 @@ public class RedstoneGolemCollectGoal extends Goal {
 			Container container = sourceContainer(chest);
 			if (container != null)
 				take(container, chest);
+			RedstoneGolemReservations.SERVER.release(golem.getUUID()); // arrived and took: free for others
 			travelTicks = 0;
 			standSpot = null;
 			phase = golem.getCarried().isEmpty() ? Phase.DONE : Phase.RETURN;
@@ -194,14 +234,16 @@ public class RedstoneGolemCollectGoal extends Goal {
 			} else {
 				// Select the next source as part of this goal's transition. Otherwise the goal
 				// stops at home and relies on an idle cooldown to restart the entire run.
-				source = chooseSource(chest);
+				source = chooseSource(chest, true);
+				seenChestVersion = chest.getContentVersion(); // own deposit is not a wake
 				if (source != null) {
 					travelTicks = 0;
 					standSpot = null;
 					golem.setTask(RedstoneGolem.Task.COLLECTING);
 					phase = Phase.GO;
 				} else {
-					golem.setTask(hasTransferableSource(chest) ? RedstoneGolem.Task.NO_SOURCE : RedstoneGolem.Task.CHEST_FULL);
+					golem.setTask(idleTask());
+					lastPlan = golem.level().getGameTime();
 					phase = Phase.DONE;
 				}
 			}
@@ -213,7 +255,7 @@ public class RedstoneGolemCollectGoal extends Goal {
 
 	/** The source's inventory if it is still on the network (link not removed, still loaded). */
 	private @Nullable Container sourceContainer(RedstoneGolemChestBlockEntity chest) {
-		for (RedstoneGolemNetwork.Source s : RedstoneGolemNetwork.sources(golem.level(), chest))
+		for (RedstoneGolemNetwork.Source s : sources(chest, false))
 			if (s.pos().equals(source))
 				return s.container();
 		return null;
@@ -230,8 +272,10 @@ public class RedstoneGolemCollectGoal extends Goal {
 			return true;
 		}
 		if (travelTicks++ > RedstoneGolemRules.GIVE_UP_TICKS) {
-			if (phase == Phase.GO)
+			if (phase == Phase.GO) {
 				blacklist.put(chestPos, golem.level().getGameTime() + RedstoneGolemRules.BLACKLIST_TICKS);
+				RedstoneGolemReservations.SERVER.release(golem.getUUID());
+			}
 			else returnCooldown = 100; // retry home after 5 s; never discard carried items
 			phase = Phase.DONE;
 			golem.getNavigation().stop();

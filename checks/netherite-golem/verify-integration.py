@@ -120,7 +120,7 @@ assert 'instanceof AndesiteGolemChestBlockEntity golemChest' in rg_net and 'Ches
 assert 'RedstoneGolemRules.inRange(' in rg_net
 # behaviour: fullest-first, 4 slots, run there, stop when full
 assert 'RedstoneGolemRules.chooseSource(candidates)' in rg_goal and 'RedstoneGolemRules.pickupSlots(occupied' in rg_goal
-assert 'walkTo(source, RedstoneGolemRules.RUN_SPEED)' in rg_goal and 'RedstoneGolemRules.shouldCollect(chest.hasEmptySlot()' in rg_goal
+assert 'walkTo(source, RedstoneGolemRules.RUN_SPEED)' in rg_goal and 'transferableSlots(s.container(), chest)' in rg_goal
 # Round 11: both legs target reachable standing spots with 3D arrival and no partial roof paths.
 rg_nav = (rg/'RedstoneGolemNavigation.java').read_text()
 rg_barriers = (rg/'RedstoneGolemBarriers.java').read_text()

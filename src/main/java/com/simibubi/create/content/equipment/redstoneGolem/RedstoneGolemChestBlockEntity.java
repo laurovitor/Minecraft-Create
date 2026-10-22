@@ -41,16 +41,30 @@ public class RedstoneGolemChestBlockEntity extends AndesiteGolemChestBlockEntity
 		behaviours.add(link = new LogisticallyLinkedBehaviour(this, false));
 	}
 
+	/** Bumped on every change of the chest (contents or state): the golem re-plans at once. */
+	private int contentVersion;
+
+	public int getContentVersion() {
+		return contentVersion;
+	}
+
+	@Override
+	public void setChanged() {
+		super.setChanged();
+		contentVersion++;
+	}
+
 	/** A full set of slots can still accept more of an existing stack. */
 	public boolean hasRoomFor(ItemStack incoming) {
 		if (incoming.isEmpty()) return false;
-		for (int i = 0; i < getContainer().getContainerSize(); i++) {
-			ItemStack stored = getContainer().getItem(i);
-			if (stored.isEmpty() || ItemStack.isSameItemSameComponents(stored, incoming)
-				&& stored.getCount() < Math.min(stored.getMaxStackSize(), getContainer().getMaxStackSize(incoming)))
-				return true;
-		}
-		return false;
+		var inventory = getContainer();
+		return RedstoneGolemRules.hasRoomFor(inventory.getContainerSize(),
+			slot -> inventory.getItem(slot).isEmpty(),
+			slot -> {
+				ItemStack stored = inventory.getItem(slot);
+				return ItemStack.isSameItemSameComponents(stored, incoming)
+					&& stored.getCount() < Math.min(stored.getMaxStackSize(), inventory.getMaxStackSize(incoming));
+			});
 	}
 
 	/** No filter: everything is accepted. */

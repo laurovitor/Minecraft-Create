@@ -2,6 +2,7 @@ package com.simibubi.create.content.equipment.redstoneGolem;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.IntPredicate;
 
 /** Lauro edition: side-effect-free policy of the Redstone Golem, checked offline. */
 public final class RedstoneGolemRules {
@@ -22,11 +23,27 @@ public final class RedstoneGolemRules {
 	 * 48-block navigation path length the golems use; farther targets could never be pathed to.
 	 */
 	public static final int MAX_SOURCE_DISTANCE = 48;
-	/** How often an idle golem looks at its network again, ticks (2 s). */
-	public static final int SEARCH_INTERVAL = 40;
+	/**
+	 * How often an idle golem looks at its network again, in GAME ticks (1 s). Vanilla only calls
+	 * Goal#canUse every second tick, so the goal schedules by game time, not by canUse calls (the
+	 * old call-counted 40 meant ~80 game ticks = 4 s). A change in its own chest wakes it at once.
+	 */
+	public static final int SEARCH_INTERVAL = 20;
+	/** A chest-change wake re-plans at most this often, game ticks (0.25 s): a hopper feeding the chest
+	 * cannot force a network scan every goal update. */
+	public static final int WAKE_MIN_GAP = 5;
 	/** Gives up walking to a source after this long, ticks (60 s), and skips it for BLACKLIST_TICKS. */
 	public static final int GIVE_UP_TICKS = 1200;
-	public static final int BLACKLIST_TICKS = 1200;
+	/** Unreachable source skipped this long, game ticks (10 s; was 60 s), then retried. */
+	public static final int BLACKLIST_TICKS = 200;
+	/** Network source list reused this long while walking, game ticks (1 s); rescanned at once on a wake. */
+	public static final int SOURCE_CACHE_TICKS = 20;
+	/**
+	 * A golem's claim on its source chest lasts this long without renewal, game ticks (2 s). Renewed
+	 * every tick while walking there; released on arrival, give-up and goal stop, so a dead or
+	 * unloaded golem's claim lapses on its own.
+	 */
+	public static final int RESERVATION_TTL = 40;
 
 	/**
 	 * Fullness of a chest: occupied slots / total slots, 0..1. Slots, not item counts: the golem
@@ -36,18 +53,46 @@ public final class RedstoneGolemRules {
 		return totalSlots <= 0 ? 0 : (double) Math.max(0, occupiedSlots) / totalSlots;
 	}
 
-	/** One network chest as seen by the golem. */
-	public record Candidate(int occupiedSlots, int totalSlots, double distanceSqr, boolean skipped) {}
+	/**
+	 * One network chest as seen by the golem. {@code reservedByOthers}: other golems already heading
+	 * there. {@code occupiedSlots} counts stacks this golem could take (fit in its own chest).
+	 */
+	public record Candidate(int occupiedSlots, int totalSlots, double distanceSqr, boolean skipped, int reservedByOthers) {
+		public Candidate(int occupiedSlots, int totalSlots, double distanceSqr, boolean skipped) {
+			this(occupiedSlots, totalSlots, distanceSqr, skipped, 0);
+		}
+	}
 
 	/**
-	 * Index of the chest to visit: the fullest non-empty, not-skipped one; ties go to the nearer.
-	 * -1 when every chest is empty or skipped.
+	 * A chest already claimed by {@code reservers} golems has room for one more only when its stacks
+	 * exceed what they will take: more than CARRY_SLOTS per golem already going.
+	 */
+	/** Idle decision timing: plan when the interval passed, or on a wake once WAKE_MIN_GAP passed. */
+	public static boolean shouldPlan(long now, long lastPlan, boolean woken) {
+		return now - lastPlan >= SEARCH_INTERVAL || woken && now - lastPlan >= WAKE_MIN_GAP || now < lastPlan;
+	}
+
+	public static boolean canShare(int transferableStacks, int reservers) {
+		return transferableStacks > (long) CARRY_SLOTS * reservers;
+	}
+
+	/**
+	 * Index of the chest to visit. Fullest-first among unclaimed chests with items; only when none is
+	 * left, fullest-first among claimed chests with enough items to share. Ties go to the nearer.
+	 * -1 when nothing qualifies.
 	 */
 	public static int chooseSource(List<Candidate> candidates) {
+		int free = pickFullest(candidates, true);
+		return free >= 0 ? free : pickFullest(candidates, false);
+	}
+
+	private static int pickFullest(List<Candidate> candidates, boolean unclaimedOnly) {
 		int best = -1;
 		for (int i = 0; i < candidates.size(); i++) {
 			Candidate c = candidates.get(i);
 			if (c.skipped() || c.occupiedSlots() <= 0)
+				continue;
+			if (unclaimedOnly ? c.reservedByOthers() > 0 : !canShare(c.occupiedSlots(), c.reservedByOthers()))
 				continue;
 			if (best < 0)
 				best = i;
@@ -69,6 +114,14 @@ public final class RedstoneGolemRules {
 			if (slotOccupied.get(i))
 				slots.add(i);
 		return slots;
+	}
+
+	/** Scan the entire backing chest, including slots 18-26, for an empty or mergeable slot. */
+	public static boolean hasRoomFor(int slotCount, IntPredicate empty, IntPredicate mergeable) {
+		for (int slot = 0; slot < slotCount; slot++)
+			if (empty.test(slot) || mergeable.test(slot))
+				return true;
+		return false;
 	}
 
 	/** A new trip starts only with empty hands and capacity for at least one source stack. */

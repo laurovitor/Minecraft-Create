@@ -43,7 +43,11 @@ public class RedstoneGolem extends AndesiteGolem {
 
 	/** What the golem is doing, for the clipboard. Lang: create.clipboard.golem_info.task.<key>. */
 	public enum Task {
-		IDLE("idle"), COLLECTING("collecting"), RETURNING("returning"), CHEST_FULL("chest_full"), NO_SOURCE("no_source");
+		IDLE("idle"), COLLECTING("collecting"), RETURNING("returning"), CHEST_FULL("chest_full"), NO_SOURCE("no_source"),
+		/** Network chests have items, but each was unreachable recently (retried after BLACKLIST_TICKS). */
+		UNREACHABLE("unreachable"),
+		/** Every chest with items is already claimed by other golems with too little to share. */
+		NETWORK_BUSY("network_busy");
 
 		public final String key;
 
@@ -81,6 +85,14 @@ public class RedstoneGolem extends AndesiteGolem {
 	}
 
 	public void closeOpenedBarriers() { barriers.stop(); }
+
+	/** Unloaded, killed or discarded: give up any source claim (the claim would also lapse by itself). */
+	@Override
+	public void remove(RemovalReason reason) {
+		if (!level().isClientSide())
+			RedstoneGolemReservations.SERVER.release(getUUID());
+		super.remove(reason);
+	}
 
 	@Override
 	protected void registerGoals() {

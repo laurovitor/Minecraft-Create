@@ -164,7 +164,27 @@ public class RedstoneGolemChestBlock extends HorizontalDirectionalBlock
 		net.minecraft.world.InteractionHand hand, BlockHitResult hitResult) {
 		if (stack.getItem() instanceof com.simibubi.create.content.logistics.packagerLink.LogisticallyLinkedBlockItem)
 			return InteractionResult.PASS;
+		// A packed Redstone chest (golem inside) joins this chest's network, like tuning a Stock Link.
+		// Plain right-click tunes; Shift + right-click still places it (vanilla skips useItemOn then).
+		if (AllItems.PACKED_REDSTONE_GOLEM_CHEST.isIn(stack)) {
+			if (level.isClientSide())
+				return InteractionResult.SUCCESS;
+			if (level.getBlockEntity(pos) instanceof RedstoneGolemChestBlockEntity chest && chest.link.mayInteractMessage(player))
+				joinNetwork(stack, chest.link.freqId, player);
+			return InteractionResult.SUCCESS;
+		}
 		return super.useItemOn(stack, state, level, pos, player, hand, hitResult);
+	}
+
+	/** Stores the network frequency in the packed chest; placing it restores it (see setPlacedBy). */
+	public static void joinNetwork(ItemStack packed, java.util.UUID freq, Player player) {
+		CompoundTag data = packed.get(DataComponents.CUSTOM_DATA) instanceof CustomData custom ? custom.copyTag() : new CompoundTag();
+		boolean already = data.read("Freq", net.minecraft.core.UUIDUtil.CODEC).filter(freq::equals).isPresent();
+		data.store("Freq", net.minecraft.core.UUIDUtil.CODEC, freq);
+		packed.set(DataComponents.CUSTOM_DATA, CustomData.of(data));
+		player.sendOverlayMessage(com.simibubi.create.foundation.utility.CreateLang
+			.translate(already ? "golem_network.already_joined" : "golem_network.joined")
+			.style(net.minecraft.ChatFormatting.GREEN).component());
 	}
 
 	@Override

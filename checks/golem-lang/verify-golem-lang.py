@@ -40,7 +40,7 @@ assert len([k for k in keys if '.tree.' in k]) == 9
 # Redstone golem task names: "clipboard.golem_info.task." + RedstoneGolem.Task.key.
 tasks = re.search(r'enum Task \{(.*?);', (src / 'content/equipment/redstoneGolem/RedstoneGolem.java').read_text(), re.S)
 keys |= {f'create.clipboard.golem_info.task.{k}' for k in re.findall(r'\("([a-z_]+)"\)', tasks.group(1))}
-assert len([k for k in keys if '.task.' in k]) == 5
+assert len([k for k in keys if '.task.' in k]) == 7
 
 def check(label, en_map, pt_map):
     bad = [k for k in sorted(keys) if k not in en_map or k not in pt_map or en_map[k] == pt_map[k]]
