@@ -1410,5 +1410,15 @@
 	"create.ponder.connector.text_9": "Energy now flows from the Alternator to the Electric Motor",
 	"create.ponder.connector_remove.header": "Removing Wires using an Empty Spool",
 	"create.ponder.connector_remove.text_1": "Right-click both ends of a wire with an Empty Spool to remove it",
-	"create.ponder.connector_remove.text_2": "The wire is returned as a filled Spool"
+	"create.ponder.connector_remove.text_2": "The wire is returned as a filled Spool",
+
+	"create.recipe.charging": "Charging",
+	"create.recipe.liquid_burning": "Liquid Burning",
+	"create.recipe.assembly.charging": "Charge with %1$s⚡",
+	"create.servo.max_angle": "Max Angle",
+	"create.servo.min_angle": "Min Angle",
+	"create.tooltip.relay.info": "Relay",
+	"create.subtitle.tesla_coil": "Tesla Coil buzzes",
+	"create.subtitle.loud_zap": "Tesla Coil zaps",
+	"create.subtitle.little_zap": "Electricity sparks"
 }
