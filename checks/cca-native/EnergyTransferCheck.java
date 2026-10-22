@@ -8,9 +8,7 @@ import net.neoforged.neoforge.transfer.transaction.Transaction;
  * Run with java -ea against the built classes and the NeoForge universal jar:
  *
  * <pre>
- * CP=build/classes/java/main:$(find ~/.gradle/caches -name 'neoforge-26.3.0.89-universal.jar' | head -1)
- * javac -d /tmp/cca-energy -cp "$CP" checks/cca-native/EnergyTransferCheck.java
- * java -ea -cp "/tmp/cca-energy:$CP" com.simibubi.create.content.electricity.energy.EnergyTransferCheck
+ * sh checks/cca-native/run-energy-check.sh
  * </pre>
  */
 public class EnergyTransferCheck {

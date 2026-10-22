@@ -39,8 +39,11 @@ public final class PortableEnergyManager {
         private long heartbeat = System.currentTimeMillis();
         private final Map<BlockPos, EnergyData> holders = new LinkedHashMap<>();
         EnergyStorageHolder() {
-            super(0, AllConfigs.server().electricity.accumulatorMaxInput.get(),
-                AllConfigs.server().electricity.accumulatorMaxOutput.get(), 0);
+            this(AllConfigs.server().electricity.accumulatorMaxInput.get(),
+                AllConfigs.server().electricity.accumulatorMaxOutput.get());
+        }
+        EnergyStorageHolder(int maxInput, int maxOutput) {
+            super(0, maxInput, maxOutput, 0);
         }
         void addEnergySource(CompoundTag nbt, BlockPos pos) {
             heartbeat = System.currentTimeMillis();

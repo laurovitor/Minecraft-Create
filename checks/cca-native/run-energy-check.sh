@@ -1,11 +1,17 @@
 #!/bin/sh
-# Compiles and runs EnergyTransferCheck against the built classes. Run from the repository root after
-# ./gradlew build --offline. Libraries come from the local Gradle cache (offline).
-set -e
-lib() { find ~/.gradle/caches/modules-2 -name "$1" ! -name '*sources*' | sort | tail -1; }
-CP="build/classes/java/main:build/moddev/artifacts/minecraft-patched-26.3.0.89.jar"
-CP="$CP:$(lib 'neoforge-26.3.0.89-universal.jar'):$(lib 'guava-*.jar'):$(lib 'datafixerupper-*.jar'):$(lib 'logging-1*.jar'):$(lib 'slf4j-api-*.jar'):$(lib 'fastutil-*.jar')"
+# Compiles and runs EnergyTransferCheck and PortableEnergyCheck against the built classes.
+# Run from the repository root after ./gradlew build --offline (classpath taken from Gradle, offline).
+set -eu
 OUT=$(mktemp -d)
-javac -d "$OUT" -cp "$CP" checks/cca-native/EnergyTransferCheck.java
+trap 'rm -rf "$OUT"' EXIT
+cat > "$OUT/classpath.gradle" <<'GRADLE'
+gradle.projectsEvaluated {
+    rootProject.tasks.register('printEnergyCheckClasspath') {
+        doLast { println rootProject.sourceSets.main.runtimeClasspath.asPath }
+    }
+}
+GRADLE
+CP=$(./gradlew --offline --quiet -I "$OUT/classpath.gradle" printEnergyCheckClasspath | tail -1)
+javac -d "$OUT" -cp "$CP" checks/cca-native/EnergyTransferCheck.java checks/cca-native/PortableEnergyCheck.java
 java -ea -cp "$OUT:$CP" com.simibubi.create.content.electricity.energy.EnergyTransferCheck
-rm -rf "$OUT"
+java -ea -cp "$OUT:$CP" com.simibubi.create.content.electricity.portable.PortableEnergyCheck
