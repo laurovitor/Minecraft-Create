@@ -171,6 +171,9 @@ public class AllPartialModels {
 		ENGINE_CONNECTOR = block("steam_engine/shaft_connector"), BOILER_GAUGE = block("steam_engine/gauge"),
 		BOILER_GAUGE_DIAL = block("steam_engine/gauge_dial"),
 
+		SMALL_LIGHT = block("connector/small_light"),
+		ACCUMULATOR_GAUGE = block("modular_accumulator/gauge"), ACCUMULATOR_DIAL = block("modular_accumulator/dial"),
+
 		SIGNAL_ON = block("track_signal/indicator_on"), SIGNAL_OFF = block("track_signal/indicator_off"),
 		DISPLAY_LINK_TUBE = block("display_link/tube"), DISPLAY_LINK_GLOW = block("display_link/glow"),
 

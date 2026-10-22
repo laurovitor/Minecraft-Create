@@ -351,6 +351,14 @@ public class AllSoundEvents {
 			.category(SoundSource.RECORDS)
 			.build(),
 
+		ELECTRIC_MOTOR_BUZZ = create("electric_motor_buzz").subtitle("Electric machine hums")
+			.category(SoundSource.BLOCKS)
+			.build(),
+
+		ELECTRIC_CHARGE = create("electric_charge").subtitle("Electricity crackles")
+			.category(SoundSource.BLOCKS)
+			.build(),
+
 		HAUNTED_BELL_CONVERT = create("haunted_bell_convert").subtitle("Haunted Bell awakens")
 			.category(SoundSource.BLOCKS)
 			.build(),

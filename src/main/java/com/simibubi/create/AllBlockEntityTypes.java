@@ -237,6 +237,20 @@ import com.simibubi.create.foundation.blockEntity.renderer.SmartBlockEntityRende
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.tterrag.registrate.util.entry.BlockEntityEntry;
 
+import com.simibubi.create.content.electricity.accumulator.ModularAccumulatorBlockEntity;
+import com.simibubi.create.content.electricity.accumulator.ModularAccumulatorRenderer;
+import com.simibubi.create.content.electricity.alternator.AlternatorBlockEntity;
+import com.simibubi.create.content.electricity.connector.LargeConnectorBlockEntity;
+import com.simibubi.create.content.electricity.connector.SmallConnectorBlockEntity;
+import com.simibubi.create.content.electricity.connector.SmallLightConnectorBlockEntity;
+import com.simibubi.create.content.electricity.connector.base.ConnectorRenderer;
+import com.simibubi.create.content.electricity.creative.CreativeEnergyBlockEntity;
+import com.simibubi.create.content.electricity.motor.ElectricMotorBlockEntity;
+import com.simibubi.create.content.electricity.motor.ElectricMotorRenderer;
+import com.simibubi.create.content.kinetics.rollingMill.RollingMillBlockEntity;
+import com.simibubi.create.content.kinetics.rollingMill.RollingMillRenderer;
+import com.simibubi.create.content.kinetics.rollingMill.RollingMillVisual;
+
 public class AllBlockEntityTypes {
 	private static final CreateRegistrate REGISTRATE = Create.registrate();
 
@@ -266,6 +280,57 @@ public class AllBlockEntityTypes {
 		.visual(() -> OrientedRotatingVisual.of(AllPartialModels.SHAFT_HALF), false)
 		.validBlocks(AllBlocks.CREATIVE_MOTOR)
 		.renderer(() -> CreativeMotorRenderer::new)
+		.register();
+
+	// Electricity, imported from Create Crafts & Additions (MIT, by MRH0)
+	public static final BlockEntityEntry<ElectricMotorBlockEntity> ELECTRIC_MOTOR = REGISTRATE
+		.blockEntity("electric_motor", ElectricMotorBlockEntity::new)
+		.visual(() -> OrientedRotatingVisual.of(AllPartialModels.SHAFT_HALF), false)
+		.validBlocks(AllBlocks.ELECTRIC_MOTOR)
+		.renderer(() -> ElectricMotorRenderer::new)
+		.register();
+
+	public static final BlockEntityEntry<AlternatorBlockEntity> ALTERNATOR = REGISTRATE
+		.blockEntity("alternator", AlternatorBlockEntity::new)
+		.visual(() -> SingleAxisRotatingVisual::shaft, false)
+		.validBlocks(AllBlocks.ALTERNATOR)
+		.renderer(() -> ShaftRenderer::new)
+		.register();
+
+	public static final BlockEntityEntry<RollingMillBlockEntity> ROLLING_MILL = REGISTRATE
+		.blockEntity("rolling_mill", RollingMillBlockEntity::new)
+		.visual(() -> RollingMillVisual::new)
+		.validBlocks(AllBlocks.ROLLING_MILL)
+		.renderer(() -> RollingMillRenderer::new)
+		.register();
+
+	public static final BlockEntityEntry<CreativeEnergyBlockEntity> CREATIVE_ENERGY = REGISTRATE
+		.blockEntity("creative_energy", CreativeEnergyBlockEntity::new)
+		.validBlocks(AllBlocks.CREATIVE_ENERGY)
+		.register();
+
+	public static final BlockEntityEntry<SmallConnectorBlockEntity> SMALL_CONNECTOR = REGISTRATE
+		.blockEntity("connector", SmallConnectorBlockEntity::new)
+		.validBlocks(AllBlocks.SMALL_CONNECTOR)
+		.renderer(() -> ConnectorRenderer::new)
+		.register();
+
+	public static final BlockEntityEntry<SmallLightConnectorBlockEntity> SMALL_LIGHT_CONNECTOR = REGISTRATE
+		.blockEntity("small_light_connector", SmallLightConnectorBlockEntity::new)
+		.validBlocks(AllBlocks.SMALL_LIGHT_CONNECTOR)
+		.renderer(() -> ConnectorRenderer::new)
+		.register();
+
+	public static final BlockEntityEntry<LargeConnectorBlockEntity> LARGE_CONNECTOR = REGISTRATE
+		.blockEntity("large_connector", LargeConnectorBlockEntity::new)
+		.validBlocks(AllBlocks.LARGE_CONNECTOR)
+		.renderer(() -> ConnectorRenderer::new)
+		.register();
+
+	public static final BlockEntityEntry<ModularAccumulatorBlockEntity> MODULAR_ACCUMULATOR = REGISTRATE
+		.blockEntity("modular_accumulator", ModularAccumulatorBlockEntity::new)
+		.validBlocks(AllBlocks.MODULAR_ACCUMULATOR)
+		.renderer(() -> ModularAccumulatorRenderer::new)
 		.register();
 
 	public static final BlockEntityEntry<GearboxBlockEntity> GEARBOX = REGISTRATE

@@ -235,6 +235,24 @@
     ],
     "subtitle": "create.subtitle.desk_bell"
   },
+  "electric_charge": {
+    "sounds": [
+      {
+        "type": "file",
+        "name": "create:electric_charge"
+      }
+    ],
+    "subtitle": "create.subtitle.electric_charge"
+  },
+  "electric_motor_buzz": {
+    "sounds": [
+      {
+        "type": "file",
+        "name": "create:electric_motor_buzz"
+      }
+    ],
+    "subtitle": "create.subtitle.electric_motor_buzz"
+  },
   "frogport_catch": {
     "sounds": [
       {

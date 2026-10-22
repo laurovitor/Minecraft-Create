@@ -57,6 +57,8 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
+import com.simibubi.create.content.kinetics.rollingMill.RollingRecipe;
+
 public enum AllRecipeTypes implements IRecipeTypeInfo, StringRepresentable {
 
 	CONVERSION(ConversionRecipe::new),
@@ -67,6 +69,7 @@ public enum AllRecipeTypes implements IRecipeTypeInfo, StringRepresentable {
 	MIXING(MixingRecipe::new),
 	COMPACTING(CompactingRecipe::new),
 	PRESSING(PressingRecipe::new),
+	ROLLING(RollingRecipe::new),
 	SANDPAPER_POLISHING(SandPaperPolishingRecipe::new),
 	SPLASHING(SplashingRecipe::new),
 	HAUNTING(HauntingRecipe::new),

@@ -291,6 +291,17 @@ import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.simibubi.create.foundation.data.ModelSlots;
 import com.simibubi.create.foundation.data.MetalBarsGen;
 import com.simibubi.create.foundation.data.SharedProperties;
+import com.simibubi.create.content.electricity.accumulator.ModularAccumulatorBlock;
+import com.simibubi.create.content.electricity.accumulator.ModularAccumulatorBlockItem;
+import com.simibubi.create.content.electricity.accumulator.ModularAccumulatorCTBehaviour;
+import com.simibubi.create.content.electricity.alternator.AlternatorBlock;
+import com.simibubi.create.content.electricity.connector.LargeConnectorBlock;
+import com.simibubi.create.content.electricity.connector.SmallConnectorBlock;
+import com.simibubi.create.content.electricity.connector.SmallLightConnectorBlock;
+import com.simibubi.create.content.electricity.creative.CreativeEnergyBlock;
+import com.simibubi.create.content.electricity.energy.NodeMovementBehaviour;
+import com.simibubi.create.content.electricity.motor.ElectricMotorBlock;
+import com.simibubi.create.content.kinetics.rollingMill.RollingMillBlock;
 import com.simibubi.create.foundation.data.recipe.CommonMetal;
 import com.simibubi.create.foundation.item.ItemDescription;
 import com.simibubi.create.foundation.item.UncontainableBlockItem;
@@ -2339,6 +2350,104 @@ public class AllBlocks {
 		.build()
 		.register();
 
+	// Electricity, imported from Create Crafts & Additions (MIT, by MRH0)
+
+	public static final BlockEntry<RollingMillBlock> ROLLING_MILL = REGISTRATE.block("rolling_mill", RollingMillBlock::new)
+		.initialProperties(SharedProperties::stone)
+		.properties(p -> p.mapColor(MapColor.METAL))
+		.transform(axeOrPickaxe())
+		.transform(CStress.setImpact(8.0))
+			// Hand-written under src/main/resources: client datagen is not ported to 26.3 yet.
+			.blockstate(() -> (c, p) -> {})
+		.lang("Rolling Mill")
+		.item()
+		.transform(customItemModel())
+		.register();
+
+	public static final BlockEntry<ElectricMotorBlock> ELECTRIC_MOTOR = REGISTRATE.block("electric_motor", ElectricMotorBlock::new)
+		.initialProperties(SharedProperties::softMetal)
+		.transform(pickaxeOnly())
+		.transform(CStress.setCapacity(64.0))
+		.onRegister(BlockStressValues.setGeneratorSpeed(256, true))
+			// Hand-written under src/main/resources: client datagen is not ported to 26.3 yet.
+			.blockstate(() -> (c, p) -> {})
+		.lang("Electric Motor")
+		.item()
+		.transform(customItemModel())
+		.register();
+
+	public static final BlockEntry<AlternatorBlock> ALTERNATOR = REGISTRATE.block("alternator", AlternatorBlock::new)
+		.initialProperties(SharedProperties::softMetal)
+		.transform(pickaxeOnly())
+		.transform(CStress.setImpact(64.0))
+			// Hand-written under src/main/resources: client datagen is not ported to 26.3 yet.
+			.blockstate(() -> (c, p) -> {})
+		.lang("Alternator")
+		.item()
+		.transform(customItemModel())
+		.register();
+
+	public static final BlockEntry<SmallConnectorBlock> SMALL_CONNECTOR = REGISTRATE.block("connector", SmallConnectorBlock::new)
+		.initialProperties(SharedProperties::stone)
+		.transform(pickaxeOnly())
+		.onRegister(movementBehaviour(new NodeMovementBehaviour()))
+			// Hand-written under src/main/resources: client datagen is not ported to 26.3 yet.
+			.blockstate(() -> (c, p) -> {})
+		.lang("Small Connector")
+		.item()
+		.transform(customItemModel("connector", "small", "item"))
+		.register();
+
+	public static final BlockEntry<SmallLightConnectorBlock> SMALL_LIGHT_CONNECTOR =
+		REGISTRATE.block("small_light_connector", SmallLightConnectorBlock::new)
+			.initialProperties(SharedProperties::stone)
+			.transform(pickaxeOnly())
+			.onRegister(movementBehaviour(new NodeMovementBehaviour()))
+				// Hand-written under src/main/resources: client datagen is not ported to 26.3 yet.
+			.blockstate(() -> (c, p) -> {})
+			.lang("Small Connector with Light")
+			.item()
+			.transform(customItemModel("connector", "small_light", "item"))
+			.register();
+
+	public static final BlockEntry<LargeConnectorBlock> LARGE_CONNECTOR = REGISTRATE.block("large_connector", LargeConnectorBlock::new)
+		.initialProperties(SharedProperties::stone)
+		.transform(pickaxeOnly())
+		.onRegister(movementBehaviour(new NodeMovementBehaviour()))
+			// Hand-written under src/main/resources: client datagen is not ported to 26.3 yet.
+			.blockstate(() -> (c, p) -> {})
+		.lang("Large Connector")
+		.item()
+		.transform(customItemModel("connector", "large", "item"))
+		.register();
+
+	public static final BlockEntry<ModularAccumulatorBlock> MODULAR_ACCUMULATOR =
+		REGISTRATE.block("modular_accumulator", ModularAccumulatorBlock::regular)
+			.initialProperties(SharedProperties::softMetal)
+			.properties(BlockBehaviour.Properties::noOcclusion)
+			.transform(pickaxeOnly())
+			.onRegister(connectedTextures(ModularAccumulatorCTBehaviour::new))
+			.transform(displaySource(AllDisplaySources.MODULAR_ACCUMULATOR))
+				// Hand-written under src/main/resources: client datagen is not ported to 26.3 yet.
+			.blockstate(() -> (c, p) -> {})
+			.lang("Modular Accumulator")
+			.item(ModularAccumulatorBlockItem::new)
+			.transform(customItemModel())
+			.register();
+
+	public static final BlockEntry<CreativeEnergyBlock> CREATIVE_ENERGY = REGISTRATE.block("creative_energy", CreativeEnergyBlock::new)
+		.initialProperties(SharedProperties::softMetal)
+		.properties(p -> p.mapColor(MapColor.COLOR_PURPLE))
+		.transform(pickaxeOnly())
+		.tag(AllBlockTags.SAFE_NBT.tag)
+			// Hand-written under src/main/resources: client datagen is not ported to 26.3 yet.
+			.blockstate(() -> (c, p) -> {})
+		.lang("Creative Energy Source")
+		.item()
+		.properties(p -> p.rarity(Rarity.EPIC))
+		.transform(customItemModel())
+		.register();
+
 	// Materials
 
 	static {
@@ -2635,6 +2744,21 @@ public class AllBlocks {
 	public static final BlockEntry<Block> WEATHERED_IRON_BLOCK = REGISTRATE.block("weathered_iron_block", Block::new)
 		.transform(BuilderTransformers.palettesIronBlock())
 		.lang("Block of Weathered Iron")
+		.register();
+
+	public static final BlockEntry<Block> ELECTRUM_BLOCK = REGISTRATE.block("electrum_block", Block::new)
+		.initialProperties(() -> Blocks.GOLD_BLOCK)
+		.properties(p -> p.mapColor(MapColor.TERRACOTTA_YELLOW)
+			.requiresCorrectToolForDrops())
+		.transform(pickaxeOnly())
+		.blockstate(() -> simpleCubeAll("electrum_block"))
+		.tag(BlockTags.NEEDS_IRON_TOOL)
+		.tag(Tags.Blocks.STORAGE_BLOCKS)
+		.tag(BlockTags.BEACON_BASE_BLOCKS)
+		.transform(tagBlockAndItem(AllTags.commonBlockTag("storage_blocks/electrum"), AllTags.commonItemTag("storage_blocks/electrum")))
+		.tag(Tags.Items.STORAGE_BLOCKS)
+		.build()
+		.lang("Block of Electrum")
 		.register();
 
 	public static final BlockEntry<Block> BRASS_BLOCK = REGISTRATE.block("brass_block", Block::new)

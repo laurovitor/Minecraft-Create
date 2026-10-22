@@ -100,6 +100,10 @@ import net.minecraft.world.item.Rarity;
 import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.common.Tags.Items;
 
+import com.simibubi.create.content.electricity.item.CapacitorItem;
+import com.simibubi.create.content.electricity.item.WireSpool;
+import com.simibubi.create.content.equipment.sandPaper.DiamondGritSandpaperItem;
+
 public class AllItems {
 	private static final CreateRegistrate REGISTRATE = Create.registrate();
 
@@ -256,6 +260,33 @@ public class AllItems {
 		taggedIngredient("copper_nugget", CommonMetal.COPPER.nuggets, Tags.Items.NUGGETS),
 		ZINC_NUGGET = taggedIngredient("zinc_nugget", CommonMetal.ZINC.nuggets, Tags.Items.NUGGETS),
 		BRASS_NUGGET = taggedIngredient("brass_nugget", CommonMetal.BRASS.nuggets, Tags.Items.NUGGETS);
+
+	// Electricity materials, imported from Create Crafts & Additions (MIT, by MRH0)
+	public static final ItemEntry<Item>
+		ELECTRUM_INGOT = taggedIngredient("electrum_ingot", AllTags.commonItemTag("ingots/electrum"), Tags.Items.INGOTS),
+		ELECTRUM_NUGGET = taggedIngredient("electrum_nugget", AllTags.commonItemTag("nuggets/electrum"), Tags.Items.NUGGETS),
+		ELECTRUM_SHEET = taggedIngredient("electrum_sheet", AllTags.commonItemTag("plates/electrum"), PLATES.tag),
+		ZINC_SHEET = taggedIngredient("zinc_sheet", AllTags.commonItemTag("plates/zinc"), PLATES.tag),
+		COPPER_ROD = taggedIngredient("copper_rod", AllTags.commonItemTag("rods/copper"), AllTags.commonItemTag("rods/all_metal")),
+		IRON_ROD = taggedIngredient("iron_rod", AllTags.commonItemTag("rods/iron"), AllTags.commonItemTag("rods/all_metal")),
+		GOLD_ROD = taggedIngredient("gold_rod", AllTags.commonItemTag("rods/gold"), AllTags.commonItemTag("rods/all_metal")),
+		ELECTRUM_ROD = taggedIngredient("electrum_rod", AllTags.commonItemTag("rods/electrum"), AllTags.commonItemTag("rods/all_metal")),
+		BRASS_ROD = taggedIngredient("brass_rod", AllTags.commonItemTag("rods/brass"), AllTags.commonItemTag("rods/all_metal")),
+		COPPER_WIRE = taggedIngredient("copper_wire", AllTags.commonItemTag("wires/copper"), AllTags.commonItemTag("wires/all_metal")),
+		IRON_WIRE = taggedIngredient("iron_wire", AllTags.commonItemTag("wires/iron"), AllTags.commonItemTag("wires/all_metal")),
+		GOLD_WIRE = taggedIngredient("gold_wire", AllTags.commonItemTag("wires/gold"), AllTags.commonItemTag("wires/all_metal")),
+		ELECTRUM_WIRE = taggedIngredient("electrum_wire", AllTags.commonItemTag("wires/electrum"), AllTags.commonItemTag("wires/all_metal")),
+		DIAMOND_GRIT = taggedIngredient("diamond_grit", AllTags.commonItemTag("dusts/diamond"));
+
+	public static final ItemEntry<WireSpool>
+		SPOOL = REGISTRATE.item("spool", WireSpool::new).register(),
+		COPPER_SPOOL = REGISTRATE.item("copper_spool", WireSpool::new).register(),
+		GOLD_SPOOL = REGISTRATE.item("gold_spool", WireSpool::new).register(),
+		ELECTRUM_SPOOL = REGISTRATE.item("electrum_spool", WireSpool::new).register(),
+		FESTIVE_SPOOL = REGISTRATE.item("festive_spool", WireSpool::new).register();
+
+	public static final ItemEntry<CapacitorItem> CAPACITOR = REGISTRATE.item("capacitor", CapacitorItem::new)
+		.register();
 
 	public static final ItemEntry<ExperienceNuggetItem> EXP_NUGGET =
 		REGISTRATE.item("experience_nugget", ExperienceNuggetItem::new)
@@ -434,6 +465,11 @@ public class AllItems {
 		.tag(AllTags.AllItemTags.SANDPAPER.tag)
 		.onRegister(s -> ItemDescription.referKey(s, SAND_PAPER))
 		.register();
+
+	public static final ItemEntry<DiamondGritSandpaperItem> DIAMOND_GRIT_SANDPAPER =
+		REGISTRATE.item("diamond_grit_sandpaper", DiamondGritSandpaperItem::new)
+			.tag(AllTags.AllItemTags.SANDPAPER.tag)
+			.register();
 
 	public static final ItemEntry<WrenchItem> WRENCH = REGISTRATE.item("wrench", WrenchItem::new)
 		.properties(p -> p.stacksTo(1))

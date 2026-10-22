@@ -61,6 +61,12 @@ public class AllDataComponents {
 			builder -> builder.persistent(ExtraCodecs.NON_NEGATIVE_INT).networkSynchronized(ByteBufCodecs.VAR_INT)
 	);
 
+	/** Energy stored in an electric item, in FE (Capacitor). */
+	public static final DataComponentType<Integer> STORED_ENERGY = register(
+			"stored_energy",
+			builder -> builder.persistent(ExtraCodecs.NON_NEGATIVE_INT).networkSynchronized(ByteBufCodecs.VAR_INT)
+	);
+
 	public static final DataComponentType<BlockPos> BELT_FIRST_SHAFT = register(
 			"belt_first_shaft",
 			builder -> builder.persistent(BlockPos.CODEC).networkSynchronized(BlockPos.STREAM_CODEC)

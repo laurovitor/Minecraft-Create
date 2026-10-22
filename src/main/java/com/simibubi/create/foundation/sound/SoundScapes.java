@@ -32,6 +32,8 @@ public class SoundScapes {
 		COG(SoundScapes::cogwheel),
 		CRUSHING(SoundScapes::crushing),
 		MILLING(SoundScapes::milling),
+		DYNAMO(SoundScapes::dynamo),
+		CHARGE(SoundScapes::charge),
 
 		;
 
@@ -64,6 +66,14 @@ public class SoundScapes {
 	private static SoundScape milling(float pitch, AmbienceGroup group) {
 		return new SoundScape(pitch, group).repeating(AllSoundEvents.CRUSHING_1.getMainEvent(), 1.545f, .75f, 1)
 			.repeating(AllSoundEvents.CRUSHING_2.getMainEvent(), 0.425f, .75f, 2);
+	}
+
+	private static SoundScape dynamo(float pitch, AmbienceGroup group) {
+		return new SoundScape(pitch, group).continuous(AllSoundEvents.ELECTRIC_MOTOR_BUZZ.getMainEvent(), .75f, 1);
+	}
+
+	private static SoundScape charge(float pitch, AmbienceGroup group) {
+		return new SoundScape(pitch, group).continuous(AllSoundEvents.ELECTRIC_CHARGE.getMainEvent(), .2f, 1);
 	}
 
 	enum PitchGroup {
