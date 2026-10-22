@@ -100,6 +100,7 @@ for source in SCENE_SOURCES:
 keys |= {'create.ponder.tag.electric', 'create.ponder.tag.electric.description',
          'effect.create.shocking', 'create.recipe.assembly.charging'}
 keys |= {f'create.recipe.{k}' for k in RECIPE_KINDS}
+keys |= {'create.display_source.modular_accumulator', 'create.display_source.digital_adapter'}
 keys |= {f'create.subtitle.{s}' for s in SOUNDS}
 keys |= {f'death.attack.create.{d}{p}' for d in ('barbed_wire', 'tesla_coil') for p in ('', '.player')}
 for f in code_files:

@@ -3941,5 +3941,6 @@
   "create.ponder.servo_motor.text_5": "Os sinais dos dois lados são somados, com o lado Mínimo contando como negativo, então sinais iguais se anulam",
   "create.ponder.servo_motor.text_6": "O quanto o Servo gira depende da força do sinal somado",
   "create.ponder.servo_motor.text_7": "Role o mouse nas laterais do Servo para ajustar os Ângulos Máximo e Mínimo entre 0° e 180°",
-  "create.ponder.servo_motor.text_8": "Com o Ângulo Máximo em 180°, o mesmo sinal agora o gira o dobro"
+  "create.ponder.servo_motor.text_8": "Com o Ângulo Máximo em 180°, o mesmo sinal agora o gira o dobro",
+  "create.display_source.digital_adapter": "Texto do Adaptador Digital"
 }

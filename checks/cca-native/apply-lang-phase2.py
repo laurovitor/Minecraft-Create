@@ -109,6 +109,7 @@ INTERFACE = {
     "create.servo.max_angle": ("Max Angle", "Ângulo Máximo"),
     "create.servo.min_angle": ("Min Angle", "Ângulo Mínimo"),
     "create.tooltip.relay.info": ("Relay", "Relé"),
+    "create.display_source.digital_adapter": ("Digital Adapter Text", "Texto do Adaptador Digital"),
     "create.subtitle.tesla_coil": ("Tesla Coil buzzes", "Bobina de Tesla zumbe"),
     "create.subtitle.loud_zap": ("Tesla Coil zaps", "Bobina de Tesla dispara"),
     "create.subtitle.little_zap": ("Electricity sparks", "Eletricidade faísca"),
