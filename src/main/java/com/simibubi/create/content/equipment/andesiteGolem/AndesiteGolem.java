@@ -197,6 +197,11 @@ public class AndesiteGolem extends AbstractGolem {
 
 	// ---- repair and healing
 
+	/** HP one item restores when the golem repairs itself from its chest; 0 = not a repair item. */
+	protected float autoRepairAmount(ItemStack stack) {
+		return isRepairItem(stack) ? GolemCareRules.repairAmount(getMaxHealth()) : 0;
+	}
+
 	/** Whether this golem kind has jobs a wrench can skip. */
 	protected boolean canSkipTask() {
 		return workGoal != null;
@@ -249,9 +254,11 @@ public class AndesiteGolem extends AbstractGolem {
 			return;
 		// The chest is used remotely, as for saplings when replanting: no trip home needed.
 		AndesiteGolemChestBlockEntity chest = getChest();
-		if (chest == null || chest.takeOne(this::isRepairItem).isEmpty())
+		// Personal slots first, then storage (the pre-layout behaviour).
+		ItemStack used = chest == null ? ItemStack.EMPTY : chest.takeMaintenance(stack -> autoRepairAmount(stack) > 0);
+		if (used.isEmpty())
 			return;
-		repair(level);
+		repair(level, autoRepairAmount(used));
 		autoRepairCooldown = GolemCareRules.AUTO_REPAIR_COOLDOWN;
 	}
 

@@ -29,29 +29,155 @@ import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.transfer.item.VanillaContainerWrapper;
 
 /**
- * Lauro edition: home of an Andesite Golem. Holds what the golem gathers (27 slots, like a chest)
- * and a Create filter on its lid that tells the golem what to gather and keep.
+ * Lauro edition: home of an Andesite Golem. Holds what the golem gathers (21 storage slots, see
+ * GolemChestLayout), 3 personal slots for the golem's own maintenance items, and a Create filter on
+ * its lid that tells the golem what to gather and keep. Automation only ever sees the storage.
  */
 public class AndesiteGolemChestBlockEntity extends SmartBlockEntity implements Clearable {
 
-	public static final int SIZE = 27;
+	/** Storage slots of the Andesite and Netherite chests (7 columns x 3 rows). */
+	public static final int SIZE = GolemChestLayout.ROWS * GolemChestLayout.STANDARD_STORAGE_COLUMNS;
+	/** Save layout: 2 = storage + personal (+ distribution); absent = old 27-slot "Items". */
+	private static final int LAYOUT_VERSION = 2;
 
 	public FilteringBehaviour filtering;
-	protected final SimpleContainer container = new SimpleContainer(SIZE) {
-		@Override
-		public void setChanged() {
-			super.setChanged();
-			AndesiteGolemChestBlockEntity.this.setChanged();
-		}
-	};
+	/** Storage: what automation, hoppers, packagers and Redstone golems see. */
+	protected final SimpleContainer container;
+	/** The golem's own slots (repair items, glass bottles): never exposed to automation. */
+	protected final SimpleContainer personal;
+	/** Stacks from an old layout that fit nowhere; dropped next to the chest on the next lazy tick. */
+	protected final List<ItemStack> pendingDrops = new java.util.ArrayList<>();
 	/** The golem living off this chest; null once it died or never existed (placed by hand). */
 	protected @Nullable UUID golem;
 
 	public AndesiteGolemChestBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
+		this(type, pos, state, SIZE);
+	}
+
+	protected AndesiteGolemChestBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state, int storageSize) {
 		super(type, pos, state);
+		container = notifying(storageSize);
+		personal = notifying(GolemChestLayout.PERSONAL_SIZE);
+	}
+
+	protected SimpleContainer notifying(int size) {
+		return new SimpleContainer(size) {
+			@Override
+			public void setChanged() {
+				super.setChanged();
+				AndesiteGolemChestBlockEntity.this.setChanged();
+			}
+		};
+	}
+
+	public SimpleContainer getPersonal() {
+		return personal;
+	}
+
+	/** Golem kind of this chest, for the maintenance-item table (GolemMaintenance). */
+	public String kindId() {
+		var kind = com.simibubi.create.content.equipment.golemRevival.GolemKind.ofChest(getBlockState());
+		return kind == null ? "" : kind.id;
+	}
+
+	public boolean usesPersonally(ItemStack stack) {
+		return !stack.isEmpty() && GolemMaintenance.uses(kindId(),
+			net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
+	}
+
+	/** How many of {@code item} the personal slots hold, and how many more they could take. */
+	public int personalCount(net.minecraft.world.item.Item item) {
+		int n = 0;
+		for (int i = 0; i < personal.getContainerSize(); i++)
+			if (personal.getItem(i).is(item))
+				n += personal.getItem(i).getCount();
+		return n;
+	}
+
+	public int personalRoom(ItemStack sample) {
+		if (!usesPersonally(sample))
+			return 0;
+		int room = 0, max = Math.min(sample.getMaxStackSize(), personal.getMaxStackSize());
+		for (int i = 0; i < personal.getContainerSize(); i++) {
+			ItemStack slot = personal.getItem(i);
+			if (slot.isEmpty())
+				room += max;
+			else if (ItemStack.isSameItemSameComponents(slot, sample))
+				room += Math.max(0, max - slot.getCount());
+		}
+		return room;
+	}
+
+	/** Puts a maintenance item into the personal slots (merging first). @return what did not fit */
+	public ItemStack insertPersonal(ItemStack stack) {
+		return usesPersonally(stack) ? personal.addItem(stack) : stack;
+	}
+
+	/** One matching item, personal slots first, then storage (auto-repair, saplings keep storage-only takeOne). */
+	public ItemStack takeMaintenance(java.util.function.Predicate<ItemStack> predicate) {
+		for (int i = 0; i < personal.getContainerSize(); i++) {
+			ItemStack stack = personal.getItem(i);
+			if (!stack.isEmpty() && predicate.test(stack))
+				return personal.removeItem(i, 1);
+		}
+		return takeOne(predicate);
+	}
+
+	/** One matching item from the personal slots only (honey bottles). */
+	public ItemStack takePersonal(java.util.function.Predicate<ItemStack> predicate) {
+		for (int i = 0; i < personal.getContainerSize(); i++) {
+			ItemStack stack = personal.getItem(i);
+			if (!stack.isEmpty() && predicate.test(stack))
+				return personal.removeItem(i, 1);
+		}
+		return ItemStack.EMPTY;
+	}
+
+	// ---- saving: storage, personal (+ distribution in the Redstone chest), migration of old chests
+
+	protected int storageColumns() {
+		return GolemChestLayout.STANDARD_STORAGE_COLUMNS;
+	}
+
+	protected int storageOffset() {
+		return GolemChestLayout.STANDARD_STORAGE_OFFSET;
+	}
+
+	/** Also used by the packed chest item. */
+	public void writeInventory(CompoundTag tag, com.mojang.serialization.DynamicOps<net.minecraft.nbt.Tag> ops) {
+		tag.putInt("Layout", LAYOUT_VERSION);
+		tag.store("Storage", ItemStack.OPTIONAL_CODEC.listOf(), ops, container.getItems());
+		tag.store("Personal", ItemStack.OPTIONAL_CODEC.listOf(), ops, personal.getItems());
+		if (!pendingDrops.isEmpty())
+			tag.store("PendingDrops", ItemStack.CODEC.listOf(), ops, pendingDrops);
+	}
+
+	/** Reads the current layout, or migrates an old 27-slot "Items" list (GolemChestLayout#migrate). */
+	public void readInventory(CompoundTag tag, com.mojang.serialization.DynamicOps<net.minecraft.nbt.Tag> ops) {
+		container.clearContent();
+		personal.clearContent();
+		pendingDrops.clear();
+		tag.read("PendingDrops", ItemStack.CODEC.listOf(), ops).ifPresent(pendingDrops::addAll);
+		if (tag.getIntOr("Layout", 0) >= LAYOUT_VERSION) {
+			fill(container, tag.read("Storage", ItemStack.OPTIONAL_CODEC.listOf(), ops).orElse(List.of()));
+			fill(personal, tag.read("Personal", ItemStack.OPTIONAL_CODEC.listOf(), ops).orElse(List.of()));
+			return;
+		}
+		List<ItemStack> legacy = tag.read("Items", ItemStack.OPTIONAL_CODEC.listOf(), ops).orElse(List.of());
+		GolemChestLayout.Migration<ItemStack> m = GolemChestLayout.migrate(legacy, ItemStack.EMPTY, ItemStack::isEmpty,
+			this::usesPersonally, storageColumns(), storageOffset());
+		fill(container, m.storage());
+		fill(personal, m.personal());
+		pendingDrops.addAll(m.overflow());
+	}
+
+	protected static void fill(SimpleContainer target, List<ItemStack> items) {
+		for (int i = 0; i < Math.min(items.size(), target.getContainerSize()); i++)
+			target.setItem(i, items.get(i));
 	}
 
 	public static void registerCapabilities(RegisterCapabilitiesEvent event) {
+		// Storage only: personal (and distribution) slots never enter or leave through automation.
 		event.registerBlockEntity(Capabilities.Item.BLOCK, AllBlockEntityTypes.ANDESITE_GOLEM_CHEST.get(),
 			(be, context) -> VanillaContainerWrapper.of(be.container));
 	}
@@ -67,6 +193,7 @@ public class AndesiteGolemChestBlockEntity extends SmartBlockEntity implements C
 		super.lazyTick();
 		if (level == null || level.isClientSide())
 			return;
+		flushPendingDrops();
 		var linked = com.simibubi.create.content.equipment.redstoneGolem.GolemChestLinks.LINKED;
 		BlockState state = getBlockState();
 		if (!state.hasProperty(linked))
@@ -143,8 +270,22 @@ public class AndesiteGolemChestBlockEntity extends SmartBlockEntity implements C
 		if (golem != null)
 			tag.store("Golem", UUIDUtil.CODEC, golem);
 		if (!clientPacket)
-			tag.store("Items", ItemStack.OPTIONAL_CODEC.listOf(), registries.createSerializationContext(NbtOps.INSTANCE),
-				container.getItems());
+			writeInventory(tag, registries.createSerializationContext(NbtOps.INSTANCE));
+	}
+
+	/** Migrated stacks that fit nowhere: storage if room appeared, else dropped beside the chest. */
+	protected void flushPendingDrops() {
+		if (pendingDrops.isEmpty())
+			return;
+		for (ItemStack stack : pendingDrops) {
+			ItemStack rest = container.addItem(stack);
+			if (!rest.isEmpty())
+				rest = insertPersonal(rest);
+			if (!rest.isEmpty())
+				Containers.dropItemStack(level, worldPosition.getX() + 0.5, worldPosition.getY() + 1, worldPosition.getZ() + 0.5, rest);
+		}
+		pendingDrops.clear();
+		setChanged();
 	}
 
 	@Override
@@ -153,12 +294,7 @@ public class AndesiteGolemChestBlockEntity extends SmartBlockEntity implements C
 		golem = tag.read("Golem", UUIDUtil.CODEC).orElse(null);
 		if (clientPacket)
 			return;
-		container.clearContent();
-		List<ItemStack> items = tag.read("Items", ItemStack.OPTIONAL_CODEC.listOf(),
-			registries.createSerializationContext(NbtOps.INSTANCE)).orElse(List.of());
-		NonNullList<ItemStack> target = container.getItems();
-		for (int i = 0; i < Math.min(items.size(), target.size()); i++)
-			target.set(i, items.get(i));
+		readInventory(tag, registries.createSerializationContext(NbtOps.INSTANCE));
 	}
 
 	@Override
@@ -169,12 +305,19 @@ public class AndesiteGolemChestBlockEntity extends SmartBlockEntity implements C
 		if (linked != null)
 			linked.discard();
 		super.destroy();
-		if (level != null)
+		if (level != null) {
 			Containers.dropContents(level, worldPosition, container);
+			Containers.dropContents(level, worldPosition, personal);
+			for (ItemStack stack : pendingDrops)
+				Containers.dropItemStack(level, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), stack);
+			pendingDrops.clear();
+		}
 	}
 
 	@Override
 	public void clearContent() {
 		container.clearContent();
+		personal.clearContent();
+		pendingDrops.clear();
 	}
 }

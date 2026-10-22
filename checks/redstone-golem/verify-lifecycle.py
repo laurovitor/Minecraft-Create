@@ -40,7 +40,7 @@ assert 'close' in barriers.lower() and 'open' in barriers.lower()
 # Single cargo inventory: save/reload and packed-chest hand-off retain list; visual has no contents.
 assert 'output.store("Carried", ItemStack.CODEC.listOf(), carried)' in parent
 assert 'input.read("Carried", ItemStack.CODEC.listOf()).ifPresent(carried::addAll)' in parent
-assert 'super.readAdditionalSaveData(input);\n\t\tupdateHeldItem();' in golem
+assert 'super.readAdditionalSaveData(input);\n\t\tdelivery.clear();' in golem and 'ifPresent(delivery::addAll);\n\t\tupdateHeldItem();' in golem
 assert 'data.store("Carried", ItemStack.CODEC.listOf()' in chest
 assert 'data.read("Carried", ItemStack.CODEC.listOf()' in chest
 assert 'golem.getCarried().clear();\n\t\tgolem.updateHeldItem();' in chest

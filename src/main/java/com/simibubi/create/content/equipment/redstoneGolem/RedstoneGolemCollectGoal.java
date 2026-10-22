@@ -11,6 +11,7 @@ import java.util.Comparator;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
+import com.simibubi.create.content.equipment.andesiteGolem.AndesiteGolemChestBlockEntity;
 import net.minecraft.world.Container;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
@@ -69,13 +70,13 @@ public class RedstoneGolemCollectGoal extends Goal {
 		if (chest == null)
 			return false;
 		// Loaded from a save or left over from a full chest: bring it home first.
-		if (!golem.getCarried().isEmpty()) {
+		if (golem.hasLoad()) {
 			if (returnCooldown > 0) {
 				returnCooldown--;
 				golem.setTask(RedstoneGolem.Task.RETURNING);
 				return false;
 			}
-			boolean room = golem.getCarried().stream().anyMatch(chest::hasRoomFor);
+			boolean room = golem.getCarried().stream().anyMatch(chest::hasRoomFor) || canUnloadDelivery(chest);
 			golem.setTask(room ? RedstoneGolem.Task.RETURNING : RedstoneGolem.Task.CHEST_FULL);
 			return room;
 		}
@@ -135,11 +136,79 @@ public class RedstoneGolemCollectGoal extends Goal {
 				golem.distanceToSqr(Vec3.atCenterOf(s.pos())), skipped, others));
 		}
 		int best = RedstoneGolemRules.chooseSource(candidates);
-		if (best < 0)
+		// A network golem holding none of an item it uses (and that the distribution column has)
+		// gets a dedicated trip first, even if it has nothing to collect: it cannot repair otherwise.
+		BlockPos urgent = null;
+		double urgentDistance = Double.MAX_VALUE;
+		for (int i = 0; i < sources.size(); i++) {
+			RedstoneGolemNetwork.Source s = sources.get(i);
+			if (candidates.get(i).skipped() || candidates.get(i).reservedByOthers() > 0
+				|| !(golem.level().getBlockEntity(s.pos()) instanceof AndesiteGolemChestBlockEntity target))
+				continue;
+			for (int slot = 0; slot < chest.getDistribution().getContainerSize(); slot++) {
+				ItemStack item = chest.getDistribution().getItem(slot);
+				if (!item.isEmpty() && GolemDistribution.urgent(targetOf(target, item))
+					&& candidates.get(i).distanceSqr() < urgentDistance) {
+					urgent = s.pos();
+					urgentDistance = candidates.get(i).distanceSqr();
+				}
+			}
+		}
+		if (best < 0 && urgent == null)
 			return null;
-		BlockPos chosen = sources.get(best).pos();
+		BlockPos chosen = urgent != null ? urgent : sources.get(best).pos();
 		RedstoneGolemReservations.SERVER.claim(key(chosen), golem.getUUID(), now);
+		loadDelivery(chest, sources, chosen);
 		return chosen;
+	}
+
+	private static GolemDistribution.Target targetOf(AndesiteGolemChestBlockEntity target, ItemStack item) {
+		return new GolemDistribution.Target(target.personalCount(item.getItem()), target.personalRoom(item));
+	}
+
+	/**
+	 * Takes this trip's share for {@code chosen} out of the distribution column: one carry slot, one
+	 * item type (the first the target uses and gets a share of). Shares follow GolemDistribution#plan
+	 * over every golem chest of the network that uses the item.
+	 */
+	private void loadDelivery(RedstoneGolemChestBlockEntity chest, List<RedstoneGolemNetwork.Source> sources, BlockPos chosen) {
+		if (!golem.getDelivery().isEmpty() || !(golem.level().getBlockEntity(chosen) instanceof AndesiteGolemChestBlockEntity dest))
+			return;
+		var dist = chest.getDistribution();
+		for (int slot = 0; slot < dist.getContainerSize(); slot++) {
+			ItemStack item = dist.getItem(slot);
+			if (item.isEmpty() || !dest.usesPersonally(item))
+				continue;
+			List<GolemDistribution.Target> targets = new ArrayList<>();
+			int destIndex = -1;
+			for (RedstoneGolemNetwork.Source s : sources)
+				if (golem.level().getBlockEntity(s.pos()) instanceof AndesiteGolemChestBlockEntity t && t.usesPersonally(item)) {
+					if (s.pos().equals(chosen))
+						destIndex = targets.size();
+					targets.add(targetOf(t, item));
+				}
+			int stock = 0;
+			for (int i = 0; i < dist.getContainerSize(); i++)
+				if (ItemStack.isSameItemSameComponents(dist.getItem(i), item))
+					stock += dist.getItem(i).getCount();
+			int share = destIndex < 0 ? 0 : Math.min(GolemDistribution.plan(stock, targets)[destIndex], item.getMaxStackSize());
+			if (share <= 0)
+				continue;
+			ItemStack load = item.copyWithCount(0);
+			for (int i = 0; i < dist.getContainerSize() && load.getCount() < share; i++)
+				if (ItemStack.isSameItemSameComponents(dist.getItem(i), item))
+					load.grow(dist.removeItem(i, share - load.getCount()).getCount());
+			golem.getDelivery().add(load);
+			golem.updateHeldItem();
+			return;
+		}
+	}
+
+	private boolean canUnloadDelivery(RedstoneGolemChestBlockEntity chest) {
+		for (ItemStack d : golem.getDelivery())
+			if (chest.getDistribution().canAddItem(d) || chest.hasRoomFor(d))
+				return true;
+		return false;
 	}
 
 	private int transferableSlots(Container source, RedstoneGolemChestBlockEntity chest) {
@@ -158,7 +227,7 @@ public class RedstoneGolemCollectGoal extends Goal {
 	public void start() {
 		travelTicks = 0;
 		standSpot = null;
-		phase = golem.getCarried().isEmpty() ? Phase.GO : Phase.RETURN;
+		phase = source != null && golem.getCarried().isEmpty() ? Phase.GO : Phase.RETURN;
 	}
 
 	@Override
@@ -170,7 +239,7 @@ public class RedstoneGolemCollectGoal extends Goal {
 		golem.closeOpenedBarriers();
 		golem.setState(CopperGolemState.IDLE);
 		golem.getNavigation().stop();
-		if (!golem.getCarried().isEmpty())
+		if (golem.hasLoad())
 			golem.setTask(RedstoneGolem.Task.RETURNING);
 		else if (golem.getTask() == RedstoneGolem.Task.COLLECTING || golem.getTask() == RedstoneGolem.Task.RETURNING)
 			golem.setTask(RedstoneGolem.Task.IDLE);
@@ -208,12 +277,23 @@ public class RedstoneGolemCollectGoal extends Goal {
 				return;
 			golem.setState(CopperGolemState.IDLE);
 			Container container = sourceContainer(chest);
+			if (container != null && golem.level().getBlockEntity(source) instanceof AndesiteGolemChestBlockEntity target) {
+				List<ItemStack> undelivered = new ArrayList<>();
+				for (ItemStack share : golem.getDelivery()) {
+					ItemStack rest = target.insertPersonal(share);
+					if (!rest.isEmpty())
+						undelivered.add(rest); // full or holding other items: back to the distribution column
+				}
+				golem.getDelivery().clear();
+				golem.getDelivery().addAll(undelivered);
+			}
 			if (container != null)
 				take(container, chest);
 			RedstoneGolemReservations.SERVER.release(golem.getUUID()); // arrived and took: free for others
 			travelTicks = 0;
 			standSpot = null;
-			phase = golem.getCarried().isEmpty() ? Phase.DONE : Phase.RETURN;
+			golem.updateHeldItem();
+			phase = golem.hasLoad() ? Phase.RETURN : Phase.DONE;
 			golem.setTask(phase == Phase.RETURN ? RedstoneGolem.Task.RETURNING : RedstoneGolem.Task.IDLE);
 		}
 		case RETURN -> {
@@ -231,7 +311,7 @@ public class RedstoneGolemCollectGoal extends Goal {
 			deposit(chest);
 			golem.closeOpenedBarriers(); // continuous goals still finish each trip's doors
 			golem.setState(CopperGolemState.IDLE);
-			if (!golem.getCarried().isEmpty()) {
+			if (golem.hasLoad()) {
 				golem.setTask(RedstoneGolem.Task.CHEST_FULL);
 				phase = Phase.DONE;
 			} else {
@@ -359,7 +439,7 @@ public class RedstoneGolemCollectGoal extends Goal {
 		travelTicks = 0;
 		golem.setState(CopperGolemState.IDLE);
 		golem.getNavigation().stop();
-		phase = golem.getCarried().isEmpty() ? Phase.DONE : Phase.RETURN;
+		phase = golem.hasLoad() ? Phase.RETURN : Phase.DONE;
 		lastPlan = Long.MIN_VALUE / 2; // choose the next source right away
 		return true;
 	}
@@ -368,7 +448,7 @@ public class RedstoneGolemCollectGoal extends Goal {
 		List<Boolean> occupied = new ArrayList<>();
 		for (int i = 0; i < container.getContainerSize(); i++)
 			occupied.add(chest.hasRoomFor(container.getItem(i)));
-		for (int slot : RedstoneGolemRules.pickupSlots(occupied, golem.getCarried().size()))
+		for (int slot : RedstoneGolemRules.pickupSlots(occupied, golem.getCarried().size() + golem.getDelivery().size()))
 			golem.carry(container.removeItemNoUpdate(slot));
 		container.setChanged();
 	}
@@ -383,6 +463,16 @@ public class RedstoneGolemCollectGoal extends Goal {
 				leftovers.add(remainder);
 		}
 		golem.getCarried().addAll(leftovers);
+		List<ItemStack> kept = new ArrayList<>();
+		for (ItemStack share : golem.getDelivery()) {
+			ItemStack rest = chest.returnToDistribution(share);
+			if (!rest.isEmpty())
+				rest = chest.insert(rest);
+			if (!rest.isEmpty())
+				kept.add(rest);
+		}
+		golem.getDelivery().clear();
+		golem.getDelivery().addAll(kept);
 		golem.updateHeldItem();
 	}
 }

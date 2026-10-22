@@ -58,6 +58,17 @@ public class RedstoneGolem extends AndesiteGolem {
 
 	private Task task = Task.IDLE;
 	private @Nullable RedstoneGolemCollectGoal collectGoal;
+	/** Maintenance items on their way from its distribution column to a network golem (saved). */
+	private final List<ItemStack> delivery = new java.util.ArrayList<>();
+
+	public List<ItemStack> getDelivery() {
+		return delivery;
+	}
+
+	/** Carrying cargo or a delivery. */
+	public boolean hasLoad() {
+		return !getCarried().isEmpty() || !delivery.isEmpty();
+	}
 	/** Network chests found by the last search (loaded and in range), for the clipboard. */
 	private int networkChests;
 	private final RedstoneGolemBarriers barriers = new RedstoneGolemBarriers(this);
@@ -184,18 +195,28 @@ public class RedstoneGolem extends AndesiteGolem {
 	@Override
 	public void updateHeldItem() {
 		setItemInHand(InteractionHand.MAIN_HAND,
-			getCarried().isEmpty() ? ItemStack.EMPTY : PackageStyles.getDefaultBox());
+			!hasLoad() ? ItemStack.EMPTY : PackageStyles.getDefaultBox());
 	}
 
 	@Override
 	public void readAdditionalSaveData(net.minecraft.world.level.storage.ValueInput input) {
 		super.readAdditionalSaveData(input);
+		delivery.clear();
+		input.read("Delivery", ItemStack.CODEC.listOf()).ifPresent(delivery::addAll);
 		updateHeldItem();
+	}
+
+	@Override
+	public void addAdditionalSaveData(net.minecraft.world.level.storage.ValueOutput output) {
+		super.addAdditionalSaveData(output);
+		output.store("Delivery", ItemStack.CODEC.listOf(), delivery);
 	}
 
 	/** What it carried, and two redstone dust from its body (the Andesite golem leaves two alloy). */
 	@Override
 	protected void dropCustomDeathLoot(ServerLevel level, DamageSource source, boolean killedByPlayer) {
+		getCarried().addAll(delivery); // an undelivered share goes into the same cardboard box
+		delivery.clear();
 		if (!getCarried().isEmpty()) {
 			// The carried list is the only inventory of record. The hand box is visual only.
 			// Create unpacks PACKAGE_CONTENTS through PackageItem.getContents. Preserve the

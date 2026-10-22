@@ -50,7 +50,7 @@ assert 'builder.define(COMBAT, false)' in entity and 'entityData.set(COMBAT' in 
 assert 'new NetheriteGolemRestGoal(this)' in entity and 'setSleeping(day && getTarget() == null)' not in entity
 # Sleep regen and chest repair live in AndesiteGolem.tickCare for both golems (no double regen).
 assert 'sleepRegen(true, getMaxHealth())' in andesite and 'sleepRegen' not in entity
-assert 'tickCare(serverLevel)' in andesite and 'chest.takeOne(this::isRepairItem)' in andesite
+assert 'tickCare(serverLevel)' in andesite and 'chest.takeMaintenance(stack -> autoRepairAmount(stack) > 0)' in andesite  # round 16: personal first
 assert 'isShiftKeyDown() && AllItems.ANDESITE_ALLOY' not in andesite and 'held.consume(1, player)' in andesite
 assert andesite.index('isCopperCareTool(held)') < andesite.index('isRepairItem(held)')
 assert 'stack.is(Items.NETHERITE_INGOT)' in entity and 'return isInCombat();' in entity
@@ -200,7 +200,7 @@ ag = root/'content/equipment/andesiteGolem'
 work = (ag/'AndesiteGolemWorkGoal.java').read_text()
 sleep = (ag/'AndesiteGolemSleepGoal.java').read_text()
 abe = (ag/'AndesiteGolemChestBlockEntity.java').read_text()
-assert 'public static final int SIZE = 27;' in abe and 'for (int i = 0; i < container.getContainerSize(); i++)\n\t\t\tif (container.getItem(i).isEmpty())' in abe
+assert 'GolemChestLayout.STANDARD_STORAGE_COLUMNS' in abe and 'for (int i = 0; i < container.getContainerSize(); i++)\n\t\t\tif (container.getItem(i).isEmpty())' in abe
 assert 'SKIP_TICKS = 600;' in work and 'searchCooldown' not in work and 'claimedByOthers(found, pos, now)' in work
 for where in ['public void stop() {', 'harvest(chest, target);']:
     assert 'release();' in work.split(where, 1)[1][:200], where
@@ -222,4 +222,32 @@ for chest in ['andesite_golem_chest', 'netherite_golem_chest', 'redstone_golem_c
         others = [e for e in m['elements'] if e.get('name') != 'lock']
         assert all(f['texture'] == '#0' for e in others for f in e['faces'].values()), 'only the latch changes'
         assert Path(f'src/main/resources/assets/create/textures/block/{chest}/{v}_linked.png').exists()
+
+# ---- Round 16: personal / distribution slots, migration, honey (structural; runtime unverified)
+menu = (ag/'GolemChestMenu.java').read_text()
+layout = (ag/'GolemChestLayout.java').read_text()
+assert 'public static final int SIZE = GolemChestLayout.ROWS * GolemChestLayout.STANDARD_STORAGE_COLUMNS;' in abe
+assert '(be, context) -> VanillaContainerWrapper.of(be.container));' in abe  # capability = storage only
+for f in ['netheriteGolem/NetheriteGolemChestBlockEntity.java', 'redstoneGolem/RedstoneGolemChestBlockEntity.java']:
+    assert 'VanillaContainerWrapper.of(be.getContainer())' in (root/'content/equipment'/f).read_text(), f
+assert 'return golemChest.getContainer();' in rg_net  # Redstone collection = storage only
+assert 'getRedstoneSignalFromContainer(be.getContainer())' in (ag/'AndesiteGolemChestBlock.java').read_text()
+assert 'GolemChestLayout.migrate(legacy' in abe and 'pendingDrops' in abe and 'tag.putInt("Layout", LAYOUT_VERSION)' in abe
+assert 'Containers.dropContents(level, worldPosition, personal)' in abe
+for f in ['andesiteGolem/AndesiteGolemChestBlock.java', 'netheriteGolem/NetheriteGolemChestBlock.java', 'redstoneGolem/RedstoneGolemChestBlock.java']:
+    src = (root/'content/equipment'/f).read_text()
+    assert 'chest.writeInventory(data,' in src and 'chest.readInventory(data,' in src and 'GolemChestMenu.open(player, be' in src, f
+    assert 'ChestMenu.threeRows' not in src, f
+assert 'contentHolder.usesPersonally(stack)' in menu and 'RedstoneGolemChestBlockEntity.distributable(stack)' in menu
+assert 'PERSONAL_X = 152' in menu and 'STORAGE_X_REDSTONE = 35' in menu and 'DISTRIBUTION_X = 8' in menu
+assert 'GOLEM_CHEST =' in (root/'AllMenuTypes.java').read_text()
+for t in ['textures/gui/golem_chest.png', 'textures/gui/golem_chest_redstone.png',
+          'textures/gui/sprites/container/slot/golem_personal.png', 'textures/gui/sprites/container/slot/golem_distribution.png']:
+    assert Path('src/main/resources/assets/create/' + t).exists(), t
+assert 'GolemDistribution.plan(stock, targets)' in rg_goal and 'GolemDistribution.urgent(' in rg_goal
+assert 'target.insertPersonal(share)' in rg_goal and 'chest.returnToDistribution(share)' in rg_goal
+assert 'output.store("Delivery"' in rg_entity and 'getCarried().addAll(delivery)' in rg_entity
+assert 'Kind.HIVE' in work and 'hive.resetHoneyLevel(golem.level(), state, pos)' in work
+assert 'angerNearbyBees(' not in work.replace('No angerNearbyBees', '') and 'releaseBeesAndResetHoneyLevel(' not in work.replace('no releaseBeesAndResetHoneyLevel', '')
+assert 'chest.takePersonal(stack -> stack.is(net.minecraft.world.item.Items.GLASS_BOTTLE))' in work
 print('Offline integration/serialization wiring checks passed (runtime unverified)')

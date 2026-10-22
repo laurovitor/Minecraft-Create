@@ -81,6 +81,11 @@ public class AllMenuTypes {
 	public static final MenuEntry<FactoryPanelSetItemMenu> FACTORY_PANEL_SET_ITEM =
 		register("factory_panel_set_item", FactoryPanelSetItemMenu::new, () -> FactoryPanelSetItemScreen::new);
 
+	// Lauro edition: golem chests (storage, personal and distribution slots)
+	public static final MenuEntry<com.simibubi.create.content.equipment.andesiteGolem.GolemChestMenu> GOLEM_CHEST =
+		register("golem_chest", com.simibubi.create.content.equipment.andesiteGolem.GolemChestMenu::new,
+			() -> com.simibubi.create.content.equipment.andesiteGolem.GolemChestScreen::new);
+
 	private static <C extends AbstractContainerMenu, S extends Screen & MenuAccess<C>> MenuEntry<C> register(
 		String name, ForgeMenuFactory<C> factory, NonNullSupplier<ScreenFactory<C, S>> screenFactory) {
 		return Create.registrate()

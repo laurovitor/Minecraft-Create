@@ -27,8 +27,66 @@ public class RedstoneGolemChestBlockEntity extends AndesiteGolemChestBlockEntity
 	/** Not global: the chest is the network's root, not a Stock Link registered with Create's logistics. */
 	public LogisticallyLinkedBehaviour link;
 
+	/** Storage slots of the Redstone chest (6 columns x 3 rows, GolemChestLayout). */
+	public static final int SIZE = com.simibubi.create.content.equipment.andesiteGolem.GolemChestLayout.ROWS
+		* com.simibubi.create.content.equipment.andesiteGolem.GolemChestLayout.REDSTONE_STORAGE_COLUMNS;
+
+	/** Maintenance items the golem shares out to the golems of its network (never automation). */
+	protected final net.minecraft.world.SimpleContainer distribution;
+
 	public RedstoneGolemChestBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
-		super(type, pos, state);
+		super(type, pos, state, SIZE);
+		distribution = notifying(com.simibubi.create.content.equipment.andesiteGolem.GolemChestLayout.DISTRIBUTION_SIZE);
+	}
+
+	public net.minecraft.world.SimpleContainer getDistribution() {
+		return distribution;
+	}
+
+	public static boolean distributable(ItemStack stack) {
+		return !stack.isEmpty() && com.simibubi.create.content.equipment.andesiteGolem.GolemMaintenance.anyUses(
+			net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
+	}
+
+	/** Undelivered items come back here; @return what did not fit */
+	public ItemStack returnToDistribution(ItemStack stack) {
+		return distributable(stack) ? distribution.addItem(stack) : stack;
+	}
+
+	@Override
+	protected int storageColumns() {
+		return com.simibubi.create.content.equipment.andesiteGolem.GolemChestLayout.REDSTONE_STORAGE_COLUMNS;
+	}
+
+	@Override
+	protected int storageOffset() {
+		return com.simibubi.create.content.equipment.andesiteGolem.GolemChestLayout.REDSTONE_STORAGE_OFFSET;
+	}
+
+	@Override
+	public void writeInventory(net.minecraft.nbt.CompoundTag tag, com.mojang.serialization.DynamicOps<net.minecraft.nbt.Tag> ops) {
+		super.writeInventory(tag, ops);
+		tag.store("Distribution", ItemStack.OPTIONAL_CODEC.listOf(), ops, distribution.getItems());
+	}
+
+	@Override
+	public void readInventory(net.minecraft.nbt.CompoundTag tag, com.mojang.serialization.DynamicOps<net.minecraft.nbt.Tag> ops) {
+		super.readInventory(tag, ops);
+		distribution.clearContent();
+		fill(distribution, tag.read("Distribution", ItemStack.OPTIONAL_CODEC.listOf(), ops).orElse(java.util.List.of()));
+	}
+
+	@Override
+	public void destroy() {
+		super.destroy();
+		if (level != null)
+			net.minecraft.world.Containers.dropContents(level, worldPosition, distribution);
+	}
+
+	@Override
+	public void clearContent() {
+		super.clearContent();
+		distribution.clearContent();
 	}
 
 	public static void registerCapabilities(RegisterCapabilitiesEvent event) {

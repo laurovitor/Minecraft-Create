@@ -102,13 +102,18 @@ public class RedstoneGolemChestBlock extends HorizontalDirectionalBlock
 		data.putLong("CreatedGameTime", golem.getCreatedGameTime());
 		// The network survives packing: tuned Stock Links keep pointing at the moved chest.
 		data.store("Freq", net.minecraft.core.UUIDUtil.CODEC, chest.link.freqId);
-		data.store("Items", ItemStack.OPTIONAL_CODEC.listOf(), RegistryNbt.ops(level.registryAccess()),
-			chest.getContainer().getItems());
+		for (ItemStack share : golem.getDelivery()) { // an undelivered share goes back to the distribution column
+			ItemStack rest = chest.returnToDistribution(share);
+			if (!rest.isEmpty())
+				golem.getCarried().add(rest);
+		}
+		golem.getDelivery().clear();
+		chest.writeInventory(data, RegistryNbt.ops(level.registryAccess())); // storage, personal (+ distribution)
 		data.store("Carried", ItemStack.CODEC.listOf(), RegistryNbt.ops(level.registryAccess()),
 			golem.getCarried());
 		drop.set(DataComponents.CUSTOM_DATA, CustomData.of(data));
 		// these now live inside the packed item; do not drop duplicates on removal
-		chest.getContainer().clearContent();
+		chest.clearContent();
 		golem.getCarried().clear();
 		golem.updateHeldItem();
 		return drop;
@@ -133,10 +138,7 @@ public class RedstoneGolemChestBlock extends HorizontalDirectionalBlock
 			chest.linkGolem(golem.getUUID());
 			if (stack.get(DataComponents.CUSTOM_DATA) instanceof CustomData custom) {
 				CompoundTag data = custom.copyTag();
-				List<ItemStack> items = data.read("Items", ItemStack.OPTIONAL_CODEC.listOf(),
-					RegistryNbt.ops(level.registryAccess())).orElse(List.of());
-				for (int i = 0; i < Math.min(items.size(), chest.getContainer().getContainerSize()); i++)
-					chest.getContainer().setItem(i, items.get(i));
+				chest.readInventory(data, RegistryNbt.ops(level.registryAccess())); // migrates old 27-slot items
 				data.read("Freq", net.minecraft.core.UUIDUtil.CODEC).ifPresent(freq -> chest.link.freqId = freq);
 				chest.notifyUpdate();
 				data.read("Carried", ItemStack.CODEC.listOf(), RegistryNbt.ops(level.registryAccess()))
@@ -193,8 +195,7 @@ public class RedstoneGolemChestBlock extends HorizontalDirectionalBlock
 	protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
 		if (level.isClientSide())
 			return InteractionResult.SUCCESS;
-		withBlockEntityDo(level, pos, be -> player.openMenu(new SimpleMenuProvider(
-			(id, inventory, p) -> ChestMenu.threeRows(id, inventory, be.getContainer()), getName())));
+		withBlockEntityDo(level, pos, be -> com.simibubi.create.content.equipment.andesiteGolem.GolemChestMenu.open(player, be, getName()));
 		return InteractionResult.SUCCESS;
 	}
 

@@ -92,6 +92,12 @@ public class NetheriteGolem extends AndesiteGolem {
 		return hit;
 	}
 
+	/** Ancient debris kept in its personal slots is used too (10 HP, as by hand). */
+	@Override
+	protected float autoRepairAmount(ItemStack stack) {
+		return stack.is(Items.ANCIENT_DEBRIS) ? 10.0f : super.autoRepairAmount(stack);
+	}
+
 	@Override
 	public boolean isRepairItem(ItemStack stack) {
 		return stack.is(Items.NETHERITE_INGOT);

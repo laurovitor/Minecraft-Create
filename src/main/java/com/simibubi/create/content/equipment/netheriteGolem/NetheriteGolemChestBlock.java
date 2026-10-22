@@ -101,8 +101,7 @@ public class NetheriteGolemChestBlock extends HorizontalDirectionalBlock
 		data.putInt("Kills", golem.getMonsterKills());
 		data.store("Home", BlockPos.CODEC, pos);
 		data.putLong("CreatedGameTime", golem.getCreatedGameTime());
-		data.store("Items", ItemStack.OPTIONAL_CODEC.listOf(), RegistryNbt.ops(level.registryAccess()),
-			chest.getContainer().getItems());
+		chest.writeInventory(data, RegistryNbt.ops(level.registryAccess())); // storage, personal (+ distribution)
 		data.store("Filter", ItemStack.OPTIONAL_CODEC, RegistryNbt.ops(level.registryAccess()),
 			chest.filtering.getFilter());
 		data.putInt("FilterAmount", chest.filtering.count);
@@ -111,7 +110,7 @@ public class NetheriteGolemChestBlock extends HorizontalDirectionalBlock
 			golem.getCarried());
 		drop.set(DataComponents.CUSTOM_DATA, CustomData.of(data));
 		// these now live inside the packed item; do not drop duplicates on removal
-		chest.getContainer().clearContent();
+		chest.clearContent();
 		chest.filtering.setFilter(ItemStack.EMPTY);
 		golem.getCarried().clear();
 		return drop;
@@ -142,10 +141,7 @@ public class NetheriteGolemChestBlock extends HorizontalDirectionalBlock
 			chest.linkGolem(golem.getUUID());
 			if (stack.get(DataComponents.CUSTOM_DATA) instanceof CustomData custom) {
 				CompoundTag data = custom.copyTag();
-				List<ItemStack> items = data.read("Items", ItemStack.OPTIONAL_CODEC.listOf(),
-					RegistryNbt.ops(level.registryAccess())).orElse(List.of());
-				for (int i = 0; i < Math.min(items.size(), chest.getContainer().getContainerSize()); i++)
-					chest.getContainer().setItem(i, items.get(i));
+				chest.readInventory(data, RegistryNbt.ops(level.registryAccess())); // migrates old 27-slot items
 				chest.filtering.setFilter(data.read("Filter", ItemStack.OPTIONAL_CODEC,
 					RegistryNbt.ops(level.registryAccess())).orElse(ItemStack.EMPTY));
 				chest.filtering.count = data.getIntOr("FilterAmount", chest.filtering.count);
@@ -175,8 +171,7 @@ public class NetheriteGolemChestBlock extends HorizontalDirectionalBlock
 	protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
 		if (level.isClientSide())
 			return InteractionResult.SUCCESS;
-		withBlockEntityDo(level, pos, be -> player.openMenu(new SimpleMenuProvider(
-			(id, inventory, p) -> ChestMenu.threeRows(id, inventory, be.getContainer()), getName())));
+		withBlockEntityDo(level, pos, be -> com.simibubi.create.content.equipment.andesiteGolem.GolemChestMenu.open(player, be, getName()));
 		return InteractionResult.SUCCESS;
 	}
 

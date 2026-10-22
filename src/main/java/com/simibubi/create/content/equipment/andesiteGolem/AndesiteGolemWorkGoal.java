@@ -43,7 +43,7 @@ public class AndesiteGolemWorkGoal extends Goal {
 
 	private enum Phase { GO_TO_TARGET, WORK, RETURN, DEPOSIT, GO_TO_PATH, DONE }
 
-	private enum Kind { TREE, CROP, TALL_PLANT, FLOWER }
+	private enum Kind { TREE, CROP, TALL_PLANT, FLOWER, HIVE }
 
 	/** Ticks spent chopping/harvesting and storing, roughly the copper golem chest animations. */
 	private static final int WORK_TICKS = 30;
@@ -614,6 +614,10 @@ public class AndesiteGolemWorkGoal extends Goal {
 		if (isTallPlant(state))
 			return isHarvestableTallPlant(pos, state) && chest.accepts(new ItemStack(state.getBlock()))
 				? Kind.TALL_PLANT : null;
+		// Full beehive / bee nest: a honey bottle when a glass bottle is in the personal slots, else 3 combs.
+		if (state.getBlock() instanceof net.minecraft.world.level.block.BeehiveBlock
+			&& state.getValue(net.minecraft.world.level.block.BeehiveBlock.HONEY_LEVEL) >= net.minecraft.world.level.block.BeehiveBlock.MAX_HONEY_LEVELS)
+			return honeyProduct(chest).isEmpty() ? null : Kind.HIVE;
 		// 26.3: an age-8 cactus may grow a flower on top, which stops its growth (CactusBlock#randomTick).
 		if (state.is(Blocks.CACTUS_FLOWER))
 			return golem.level().getBlockState(pos.below()).is(Blocks.CACTUS) && chest.accepts(new ItemStack(Blocks.CACTUS_FLOWER))
@@ -686,6 +690,8 @@ public class AndesiteGolemWorkGoal extends Goal {
 			cutTree(chest, pos, gathered);
 		else if (kind == Kind.TALL_PLANT)
 			harvestTallPlant(pos, gathered);
+		else if (kind == Kind.HIVE)
+			harvestHive(chest, pos, gathered);
 		else if (kind == Kind.FLOWER)
 			BlockHelper.destroyBlockAs(golem.level(), pos, null, ItemStack.EMPTY, 1, gathered::add); // the cactus below stays
 		else
@@ -786,6 +792,39 @@ public class AndesiteGolemWorkGoal extends Goal {
 		golem.level().setBlockAndUpdate(pos, sapling);
 		golem.level().playSound(null, pos, SoundEvents.GRASS_PLACE, SoundSource.BLOCKS, 1, 1);
 		return true;
+	}
+
+	/**
+	 * What a full hive gives (GolemHoney#product): a honey bottle when a glass bottle is in the
+	 * personal slots and the filter takes honey bottles, else 3 honeycomb if the filter takes them.
+	 */
+	private ItemStack honeyProduct(AndesiteGolemChestBlockEntity chest) {
+		boolean bottle = chest.getPersonal().hasAnyMatching(stack -> stack.is(net.minecraft.world.item.Items.GLASS_BOTTLE));
+		return switch (GolemHoney.product(bottle, chest.accepts(new ItemStack(net.minecraft.world.item.Items.HONEY_BOTTLE)),
+			chest.accepts(new ItemStack(net.minecraft.world.item.Items.HONEYCOMB)))) {
+		case BOTTLE -> new ItemStack(net.minecraft.world.item.Items.HONEY_BOTTLE);
+		case COMBS -> new ItemStack(net.minecraft.world.item.Items.HONEYCOMB, GolemHoney.COMBS);
+		case NONE -> ItemStack.EMPTY;
+		};
+	}
+
+	/** Like a player with a bottle or shears next to a campfire: honey reset, bees stay calm inside. */
+	private void harvestHive(AndesiteGolemChestBlockEntity chest, BlockPos pos, List<ItemStack> gathered) {
+		BlockState state = golem.level().getBlockState(pos);
+		if (!(state.getBlock() instanceof net.minecraft.world.level.block.BeehiveBlock hive))
+			return;
+		ItemStack product = honeyProduct(chest);
+		if (product.isEmpty())
+			return;
+		if (product.is(net.minecraft.world.item.Items.HONEY_BOTTLE)) {
+			if (chest.takePersonal(stack -> stack.is(net.minecraft.world.item.Items.GLASS_BOTTLE)).isEmpty())
+				return;
+			golem.level().playSound(null, pos, SoundEvents.BOTTLE_FILL, SoundSource.BLOCKS, 1, 1);
+		} else
+			golem.level().playSound(null, pos, SoundEvents.BEEHIVE_SHEAR, SoundSource.BLOCKS, 1, 1);
+		gathered.add(product);
+		// No angerNearbyBees and no releaseBeesAndResetHoneyLevel: bees are never disturbed.
+		hive.resetHoneyLevel(golem.level(), state, pos);
 	}
 
 	/** At normal three-block height, cut the top two from the top down so updates cannot break upper blocks as
