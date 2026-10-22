@@ -24,11 +24,19 @@ public class AndesiteGolemSleepGoal extends Goal {
 	private static final int LIT_LEVEL = 8;
 	/** How many of the 9 sample spots in the work area must be lit for the area to count as lit. */
 	private static final int LIT_SPOTS_NEEDED = 6;
+	/** Night check interval, GAME ticks (2 s); also how soon a woken golem lies down again. */
 	private static final int CHECK_INTERVAL = 40;
+	/** Walking to the bedside gives up after this long without getting 0.25 blocks closer, ticks (3 s). */
+	private static final int STUCK_TICKS = 60;
+	/** ... or after this long in total, ticks (20 s): then it sleeps where it stands. */
+	private static final int MAX_TRAVEL_TICKS = 400;
 
 	private final AndesiteGolem golem;
 	private @Nullable BlockPos bed;
-	private int checkCooldown;
+	private long nextCheck = Long.MIN_VALUE;
+	private int travelTicks;
+	private int stuckTicks;
+	private double bestDistance;
 
 	public AndesiteGolemSleepGoal(AndesiteGolem golem) {
 		this.golem = golem;
@@ -37,9 +45,10 @@ public class AndesiteGolemSleepGoal extends Goal {
 
 	@Override
 	public boolean canUse() {
-		if (checkCooldown-- > 0)
+		long now = golem.level().getGameTime();
+		if (now < nextCheck && nextCheck - now <= CHECK_INTERVAL)
 			return false;
-		checkCooldown = CHECK_INTERVAL;
+		nextCheck = now + CHECK_INTERVAL;
 		return shouldSleep();
 	}
 
@@ -63,6 +72,13 @@ public class AndesiteGolemSleepGoal extends Goal {
 	public void start() {
 		AndesiteGolemChestBlockEntity chest = golem.getChest();
 		bed = chest == null ? null : bedNextTo(chest.getBlockPos());
+		// No reachable bedside used to release the goal, so the golem stayed awake all night in the
+		// work goal. A dark night now always ends in sleep: here, if no bedside can be reached.
+		if (GolemWorkGeometry.sleepHereInstead(bed != null, 0, 0, STUCK_TICKS, MAX_TRAVEL_TICKS))
+			bed = golem.blockPosition();
+		travelTicks = 0;
+		stuckTicks = 0;
+		bestDistance = Double.MAX_VALUE;
 	}
 
 	@Override
@@ -74,7 +90,17 @@ public class AndesiteGolemSleepGoal extends Goal {
 	public void tick() {
 		if (bed == null)
 			return;
-		if (golem.position().distanceTo(Vec3.atBottomCenterOf(bed)) > 1.2) {
+		double distance = golem.position().distanceTo(Vec3.atBottomCenterOf(bed));
+		if (distance > 1.2) {
+			if (distance < bestDistance - 0.25) {
+				bestDistance = distance;
+				stuckTicks = 0;
+			} else
+				stuckTicks++;
+			if (GolemWorkGeometry.sleepHereInstead(true, stuckTicks, ++travelTicks, STUCK_TICKS, MAX_TRAVEL_TICKS)) {
+				bed = golem.blockPosition(); // cannot get there: sleep here instead of standing awake
+				return;
+			}
 			golem.setSleeping(false);
 			if (golem.getNavigation().isDone())
 				golem.getNavigation().moveTo(bed.getX() + 0.5, bed.getY(), bed.getZ() + 0.5, 1.0);
@@ -88,6 +114,8 @@ public class AndesiteGolemSleepGoal extends Goal {
 	public void stop() {
 		golem.setSleeping(false);
 		bed = null;
+		// Woken by a hit: lie down again soon (not a full interval later) so mobs lose interest.
+		nextCheck = golem.level().getGameTime() + 10;
 	}
 
 	/** Prefer a supported, reachable bedside. A clear-looking block can still be a hole or

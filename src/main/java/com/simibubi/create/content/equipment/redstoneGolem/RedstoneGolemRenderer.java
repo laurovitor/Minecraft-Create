@@ -23,7 +23,29 @@ public class RedstoneGolemRenderer extends MobRenderer<RedstoneGolem, CopperGole
 		super(context, new CopperGolemModel(context.bakeLayer(ModelLayers.COPPER_GOLEM)), 0.5F);
 		addLayer(new LivingEntityEmissiveLayer<>(this, state -> EYES, (state, ageInTicks) -> 1.0F,
 			new CopperGolemModel(context.bakeLayer(ModelLayers.COPPER_GOLEM)), RenderTypes::eyes, false));
-		addLayer(new ItemInHandLayer<>(this));
+		addLayer(new RaisedItemLayer(this));
+	}
+
+	/**
+	 * The carried cardboard box, lifted: the short golem's hand sits so low that the block-sized box
+	 * dipped into the ground while walking. Model space Y points down, so the lift is negative.
+	 */
+	static class RaisedItemLayer extends ItemInHandLayer<CopperGolemRenderState, CopperGolemModel> {
+		/** Lift, blocks (6 px); raise further if the box still touches the ground. */
+		static final float LIFT = 6 / 16f;
+
+		RaisedItemLayer(RedstoneGolemRenderer renderer) {
+			super(renderer);
+		}
+
+		@Override
+		public void submit(com.mojang.blaze3d.vertex.PoseStack poseStack, net.minecraft.client.renderer.SubmitNodeCollector collector,
+			int light, CopperGolemRenderState state, float yRot, float xRot) {
+			poseStack.pushPose();
+			poseStack.translate(0, -LIFT, 0);
+			super.submit(poseStack, collector, light, state, yRot, xRot);
+			poseStack.popPose();
+		}
 	}
 
 	@Override

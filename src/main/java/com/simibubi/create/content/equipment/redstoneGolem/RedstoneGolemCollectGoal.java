@@ -50,6 +50,9 @@ public class RedstoneGolemCollectGoal extends Goal {
 	private @Nullable List<RedstoneGolemNetwork.Source> cachedSources;
 	private long cachedSourcesAt;
 	private boolean sourceUnreachable;
+	/** Closest the golem got to its stand spot this walk, and ticks since it last got closer. */
+	private double bestDistance = Double.MAX_VALUE;
+	private int stallTicks;
 	private boolean sourceBusy;
 	private int returnCooldown;
 	private @Nullable BlockPos standSpot;
@@ -271,7 +274,21 @@ public class RedstoneGolemCollectGoal extends Goal {
 			golem.getNavigation().stop();
 			return true;
 		}
-		if (travelTicks++ > RedstoneGolemRules.GIVE_UP_TICKS) {
+		if (travelTicks == 0) {
+			bestDistance = Double.MAX_VALUE;
+			stallTicks = 0;
+		}
+		if (standSpot != null) {
+			double d = golem.position().distanceTo(Vec3.atBottomCenterOf(standSpot));
+			if (d < bestDistance - 0.5) {
+				bestDistance = d;
+				stallTicks = 0;
+			} else
+				stallTicks++;
+		}
+		// One bad source must not hold the golem: no reachable stand spot after the first search, or
+		// no progress for STALL_TICKS, gives up right away instead of after the full GIVE_UP_TICKS.
+		if (RedstoneGolemRules.giveUpWalk(travelTicks++, standSpot != null, stallTicks)) {
 			if (phase == Phase.GO) {
 				blacklist.put(chestPos, golem.level().getGameTime() + RedstoneGolemRules.BLACKLIST_TICKS);
 				RedstoneGolemReservations.SERVER.release(golem.getUUID());
@@ -312,15 +329,39 @@ public class RedstoneGolemCollectGoal extends Goal {
 				Vec3 eye = Vec3.atBottomCenterOf(pos).add(0, golem.getEyeHeight(), 0);
 				BlockHitResult hit = golem.level().clip(new ClipContext(eye, Vec3.atCenterOf(chestPos),
 					ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, golem));
+				// The Stock Link that makes a chest a source sits on one of its faces: seeing it counts.
+				boolean seesChest = hit.getBlockPos().equals(chestPos)
+					|| golem.level().getBlockState(hit.getBlockPos()).getBlock()
+						instanceof com.simibubi.create.content.logistics.packagerLink.PackagerLinkBlock
+						&& hit.getBlockPos().distManhattan(chestPos) == 1;
 				if (!RedstoneGolemRules.validStandSpot(pos.getX() - chestPos.getX(), dy,
 					pos.getZ() - chestPos.getZ(), feet.getCollisionShape(golem.level(), pos).isEmpty(),
 					head.getCollisionShape(golem.level(), pos.above()).isEmpty(),
 					!floor.getCollisionShape(golem.level(), pos.below()).isEmpty(),
-					hit.getBlockPos().equals(chestPos))) continue;
+					seesChest)) continue;
 				spots.add(pos);
 			}
 		spots.sort(Comparator.comparingDouble(p -> golem.distanceToSqr(Vec3.atBottomCenterOf(p))));
 		return spots;
+	}
+
+	/**
+	 * Wrench: drop the current source and ignore it for SKIP_TICKS; carried items still go home.
+	 * @return whether there was a source to skip
+	 */
+	public boolean skip() {
+		if (source == null || phase != Phase.GO && phase != Phase.TAKE)
+			return false;
+		blacklist.put(source, golem.level().getGameTime() + RedstoneGolemRules.SKIP_TICKS);
+		RedstoneGolemReservations.SERVER.release(golem.getUUID());
+		source = null;
+		standSpot = null;
+		travelTicks = 0;
+		golem.setState(CopperGolemState.IDLE);
+		golem.getNavigation().stop();
+		phase = golem.getCarried().isEmpty() ? Phase.DONE : Phase.RETURN;
+		lastPlan = Long.MIN_VALUE / 2; // choose the next source right away
+		return true;
 	}
 
 	private void take(Container container, RedstoneGolemChestBlockEntity chest) {

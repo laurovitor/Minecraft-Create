@@ -23,6 +23,14 @@ final class GolemWorkGeometry {
 		return null;
 	}
 
+	/**
+	 * Night: sleep where it stands instead of walking on, when no bedside was found or the walk
+	 * there stopped getting closer ({@code stuckTicks}) or took too long ({@code travelTicks}).
+	 */
+	static boolean sleepHereInstead(boolean bedFound, int stuckTicks, int travelTicks, int maxStuck, int maxTravel) {
+		return !bedFound || stuckTicks > maxStuck || travelTicks > maxTravel;
+	}
+
 	/** A navigation path may report a partial route despite ending within resting reach. */
 	static boolean closeToBed(double x, double y, double z, int bedX, int bedY, int bedZ) {
 		return Math.abs(y - bedY) <= 1.0

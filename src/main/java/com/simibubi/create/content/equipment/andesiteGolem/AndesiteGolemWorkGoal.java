@@ -43,13 +43,18 @@ public class AndesiteGolemWorkGoal extends Goal {
 
 	private enum Phase { GO_TO_TARGET, WORK, RETURN, DEPOSIT, GO_TO_PATH, DONE }
 
-	private enum Kind { TREE, CROP, TALL_PLANT }
+	private enum Kind { TREE, CROP, TALL_PLANT, FLOWER }
 
 	/** Ticks spent chopping/harvesting and storing, roughly the copper golem chest animations. */
 	private static final int WORK_TICKS = 30;
 	private static final int DEPOSIT_TICKS = 20;
-	/** How often the golem looks for new work while it has none. */
+	/**
+	 * How often the golem looks for new work while it has none, in GAME ticks (2 s). Vanilla calls
+	 * Goal#canUse only every second tick; the old call-counted 40 really waited ~80 ticks.
+	 */
 	private static final int SEARCH_INTERVAL = 40;
+	/** A wrench-skipped job is ignored this long, game ticks (30 s). */
+	public static final int SKIP_TICKS = 600;
 	/** Gives up on a target it cannot reach after this long, and skips it for a while. */
 	private static final int GIVE_UP_TICKS = 300;
 	private static final int BLACKLIST_TICKS = 1200;
@@ -75,7 +80,10 @@ public class AndesiteGolemWorkGoal extends Goal {
 	private Kind kind = Kind.CROP;
 	private int timer;
 	private int travelTicks;
-	private int searchCooldown;
+	/** Game time of the next idle search. */
+	private long nextSearch = Long.MIN_VALUE;
+	/** The claim key of the current target (normalized trunk footprint corner for 2x2 trees). */
+	private @Nullable BlockPos claimed;
 	private double lastDistance = Double.MAX_VALUE;
 
 	public AndesiteGolemWorkGoal(AndesiteGolem golem) {
@@ -96,9 +104,10 @@ public class AndesiteGolemWorkGoal extends Goal {
 		// things to store, and room for them
 		if (!golem.getCarried().isEmpty())
 			return chest.hasEmptySlot();
-		if (searchCooldown-- > 0)
+		long now = golem.level().getGameTime();
+		if (now < nextSearch && nextSearch - now <= SEARCH_INTERVAL)
 			return false;
-		searchCooldown = SEARCH_INTERVAL;
+		nextSearch = now + SEARCH_INTERVAL;
 		if (!chest.hasEmptySlot())
 			golem.setTreeStatus(golem.getTreeStatusPos(), AndesiteGolem.TreeStatus.CHEST_FULL);
 		else if (findTarget(chest))
@@ -128,6 +137,7 @@ public class AndesiteGolemWorkGoal extends Goal {
 	@Override
 	public void stop() {
 		phase = Phase.DONE;
+		release();
 		target = null;
 		pathTarget = null;
 		approach = null;
@@ -150,6 +160,7 @@ public class AndesiteGolemWorkGoal extends Goal {
 
 		switch (phase) {
 		case GO_TO_TARGET -> {
+			renewClaim();
 			if (target == null || !isValidTarget(chest, target)) {
 				phase = golem.getCarried().isEmpty() ? Phase.DONE : Phase.RETURN;
 				return;
@@ -164,12 +175,14 @@ public class AndesiteGolemWorkGoal extends Goal {
 				clearLeavesIfStuck(chest);
 		}
 		case WORK -> {
+			renewClaim();
 			golem.getLookControl().setLookAt(Vec3.atCenterOf(target));
 			if (--timer > 0)
 				return;
 			golem.setState(CopperGolemState.IDLE);
 			if (isValidTarget(chest, target))
 				harvest(chest, target);
+			release();
 			target = null;
 			travelTicks = 0;
 			phase = golem.getCarried().isEmpty() ? Phase.DONE : Phase.RETURN;
@@ -212,8 +225,10 @@ public class AndesiteGolemWorkGoal extends Goal {
 			return true;
 		}
 		if (travelTicks++ > GIVE_UP_TICKS) {
-			if (phase == Phase.GO_TO_TARGET && target != null)
+			if (phase == Phase.GO_TO_TARGET && target != null) {
 				blacklist.put(target, golem.level().getGameTime() + BLACKLIST_TICKS);
+				release();
+			}
 			phase = Phase.DONE;
 			return false;
 		}
@@ -300,6 +315,7 @@ public class AndesiteGolemWorkGoal extends Goal {
 		}
 		if (travelTicks++ > GIVE_UP_TICKS) {
 			blacklist.put(base, golem.level().getGameTime() + BLACKLIST_TICKS);
+			release();
 			phase = Phase.DONE;
 		}
 		return false;
@@ -399,7 +415,7 @@ public class AndesiteGolemWorkGoal extends Goal {
 					if (found == null || blacklist.containsKey(pos))
 						continue;
 					double distance = golem.distanceToSqr(Vec3.atCenterOf(pos));
-					if (distance >= bestDistance || found == Kind.TREE && !isTree(pos))
+					if (distance >= bestDistance || claimedByOthers(found, pos, now) || found == Kind.TREE && !isTree(pos))
 						continue;
 					best = pos.immutable();
 					bestKind = found;
@@ -414,6 +430,69 @@ public class AndesiteGolemWorkGoal extends Goal {
 			return false;
 		target = best;
 		kind = bestKind;
+		claimed = claimKey(kind, target);
+		renewClaim();
+		return true;
+	}
+
+	// ---- sharing work between golems
+
+	/** Trees are claimed by the corner of their bottom layer, so no two golems pick logs of one 2x2. */
+	private BlockPos claimKey(Kind kind, BlockPos pos) {
+		if (kind != Kind.TREE)
+			return pos.immutable();
+		BlockPos min = pos.immutable();
+		for (BlockPos log : baseCluster(pos))
+			if (log.getX() < min.getX() || log.getX() == min.getX() && log.getZ() < min.getZ())
+				min = log;
+		return min;
+	}
+
+	private net.minecraft.core.GlobalPos global(BlockPos pos) {
+		return net.minecraft.core.GlobalPos.of(golem.level().dimension(), pos);
+	}
+
+	private boolean claimedByOthers(Kind kind, BlockPos pos, long now) {
+		return AndesiteGolemWorkReservations.SERVER.othersOn(global(claimKey(kind, pos)), golem.getUUID(), now) > 0;
+	}
+
+	private void renewClaim() {
+		if (claimed != null)
+			AndesiteGolemWorkReservations.SERVER.claim(global(claimed), golem.getUUID(), golem.level().getGameTime());
+	}
+
+	private void release() {
+		claimed = null;
+		AndesiteGolemWorkReservations.SERVER.release(golem.getUUID());
+	}
+
+	/**
+	 * Wrench: drop the current tree/crop (or idle paving spot) and ignore it for SKIP_TICKS.
+	 * @return whether there was a job to skip
+	 */
+	public boolean skip() {
+		long until = golem.level().getGameTime() + SKIP_TICKS;
+		boolean skipped = false;
+		if (target != null && (phase == Phase.GO_TO_TARGET || phase == Phase.WORK)) {
+			blacklist.put(target, until);
+			if (kind == Kind.TREE)
+				for (BlockPos log : baseCluster(target))
+					blacklist.put(log, until);
+			skipped = true;
+		}
+		if (pathTarget != null && phase == Phase.GO_TO_PATH) {
+			blacklist.put(pathTarget, until);
+			skipped = true;
+		}
+		if (!skipped)
+			return false;
+		release();
+		target = null;
+		pathTarget = null;
+		golem.setState(CopperGolemState.IDLE);
+		golem.getNavigation().stop();
+		phase = golem.getCarried().isEmpty() ? Phase.DONE : Phase.RETURN;
+		nextSearch = Long.MIN_VALUE; // pick the next job right away
 		return true;
 	}
 
@@ -535,6 +614,10 @@ public class AndesiteGolemWorkGoal extends Goal {
 		if (isTallPlant(state))
 			return isHarvestableTallPlant(pos, state) && chest.accepts(new ItemStack(state.getBlock()))
 				? Kind.TALL_PLANT : null;
+		// 26.3: an age-8 cactus may grow a flower on top, which stops its growth (CactusBlock#randomTick).
+		if (state.is(Blocks.CACTUS_FLOWER))
+			return golem.level().getBlockState(pos.below()).is(Blocks.CACTUS) && chest.accepts(new ItemStack(Blocks.CACTUS_FLOWER))
+				? Kind.FLOWER : null;
 		if (isGrownCrop(state))
 			return cropAccepted(chest, state, pos) ? Kind.CROP : null;
 		if (state.is(BlockTags.LOGS)) {
@@ -603,6 +686,8 @@ public class AndesiteGolemWorkGoal extends Goal {
 			cutTree(chest, pos, gathered);
 		else if (kind == Kind.TALL_PLANT)
 			harvestTallPlant(pos, gathered);
+		else if (kind == Kind.FLOWER)
+			BlockHelper.destroyBlockAs(golem.level(), pos, null, ItemStack.EMPTY, 1, gathered::add); // the cactus below stays
 		else
 			harvestCrop(chest, pos, gathered);
 
@@ -709,8 +794,11 @@ public class AndesiteGolemWorkGoal extends Goal {
 	private void harvestTallPlant(BlockPos root, List<ItemStack> gathered) {
 		Block block = golem.level().getBlockState(root).getBlock();
 		List<BlockPos> upper = new ArrayList<>();
-		for (BlockPos pos = root.above(); golem.level().isLoaded(pos)
-			&& golem.level().getBlockState(pos).is(block); pos = pos.above())
+		BlockPos pos = root.above();
+		for (; golem.level().isLoaded(pos) && golem.level().getBlockState(pos).is(block); pos = pos.above())
+			upper.add(pos);
+		// A cactus flower on top would pop off as an uncaptured world drop once its cactus is cut.
+		if (golem.level().getBlockState(pos).is(Blocks.CACTUS_FLOWER))
 			upper.add(pos);
 		for (int i = upper.size() - 1; i >= 0; i--)
 			BlockHelper.destroyBlockAs(golem.level(), upper.get(i), null, ItemStack.EMPTY, 1, gathered::add);

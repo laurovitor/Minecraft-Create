@@ -34,6 +34,10 @@ public final class RedstoneGolemRules {
 	public static final int WAKE_MIN_GAP = 5;
 	/** Gives up walking to a source after this long, ticks (60 s), and skips it for BLACKLIST_TICKS. */
 	public static final int GIVE_UP_TICKS = 1200;
+	/** Walking with no 0.5-block progress for this long gives up early, ticks (10 s). */
+	public static final int STALL_TICKS = 200;
+	/** A wrench-skipped source is ignored this long, game ticks (30 s). */
+	public static final int SKIP_TICKS = 600;
 	/** Unreachable source skipped this long, game ticks (10 s; was 60 s), then retried. */
 	public static final int BLACKLIST_TICKS = 200;
 	/** Network source list reused this long while walking, game ticks (1 s); rescanned at once on a wake. */
@@ -135,6 +139,14 @@ public final class RedstoneGolemRules {
 		return Math.abs(dx) + Math.abs(dz) == 1 && Math.abs(dy) <= 1
 			&& dx * dx + dz * dz + (dy - .5) * (dy - .5) <= 2.5 * 2.5
 			&& feetClear && headClear && supported && chestVisible;
+	}
+
+	/**
+	 * Give up a walk: the full timeout, or at once when the first stand-spot search found no
+	 * reachable spot, or after STALL_TICKS without progress. {@code travelTicks} before this tick.
+	 */
+	public static boolean giveUpWalk(int travelTicks, boolean hasStandSpot, int stallTicks) {
+		return travelTicks > GIVE_UP_TICKS || travelTicks > 1 && !hasStandSpot || stallTicks > STALL_TICKS;
 	}
 
 	/** Within the network range of the golem's chest (3D). */

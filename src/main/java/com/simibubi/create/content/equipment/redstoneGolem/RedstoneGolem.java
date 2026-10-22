@@ -57,6 +57,7 @@ public class RedstoneGolem extends AndesiteGolem {
 	}
 
 	private Task task = Task.IDLE;
+	private @Nullable RedstoneGolemCollectGoal collectGoal;
 	/** Network chests found by the last search (loaded and in range), for the clipboard. */
 	private int networkChests;
 	private final RedstoneGolemBarriers barriers = new RedstoneGolemBarriers(this);
@@ -97,7 +98,7 @@ public class RedstoneGolem extends AndesiteGolem {
 	@Override
 	protected void registerGoals() {
 		goalSelector.addGoal(0, new FloatGoal(this));
-		goalSelector.addGoal(2, new RedstoneGolemCollectGoal(this));
+		goalSelector.addGoal(2, collectGoal = new RedstoneGolemCollectGoal(this));
 		goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 6.0F));
 		goalSelector.addGoal(7, new RandomLookAroundGoal(this));
 	}
@@ -121,10 +122,20 @@ public class RedstoneGolem extends AndesiteGolem {
 			speed.setBaseValue(RedstoneGolemRules.BASE_SPEED);
 	}
 
-	/** No repair item: neither by hand nor from the chest. */
+	/** Redstone dust, by hand or from its own chest: 25% of 8 HP = 2 HP (GolemCareRules.REPAIR_FRACTION). */
 	@Override
 	public boolean isRepairItem(ItemStack stack) {
-		return false;
+		return stack.is(Items.REDSTONE);
+	}
+
+	@Override
+	protected boolean canSkipTask() {
+		return collectGoal != null;
+	}
+
+	@Override
+	protected boolean skipTask() {
+		return collectGoal != null && collectGoal.skip();
 	}
 
 	public Task getTask() { return task; }

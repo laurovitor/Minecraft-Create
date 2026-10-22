@@ -65,6 +65,8 @@ public class AndesiteGolem extends AbstractGolem {
 	/** tickCount of the last damage taken; far in the past until the first hit. */
 	private int lastHurtTick = -100_000;
 	private int autoRepairCooldown;
+	/** Null for golem kinds that register their own goals (Netherite, Redstone). */
+	private @Nullable AndesiteGolemWorkGoal workGoal;
 	/** Last work-search result for the nearest trunk; shown on the clipboard, not saved. */
 	private @Nullable BlockPos treeStatusPos;
 	private TreeStatus treeStatus = TreeStatus.NONE;
@@ -110,7 +112,7 @@ public class AndesiteGolem extends AbstractGolem {
 	protected void registerGoals() {
 		goalSelector.addGoal(0, new FloatGoal(this));
 		goalSelector.addGoal(1, new AndesiteGolemSleepGoal(this));
-		goalSelector.addGoal(2, new AndesiteGolemWorkGoal(this));
+		goalSelector.addGoal(2, workGoal = new AndesiteGolemWorkGoal(this));
 		goalSelector.addGoal(5, new AndesiteGolemStrollGoal(this));
 		goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 6.0F));
 		goalSelector.addGoal(7, new RandomLookAroundGoal(this));
@@ -165,6 +167,14 @@ public class AndesiteGolem extends AbstractGolem {
 		// Copper golem body, but not copper: never waxed, scraped or un-waxed (also for Netherite).
 		if (isCopperCareTool(held))
 			return InteractionResult.FAIL;
+		// Wrench (no Shift): drop the current job and ignore it for a while. Shift + wrench is left to
+		// Create (no golem use today); kinds without jobs (Netherite) pass.
+		if (AllItems.WRENCH.isIn(held) && !player.isShiftKeyDown() && canSkipTask()) {
+			if (!level().isClientSide())
+				player.sendOverlayMessage(com.simibubi.create.foundation.utility.CreateLang
+					.translate(skipTask() ? "golem_task.skipped" : "golem_task.nothing_to_skip").component());
+			return InteractionResult.SUCCESS;
+		}
 		if (AllBlocks.CLIPBOARD.isIn(held)) {
 			if (!level().isClientSide()) {
 				AndesiteGolemChestBlockEntity chest = getChest();
@@ -186,6 +196,24 @@ public class AndesiteGolem extends AbstractGolem {
 	}
 
 	// ---- repair and healing
+
+	/** Whether this golem kind has jobs a wrench can skip. */
+	protected boolean canSkipTask() {
+		return workGoal != null;
+	}
+
+	/** Server side: skip the current job. @return whether there was one */
+	protected boolean skipTask() {
+		return workGoal != null && workGoal.skip();
+	}
+
+	/** Unloaded, killed or discarded: free its work claim (claims also lapse by themselves). */
+	@Override
+	public void remove(RemovalReason reason) {
+		if (!level().isClientSide())
+			AndesiteGolemWorkReservations.SERVER.release(getUUID());
+		super.remove(reason);
+	}
 
 	/** The ingot this golem is repaired with, by hand or from its chest. */
 	public boolean isRepairItem(ItemStack stack) {
