@@ -29,6 +29,7 @@ public abstract class ConfigBase {
 	public ModConfigSpec specification;
 
 	protected int depth;
+	protected List<Integer> openGroupSegments = new ArrayList<>();
 	protected List<CValue<?, ?>> allValues = new ArrayList<>();
 	protected List<ConfigBase> children = new ArrayList<>();
 
@@ -91,8 +92,11 @@ public abstract class ConfigBase {
 		new CValue<Boolean, BooleanValue>(config.getName(), builder -> {
 			config.depth = depth;
 			config.registerAll(builder);
-			if (config.depth > depth)
-				builder.pop(config.depth - depth);
+			// Group names may contain dots (stressValues.v2), which push
+			// multiple builder path segments even though they are one group.
+			int segments = config.openGroupSegments.stream().mapToInt(Integer::intValue).sum();
+			if (segments > 0)
+				builder.pop(segments);
 			return null;
 		});
 		children.add(config);
@@ -162,12 +166,18 @@ public abstract class ConfigBase {
 
 		@Override
 		public void register(Builder builder) {
-			if (depth > groupDepth)
-				builder.pop(depth - groupDepth);
+			if (depth > groupDepth) {
+				int groupsToClose = depth - groupDepth;
+				int segmentsToPop = 0;
+				for (int index = 0; index < groupsToClose; index++)
+					segmentsToPop += openGroupSegments.removeLast();
+				builder.pop(segmentsToPop);
+			}
 			depth = groupDepth;
 			addComments(builder, comment);
 			builder.push(getName());
 			depth++;
+			openGroupSegments.add(getName().split("\\.").length);
 		}
 	}
 
