@@ -24,6 +24,7 @@ public class AllCustomItemRenderers {
 		CustomRenderedItems.register(AllItems.POTATO_CANNON.get(), PotatoCannonItemRenderer::new);
 		CustomRenderedItems.register(AllItems.SAND_PAPER.get(), SandPaperItemRenderer::new);
 		CustomRenderedItems.register(AllItems.RED_SAND_PAPER.get(), SandPaperItemRenderer::new);
+		CustomRenderedItems.register(AllItems.DIAMOND_GRIT_SANDPAPER.get(), SandPaperItemRenderer::new);
 		CustomRenderedItems.register(AllItems.WAND_OF_SYMMETRY.get(), SymmetryWandItemRenderer::new);
 		CustomRenderedItems.register(AllItems.CARDBOARD_SWORD.get(), CardboardSwordItemRenderer::new);
 		CustomRenderedItems.register(AllItems.WRENCH.get(), WrenchItemRenderer::new);

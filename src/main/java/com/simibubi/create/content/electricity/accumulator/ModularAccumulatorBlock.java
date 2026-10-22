@@ -1,16 +1,14 @@
 package com.simibubi.create.content.electricity.accumulator;
 
-import com.simibubi.create.Create;
+import org.jetbrains.annotations.Nullable;
+
 import com.simibubi.create.AllBlockEntityTypes;
 import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import com.simibubi.create.foundation.block.IBE;
 import com.simibubi.create.foundation.blockEntity.ComparatorUtil;
 
-import com.tterrag.registrate.providers.DataGenContext;
-import com.tterrag.registrate.providers.RegistrateBlockstateProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
@@ -19,7 +17,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
@@ -28,11 +25,9 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition.Builder;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.neoforged.neoforge.client.model.generators.BlockModelProvider;
-import net.neoforged.neoforge.client.model.generators.ModelFile;
-import net.neoforged.neoforge.client.model.generators.MultiPartBlockStateBuilder;
 import net.neoforged.neoforge.common.util.DeferredSoundType;
 
 public class ModularAccumulatorBlock extends Block implements IWrenchable, IBE<ModularAccumulatorBlockEntity> {
@@ -82,21 +77,6 @@ public class ModularAccumulatorBlock extends Block implements IWrenchable, IBE<M
 		return Shapes.block();
 	}
 
-	@Override
-	public BlockState updateShape(BlockState pState, Direction pDirection, BlockState pNeighborState,
-		LevelAccessor pLevel, BlockPos pCurrentPos, BlockPos pNeighborPos) {
-		return pState;
-	}
-
-	@Override
-	public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
-		if (state.hasBlockEntity() && (state.getBlock() != newState.getBlock() || !newState.hasBlockEntity())) {
-			BlockEntity be = level.getBlockEntity(pos);
-			if (!(be instanceof ModularAccumulatorBlockEntity acc)) return;
-            level.removeBlockEntity(pos);
-			AccumulatorConnectivityHandler.splitMulti(acc);
-		}
-	}
 
 	// Blocks are less noisy when placed in batch
 	public static final SoundType SILENCED_METAL =
@@ -116,14 +96,15 @@ public class ModularAccumulatorBlock extends Block implements IWrenchable, IBE<M
 	}
 
 	@Override
-	public int getAnalogOutputSignal(BlockState blockState, Level level, BlockPos pos) {
+	public int getAnalogOutputSignal(BlockState blockState, Level level, BlockPos pos, Direction direction) {
 		return getBlockEntityOptional(level, pos).map(ModularAccumulatorBlockEntity::getControllerBE)
 			.map(te -> ComparatorUtil.fractionToRedstoneLevel(te.getFillState()))
 			.orElse(0);
 	}
 
 	@Override
-	public void neighborChanged(BlockState state, Level level, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
+	protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block blockIn, @Nullable Orientation orientation,
+		boolean isMoving) {
 		BlockEntity be = state.hasBlockEntity() ? level.getBlockEntity(pos) : null;
 		if(be != null) {
 			if(be instanceof ModularAccumulatorBlockEntity) {
@@ -142,44 +123,4 @@ public class ModularAccumulatorBlock extends Block implements IWrenchable, IBE<M
 		return AllBlockEntityTypes.MODULAR_ACCUMULATOR.get();
 	}
 
-	@Override
-	public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-		return AllBlockEntityTypes.MODULAR_ACCUMULATOR.create(pos, state);
-	}
-
-	public static void makeBlockState(DataGenContext<Block, ModularAccumulatorBlock> ctx, RegistrateBlockstateProvider provider) {
-		BlockModelProvider models = provider.models();
-		String basePath = "block/modular_accumulator/block_";
-		MultiPartBlockStateBuilder builder = provider.getMultipartBuilder(ctx.get());
-
-		ModelFile.ExistingModelFile middle = models.getExistingFile(ResourceLocation.fromNamespaceAndPath(Create.ID, basePath + "middle"));
-		ModelFile.ExistingModelFile bottom = models.getExistingFile(ResourceLocation.fromNamespaceAndPath(Create.ID, basePath + "bottom"));
-		ModelFile.ExistingModelFile top = models.getExistingFile(ResourceLocation.fromNamespaceAndPath(Create.ID, basePath + "top"));
-		ModelFile.ExistingModelFile single = models.getExistingFile(ResourceLocation.fromNamespaceAndPath(Create.ID, basePath + "single"));
-
-		builder.part()
-				.modelFile(middle)
-				.addModel()
-				.condition(BOTTOM, false)
-				.condition(TOP, false)
-				.end()
-				.part()
-				.modelFile(bottom)
-				.addModel()
-				.condition(BOTTOM, true)
-				.condition(TOP, false)
-				.end()
-				.part()
-				.modelFile(top)
-				.addModel()
-				.condition(BOTTOM, false)
-				.condition(TOP, true)
-				.end()
-				.part()
-				.modelFile(single)
-				.addModel()
-				.condition(BOTTOM, true)
-				.condition(TOP, true)
-				.end();
-	}
 }

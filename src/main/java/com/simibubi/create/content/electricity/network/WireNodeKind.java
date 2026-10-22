@@ -6,8 +6,8 @@ import java.util.Map;
 
 import com.simibubi.create.AllBlockEntityTypes;
 
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.resources.Identifier;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +17,7 @@ public enum WireNodeKind {
 	// Nodes 0-3 are the input port, 4-7 the output port. Moves energy from input to output while powered.
 	RELAY;
 
-	private static Map<ResourceLocation, WireNodeKind> byBlockEntityId;
+	private static Map<Identifier, WireNodeKind> byBlockEntityId;
 
 	public int portOf(int node) {
 		return this == RELAY && node >= 4 ? 1 : 0;
@@ -49,14 +49,14 @@ public enum WireNodeKind {
 	@Nullable
 	public static WireNodeKind fromBlockEntityId(String id) {
 		if (byBlockEntityId == null) {
-			Map<ResourceLocation, WireNodeKind> map = new HashMap<>();
-			map.put(BlockEntityType.getKey(AllBlockEntityTypes.SMALL_CONNECTOR.get()), CONNECTOR);
-			map.put(BlockEntityType.getKey(AllBlockEntityTypes.SMALL_LIGHT_CONNECTOR.get()), CONNECTOR);
-			map.put(BlockEntityType.getKey(AllBlockEntityTypes.LARGE_CONNECTOR.get()), CONNECTOR);
-			map.put(BlockEntityType.getKey(AllBlockEntityTypes.REDSTONE_RELAY.get()), RELAY);
+			Map<Identifier, WireNodeKind> map = new HashMap<>();
+			map.put(BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(AllBlockEntityTypes.SMALL_CONNECTOR.get()), CONNECTOR);
+			map.put(BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(AllBlockEntityTypes.SMALL_LIGHT_CONNECTOR.get()), CONNECTOR);
+			map.put(BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(AllBlockEntityTypes.LARGE_CONNECTOR.get()), CONNECTOR);
+			// RELAY: the Redstone Relay block entity registers here once it is ported.
 			byBlockEntityId = map;
 		}
-		ResourceLocation key = ResourceLocation.tryParse(id);
+		Identifier key = Identifier.tryParse(id);
 		return key == null ? null : byBlockEntityId.get(key);
 	}
 }

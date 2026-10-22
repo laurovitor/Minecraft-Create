@@ -101,6 +101,8 @@ import com.simibubi.create.content.trains.station.TrainEditPacket.TrainEditRetur
 import com.simibubi.create.content.trains.track.CurvedTrackDestroyPacket;
 import com.simibubi.create.content.trains.track.CurvedTrackSelectionPacket;
 import com.simibubi.create.content.trains.track.PlaceExtendedCurvePacket;
+import com.simibubi.create.content.electricity.packet.EnergyNetworkPacket;
+import com.simibubi.create.content.electricity.packet.EnergyObservePacket;
 import com.simibubi.create.foundation.blockEntity.RemoveBlockEntityPacket;
 import com.simibubi.create.foundation.blockEntity.behaviour.ValueSettingsPacket;
 import com.simibubi.create.foundation.gui.menu.ClearMenuPacket;
@@ -234,7 +236,9 @@ public enum AllPackets {
 	KNOCKBACK(Direction.TO_CLIENT, KnockbackPacket.STREAM_CODEC),
 	TRAIN_MAP_SYNC(Direction.TO_CLIENT, TrainMapSyncPacket.STREAM_CODEC),
 	CLIENTBOUND_CHAIN_CONVEYOR(Direction.TO_CLIENT, ClientboundChainConveyorRidingPacket.STREAM_CODEC),
-	SHOP_UPDATE(Direction.TO_CLIENT, ShopUpdatePacket.STREAM_CODEC);;
+	SHOP_UPDATE(Direction.TO_CLIENT, ShopUpdatePacket.STREAM_CODEC),
+	ENERGY_NETWORK(Direction.TO_CLIENT, EnergyNetworkPacket.STREAM_CODEC),
+	ENERGY_OBSERVE(Direction.TO_SERVER, EnergyObservePacket.STREAM_CODEC);;
 
 	private final CustomPacketPayload.Type<? extends CustomPacketPayload> type;
 	private final StreamCodec<? super RegistryFriendlyByteBuf, ? extends CustomPacketPayload> codec;

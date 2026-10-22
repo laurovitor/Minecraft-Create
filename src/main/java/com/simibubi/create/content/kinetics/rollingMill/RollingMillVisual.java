@@ -1,87 +1,73 @@
 package com.simibubi.create.content.kinetics.rollingMill;
 
+import java.util.function.Consumer;
+
+import org.jetbrains.annotations.Nullable;
+
 import com.simibubi.create.AllPartialModels;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntityVisual;
 import com.simibubi.create.content.kinetics.base.RotatingInstance;
 import com.simibubi.create.foundation.render.AllInstanceTypes;
+
 import dev.engine_room.flywheel.api.instance.Instance;
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;
 import dev.engine_room.flywheel.lib.model.Models;
 import net.minecraft.core.Direction;
-import org.jetbrains.annotations.Nullable;
+import net.minecraft.core.Direction.Axis;
 
-import java.util.function.Consumer;
-
+/** Two counter-rotating rollers, the lower one at shaft height and the upper one 4px above it. */
 public class RollingMillVisual extends KineticBlockEntityVisual<RollingMillBlockEntity> {
-    protected RotatingInstance rotatingModel1;
-    protected RotatingInstance rotatingModel2;
+	protected final RotatingInstance lowerRoller;
+	protected final RotatingInstance upperRoller;
 
-    public RollingMillVisual(VisualizationContext context, RollingMillBlockEntity blockEntity, float partialTick) {
-        super(context, blockEntity, partialTick);
+	public RollingMillVisual(VisualizationContext context, RollingMillBlockEntity blockEntity, float partialTick) {
+		super(context, blockEntity, partialTick);
 
-        final Direction direction = blockState.getValue(RollingMillBlock.HORIZONTAL_FACING);
-        final Direction.Axis axis = direction.getAxis();
+		Axis axis = axis();
+		var instancer = instancerProvider().instancer(AllInstanceTypes.ROTATING, Models.partial(AllPartialModels.SHAFT));
 
-        var instancer = instancerProvider().instancer(AllInstanceTypes.ROTATING, Models.partial(AllPartialModels.SHAFT));
+		lowerRoller = instancer.createInstance()
+			.rotateToFace(Direction.UP, axis);
+		upperRoller = instancer.createInstance()
+			.rotateToFace(Direction.UP, axis);
 
-        this.rotatingModel1 = instancer.createInstance().rotateToFace(Direction.UP, axis);
-        this.rotatingModel2 = instancer.createInstance().rotateToFace(Direction.UP, axis);
+		lowerRoller.setup(blockEntity, axis)
+			.setPosition(getVisualPosition())
+			.setChanged();
+		upperRoller.setup(blockEntity, axis, -blockEntity.getSpeed())
+			.setPosition(getVisualPosition())
+			.nudge(0, 4f / 16f, 0)
+			.setChanged();
+	}
 
-        rotatingModel1.setup(blockEntity, axis)
-                //.setRotationalSpeed(blockEntity.getSpeed())
-                //.setRotationOffset(-blockEntity.getRotationAngleOffset(axis))
-                .setPosition(getVisualPosition())
-                .setChanged();
+	private Axis axis() {
+		return blockState.getValue(RollingMillBlock.HORIZONTAL_FACING)
+			.getAxis();
+	}
 
-        rotatingModel2.setup(blockEntity, axis)
-                //.setRotationalSpeed(blockEntity.getSpeed())
-                //.setRotationOffset(blockEntity.getRotationAngleOffset(axis))
-                .setPosition(getVisualPosition())
-                .nudge(0, 4f/16f, 0)
-                .setRotationalSpeed(-blockEntity.getSpeed()*partialTick*8f)
-                .setChanged();
+	@Override
+	public void update(float partialTick) {
+		Axis axis = axis();
+		lowerRoller.setup(blockEntity, axis, blockEntity.getSpeed())
+			.setChanged();
+		upperRoller.setup(blockEntity, axis, -blockEntity.getSpeed())
+			.setChanged();
+	}
 
-        /*
-        rotatingModel1.setRotationAxis(axis)
-                .setRotationalSpeed(getBlockEntitySpeed())
-                .setRotationOffset(-getRotationOffset(axis))
-                .setColor(blockEntity)
-                .setPosition(getInstancePosition());
+	@Override
+	public void updateLight(float partialTick) {
+		relight(lowerRoller, upperRoller);
+	}
 
-        rotatingModel2.setRotationAxis(axis)
-                .setRotationalSpeed(getBlockEntitySpeed())
-                .setRotationOffset(-getRotationOffset(axis))
-                .setColor(blockEntity)
-                .setPosition(getInstancePosition())
-                .nudge(0, 4f/16f, 0)
-                .setRotationalSpeed(-getBlockEntitySpeed());
-                */
-    }
+	@Override
+	public void collectCrumblingInstances(Consumer<@Nullable Instance> consumer) {
+		consumer.accept(lowerRoller);
+		consumer.accept(upperRoller);
+	}
 
-    @Override
-    public void update(float v) {
-        //this.updateRotation(this.rotatingModel1);
-        //this.updateRotation(this.rotatingModel2);
-        final Direction direction = blockState.getValue(RollingMillBlock.HORIZONTAL_FACING);
-        final Direction.Axis axis = direction.getAxis();
-        rotatingModel1.setup(blockEntity, axis, blockEntity.getSpeed()).setChanged();
-        rotatingModel2.setup(blockEntity, axis, -blockEntity.getSpeed()).setChanged();
-        //rotatingModel2.setRotationalSpeed(-blockEntity.getSpeed());
-    }
-
-    public void updateLight(float v) {
-        this.relight(this.pos, this.rotatingModel1, this.rotatingModel2);
-    }
-
-    @Override
-    public void collectCrumblingInstances(Consumer<@Nullable Instance> consumer) {
-        consumer.accept(rotatingModel1);
-        consumer.accept(rotatingModel2);
-    }
-
-    @Override
-    protected void _delete() {
-        rotatingModel1.delete();
-        rotatingModel2.delete();
-    }
+	@Override
+	protected void _delete() {
+		lowerRoller.delete();
+		upperRoller.delete();
+	}
 }

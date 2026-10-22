@@ -48,8 +48,12 @@ public class SandPaperItem extends Item {
 	private static final ItemAbility AXE_WAX_OFF = ItemAbility.get("axe_wax_off");
 
 	public SandPaperItem(Properties properties) {
+		this(properties, 8);
+	}
+
+	protected SandPaperItem(Properties properties, int durability) {
 		// Enchantability is a component in 26.2 rather than an override.
-		super(properties.durability(8)
+		super(properties.durability(durability)
 			.enchantable(1));
 	}
 

@@ -7,7 +7,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.AllPartialModels;
 import com.simibubi.create.foundation.blockEntity.renderer.SafeBlockEntityRenderer;
 import com.simibubi.create.foundation.render.CachedBufferer;
-import com.simibubi.create.foundation.render.RenderTypes;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 
 import dev.engine_room.flywheel.lib.transform.TransformStack;

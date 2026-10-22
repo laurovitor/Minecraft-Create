@@ -278,6 +278,10 @@ public class AllShapes {
 			.build(),
 		SPOUT = shape(1, 2, 1, 15, 14, 15).add(2, 0, 2, 14, 16, 14)
 			.build(),
+		ROLLING_MILL = shape(0, 0, 0, 16, 5, 16).add(2, 0, 2, 14, 16, 14)
+			.build(),
+		CREATIVE_ENERGY = shape(1, 0, 1, 15, 16, 15).add(0, 2, 0, 16, 14, 16)
+			.build(),
 		MILLSTONE = shape(0, 0, 0, 16, 6, 16).add(2, 6, 2, 14, 16, 14)
 			.build(),
 		CUCKOO_CLOCK = shape(1, 0, 1, 15, 19, 15).build(),
@@ -356,7 +360,17 @@ public class AllShapes {
 		WHISTLE_MEDIUM_WALL = shape(WHISTLE_MEDIUM).add(WHISTLE_BASE.get(NORTH))
 			.forHorizontal(SOUTH),
 		WHISTLE_LARGE_WALL = shape(WHISTLE_LARGE).add(WHISTLE_BASE.get(NORTH))
-			.forHorizontal(SOUTH)
+			.forHorizontal(SOUTH),
+
+		// Electricity (from Create Crafts & Additions)
+		ELECTRIC_MOTOR = shape(0, 5, 0, 16, 11, 16).add(3, 0, 3, 13, 14, 13)
+			.forDirectional(),
+		ALTERNATOR = shape(0, 3, 0, 16, 13, 16).add(2, 2, 2, 14, 14, 14)
+			.forDirectional(),
+		SMALL_CONNECTOR = shape(6, 0, 6, 10, 5, 10).forDirectional(),
+		SMALL_LIGHT_CONNECTOR = shape(6, 0, 6, 10, 5, 10).add(5, 4, 5, 11, 10, 11)
+			.forDirectional(),
+		LARGE_CONNECTOR = shape(5, 0, 5, 11, 7, 11).forDirectional()
 
 	;
 

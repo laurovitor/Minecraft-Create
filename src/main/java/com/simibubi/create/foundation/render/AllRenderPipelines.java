@@ -72,6 +72,21 @@ public class AllRenderPipelines {
 		RenderPipeline.builder(RenderPipelines.PARTICLE_SNIPPET)
 			.withColorTargetState(new ColorTargetState(BlendFunction.ADDITIVE)));
 
+	/**
+	 * Electric wires: vanilla's leash shader drawn as separate quads, so many wire segments can share
+	 * one buffer without the strip joining them up.
+	 */
+	public static final RenderPipeline WIRE = pipeline("wire",
+		RenderPipeline.builder(RenderPipelines.MATRICES_FOG_SNIPPET)
+			.withVertexShader("core/rendertype_leash")
+			.withFragmentShader("core/rendertype_leash")
+			.withBindGroupLayout(BindGroupLayouts.SAMPLER2)
+			.withCull(false)
+			.withVertexBinding(0, DefaultVertexFormat.POSITION_COLOR_LIGHTMAP)
+			.withPrimitiveTopology(PrimitiveTopology.QUADS)
+			.withColorTargetState(ColorTargetState.DEFAULT)
+			.withDepthStencilState(DepthStencilState.DEFAULT));
+
 	private static RenderPipeline pipeline(String id, RenderPipeline.Builder builder) {
 		return builder.withLocation(Create.asResource("pipeline/" + id))
 			.build();
@@ -83,6 +98,7 @@ public class AllRenderPipelines {
 		event.registerPipeline(ADDITIVE_PARTICLE);
 		event.registerPipeline(GLOWING);
 		event.registerPipeline(GLOWING_TRANSLUCENT);
+		event.registerPipeline(WIRE);
 	}
 
 }

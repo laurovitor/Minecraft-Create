@@ -1,58 +1,41 @@
 package com.simibubi.create.content.electricity.packet;
 
-import com.simibubi.create.Create;
+import com.simibubi.create.AllPackets;
 
+import io.netty.buffer.ByteBuf;
+import net.createmod.catnip.api.network.NetworkHelper;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 
-/*
-public class EnergyNetworkPacket {
-	private BlockPos pos;
-	private int demand;
-	private int buff;
-	
+/** Answer to {@link EnergyObservePacket}: demand and buffer of the observed energy network, for goggles. */
+public record EnergyNetworkPacket(BlockPos pos, int demand, int buff) implements CustomPacketPayload {
+
 	public static double clientSaturation = 0;
 	public static int clientDemand = 0;
 	public static int clientBuff = 0;
-	
-	public EnergyNetworkPacket(BlockPos pos, int demand, int buff) {
-		this.pos = pos;
-		this.demand = demand;
-		this.buff = buff;
+
+	public static final StreamCodec<ByteBuf, EnergyNetworkPacket> STREAM_CODEC = StreamCodec.composite(
+		BlockPos.STREAM_CODEC, EnergyNetworkPacket::pos,
+		ByteBufCodecs.VAR_INT, EnergyNetworkPacket::demand,
+		ByteBufCodecs.VAR_INT, EnergyNetworkPacket::buff,
+		EnergyNetworkPacket::new);
+
+	@Override
+	public Type<? extends CustomPacketPayload> type() {
+		return AllPackets.ENERGY_NETWORK.getType();
 	}
-	
-	public static void encode(EnergyNetworkPacket packet, FriendlyByteBuf tag) {
-        tag.writeBlockPos(packet.pos);
-        tag.writeInt(packet.demand);
-        tag.writeInt(packet.buff);
-    }
-	
-	public static EnergyNetworkPacket decode(FriendlyByteBuf buf) {
-		EnergyNetworkPacket scp = new EnergyNetworkPacket(buf.readBlockPos(), buf.readInt(), buf.readInt());
-        return scp;
-    }
-	
-	public static void handle(EnergyNetworkPacket pkt, Supplier<NetworkEvent.Context> ctx) {
-		ctx.get().enqueueWork(() -> {
-			try {
-				updateClientCache(pkt.pos, pkt.demand, pkt.buff);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		});
-		
-		ctx.get().setPacketHandled(true);
-	}
-	
-	private static void updateClientCache(BlockPos pos, int demand, int buff) {
+
+	public void handle(Player player) {
 		clientDemand = demand;
 		clientBuff = buff;
 		clientSaturation = buff - demand;
-    }
-	
+	}
+
 	public static void send(BlockPos pos, int demand, int buff, ServerPlayer player) {
-		CreateAddition.Network.send(PacketDistributor.PLAYER.with(() -> player), new EnergyNetworkPacket(pos, demand, buff));
+		NetworkHelper.INSTANCE.sendToClient(player, new EnergyNetworkPacket(pos, demand, buff));
 	}
 }
-*/

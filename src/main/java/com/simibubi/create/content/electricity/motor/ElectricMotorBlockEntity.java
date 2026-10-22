@@ -132,7 +132,7 @@ public class ElectricMotorBlockEntity extends GeneratingKineticBlockEntity {
 	protected void read(CompoundTag tag, HolderLookup.Provider registries, boolean clientPacket) {
 		super.read(tag, registries, clientPacket);
 		energy.read(tag);
-		active = tag.getBoolean("active");
+		active = tag.getBooleanOr("active", false);
 	}
 
 	@Override

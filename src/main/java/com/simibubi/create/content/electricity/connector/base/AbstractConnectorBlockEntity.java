@@ -11,9 +11,9 @@ import com.simibubi.create.content.electricity.network.EnergyNetwork;
 import com.simibubi.create.content.electricity.network.WireGraph;
 import com.simibubi.create.foundation.utility.CreateLang;
 import com.simibubi.create.content.electricity.ElectricityUtil;
-import com.simibubi.create.content.electricity.packet.EnergyNetworkPacketPayload;
+import com.simibubi.create.content.electricity.packet.EnergyNetworkPacket;
 import com.simibubi.create.content.electricity.packet.IObserveBlockEntity;
-import com.simibubi.create.content.electricity.packet.ObservePacketPayload;
+import com.simibubi.create.content.electricity.packet.EnergyObservePacket;
 
 import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
@@ -174,7 +174,7 @@ public abstract class AbstractConnectorBlockEntity extends SmartBlockEntity impl
 		// Read the nodes.
 		invalidateLocalNodes();
 		invalidateNodeCache();
-		ListTag nodes = nbt.getList(LocalNode.NODES, Tag.TAG_COMPOUND);
+		ListTag nodes = nbt.getListOrEmpty(LocalNode.NODES);
 		nodes.forEach(tag -> {
 			LocalNode localNode = new LocalNode(this, (CompoundTag) tag);
 			this.localNodes[localNode.getIndex()] = localNode;
@@ -182,7 +182,7 @@ public abstract class AbstractConnectorBlockEntity extends SmartBlockEntity impl
 
 		// Check if this was a contraption.
 		if (nbt.contains("contraption") && !clientPacket) {
-			this.wasContraption = nbt.getBoolean("contraption");
+			this.wasContraption = nbt.getBooleanOr("contraption", false);
 			NodeRotation rotation = getBlockState().getValue(NodeRotation.ROTATION);
 			if(level == null) return;
 			if (rotation != NodeRotation.NONE)
@@ -345,14 +345,14 @@ public abstract class AbstractConnectorBlockEntity extends SmartBlockEntity impl
 	}
 
 	@Override
-	public void onObserved(ServerPlayer player, ObservePacketPayload pack) {
+	public void onObserved(ServerPlayer player, EnergyObservePacket pack) {
 		if(isNetworkValid(0))
-			EnergyNetworkPacketPayload.send(worldPosition, getNetwork(0).getPulled(), getNetwork(0).getPushed(), player);
+			EnergyNetworkPacket.send(worldPosition, getNetwork(0).getPulled(), getNetwork(0).getPushed(), player);
 	}
 
 	@Override
 	public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
-		ObservePacketPayload.send(worldPosition, 0);
+		EnergyObservePacket.send(worldPosition, 0);
 
 		CreateLang.builder().add(Component.translatable(Create.ID + ".tooltip.connector.info").withStyle(ChatFormatting.WHITE)).forGoggles(tooltip);
 
@@ -361,7 +361,7 @@ public abstract class AbstractConnectorBlockEntity extends SmartBlockEntity impl
 				.append(getBlockState().getValue(AbstractConnectorBlock.MODE).getTooltip().withStyle(ChatFormatting.AQUA))).forGoggles(tooltip);
 
 		CreateLang.builder().add(Component.translatable(Create.ID + ".tooltip.energy.usage").withStyle(ChatFormatting.GRAY)).forGoggles(tooltip);
-		CreateLang.builder().add(Component.literal(" ").append(ElectricityUtil.format((int)EnergyNetworkPacketPayload.clientBuff)).append("⚡/t").withStyle(ChatFormatting.AQUA)).forGoggles(tooltip);
+		CreateLang.builder().add(Component.literal(" ").append(ElectricityUtil.format((int)EnergyNetworkPacket.clientBuff)).append("⚡/t").withStyle(ChatFormatting.AQUA)).forGoggles(tooltip);
 
 		return IHaveGoggleInformation.super.addToGoggleTooltip(tooltip, isPlayerSneaking);
 	}

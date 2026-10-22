@@ -13,6 +13,8 @@ import com.simibubi.create.foundation.block.IBE;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.Nullable;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundEvents;
@@ -20,7 +22,6 @@ import net.minecraft.sounds.SoundSource;
 
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -28,21 +29,20 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition.Builder;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public abstract class AbstractConnectorBlock<BE extends AbstractConnectorBlockEntity> extends Block implements IBE<BE>, IWrenchable, TransformableBlock {
-	public static final DirectionProperty FACING = BlockStateProperties.FACING;
+	public static final EnumProperty<Direction> FACING = BlockStateProperties.FACING;
 	public static final EnumProperty<ConnectorMode> MODE = EnumProperty.create("mode", ConnectorMode.class);
 	public static final EnumProperty<ConnectorVariant> VARIANT = EnumProperty.create("variant", ConnectorVariant.class);
 	private static final VoxelShape boxwe = Block.box(0,7,7,10,9,9);
@@ -71,7 +71,7 @@ public abstract class AbstractConnectorBlock<BE extends AbstractConnectorBlockEn
 	}
 
 	public static void playWireBreakSound(Level level, BlockPos pos) {
-		level.playSound(null, pos, SoundEvents.CHAIN_BREAK, SoundSource.BLOCKS, 1.0f, 2.0f + level.random.nextFloat() * 0.1f);
+		level.playSound(null, pos, SoundEvents.CHAIN_BREAK, SoundSource.BLOCKS, 1.0f, 2.0f + level.getRandom().nextFloat() * 0.1f);
 	}
 
 	@Override
@@ -87,7 +87,7 @@ public abstract class AbstractConnectorBlock<BE extends AbstractConnectorBlockEn
 	}
 
 	@Override
-	protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+	protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
 		if (stack.is(Items.SHEARS)) {
 			if (!level.isClientSide()) {
 				BlockEntity be = level.getBlockEntity(pos);
@@ -107,10 +107,10 @@ public abstract class AbstractConnectorBlock<BE extends AbstractConnectorBlockEn
 							remoteNodes.get(i).removeNode(remoteIndices.get(i), false);
 					}
 					playWireBreakSound(level, pos);
-					level.playSound(null, pos, SoundEvents.SHEEP_SHEAR, SoundSource.BLOCKS, 1f, 1f + level.random.nextFloat() * 0.1f);
+					level.playSound(null, pos, SoundEvents.SHEEP_SHEAR, SoundSource.BLOCKS, 1f, 1f + level.getRandom().nextFloat() * 0.1f);
 				}
 			}
-			return ItemInteractionResult.SUCCESS;
+			return InteractionResult.SUCCESS;
 		}
 		return super.useItemOn(stack, state, level, pos, player, hand, hit);
 	}
@@ -138,7 +138,8 @@ public abstract class AbstractConnectorBlock<BE extends AbstractConnectorBlockEn
 	}
 
 	@Override
-	public void neighborChanged(BlockState state, Level worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
+	protected void neighborChanged(BlockState state, Level worldIn, BlockPos pos, Block blockIn, @Nullable Orientation orientation,
+		boolean isMoving) {
 		BlockEntity blockEntity = state.hasBlockEntity() ? worldIn.getBlockEntity(pos) : null;
 		if (!state.canSurvive(worldIn, pos)) {
 			dropResources(state, worldIn, pos, blockEntity);
@@ -153,7 +154,8 @@ public abstract class AbstractConnectorBlock<BE extends AbstractConnectorBlockEn
 		}
 	}
 
-	public boolean canSurvive(BlockState state, LevelReader world, BlockPos pos) {
+	@Override
+	protected boolean canSurvive(BlockState state, LevelReader world, BlockPos pos) {
 		Direction dir = state.getValue(FACING);
 		return
 				!Shapes.joinIsNotEmpty(world.getBlockState(pos.relative(dir)).getBlockSupportShape(world,pos.relative(dir)).getFaceShape(dir.getOpposite()), boxwe, BooleanOp.ONLY_SECOND) ||
@@ -162,18 +164,13 @@ public abstract class AbstractConnectorBlock<BE extends AbstractConnectorBlockEn
 	}
 
 	@Override
-	public BlockState rotate(BlockState state, Rotation direction) {
+	protected BlockState rotate(BlockState state, Rotation direction) {
 		// Handle old rotation.
 		return state.setValue(FACING, direction.rotate(state.getValue(FACING)));
 	}
 
 	@Override
-	public BlockState rotate(BlockState state, LevelAccessor world, BlockPos pos, Rotation direction) {
-		return rotate(state, direction);
-	}
-
-	@Override
-	public BlockState mirror(BlockState state, Mirror mirror) {
+	protected BlockState mirror(BlockState state, Mirror mirror) {
 		return state.setValue(FACING, mirror.mirror(state.getValue(FACING)));
 	}
 

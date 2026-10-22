@@ -173,6 +173,7 @@ public class CreateClientPayloadHandlers {
 		register(AllPackets.TRAIN_MAP_SYNC, TrainMapSyncPacket::handle);
 		register(AllPackets.CLIENTBOUND_CHAIN_CONVEYOR, ClientboundChainConveyorRidingPacket::handle);
 		register(AllPackets.SHOP_UPDATE, ShopUpdatePacket::handle);
+		register(AllPackets.ENERGY_NETWORK, com.simibubi.create.content.electricity.packet.EnergyNetworkPacket::handle);
 	}
 
 	private static <T extends CustomPacketPayload> void register(AllPackets packet, Handler<T> handler) {

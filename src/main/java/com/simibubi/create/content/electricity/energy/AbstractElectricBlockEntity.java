@@ -52,14 +52,6 @@ public abstract class AbstractElectricBlockEntity extends SmartBlockEntity {
 		localEnergy.write(tag);
 	}
 
-	@Deprecated
-	public void outputTick(int max) {
-		for(Direction side : Direction.values()) {
-			if(!isEnergyOutput(side))
-				continue;
-			localEnergy.outputToSide(level, worldPosition, side, max);
-		}
-	}
 
 	@Override
 	public void tick() {

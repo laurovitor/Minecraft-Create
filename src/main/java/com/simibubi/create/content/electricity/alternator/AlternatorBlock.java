@@ -1,11 +1,10 @@
 package com.simibubi.create.content.electricity.alternator;
 
 import com.simibubi.create.AllBlockEntityTypes;
-import com.simibubi.create.content.electricity.ElectricShapes;
+import com.simibubi.create.AllShapes;
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
 import com.simibubi.create.content.kinetics.base.IRotate;
 import com.simibubi.create.foundation.block.IBE;
-import net.createmod.catnip.math.VoxelShaper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -17,17 +16,16 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
 public class AlternatorBlock extends DirectionalKineticBlock implements IBE<AlternatorBlockEntity>, IRotate {
 	
-	public static final VoxelShaper ALTERNATOR_SHAPE = ElectricShapes.shape(0, 3, 0, 16, 13, 16).add(2, 2, 2, 14, 14, 14).forDirectional();
-	
 	@Override
 	public VoxelShape getShape(BlockState state, BlockGetter worldIn, BlockPos pos, CollisionContext context) {
-		return ALTERNATOR_SHAPE.get(state.getValue(FACING));
+		return AllShapes.ALTERNATOR.get(state.getValue(FACING));
 	}
 
 	@Nullable
@@ -77,7 +75,7 @@ public class AlternatorBlock extends DirectionalKineticBlock implements IBE<Alte
 	}
 	*/
 	@Override
-	public void neighborChanged(BlockState state, Level worldIn, BlockPos pos, Block blockIn, BlockPos fromPos, boolean isMoving) {
+	protected void neighborChanged(BlockState state, Level worldIn, BlockPos pos, Block blockIn, @Nullable Orientation orientation, boolean isMoving) {
 		BlockEntity tileentity = state.hasBlockEntity() ? worldIn.getBlockEntity(pos) : null;
 		if(tileentity != null) {
 			if(tileentity instanceof AlternatorBlockEntity) {

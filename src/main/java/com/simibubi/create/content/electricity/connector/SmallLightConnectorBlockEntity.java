@@ -45,7 +45,7 @@ public class SmallLightConnectorBlockEntity extends AbstractConnectorBlockEntity
 
     @Override
     public void read(CompoundTag nbt, HolderLookup.Provider registries, boolean clientPacket) {
-        tickToggleTimer = nbt.getInt("tick_toggle_timer");
+        tickToggleTimer = nbt.getIntOr("tick_toggle_timer", 0);
         super.read(nbt, registries, clientPacket);
     }
 

@@ -1,11 +1,10 @@
 package com.simibubi.create.content.electricity.motor;
 
 import com.simibubi.create.AllBlockEntityTypes;
-import com.simibubi.create.content.electricity.ElectricShapes;
+import com.simibubi.create.AllShapes;
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
 import com.simibubi.create.foundation.block.IBE;
 
-import net.createmod.catnip.math.VoxelShaper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
@@ -19,6 +18,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.world.level.block.state.StateDefinition.Builder;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
@@ -27,9 +27,6 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
 public class ElectricMotorBlock extends DirectionalKineticBlock implements IBE<ElectricMotorBlockEntity> {
-
-	public static final VoxelShaper ELECTRIC_MOTOR_SHAPE = ElectricShapes.shape(0, 5, 0, 16, 11, 16).add(3, 0, 3, 13, 14, 13)
-			.forDirectional();
 	public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
 
 	public ElectricMotorBlock(Properties properties) {
@@ -45,7 +42,7 @@ public class ElectricMotorBlock extends DirectionalKineticBlock implements IBE<E
 
 	@Override
 	public VoxelShape getShape(BlockState state, BlockGetter worldIn, BlockPos pos, CollisionContext context) {
-		return ELECTRIC_MOTOR_SHAPE.get(state.getValue(FACING));
+		return AllShapes.ELECTRIC_MOTOR.get(state.getValue(FACING));
 	}
 
 	@Nullable
@@ -81,33 +78,16 @@ public class ElectricMotorBlock extends DirectionalKineticBlock implements IBE<E
 		world.setBlock(pos, world.getBlockState(pos).setValue(POWERED, powered), 3);
 	}
 
-	@Override
-	public boolean canConnectRedstone(BlockState state, BlockGetter world, BlockPos pos, @Nullable Direction side) {
-		return true;
-	}
 
     @Override
     public boolean hideStressImpact() {
         return true;
     }
 
-	/*
-	@Override
-	public void neighborChanged(BlockState state, Level world, BlockPos pos, Block block, BlockPos from, boolean b) {
-		if (!world.isClientSide) {
-			boolean flag = state.getValue(POWERED);
-			if (flag != world.hasNeighborSignal(pos)) {
-				if (flag)
-					world.scheduleTick(pos, this, 4);
-				else
-					world.setBlock(pos, state.cycle(POWERED), 2);
-			}
-		}
-	}
-	*/
 
-	public void neighborChanged(BlockState state, Level world, BlockPos pos, Block block, BlockPos from, boolean b) {
-		if (!world.isClientSide) {
+	@Override
+	protected void neighborChanged(BlockState state, Level world, BlockPos pos, Block block, @Nullable Orientation orientation, boolean b) {
+		if (!world.isClientSide()) {
 			boolean flag = state.getValue(POWERED);
 			if (flag != world.hasNeighborSignal(pos)) {
 				if (flag){

@@ -97,6 +97,15 @@ public class RenderTypes {
 			.setOutline(OutlineProperty.AFFECTS_OUTLINE)
 			.createRenderSetup()));
 
+	private static final RenderType WIRE = RenderType.create(createLayerName("wire"),
+		RenderSetup.builder(AllRenderPipelines.WIRE)
+			.useLightmap()
+			.createRenderSetup());
+
+	public static RenderType wire() {
+		return WIRE;
+	}
+
 	public static RenderType entitySolidBlockMipped() {
 		return ENTITY_SOLID_BLOCK_MIPPED;
 	}

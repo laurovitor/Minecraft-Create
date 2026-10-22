@@ -1,59 +1,51 @@
 package com.simibubi.create.content.kinetics.rollingMill;
 
+import org.jspecify.annotations.NullMarked;
+
 import com.simibubi.create.AllRecipeTypes;
 import com.simibubi.create.content.processing.recipe.ProcessingRecipeParams;
 import com.simibubi.create.content.processing.recipe.StandardProcessingRecipe;
-import com.simibubi.create.foundation.recipe.IRecipeTypeInfo;
-import net.minecraft.resources.ResourceLocation;
+
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.*;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.RecipeInput;
 import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.items.wrapper.RecipeWrapper;
-import org.jetbrains.annotations.NotNull;
 
-public class RollingRecipe extends StandardProcessingRecipe<RecipeWrapper> {
-    public static final IRecipeTypeInfo TYPE_INFO = new IRecipeTypeInfo() {
-        @Override
-        public ResourceLocation getId() {
-            return AllRecipeTypes.ROLLING.getId();
-        }
+/**
+ * Rolling Mill recipe: one input item rolled into one output stack (sheets into rods, rods into wires).
+ * Ported from Create Crafts &amp; Additions (MIT, by MRH0).
+ */
+@NullMarked
+public class RollingRecipe extends StandardProcessingRecipe<RecipeInput> {
 
-        @Override
-        public <T extends RecipeSerializer<?>> T getSerializer() {
-            return (T) AllRecipeTypes.ROLLING.get();
-        }
+	public RollingRecipe(ProcessingRecipeParams params) {
+		super(AllRecipeTypes.ROLLING, params);
+	}
 
-        @Override
-        public <V extends RecipeInput, R extends Recipe<V>> RecipeType<R> getType() {
-            return (RecipeType<R>) AllRecipeTypes.ROLLING_TYPE.get();
-        }
-    };
+	public Ingredient getIngredient() {
+		return ingredients.get(0);
+	}
 
-    public RollingRecipe(ProcessingRecipeParams params) {
-        super(TYPE_INFO, params);
-    }
+	@Override
+	public boolean matches(RecipeInput inv, Level level) {
+		if (inv.isEmpty())
+			return false;
+		return ingredients.get(0)
+			.test(inv.getItem(0));
+	}
 
-    public Ingredient getIngredient() {
-        return ingredients.get(0);
-    }
+	@Override
+	protected int getMaxInputCount() {
+		return 1;
+	}
 
-    @Override
-    public boolean matches(RecipeWrapper inv, @NotNull Level level) {
-        if (inv.isEmpty()) return false;
-        return ingredients.get(0).test(inv.getItem(0));
-    }
+	@Override
+	protected int getMaxOutputCount() {
+		return 1;
+	}
 
-    @Override
-    protected int getMaxInputCount() {
-        return 1;
-    }
-
-    @Override
-    protected int getMaxOutputCount() {
-        return 1;
-    }
-
-    public ItemStack getResultStack() {
-        return getRollableResults().getFirst().getStack();
-    }
+	public ItemStack getResultStack() {
+		return getRollableResults().getFirst()
+			.getStack();
+	}
 }

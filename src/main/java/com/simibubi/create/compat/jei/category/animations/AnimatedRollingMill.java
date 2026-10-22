@@ -1,48 +1,48 @@
 package com.simibubi.create.compat.jei.category.animations;
 
-import com.mojang.math.Axis;
-import com.simibubi.create.AllBlocks;
-import com.simibubi.create.compat.jei.category.animations.AnimatedKinetics;
-import com.simibubi.create.foundation.gui.AllGuiTextures;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.core.Direction;
+import org.joml.Matrix3x2fStack;
 
+import com.simibubi.create.AllBlocks;
+import com.simibubi.create.foundation.gui.AllGuiTextures;
+
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.state.BlockState;
+
+/** Rolling Mill with its two counter-rotating rollers, for JEI. */
 public class AnimatedRollingMill extends AnimatedKinetics {
 
-	boolean shadow = true;
+	private final boolean shadow;
 
-	public AnimatedRollingMill(boolean shadow) { this.shadow = shadow; }
+	public AnimatedRollingMill(boolean shadow) {
+		this.shadow = shadow;
+	}
 
-	public AnimatedRollingMill() {}
+	public AnimatedRollingMill() {
+		this(true);
+	}
 
 	@Override
-	public void draw(GuiGraphics gg, int xOffset, int yOffset) {
-		var matrixStack = gg.pose();
-		matrixStack.pushPose();
-		matrixStack.translate(xOffset, yOffset, 0);
-		if(shadow)
-			AllGuiTextures.JEI_SHADOW.render(gg, -16, 13);
-		matrixStack.translate(-2, 18, 0);
-		matrixStack.mulPose(Axis.XP.rotationDegrees(-22.5f));
-		matrixStack.mulPose(Axis.YP.rotationDegrees(22.5f));
+	public void draw(GuiGraphicsExtractor graphics, int xOffset, int yOffset) {
+		viewRotation(-22.5f, 22.5f);
+		Matrix3x2fStack matrixStack = graphics.pose();
+		matrixStack.pushMatrix();
+		matrixStack.translate((float) xOffset, (float) yOffset);
+		if (shadow)
+			AllGuiTextures.JEI_SHADOW.render(graphics, -16, 13);
+		matrixStack.translate(-2f, 18f);
 		int scale = 22;
 
-		blockElement(shaft(Direction.Axis.Z))
-				.rotateBlock(0, 0, -getCurrentAngle())
-				.scale(scale)
-				.render(gg);
+		BlockState shaft = shaft(Direction.Axis.Z);
+		BlockState mill = AllBlocks.ROLLING_MILL.getDefaultState();
+		float angle = getCurrentAngle();
 
-		blockElement(shaft(Direction.Axis.Z))
-				.atLocal(0f, -4f/16F, 0f)
-				.rotateBlock(0, 0, getCurrentAngle())
-				.scale(scale)
-				.render(gg);
+		scene(graphics, scale, (ps, col) -> {
+			part(ps, col, modelOf(shaft), shaft, 0, 0, 0, 0, 0, -angle);
+			part(ps, col, modelOf(shaft), shaft, 0, -4 / 16f, 0, 0, 0, angle);
+			part(ps, col, modelOf(mill), mill, 0, 0, 0, 0, 0, 0);
+		});
 
-		blockElement(AllBlocks.ROLLING_MILL.getDefaultState())
-				.rotateBlock(0f, 0f, 0)
-				.scale(scale)
-				.render(gg);
-
-		matrixStack.popPose();
+		matrixStack.popMatrix();
 	}
 }

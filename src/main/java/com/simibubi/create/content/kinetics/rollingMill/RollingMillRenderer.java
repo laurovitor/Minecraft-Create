@@ -4,7 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.AllPartialModels;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntityRenderer;
 import com.simibubi.create.foundation.render.CachedBufferer;
-import com.simibubi.create.foundation.render.RenderTypes;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import com.simibubi.create.foundation.render.SuperByteBufferRenderState;
 
 import dev.engine_room.flywheel.api.visualization.VisualizationManager;

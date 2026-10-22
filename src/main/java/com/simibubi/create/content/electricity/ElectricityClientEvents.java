@@ -1,7 +1,7 @@
 package com.simibubi.create.content.electricity;
 
 import com.simibubi.create.content.electricity.item.WireSpool;
-import com.simibubi.create.content.electricity.packet.ObservePacketPayload;
+import com.simibubi.create.content.electricity.packet.EnergyObservePacket;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.item.ItemStack;
@@ -17,7 +17,7 @@ public class ElectricityClientEvents {
 
 	@SubscribeEvent
 	public static void onClientTick(ClientTickEvent.Post event) {
-		ObservePacketPayload.tick();
+		EnergyObservePacket.tick();
 
 		clientRenderHeldWire = false;
 		if (Minecraft.getInstance().player == null)

@@ -35,6 +35,8 @@ import com.simibubi.create.compat.jei.category.ItemApplicationCategory;
 import com.simibubi.create.compat.jei.category.ItemDrainCategory;
 import com.simibubi.create.compat.jei.category.MechanicalCraftingCategory;
 import com.simibubi.create.compat.jei.category.MillingCategory;
+import com.simibubi.create.compat.jei.category.RollingMillCategory;
+import com.simibubi.create.content.kinetics.rollingMill.RollingRecipe;
 import com.simibubi.create.compat.jei.category.MixingCategory;
 import com.simibubi.create.compat.jei.category.MysteriousItemConversionCategory;
 import com.simibubi.create.compat.jei.category.PackingCategory;
@@ -136,6 +138,13 @@ public class CreateJEI implements IModPlugin {
 			.doubleItemIcon(AllBlocks.MILLSTONE.get(), AllItems.WHEAT_FLOUR.get())
 			.emptyBackground(177, 53)
 			.build("milling", MillingCategory::new),
+
+			rolling = builder(RollingRecipe.class)
+				.addTypedRecipes(AllRecipeTypes.ROLLING)
+				.catalyst(AllBlocks.ROLLING_MILL::get)
+				.doubleItemIcon(AllBlocks.ROLLING_MILL.get(), AllItems.COPPER_WIRE.get())
+				.emptyBackground(177, 53)
+				.build("rolling", RollingMillCategory::new),
 
 			crushing = builder(AbstractCrushingRecipe.class)
 				.addTypedRecipes(AllRecipeTypes.CRUSHING)

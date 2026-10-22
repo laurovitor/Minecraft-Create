@@ -43,7 +43,6 @@ public class CElectricity extends ConfigBase {
 	public final ConfigInt accumulatorMaxWidth = i(3, 1, 8, "accumulatorMaxWidth", Comments.accumulatorMaxWidth);
 
 	public final ConfigGroup items = group(1, "items", "Electric items");
-	public final ConfigInt diamondGritSandpaperUses = i(1024, 3, "diamondGritSandpaperUses", Comments.sandpaperUses);
 	public final ConfigInt capacitorCapacity = i(5000, 1, "capacitorCapacity", Comments.capacitorCapacity);
 	public final ConfigInt capacitorChargeRate = i(500, 1, "capacitorChargeRate", Comments.capacitorChargeRate);
 
@@ -71,7 +70,6 @@ public class CElectricity extends ConfigBase {
 		static String accumulatorCapacity = "Modular Accumulator capacity per block [in FE].";
 		static String accumulatorMaxHeight = "Modular Accumulator max multiblock height.";
 		static String accumulatorMaxWidth = "Modular Accumulator max multiblock width.";
-		static String sandpaperUses = "Diamond Grit Sandpaper durability [number of uses].";
 		static String capacitorCapacity = "Max energy a Capacitor can store [in FE].";
 		static String capacitorChargeRate = "Max energy per transfer for the Capacitor [in FE].";
 	}

@@ -365,7 +365,7 @@ public interface IWireNode {
 		ListTag list = new ListTag();
 		for (int i = 0; i < getNodeCount(); i++) {
 			if (nbt.contains("node" + i)) {
-				if (nbt.getInt("node" + i) == -1) {
+				if (nbt.getIntOr("node" + i, 0) == -1) {
 					// No data, just remove the node.
 					nbt.remove("node" + i);
 					nbt.remove("type" + i);
@@ -373,9 +373,9 @@ public interface IWireNode {
 				}
 				// We found some data!
 				// Get the node data.
-				int other = nbt.getInt("node" + i);
-				WireType type = WireType.fromIndex(nbt.getInt("type" + i));
-				BlockPos pos = new BlockPos(nbt.getInt("x" + i), nbt.getInt("y" + i), nbt.getInt("z" + i)).subtract(getPos());
+				int other = nbt.getIntOr("node" + i, 0);
+				WireType type = WireType.fromIndex(nbt.getIntOr("type" + i, 0));
+				BlockPos pos = new BlockPos(nbt.getIntOr("x" + i, 0), nbt.getIntOr("y" + i, 0), nbt.getIntOr("z" + i, 0)).subtract(getPos());
 				// Remove the data.
 				nbt.remove("node" + i);
 				nbt.remove("type" + i);
@@ -499,7 +499,7 @@ public interface IWireNode {
 	static BlockPos readNodeBlockPos(CompoundTag nbt, int index, BlockPos origin) {
 		CompoundTag node = getNbtNode(nbt, index);
 		if (node == null) return null;
-		return origin.offset(node.getInt(LocalNode.X), node.getInt(LocalNode.Y), node.getInt(LocalNode.Z));
+		return origin.offset(node.getIntOr(LocalNode.X, 0), node.getIntOr(LocalNode.Y, 0), node.getIntOr(LocalNode.Z, 0));
 	}
 
 	/**
@@ -517,7 +517,7 @@ public interface IWireNode {
 	static WireType readNodeWireType(CompoundTag nbt, int index) {
 		CompoundTag node = getNbtNode(nbt, index);
 		if (node == null) return null;
-		return WireType.fromIndex(node.getInt(LocalNode.TYPE));
+		return WireType.fromIndex(node.getIntOr(LocalNode.TYPE, 0));
 	}
 
 	/**
@@ -534,7 +534,7 @@ public interface IWireNode {
 	static int readNodeOtherIndex(CompoundTag nbt, int index) {
 		CompoundTag node = getNbtNode(nbt, index);
 		if (node == null) return -1;
-		return node.getInt(LocalNode.OTHER);
+		return node.getIntOr(LocalNode.OTHER, 0);
 	}
 
 	/**
@@ -551,10 +551,10 @@ public interface IWireNode {
 	@Nullable
 	static CompoundTag getNbtNode(CompoundTag nbt, int index) {
 		if (!nbt.contains(LocalNode.NODES)) return null;
-		ListTag nodes = nbt.getList(LocalNode.NODES, Tag.TAG_COMPOUND);
+		ListTag nodes = nbt.getListOrEmpty(LocalNode.NODES);
 		for (Tag t : nodes) {
 			CompoundTag node = (CompoundTag) t;
-			if (node.getInt(LocalNode.ID) == index) {
+			if (node.getIntOr(LocalNode.ID, 0) == index) {
 				return node;
 			}
 		}
