@@ -130,7 +130,9 @@ for required in ['standingSpots(chestPos)', 'path.canReach()', 'BlockHitResult h
     assert required in rg_goal, required
 assert 'walkTo(chest.getBlockPos(), RedstoneGolemRules.WALK_SPEED)' in rg_goal
 assert 'new RedstoneGolemNavigation(this, level)' in rg_entity and 'barriers.tick()' in rg_entity
-assert 'Attributes.FOLLOW_RANGE, 96.0' in rg_entity and 'setMaxVisitedNodesMultiplier(4)' in rg_nav
+assert 'Attributes.FOLLOW_RANGE, RedstoneGolemRules.PATH_LENGTH' in rg_entity and 'setRequiredPathLength(RedstoneGolemRules.PATH_LENGTH)' in rg_entity
+assert 'MAX_SOURCE_DISTANCE = 128;' in (rg/'RedstoneGolemRules.java').read_text() and 'PATH_LENGTH = 160;' in (rg/'RedstoneGolemRules.java').read_text()
+assert '.limit(RedstoneGolemRules.MAX_STAND_SPOT_PATHS)' in rg_goal and 'setMaxVisitedNodesMultiplier(4)' in rg_nav
 for required in ['DoorBlock', 'FenceGateBlock', 'TrapDoorBlock', 'PathType.WALKABLE_DOOR', 'PathType.BLOCKED']:
     assert required in rg_nav and required in rg_barriers or required in rg_nav, required
 assert 'setCanOpenDoors(true)' in rg_nav and 'setCanPassDoors(true)' in rg_nav

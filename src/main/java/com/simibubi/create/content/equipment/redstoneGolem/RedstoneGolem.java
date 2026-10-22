@@ -75,13 +75,14 @@ public class RedstoneGolem extends AndesiteGolem {
 
 	public RedstoneGolem(EntityType<? extends AbstractGolem> type, Level level) {
 		super(type, level);
+		getNavigation().setRequiredPathLength(RedstoneGolemRules.PATH_LENGTH); // Andesite default: 48
 	}
 
 	public static AttributeSupplier.Builder createAttributes() {
 		return Mob.createMobAttributes()
 			.add(Attributes.MOVEMENT_SPEED, RedstoneGolemRules.BASE_SPEED)
 			.add(Attributes.STEP_HEIGHT, 1.0)
-			.add(Attributes.FOLLOW_RANGE, 96.0)
+			.add(Attributes.FOLLOW_RANGE, RedstoneGolemRules.PATH_LENGTH)
 			.add(Attributes.MAX_HEALTH, RedstoneGolemRules.MAX_HEALTH);
 	}
 

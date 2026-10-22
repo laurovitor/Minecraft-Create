@@ -382,7 +382,7 @@ public class RedstoneGolemCollectGoal extends Goal {
 			return false;
 		Path best = null;
 		BlockPos bestSpot = null;
-		for (BlockPos candidate : standingSpots(chestPos)) {
+		for (BlockPos candidate : standingSpots(chestPos).stream().limit(RedstoneGolemRules.MAX_STAND_SPOT_PATHS).toList()) {
 			Path path = golem.getNavigation().createPath(candidate, 0);
 			if (path == null || !path.canReach()) continue;
 			if (best == null || path.getNodeCount() < best.getNodeCount()) {

@@ -19,10 +19,17 @@ public final class RedstoneGolemRules {
 	/** Stacks (inventory slots) the golem carries per trip. */
 	public static final int CARRY_SLOTS = 4;
 	/**
-	 * Network chests farther than this from the golem's chest are ignored, blocks (3D). Matches the
-	 * 48-block navigation path length the golems use; farther targets could never be pathed to.
+	 * Network chests farther than this from the golem's chest are ignored, blocks (3D; was 48). Used
+	 * for collecting, distribution targets and the latch tint (all via RedstoneGolemNetwork#sources).
 	 */
-	public static final int MAX_SOURCE_DISTANCE = 48;
+	public static final int MAX_SOURCE_DISTANCE = 128;
+	/**
+	 * Navigation reach, blocks: the path length budget (and FOLLOW_RANGE) for 128-block sources with
+	 * detours. Vanilla searches up to length * 16 * RedstoneGolemNavigation multiplier (4) = 10240 nodes.
+	 */
+	public static final float PATH_LENGTH = 160;
+	/** Paths computed per stand-spot refresh (nearest spots first): bounds the cost of long searches. */
+	public static final int MAX_STAND_SPOT_PATHS = 4;
 	/**
 	 * How often an idle golem looks at its network again, in GAME ticks (1 s). Vanilla only calls
 	 * Goal#canUse every second tick, so the goal schedules by game time, not by canUse calls (the

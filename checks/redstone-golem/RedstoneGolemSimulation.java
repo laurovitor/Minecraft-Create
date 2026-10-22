@@ -125,7 +125,7 @@ public class RedstoneGolemSimulation {
 			new Link(home, 0, 64, -7, Kind.GOLEM_CHEST, golemBox, null),
 			new Link(other, 3, 64, 3, Kind.CHEST, otherNet, null),
 			new Link(home, 2, 64, 2, Kind.FURNACE, furnace, null),
-			new Link(home, 60, 64, 0, Kind.CHEST, far, null),
+			new Link(home, 129, 64, 0, Kind.CHEST, far, null),
 			new Link(home, 0, 64, 0, Kind.GOLEM_CHEST, own, null));
 		List<Source> net = sources(home, 0, 64, 0, links);
 		assert net.size() == 4 : "two chests, one double chest once, one golem chest; got " + net.size();
