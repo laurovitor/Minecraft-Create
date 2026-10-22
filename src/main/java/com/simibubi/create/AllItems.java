@@ -285,6 +285,16 @@ public class AllItems {
 		ELECTRUM_SPOOL = REGISTRATE.item("electrum_spool", WireSpool::new).register(),
 		FESTIVE_SPOOL = REGISTRATE.item("festive_spool", WireSpool::new).register();
 
+	// Native Crafts & Additions food, biomass and electrum accessories (MIT, by MRH0).
+	public static final ItemEntry<Item> CAKE_BASE = REGISTRATE.item("cake_base", Item::new).register(),
+		CAKE_BASE_BAKED = REGISTRATE.item("cake_base_baked", Item::new).register(),
+		BIOMASS = REGISTRATE.item("biomass", Item::new).properties(p -> p.stacksTo(16)).register(),
+		BIOMASS_PELLET = REGISTRATE.item("biomass_pellet", Item::new).burnTime(6400).register();
+
+	public static final ItemEntry<com.simibubi.create.content.electricity.item.ElectrumAmuletItem> ELECTRUM_AMULET =
+		REGISTRATE.item("electrum_amulet", com.simibubi.create.content.electricity.item.ElectrumAmuletItem::new)
+			.properties(p -> p.stacksTo(1)).register();
+
 	public static final ItemEntry<Item> STRAW = REGISTRATE.item("straw", Item::new)
 		.properties(p -> p.stacksTo(16)).register();
 

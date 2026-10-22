@@ -1,0 +1,17 @@
+{
+  "type": "create:mixing",
+  "heat_requirement": "heated",
+  "ingredients": [
+    "#minecraft:flowers",
+    "#minecraft:flowers",
+    {
+      "amount": 100,
+      "ingredient": "#c:plantoil"
+    }
+  ],
+  "results": [
+    {
+      "id": "create:biomass"
+    }
+  ]
+}

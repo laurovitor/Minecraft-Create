@@ -1,0 +1,18 @@
+{
+  "type": "create:mixing",
+  "heat_requirement": "heated",
+  "ingredients": [
+    "#create:plants",
+    "#create:plants",
+    "#create:plants",
+    {
+      "amount": 100,
+      "ingredient": "#c:plantoil"
+    }
+  ],
+  "results": [
+    {
+      "id": "create:biomass"
+    }
+  ]
+}

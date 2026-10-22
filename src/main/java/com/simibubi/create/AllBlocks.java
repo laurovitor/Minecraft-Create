@@ -2813,6 +2813,21 @@ public class AllBlocks {
 		.lang("Block of Weathered Iron")
 		.register();
 
+	// Native Crafts & Additions foods and biomass (MIT, by MRH0).
+	public static final BlockEntry<com.simibubi.create.content.electricity.food.AdditionCakeBlock> CHOCOLATE_CAKE =
+		REGISTRATE.block("chocolate_cake", com.simibubi.create.content.electricity.food.AdditionCakeBlock::new)
+			.initialProperties(() -> Blocks.CAKE).properties(p -> p.sound(SoundType.WOOL).strength(.5f))
+			.blockstate(() -> (c, p) -> {}).item().transform(customItemModel()).register();
+
+	public static final BlockEntry<com.simibubi.create.content.electricity.food.AdditionCakeBlock> HONEY_CAKE =
+		REGISTRATE.block("honey_cake", com.simibubi.create.content.electricity.food.AdditionCakeBlock::new)
+			.initialProperties(() -> Blocks.CAKE).properties(p -> p.sound(SoundType.WOOL).strength(.5f))
+			.blockstate(() -> (c, p) -> {}).item().transform(customItemModel()).register();
+
+	public static final BlockEntry<Block> BIOMASS_PELLET_BLOCK = REGISTRATE.block("biomass_pellet_block", Block::new)
+		.initialProperties(() -> Blocks.DRIED_KELP_BLOCK).properties(p -> p.mapColor(MapColor.COLOR_GREEN))
+		.blockstate(() -> (c, p) -> {}).item().burnTime(57600).transform(customItemModel()).register();
+
 	public static final BlockEntry<Block> ELECTRUM_BLOCK = REGISTRATE.block("electrum_block", Block::new)
 		.initialProperties(() -> Blocks.GOLD_BLOCK)
 		.properties(p -> p.mapColor(MapColor.TERRACOTTA_YELLOW)

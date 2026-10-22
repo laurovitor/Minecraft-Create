@@ -32,6 +32,11 @@ public class ElectricityEvents {
 	}
 
 	@SubscribeEvent
+	public static void onPlayerTick(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post event) {
+		com.simibubi.create.content.electricity.item.ElectrumAmuletItem.tick(event.getEntity());
+	}
+
+	@SubscribeEvent
 	public static void onChunkLoad(ChunkEvent.Load event) {
 		if (event.getLevel() instanceof ServerLevel level && event.getChunk() instanceof LevelChunk chunk)
 			WireGraph.chunkLoaded(level, chunk);

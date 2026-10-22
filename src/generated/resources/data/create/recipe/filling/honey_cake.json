@@ -1,0 +1,15 @@
+{
+  "type": "create:filling",
+  "ingredients": [
+    "create:cake_base_baked",
+    {
+      "amount": 500,
+      "ingredient": "#c:honey"
+    }
+  ],
+  "results": [
+    {
+      "id": "create:honey_cake"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smoking",
+  "category": "food",
+  "cookingtime": 100,
+  "experience": 0.0,
+  "ingredient": "create:cake_base",
+  "result": {
+    "count": 1,
+    "id": "create:cake_base_baked"
+  }
+}

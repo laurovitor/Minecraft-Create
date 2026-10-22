@@ -1,0 +1,15 @@
+{
+  "type": "create:mixing",
+  "ingredients": [
+    "minecraft:sugar",
+    "create:cinder_flour",
+    "create:biomass",
+    "create:biomass"
+  ],
+  "results": [
+    {
+      "amount": 125,
+      "id": "create:bioethanol"
+    }
+  ]
+}

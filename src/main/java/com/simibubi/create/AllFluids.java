@@ -110,6 +110,29 @@ public class AllFluids {
 			.build()
 			.register();
 
+	// Crafts & Additions renewable fuels (MIT, by MRH0). Both are placeable and bucketable.
+	public static final FluidEntry<BaseFlowingFluid.Flowing> SEED_OIL =
+		REGISTRATE.standardFluid("seed_oil", SolidRenderedPlaceableFluidType.create(0xD7AF3E, () -> 1f))
+			.model(() -> AllFluidsClient.tintedModel("seed_oil", () -> AllFluids.SEED_OIL.get()))
+			.lang("Seed Oil")
+			.properties(b -> b.viscosity(2000).density(1400))
+			.fluidProperties(p -> p.levelDecreasePerBlock(2).tickRate(15).slopeFindDistance(6).explosionResistance(100f))
+			.source(BaseFlowingFluid.Source::new)
+			.block().properties(p -> p.mapColor(MapColor.TERRACOTTA_YELLOW)).build()
+			.bucket().onRegister(AllFluids::registerFluidDispenseBehavior).tag(Tags.Items.BUCKETS).build()
+			.register();
+
+	public static final FluidEntry<BaseFlowingFluid.Flowing> BIOETHANOL =
+		REGISTRATE.standardFluid("bioethanol", SolidRenderedPlaceableFluidType.create(0xB9CC99, () -> 1f))
+			.model(() -> AllFluidsClient.tintedModel("bioethanol", () -> AllFluids.BIOETHANOL.get()))
+			.lang("Bioethanol")
+			.properties(b -> b.viscosity(2500).density(1600))
+			.fluidProperties(p -> p.levelDecreasePerBlock(2).tickRate(15).slopeFindDistance(6).explosionResistance(100f))
+			.source(BaseFlowingFluid.Source::new)
+			.block().properties(p -> p.mapColor(MapColor.COLOR_GREEN)).build()
+			.bucket().onRegister(AllFluids::registerFluidDispenseBehavior).tag(Tags.Items.BUCKETS).build()
+			.register();
+
 	// Load this class
 
 	public static void register() {

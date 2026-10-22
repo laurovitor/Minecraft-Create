@@ -1,0 +1,18 @@
+{
+  "type": "create:mixing",
+  "heat_requirement": "heated",
+  "ingredients": [
+    "#minecraft:saplings",
+    "#minecraft:saplings",
+    "#minecraft:saplings",
+    {
+      "amount": 100,
+      "ingredient": "#c:plantoil"
+    }
+  ],
+  "results": [
+    {
+      "id": "create:biomass"
+    }
+  ]
+}

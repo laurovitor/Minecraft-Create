@@ -1,0 +1,23 @@
+{
+  "type": "create:mixing",
+  "heat_requirement": "heated",
+  "ingredients": [
+    "minecraft:stick",
+    "minecraft:stick",
+    "minecraft:stick",
+    "minecraft:stick",
+    "minecraft:stick",
+    "minecraft:stick",
+    "minecraft:stick",
+    "minecraft:stick",
+    {
+      "amount": 100,
+      "ingredient": "#c:plantoil"
+    }
+  ],
+  "results": [
+    {
+      "id": "create:biomass"
+    }
+  ]
+}

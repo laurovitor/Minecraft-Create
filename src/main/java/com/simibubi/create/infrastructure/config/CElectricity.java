@@ -73,6 +73,8 @@ public class CElectricity extends ConfigBase {
 	public final ConfigInt barbedWireDamage = i(2, 0, "barbedWireDamage", "Barbed Wire damage on contact.");
 
 	public final ConfigGroup items = group(1, "items", "Electric items");
+	public final ConfigBool amuletEffectEnabled = b(true, "amuletEffectEnabled", "Whether the Electrum Amulet passively charges an item held in the other hand.");
+	public final ConfigInt amuletChargeRate = i(1, 0, "electrumAmuletChargeRate", "Average charge rate [FE/t]. The amulet transfers this many FE times 300, once per 300 ticks on average.");
 	public final ConfigInt capacitorCapacity = i(5000, 1, "capacitorCapacity", Comments.capacitorCapacity);
 	public final ConfigInt capacitorChargeRate = i(500, 1, "capacitorChargeRate", Comments.capacitorChargeRate);
 

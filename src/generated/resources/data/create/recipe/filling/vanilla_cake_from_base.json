@@ -1,0 +1,15 @@
+{
+  "type": "create:filling",
+  "ingredients": [
+    "create:cake_base_baked",
+    {
+      "amount": 1000,
+      "ingredient": "#c:milk"
+    }
+  ],
+  "results": [
+    {
+      "id": "minecraft:cake"
+    }
+  ]
+}

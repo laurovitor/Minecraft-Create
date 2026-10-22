@@ -1,0 +1,15 @@
+{
+  "type": "create:compacting",
+  "ingredients": [
+    "create:biomass"
+  ],
+  "results": [
+    {
+      "id": "create:biomass_pellet"
+    },
+    {
+      "amount": 50,
+      "id": "minecraft:water"
+    }
+  ]
+}
