@@ -321,6 +321,11 @@ public class CommonEvents {
 			MillstoneBlockEntity.registerCapabilities(event);
 			com.simibubi.create.content.kinetics.rollingMill.RollingMillBlockEntity.registerCapabilities(event);
 			com.simibubi.create.content.electricity.motor.ElectricMotorBlockEntity.registerCapabilities(event);
+			com.simibubi.create.content.electricity.pump.ElectricPumpBlockEntity.registerCapabilities(event);
+			com.simibubi.create.content.electricity.tesla.TeslaCoilBlockEntity.registerCapabilities(event);
+			com.simibubi.create.content.electricity.servo.ServoMotorBlockEntity.registerCapabilities(event);
+			com.simibubi.create.content.electricity.portable.PortableEnergyInterfaceBlockEntity.registerCapabilities(event);
+			com.simibubi.create.content.electricity.burner.LiquidBlazeBurnerBlockEntity.registerCapabilities(event);
 			com.simibubi.create.content.electricity.alternator.AlternatorBlockEntity.registerCapabilities(event);
 			com.simibubi.create.content.electricity.creative.CreativeEnergyBlockEntity.registerCapabilities(event);
 			com.simibubi.create.content.electricity.accumulator.ModularAccumulatorBlockEntity.registerCapabilities(event);

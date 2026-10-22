@@ -1,0 +1,503 @@
+package com.simibubi.create.content.electricity.servo;
+
+import java.util.List;
+
+import com.google.common.collect.ImmutableList;
+import com.simibubi.create.Create;
+import com.simibubi.create.content.electricity.motor.ElectricMotorBlockEntity;
+import com.simibubi.create.infrastructure.config.AllConfigs;
+import com.simibubi.create.content.electricity.energy.InternalEnergyStorage;
+import com.simibubi.create.AllBlockEntityTypes;
+import com.simibubi.create.AllBlocks;
+import com.simibubi.create.content.electricity.ElectricityUtil;
+
+
+import com.simibubi.create.AllSoundEvents;
+import com.simibubi.create.content.contraptions.AssemblyException;
+import com.simibubi.create.content.contraptions.ControlledContraptionEntity;
+import com.simibubi.create.content.contraptions.bearing.BearingContraption;
+import com.simibubi.create.content.contraptions.DirectionalExtenderScrollOptionSlot;
+import com.simibubi.create.content.contraptions.bearing.MechanicalBearingBlockEntity;
+import com.simibubi.create.content.kinetics.motor.KineticScrollValueBehaviour;
+import com.simibubi.create.foundation.advancement.AllAdvancements;
+import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
+import com.simibubi.create.foundation.blockEntity.behaviour.BehaviourType;
+import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
+import com.simibubi.create.foundation.blockEntity.behaviour.CenteredSideValueBoxTransform;
+import com.simibubi.create.foundation.blockEntity.behaviour.ValueBoxTransform;
+import com.simibubi.create.foundation.blockEntity.behaviour.ValueSettingsBoard;
+import com.simibubi.create.foundation.blockEntity.behaviour.ValueSettingsFormatter;
+import com.simibubi.create.foundation.blockEntity.behaviour.scrollValue.ScrollOptionBehaviour;
+import com.simibubi.create.foundation.blockEntity.behaviour.scrollValue.ScrollValueBehaviour;
+import com.simibubi.create.foundation.utility.CreateLang;
+
+import net.minecraft.core.Direction.Axis;
+
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import net.neoforged.neoforge.transfer.energy.EnergyHandler;
+
+public class ServoMotorBlockEntity extends MechanicalBearingBlockEntity {
+
+	static final BehaviourType<ServoMovementMode> MOVEMENT_MODE_TYPE = new BehaviourType<>();
+
+	// ScrollOptionBehaviour and KineticScrollValueBehaviour both inherit ScrollValueBehaviour.TYPE,
+	// so they'd overwrite each other in SmartBlockEntity's BehaviourType→Behaviour map. This
+	// subclass gets its own type, a distinct NBT key, and a distinct netId three separate
+	// conflicts that all need to be resolved for two scroll behaviours to coexist.
+	static class ServoMovementMode extends ScrollOptionBehaviour<RotationMode> {
+		ServoMovementMode(Component label, SmartBlockEntity be, ValueBoxTransform slot) {
+			super(RotationMode.class, label, be, slot);
+		}
+
+		@Override
+		public BehaviourType<?> getType() {
+			return MOVEMENT_MODE_TYPE;
+		}
+
+		// ValueSettingsPacket matches behaviours by netId(); generatedSpeed uses 0 (default).
+		@Override
+		public int netId() {
+			return 1;
+		}
+
+		@Override
+		public void write(CompoundTag nbt, HolderLookup.Provider registries, boolean clientPacket) {
+			nbt.putInt("RotationMode", value);
+		}
+
+		@Override
+		public void read(CompoundTag nbt, HolderLookup.Provider registries, boolean clientPacket) {
+			value = nbt.getIntOr("RotationMode", 0);
+		}
+	}
+
+	static final BehaviourType<ServoAngleLimit> MIN_ANGLE_TYPE = new BehaviourType<>();
+	static final BehaviourType<ServoAngleLimit> MAX_ANGLE_TYPE = new BehaviourType<>();
+
+	// Same three-conflict pattern as ServoMovementMode: distinct BehaviourType, distinct NBT key,
+	// distinct netId. The negated flag controls whether the angle is treated as negative
+	// (min side, 0 to -180) or positive (max side, 0 to +180).
+	static class ServoAngleLimit extends ScrollValueBehaviour {
+		private final BehaviourType<ServoAngleLimit> myType;
+		private final int myNetId;
+		private final String nbtKey;
+		private final int defaultVal;
+		private final boolean negated;
+
+		ServoAngleLimit(Component label, SmartBlockEntity be, ValueBoxTransform slot,
+				BehaviourType<ServoAngleLimit> type, int netId, String nbtKey, int defaultVal, boolean negated) {
+			super(label, be, slot);
+			this.myType = type;
+			this.myNetId = netId;
+			this.nbtKey = nbtKey;
+			this.defaultVal = defaultVal;
+			this.negated = negated;
+			between(0, 180);
+			value = defaultVal;
+		}
+
+		/** Returns the signed angle in degrees this limit represents. */
+		public float getAngle() {
+			return negated ? -value : value;
+		}
+
+		@Override
+		public BehaviourType<?> getType() { return myType; }
+
+		@Override
+		public int netId() { return myNetId; }
+
+		@Override
+		public ValueSettingsBoard createBoard(Player player, BlockHitResult hitResult) {
+			ValueSettingsFormatter fmt = new ValueSettingsFormatter(
+				vs -> Component.literal((negated ? -vs.value() : vs.value()) + "°"));
+			return new ValueSettingsBoard(label, 180, 5, ImmutableList.of(Component.literal("°")), fmt);
+		}
+
+		@Override
+		public void write(CompoundTag nbt, HolderLookup.Provider registries, boolean clientPacket) {
+			nbt.putInt(nbtKey, value);
+		}
+
+		@Override
+		public void read(CompoundTag nbt, HolderLookup.Provider registries, boolean clientPacket) {
+			// nbt.getInt() returns 0 for a missing key fall back to the constructor default.
+			value = nbt.contains(nbtKey) ? nbt.getIntOr(nbtKey, defaultVal) : defaultVal;
+		}
+	}
+
+	protected float motorSpeed;
+	protected ScrollValueBehaviour generatedSpeed;
+	protected ServoAngleLimit minAngle;
+	protected ServoAngleLimit maxAngle;
+	protected final InternalEnergyStorage energy;
+	private final EnergyHandler energyCapability;
+
+	private boolean active = false;
+	private boolean firstTick = true;
+	private boolean allowAssemble = false;
+	private int lastNetSignal = Integer.MIN_VALUE;
+	private float targetAngle = 0;
+
+	public ServoMotorBlockEntity(BlockEntityType<? extends ServoMotorBlockEntity> type, BlockPos pos, BlockState state) {
+		super(type, pos, state);
+		energy = new InternalEnergyStorage(AllConfigs.server().electricity.motorCapacity.get(),
+				AllConfigs.server().electricity.motorMaxInput.get(), 0);
+		energyCapability = energy;
+		setLazyTickRate(20);
+	}
+
+	public static void registerCapabilities(RegisterCapabilitiesEvent event) {
+		event.registerBlockEntity(
+				Capabilities.Energy.BLOCK,
+				AllBlockEntityTypes.SERVO_MOTOR.get(),
+				(be, context) -> be.energyCapability);
+	}
+
+	// Max angle on the top side, min angle opposite it, movement mode on the remaining two sides.
+	// Which side is the top depends on FACING and ROLL, see ServoMotorBlock.getTop.
+	private static boolean isModeSide(BlockState state, Direction d) {
+		Axis dAxis = d.getAxis();
+		return dAxis != state.getValue(ServoMotorBlock.FACING).getAxis()
+				&& dAxis != ServoMotorBlock.getTop(state).getAxis();
+	}
+
+	private static boolean isMaxAngleSide(BlockState state, Direction d) {
+		return d == ServoMotorBlock.getTop(state);
+	}
+
+	private static boolean isMinAngleSide(BlockState state, Direction d) {
+		return d == ServoMotorBlock.getTop(state).getOpposite();
+	}
+
+	@Override
+	public ValueBoxTransform getMovementModeSlot() {
+		return new DirectionalExtenderScrollOptionSlot(ServoMotorBlockEntity::isModeSide);
+	}
+
+	@Override
+	public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
+		super.addBehaviours(behaviours);
+
+		// super's movementMode uses ScrollValueBehaviour.TYPE same as generatedSpeed's type,
+		// so one would silently overwrite the other in SmartBlockEntity's type→behaviour map.
+		// Replace it in-place with our ServoMovementMode that has its own distinct type.
+		for (int i = 0; i < behaviours.size(); i++) {
+			if (behaviours.get(i) == movementMode) {
+				movementMode = new ServoMovementMode(
+						CreateLang.translateDirect("contraptions.movement_mode"), this, getMovementModeSlot());
+				behaviours.set(i, movementMode);
+				break;
+			}
+		}
+
+		CenteredSideValueBoxTransform slot = new CenteredSideValueBoxTransform(
+				(motor, side) -> motor.getValue(ServoMotorBlock.FACING) == side.getOpposite());
+
+		generatedSpeed = new KineticScrollValueBehaviour(CreateLang.translateDirect("generic.speed"), this, slot);
+		generatedSpeed.between(-AllConfigs.server().electricity.motorRpmRange.get(),
+				AllConfigs.server().electricity.motorRpmRange.get());
+		generatedSpeed.value = 32;
+		generatedSpeed.withCallback(rpm -> {
+			motorSpeed = rpm;
+			updateGeneratedRotation();
+		});
+		behaviours.add(generatedSpeed);
+
+		// Max angle: 0 to +180°, shown on the top side. Default 90°.
+		maxAngle = new ServoAngleLimit(Component.translatable("create.servo.max_angle"), this,
+				new DirectionalExtenderScrollOptionSlot(ServoMotorBlockEntity::isMaxAngleSide),
+				MAX_ANGLE_TYPE, 2, "MaxAngle", 90, false);
+		behaviours.add(maxAngle);
+
+		// Min angle: 0 to -180°, shown opposite the top side. Default -90° (stored as 90).
+		minAngle = new ServoAngleLimit(Component.translatable("create.servo.min_angle"), this,
+				new DirectionalExtenderScrollOptionSlot(ServoMotorBlockEntity::isMinAngleSide),
+				MIN_ANGLE_TYPE, 3, "MinAngle", 90, true);
+		behaviours.add(minAngle);
+	}
+
+	// When assembled, delegate directly to the contraption entity's own lerp so the disc
+	// is always in perfect sync with the rotating contraption blocks.
+	// Returns the static angle when not assembled disc stays fixed before assembly.
+	@Override
+	public float getInterpolatedAngle(float partialTicks) {
+		if (!running) return toContraptionAngle(angle);
+		if (movedContraption != null)
+			return movedContraption.getAngle(partialTicks + 1f);
+		return toContraptionAngle(angle);
+	}
+
+	// Contraptions and the disc rotate around the positive direction of the axis, while the servo's
+	// angles are relative to its front, so they are flipped for negative facings (north, west, down).
+	private float toContraptionAngle(float servoAngle) {
+		BlockState state = getBlockState();
+		if (!state.hasProperty(ServoMotorBlock.FACING)) return servoAngle;
+		return state.getValue(ServoMotorBlock.FACING).getAxisDirection() == Direction.AxisDirection.POSITIVE
+				? servoAngle : -servoAngle;
+	}
+
+	@Override
+	protected void applyRotation() {
+		if (movedContraption == null) return;
+		movedContraption.setAngle(toContraptionAngle(angle));
+		BlockState state = getBlockState();
+		if (state.hasProperty(ServoMotorBlock.FACING))
+			movedContraption.setRotationAxis(state.getValue(ServoMotorBlock.FACING).getAxis());
+	}
+
+	// When the contraption is assembled, the angle is set directly by the redstone
+	// signal every tick continuous spinning is not used.
+	@Override
+	public float getAngularSpeed() {
+		if (running) return 0;
+		return super.getAngularSpeed();
+	}
+
+	@Override
+	public float getGeneratedSpeed() {
+		if (!AllBlocks.SERVO_MOTOR.has(getBlockState())) return 0;
+		return convertToDirection(active ? motorSpeed : 0, getBlockState().getValue(ServoMotorBlock.FACING));
+	}
+
+	@Override
+	public float calculateAddedStressCapacity() {
+		float capacity = 16384 / 256f;
+		this.lastCapacityProvided = capacity;
+		return capacity;
+	}
+
+	@Override
+	protected Block getStressConfigKey() {
+		return AllBlocks.SERVO_MOTOR.get();
+	}
+
+	@Override
+	public void assemble() {
+		// MechanicalBearingBlockEntity.tick() calls assemble() whenever assembleNextTick is set,
+		// which happens on every kinetic speed change. Guard here so the contraption only builds
+		// on an explicit right-click (triggerAssemble sets allowAssemble before setting the flag).
+		if (!allowAssemble) return;
+		allowAssemble = false;
+
+		if (!(level.getBlockState(worldPosition).getBlock() instanceof ServoMotorBlock))
+			return;
+
+		Direction direction = getBlockState().getValue(ServoMotorBlock.FACING);
+		BearingContraption contraption = new BearingContraption(false, direction);
+		try {
+			if (!contraption.assemble(level, worldPosition))
+				return;
+			lastException = null;
+		} catch (AssemblyException e) {
+			lastException = e;
+			sendData();
+			return;
+		}
+
+		contraption.removeBlocksFromWorld(level, BlockPos.ZERO);
+		movedContraption = ControlledContraptionEntity.create(level, this, contraption);
+		BlockPos anchor = worldPosition.relative(direction);
+		movedContraption.setPos(anchor.getX(), anchor.getY(), anchor.getZ());
+		movedContraption.setRotationAxis(direction.getAxis());
+		level.addFreshEntity(movedContraption);
+
+		AllSoundEvents.CONTRAPTION_ASSEMBLE.playOnServer(level, worldPosition);
+
+		if (contraption.containsBlockBreakers())
+			award(AllAdvancements.CONTRAPTION_ACTORS);
+
+		running = true;
+		angle = 0;
+		lastNetSignal = Integer.MIN_VALUE; // force tick() to re-evaluate redstone on next tick
+		sendData();
+		updateGeneratedRotation();
+	}
+
+	@Override
+	public void tick() {
+		if (firstTick) {
+			motorSpeed = generatedSpeed.getValue();
+			firstTick = false;
+		}
+
+		if (!level.isClientSide()) {
+			int con = ElectricMotorBlockEntity.getEnergyConsumptionRate(motorSpeed);
+			if (!running) {
+				// No energy consumed when not assembled; activate whenever the buffer is sufficient
+				boolean hasEnergy = energy.getEnergyStored() >= con;
+				if (active != hasEnergy) {
+					active = hasEnergy;
+					updateGeneratedRotation();
+				}
+			} else {
+				// Assembled: full rate when the angle is stepping, 10% when stationary at target
+				boolean moving = Math.abs(targetAngle - angle) > 0.001f && Math.abs(motorSpeed) > 0f;
+				int consumption = moving ? con : con / 10;
+				if (!active) {
+					if (energy.getEnergyStored() >= con) {
+						active = true;
+						updateGeneratedRotation();
+					}
+				} else {
+					if (energy.internalConsumeEnergy(consumption) < consumption) {
+						active = false;
+						updateGeneratedRotation();
+					}
+				}
+			}
+		}
+
+		super.tick();
+
+		// Net redstone = maxFaceSignal - minFaceSignal, range -15 to +15.
+		// Net 0 → center (angle 0), positive → toward maxAngle, negative → toward minAngle.
+		if (!level.isClientSide() && active) {
+			Direction maxFace = ServoMotorBlock.getTop(getBlockState());
+			Direction minFace = maxFace.getOpposite();
+			int maxSignal = level.getSignal(worldPosition.relative(maxFace), maxFace);
+			int minSignal = level.getSignal(worldPosition.relative(minFace), minFace);
+			int net = maxSignal - minSignal;
+			if (net != lastNetSignal) {
+				lastNetSignal = net;
+				// minAngle.getAngle() already returns a negative value (negated=true)
+				targetAngle = net >= 0
+					? (net / 15.0f) * maxAngle.getAngle()
+					: (-net / 15.0f) * minAngle.getAngle();
+				// Auto-assemble on non-zero signal, auto-disassemble to center handled below
+				if (net != 0 && !running)
+					triggerAssemble();
+				sendData();
+			}
+
+			// Step angle and drive contraption only when assembled
+			if (running) {
+				float diff = targetAngle - angle;
+				float degreesPerTick = Math.abs(motorSpeed) * 360f / 1200f;
+				if (Math.abs(diff) > 0.001f && degreesPerTick > 0f) {
+					angle += Math.signum(diff) * Math.min(Math.abs(diff), degreesPerTick);
+					applyRotation();
+					sendData();
+				}
+				int mode = movementMode.getValue();
+				if (mode == RotationMode.ROTATE_PLACE.ordinal()) {
+					// "Place when stopped": snap to nearest 90° and disassemble at min/max limit
+					if (Math.abs(angle - maxAngle.getAngle()) < 0.1f
+							|| Math.abs(angle - minAngle.getAngle()) < 0.1f) {
+						angle = Math.round(angle / 90f) * 90f;
+						applyRotation();
+						disassemble();
+					}
+				} else if (mode == RotationMode.ROTATE_PLACE_RETURNED.ordinal()) {
+					// "Place near initial angle": disassemble only when back near 0°
+					if (Math.abs(angle) < 0.1f)
+						disassemble();
+				}
+			}
+		}
+	}
+
+
+	@Override
+	public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
+		super.addToGoggleTooltip(tooltip, isPlayerSneaking);
+		CreateLang.builder()
+				.add(Component.translatable(Create.ID + ".tooltip.energy.consumption")
+						.withStyle(ChatFormatting.GRAY))
+				.forGoggles(tooltip);
+		CreateLang.builder()
+				.add(Component.literal(
+						" " + ElectricityUtil.format(ElectricMotorBlockEntity.getEnergyConsumptionRate(generatedSpeed.getValue()))
+								+ "⚡/t ")
+						.withStyle(ChatFormatting.AQUA)
+						.append(CreateLang.translateDirect("gui.goggles.at_current_speed")
+								.withStyle(ChatFormatting.DARK_GRAY)))
+				.forGoggles(tooltip);
+		return true;
+	}
+
+	@Override
+	public void write(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
+		super.write(compound, registries, clientPacket);
+		if (!clientPacket)
+			energy.write(compound);
+		compound.putBoolean("servo_active", active);
+		compound.putFloat("TargetAngle", targetAngle);
+	}
+
+	@Override
+	protected void read(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
+		super.read(compound, registries, clientPacket);
+		if (!clientPacket)
+			energy.read(compound);
+		active = compound.getBooleanOr("servo_active", false);
+		if (compound.contains("TargetAngle"))
+			targetAngle = compound.getFloatOr("TargetAngle", 0);
+		// The parent's client-side read resets angle = angleBefore so kinetic-speed
+		// extrapolation works for normal bearings. We use explicit server-sent angles, so
+		// restore the actual server angle for correct applyRotation() calls each client tick.
+		if (clientPacket && running)
+			angle = compound.getFloatOr("Angle", 0);
+	}
+
+	public void triggerAssemble() {
+		allowAssemble = true;
+		assembleNextTick = true;
+	}
+
+	public float getRPM() {
+		return motorSpeed;
+	}
+
+	public void setRPM(float rpm) {
+		if (!Float.isFinite(rpm)) return;
+		int clamped = (int) Math.max(-AllConfigs.server().electricity.motorRpmRange.get(),
+				Math.min(AllConfigs.server().electricity.motorRpmRange.get(), rpm));
+		generatedSpeed.setValue(clamped);
+		motorSpeed = clamped;
+		updateGeneratedRotation();
+		sendData();
+	}
+
+	public float getCurrentAngle() {
+		return angle;
+	}
+
+	public float getTargetAngle() {
+		return targetAngle;
+	}
+
+	public float getMinAngleDegrees() {
+		return minAngle.getAngle();
+	}
+
+	public void setMinAngleDegrees(int degrees) {
+		minAngle.value = Math.max(0, Math.min(180, Math.abs(degrees)));
+		sendData();
+	}
+
+	public float getMaxAngleDegrees() {
+		return maxAngle.getAngle();
+	}
+
+	public void setMaxAngleDegrees(int degrees) {
+		maxAngle.value = Math.max(0, Math.min(180, Math.abs(degrees)));
+		sendData();
+	}
+
+	public int getEnergyConsumption() {
+		return ElectricMotorBlockEntity.getEnergyConsumptionRate(motorSpeed);
+	}
+}

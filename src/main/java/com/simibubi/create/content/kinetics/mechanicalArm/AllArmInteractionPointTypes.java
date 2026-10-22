@@ -68,6 +68,7 @@ public class AllArmInteractionPointTypes {
 		register("basin", new BasinType());
 		register("belt", new BeltType());
 		register("blaze_burner", new BlazeBurnerType());
+		register("liquid_blaze_burner", new LiquidBlazeBurnerType());
 		register("chute", new ChuteType());
 		register("crafter", new CrafterType());
 		register("crushing_wheels", new CrushingWheelsType());
@@ -127,6 +128,15 @@ public class AllArmInteractionPointTypes {
 
 		@Override
 		public ArmInteractionPoint createPoint(Level level, BlockPos pos, BlockState state) {
+			return new BlazeBurnerPoint(this, level, pos, state);
+		}
+	}
+
+	public static class LiquidBlazeBurnerType extends ArmInteractionPointType {
+		@Override public boolean canCreatePoint(Level level, BlockPos pos, BlockState state) {
+			return AllBlocks.LIQUID_BLAZE_BURNER.has(state);
+		}
+		@Override public ArmInteractionPoint createPoint(Level level, BlockPos pos, BlockState state) {
 			return new BlazeBurnerPoint(this, level, pos, state);
 		}
 	}

@@ -19,6 +19,33 @@ public class CElectricity extends ConfigBase {
 	public final ConfigInt alternatorCapacity = i(5000, 0, "alternatorCapacity", Comments.capacity);
 	public final ConfigFloat alternatorEfficiency = f(.75f, .01f, 1, "alternatorEfficiency", Comments.alternatorEfficiency);
 
+	public final ConfigGroup liquidBlazeBurner = group(1, "liquidBlazeBurner", "Liquid Blaze Burner");
+	public final ConfigInt liquidBurnerCapacity = i(1000, 100, "liquidBurnerCapacity", "Fuel capacity [mB].");
+	public final ConfigInt liquidBurnerHeatCapacity = i(10000, 0, "liquidBurnerHeatCapacity", "Heat capacity [ticks].");
+
+	public final ConfigGroup portableEnergyInterface = group(1, "portableEnergyInterface", "Portable Energy Interface");
+	public final ConfigInt peiMaxInput = i(5000, 0, "peiMaxInput", Comments.maxInput);
+	public final ConfigInt peiMaxOutput = i(5000, 0, "peiMaxOutput", Comments.maxOutput);
+
+	public final ConfigGroup tesla = group(1, "teslaCoil", "Tesla Coil");
+	public final ConfigInt teslaMaxInput = i(10000, 0, "teslaMaxInput", Comments.maxInput);
+	public final ConfigInt teslaChargeRate = i(5000, 0, "teslaChargeRate", "Item charge rate [FE/t].");
+	public final ConfigInt teslaRecipeChargeRate = i(2000, 0, "teslaRecipeChargeRate", "Recipe charge rate [FE/t].");
+	public final ConfigInt teslaCapacity = i(40000, 0, "teslaCapacity", Comments.capacity);
+	public final ConfigInt teslaFireEnergy = i(1000, 0, "teslaFireEnergy", "Energy spent per redstone shock.");
+	public final ConfigInt teslaHurtRange = i(3, 0, "teslaHurtRange", "Shock range [blocks].");
+	public final ConfigInt teslaMobDamage = i(3, 0, "teslaMobDamage", "Damage to mobs.");
+	public final ConfigInt teslaPlayerDamage = i(2, 0, "teslaPlayerDamage", "Damage to players.");
+	public final ConfigInt teslaMobEffectTime = i(20, 0, "teslaMobEffectTime", "Shock duration for mobs [ticks].");
+	public final ConfigInt teslaPlayerEffectTime = i(20, 0, "teslaPlayerEffectTime", "Shock duration for players [ticks].");
+	public final ConfigInt teslaFireCooldown = i(20, 1, "teslaFireCooldown", "Shock interval [ticks].");
+
+	public final ConfigGroup electricPump = group(1, "electricPump", "Electric Pump");
+	public final ConfigInt pumpRpmRange = i(256, 1, "pumpRpmRange", "Pump strength range in equivalent Mechanical Pump RPM.");
+	public final ConfigInt pumpFeAtMaxRpm = i(120, 1, "pumpFeAtMaxRpm", "Electric Pump consumption at 256 RPM [FE/t].");
+	public final ConfigInt pumpMaxInput = i(5000, 0, "pumpMaxInput", Comments.maxInput);
+	public final ConfigInt pumpCapacity = i(5000, 0, "pumpCapacity", Comments.capacity);
+
 	public final ConfigGroup rollingMill = group(1, "rollingMill", "Rolling Mill");
 	public final ConfigInt rollingMillDuration = i(120, 0, "rollingMillProcessingDuration", Comments.rollingMillDuration);
 
@@ -41,6 +68,8 @@ public class CElectricity extends ConfigBase {
 	public final ConfigInt accumulatorCapacity = i(2_000_000, 0, "accumulatorCapacity", Comments.accumulatorCapacity);
 	public final ConfigInt accumulatorMaxHeight = i(5, 1, 8, "accumulatorMaxHeight", Comments.accumulatorMaxHeight);
 	public final ConfigInt accumulatorMaxWidth = i(3, 1, 8, "accumulatorMaxWidth", Comments.accumulatorMaxWidth);
+
+	public final ConfigInt barbedWireDamage = i(2, 0, "barbedWireDamage", "Barbed Wire damage on contact.");
 
 	public final ConfigGroup items = group(1, "items", "Electric items");
 	public final ConfigInt capacitorCapacity = i(5000, 1, "capacitorCapacity", Comments.capacitorCapacity);

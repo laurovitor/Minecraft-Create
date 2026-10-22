@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "create:display_link",
+    "#c:plates/brass",
+    "minecraft:redstone_torch"
+  ],
+  "result": {
+    "id": "create:digital_adapter"
+  }
+}

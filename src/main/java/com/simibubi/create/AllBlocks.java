@@ -291,6 +291,15 @@ import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.simibubi.create.foundation.data.ModelSlots;
 import com.simibubi.create.foundation.data.MetalBarsGen;
 import com.simibubi.create.foundation.data.SharedProperties;
+import com.simibubi.create.content.electricity.barbedwire.BarbedWireBlock;
+import com.simibubi.create.content.electricity.digital.DigitalAdapterBlock;
+import com.simibubi.create.content.electricity.pump.ElectricPumpBlock;
+import com.simibubi.create.content.electricity.tesla.TeslaCoilBlock;
+import com.simibubi.create.content.electricity.servo.ServoMotorBlock;
+import com.simibubi.create.content.electricity.relay.RedstoneRelayBlock;
+import com.simibubi.create.content.electricity.portable.PortableEnergyInterfaceBlock;
+import com.simibubi.create.content.electricity.portable.ModularAccumulatorMovement;
+import com.simibubi.create.content.electricity.burner.LiquidBlazeBurnerBlock;
 import com.simibubi.create.content.electricity.accumulator.ModularAccumulatorBlock;
 import com.simibubi.create.content.electricity.accumulator.ModularAccumulatorBlockItem;
 import com.simibubi.create.content.electricity.accumulator.ModularAccumulatorCTBehaviour;
@@ -1535,6 +1544,12 @@ public class AllBlocks {
 		.transform(BuilderTransformers.casing(() -> AllSpriteShifts.COPPER_CASING))
 		.register();
 
+	public static final BlockEntry<CasingBlock> COPPER_WIRE_CASING = REGISTRATE.block("copper_wire_casing", CasingBlock::new)
+		.properties(p -> p.mapColor(MapColor.TERRACOTTA_LIGHT_GRAY).sound(SoundType.COPPER))
+		.transform(BuilderTransformers.casing(() -> AllSpriteShifts.COPPER_WIRE_CASING))
+		.lang("Copper Wire Casing")
+		.register();
+
 	public static final BlockEntry<CasingBlock> SHADOW_STEEL_CASING =
 		REGISTRATE.block("shadow_steel_casing", CasingBlock::new)
 			.properties(p -> p.mapColor(MapColor.COLOR_BLACK))
@@ -2427,6 +2442,7 @@ public class AllBlocks {
 			.properties(BlockBehaviour.Properties::noOcclusion)
 			.transform(pickaxeOnly())
 			.onRegister(connectedTextures(ModularAccumulatorCTBehaviour::new))
+			.onRegister(movementBehaviour(new ModularAccumulatorMovement()))
 			.transform(displaySource(AllDisplaySources.MODULAR_ACCUMULATOR))
 				// Hand-written under src/main/resources: client datagen is not ported to 26.3 yet.
 			.blockstate(() -> (c, p) -> {})
@@ -2447,6 +2463,57 @@ public class AllBlocks {
 		.properties(p -> p.rarity(Rarity.EPIC))
 		.transform(customItemModel())
 		.register();
+
+	public static final BlockEntry<BarbedWireBlock> BARBED_WIRE = REGISTRATE.block("barbed_wire", BarbedWireBlock::new)
+		.initialProperties(() -> Blocks.COBWEB)
+		.properties(p -> p.noCollision().requiresCorrectToolForDrops().strength(4.0f))
+		.transform(pickaxeOnly())
+		.blockstate(() -> (c, p) -> {})
+		.item().transform(customItemModel()).register();
+
+	public static final BlockEntry<DigitalAdapterBlock> DIGITAL_ADAPTER = REGISTRATE.block("digital_adapter", DigitalAdapterBlock::new)
+		.initialProperties(SharedProperties::softMetal)
+		.transform(pickaxeOnly())
+		.transform(displaySource(AllDisplaySources.DIGITAL_ADAPTER))
+		.blockstate(() -> (c, p) -> {})
+		.item().transform(customItemModel()).register();
+
+	public static final BlockEntry<ElectricPumpBlock> ELECTRIC_PUMP = REGISTRATE.block("electric_pump", ElectricPumpBlock::new)
+		.initialProperties(SharedProperties::softMetal).properties(p -> p.noOcclusion())
+		.transform(pickaxeOnly()).blockstate(() -> (c, p) -> {})
+		.item().transform(customItemModel()).register();
+
+	public static final BlockEntry<TeslaCoilBlock> TESLA_COIL = REGISTRATE.block("tesla_coil", TeslaCoilBlock::new)
+		.initialProperties(SharedProperties::softMetal)
+		.properties(p -> p.lightLevel(s -> s.getValue(TeslaCoilBlock.POWERED) ? 10 : 0))
+		.transform(pickaxeOnly()).blockstate(() -> (c, p) -> {})
+		.item().transform(customItemModel()).register();
+
+	public static final BlockEntry<ServoMotorBlock> SERVO_MOTOR = REGISTRATE.block("servo_motor", ServoMotorBlock::new)
+		.initialProperties(SharedProperties::softMetal).properties(p -> p.noOcclusion())
+		.transform(pickaxeOnly()).transform(CStress.setCapacity(64.0))
+		.onRegister(BlockStressValues.setGeneratorSpeed(256, true))
+		.blockstate(() -> (c, p) -> {}).item().transform(customItemModel()).register();
+
+	public static final BlockEntry<RedstoneRelayBlock> REDSTONE_RELAY = REGISTRATE.block("redstone_relay", RedstoneRelayBlock::new)
+		.initialProperties(SharedProperties::stone)
+		.onRegister(movementBehaviour(new NodeMovementBehaviour()))
+		.blockstate(() -> (c, p) -> {}).item().transform(customItemModel()).register();
+
+	public static final BlockEntry<PortableEnergyInterfaceBlock> PORTABLE_ENERGY_INTERFACE =
+		REGISTRATE.block("portable_energy_interface", PortableEnergyInterfaceBlock::new)
+			.initialProperties(SharedProperties::softMetal)
+			.transform(pickaxeOnly()).blockstate(() -> (c, p) -> {})
+			.onRegister(movementBehaviour(new PortableStorageInterfaceMovement()))
+			.item().tag(AllItemTags.CONTRAPTION_CONTROLLED.tag)
+			.transform(customItemModel()).register();
+
+	public static final BlockEntry<LiquidBlazeBurnerBlock> LIQUID_BLAZE_BURNER =
+		REGISTRATE.block("liquid_blaze_burner", LiquidBlazeBurnerBlock::new)
+			.initialProperties(SharedProperties::softMetal)
+			.properties(p -> p.lightLevel(LiquidBlazeBurnerBlock::getLight))
+			.transform(pickaxeOnly()).blockstate(() -> (c, p) -> {})
+			.item().transform(customItemModel()).register();
 
 	// Materials
 

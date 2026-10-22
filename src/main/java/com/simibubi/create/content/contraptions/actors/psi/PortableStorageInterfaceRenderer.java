@@ -139,6 +139,9 @@ public class PortableStorageInterfaceRenderer
 	}
 
 	static PartialModel getMiddleForState(BlockState state, boolean lit) {
+		if (AllBlocks.PORTABLE_ENERGY_INTERFACE.has(state))
+			return lit ? AllPartialModels.PORTABLE_ENERGY_INTERFACE_MIDDLE_POWERED
+				: AllPartialModels.PORTABLE_ENERGY_INTERFACE_MIDDLE;
 		if (AllBlocks.PORTABLE_FLUID_INTERFACE.has(state))
 			return lit ? AllPartialModels.PORTABLE_FLUID_INTERFACE_MIDDLE_POWERED
 				: AllPartialModels.PORTABLE_FLUID_INTERFACE_MIDDLE;
@@ -147,6 +150,8 @@ public class PortableStorageInterfaceRenderer
 	}
 
 	static PartialModel getTopForState(BlockState state) {
+		if (AllBlocks.PORTABLE_ENERGY_INTERFACE.has(state))
+			return AllPartialModels.PORTABLE_ENERGY_INTERFACE_TOP;
 		if (AllBlocks.PORTABLE_FLUID_INTERFACE.has(state))
 			return AllPartialModels.PORTABLE_FLUID_INTERFACE_TOP;
 		return AllPartialModels.PORTABLE_STORAGE_INTERFACE_TOP;

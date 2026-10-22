@@ -19,7 +19,9 @@ public class AllDamageTypes {
 			ROLLER = key("mechanical_roller"),
 			SAW = key("mechanical_saw"),
 			POTATO_CANNON = key("potato_cannon"),
-			RUN_OVER = key("run_over");
+			RUN_OVER = key("run_over"),
+			BARBED_WIRE = key("barbed_wire"),
+			TESLA_COIL = key("tesla_coil");
 
 	private static ResourceKey<DamageType> key(String name) {
 		return ResourceKey.create(Registries.DAMAGE_TYPE, Create.asResource(name));
@@ -35,5 +37,7 @@ public class AllDamageTypes {
 		new DamageTypeBuilder(SAW).register(ctx);
 		new DamageTypeBuilder(POTATO_CANNON).register(ctx);
 		new DamageTypeBuilder(RUN_OVER).register(ctx);
+		new DamageTypeBuilder(BARBED_WIRE).register(ctx);
+		new DamageTypeBuilder(TESLA_COIL).register(ctx);
 	}
 }

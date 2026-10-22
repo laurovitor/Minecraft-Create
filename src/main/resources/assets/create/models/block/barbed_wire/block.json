@@ -1,0 +1,71 @@
+{
+	"format_version": "1.21.11",
+	"credit": "Made with Blockbench",
+	"textures": {
+		"0": "create:block/barbed_wire/block",
+		"particle": "create:block/barbed_wire/block"
+	},
+	"elements": [
+		{
+			"name": "Plane",
+			"from": [0, 0, -1],
+			"to": [16, 18, -1],
+			"rotation": {"angle": 22.5, "axis": "x", "origin": [0, 0, -1]},
+			"faces": {
+				"north": {"uv": [0, 0, 16, 16], "texture": "#0"},
+				"south": {"uv": [0, 0, 16, 16], "texture": "#0"}
+			}
+		},
+		{
+			"name": "Plane",
+			"from": [0, 0, 7],
+			"to": [16, 18, 7],
+			"rotation": {"angle": 22.5, "axis": "x", "origin": [0, 0, 7]},
+			"faces": {
+				"north": {"uv": [0, 0, 16, 16], "texture": "#0"},
+				"south": {"uv": [0, 0, 16, 16], "texture": "#0"}
+			}
+		},
+		{
+			"name": "Plane",
+			"from": [0, 0, 9],
+			"to": [16, 18, 9],
+			"rotation": {"angle": -22.5, "axis": "x", "origin": [0, 0, 9]},
+			"faces": {
+				"north": {"uv": [0, 0, 16, 16], "texture": "#0"},
+				"south": {"uv": [0, 0, 16, 16], "texture": "#0"}
+			}
+		},
+		{
+			"name": "Plane",
+			"from": [0, 0, 17],
+			"to": [16, 18, 17],
+			"rotation": {"angle": -22.5, "axis": "x", "origin": [0, 0, 17]},
+			"faces": {
+				"north": {"uv": [0, 0, 16, 16], "texture": "#0"},
+				"south": {"uv": [0, 0, 16, 16], "texture": "#0"}
+			}
+		}
+	],
+	"display": {
+		"thirdperson_righthand": {
+			"scale": [0.25, 0.25, 0.25]
+		},
+		"thirdperson_lefthand": {
+			"scale": [0.25, 0.25, 0.25]
+		},
+		"firstperson_righthand": {
+			"scale": [0.25, 0.25, 0.25]
+		},
+		"firstperson_lefthand": {
+			"scale": [0.25, 0.25, 0.25]
+		},
+		"ground": {
+			"scale": [0.25, 0.25, 0.25]
+		},
+		"gui": {
+			"rotation": [30, 45, 0],
+			"scale": [0.7, 0.7, 0.7]
+		}
+	}
+}

@@ -285,6 +285,9 @@ public class AllItems {
 		ELECTRUM_SPOOL = REGISTRATE.item("electrum_spool", WireSpool::new).register(),
 		FESTIVE_SPOOL = REGISTRATE.item("festive_spool", WireSpool::new).register();
 
+	public static final ItemEntry<Item> STRAW = REGISTRATE.item("straw", Item::new)
+		.properties(p -> p.stacksTo(16)).register();
+
 	public static final ItemEntry<CapacitorItem> CAPACITOR = REGISTRATE.item("capacitor", CapacitorItem::new)
 		.register();
 

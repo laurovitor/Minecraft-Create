@@ -1,0 +1,216 @@
+{
+  "variants": {
+    "facing=down,roll=0,powered=false": {
+      "model": "create:block/servo_motor/block",
+      "x": 270,
+      "y": 270
+    },
+    "facing=down,roll=0,powered=true": {
+      "model": "create:block/servo_motor/block",
+      "x": 270,
+      "y": 270
+    },
+    "facing=down,roll=1,powered=false": {
+      "model": "create:block/servo_motor/block",
+      "x": 270
+    },
+    "facing=down,roll=1,powered=true": {
+      "model": "create:block/servo_motor/block",
+      "x": 270
+    },
+    "facing=down,roll=2,powered=false": {
+      "model": "create:block/servo_motor/block",
+      "x": 270,
+      "y": 90
+    },
+    "facing=down,roll=2,powered=true": {
+      "model": "create:block/servo_motor/block",
+      "x": 270,
+      "y": 90
+    },
+    "facing=down,roll=3,powered=false": {
+      "model": "create:block/servo_motor/block",
+      "x": 270,
+      "y": 180
+    },
+    "facing=down,roll=3,powered=true": {
+      "model": "create:block/servo_motor/block",
+      "x": 270,
+      "y": 180
+    },
+    "facing=east,roll=0,powered=false": {
+      "model": "create:block/servo_motor/block",
+      "y": 270
+    },
+    "facing=east,roll=0,powered=true": {
+      "model": "create:block/servo_motor/block",
+      "y": 270
+    },
+    "facing=east,roll=1,powered=false": {
+      "model": "create:block/servo_motor/block_rolled",
+      "x": 180,
+      "y": 90
+    },
+    "facing=east,roll=1,powered=true": {
+      "model": "create:block/servo_motor/block_rolled",
+      "x": 180,
+      "y": 90
+    },
+    "facing=east,roll=2,powered=false": {
+      "model": "create:block/servo_motor/block",
+      "x": 180,
+      "y": 90
+    },
+    "facing=east,roll=2,powered=true": {
+      "model": "create:block/servo_motor/block",
+      "x": 180,
+      "y": 90
+    },
+    "facing=east,roll=3,powered=false": {
+      "model": "create:block/servo_motor/block_rolled",
+      "y": 270
+    },
+    "facing=east,roll=3,powered=true": {
+      "model": "create:block/servo_motor/block_rolled",
+      "y": 270
+    },
+    "facing=north,roll=0,powered=false": {
+      "model": "create:block/servo_motor/block",
+      "y": 180
+    },
+    "facing=north,roll=0,powered=true": {
+      "model": "create:block/servo_motor/block",
+      "y": 180
+    },
+    "facing=north,roll=1,powered=false": {
+      "model": "create:block/servo_motor/block_rolled",
+      "y": 180
+    },
+    "facing=north,roll=1,powered=true": {
+      "model": "create:block/servo_motor/block_rolled",
+      "y": 180
+    },
+    "facing=north,roll=2,powered=false": {
+      "model": "create:block/servo_motor/block",
+      "x": 180
+    },
+    "facing=north,roll=2,powered=true": {
+      "model": "create:block/servo_motor/block",
+      "x": 180
+    },
+    "facing=north,roll=3,powered=false": {
+      "model": "create:block/servo_motor/block_rolled",
+      "x": 180
+    },
+    "facing=north,roll=3,powered=true": {
+      "model": "create:block/servo_motor/block_rolled",
+      "x": 180
+    },
+    "facing=south,roll=0,powered=false": {
+      "model": "create:block/servo_motor/block"
+    },
+    "facing=south,roll=0,powered=true": {
+      "model": "create:block/servo_motor/block"
+    },
+    "facing=south,roll=1,powered=false": {
+      "model": "create:block/servo_motor/block_rolled",
+      "x": 180,
+      "y": 180
+    },
+    "facing=south,roll=1,powered=true": {
+      "model": "create:block/servo_motor/block_rolled",
+      "x": 180,
+      "y": 180
+    },
+    "facing=south,roll=2,powered=false": {
+      "model": "create:block/servo_motor/block",
+      "x": 180,
+      "y": 180
+    },
+    "facing=south,roll=2,powered=true": {
+      "model": "create:block/servo_motor/block",
+      "x": 180,
+      "y": 180
+    },
+    "facing=south,roll=3,powered=false": {
+      "model": "create:block/servo_motor/block_rolled"
+    },
+    "facing=south,roll=3,powered=true": {
+      "model": "create:block/servo_motor/block_rolled"
+    },
+    "facing=up,roll=0,powered=false": {
+      "model": "create:block/servo_motor/block",
+      "x": 90,
+      "y": 90
+    },
+    "facing=up,roll=0,powered=true": {
+      "model": "create:block/servo_motor/block",
+      "x": 90,
+      "y": 90
+    },
+    "facing=up,roll=1,powered=false": {
+      "model": "create:block/servo_motor/block",
+      "x": 90,
+      "y": 180
+    },
+    "facing=up,roll=1,powered=true": {
+      "model": "create:block/servo_motor/block",
+      "x": 90,
+      "y": 180
+    },
+    "facing=up,roll=2,powered=false": {
+      "model": "create:block/servo_motor/block",
+      "x": 90,
+      "y": 270
+    },
+    "facing=up,roll=2,powered=true": {
+      "model": "create:block/servo_motor/block",
+      "x": 90,
+      "y": 270
+    },
+    "facing=up,roll=3,powered=false": {
+      "model": "create:block/servo_motor/block",
+      "x": 90
+    },
+    "facing=up,roll=3,powered=true": {
+      "model": "create:block/servo_motor/block",
+      "x": 90
+    },
+    "facing=west,roll=0,powered=false": {
+      "model": "create:block/servo_motor/block",
+      "y": 90
+    },
+    "facing=west,roll=0,powered=true": {
+      "model": "create:block/servo_motor/block",
+      "y": 90
+    },
+    "facing=west,roll=1,powered=false": {
+      "model": "create:block/servo_motor/block_rolled",
+      "y": 90
+    },
+    "facing=west,roll=1,powered=true": {
+      "model": "create:block/servo_motor/block_rolled",
+      "y": 90
+    },
+    "facing=west,roll=2,powered=false": {
+      "model": "create:block/servo_motor/block",
+      "x": 180,
+      "y": 270
+    },
+    "facing=west,roll=2,powered=true": {
+      "model": "create:block/servo_motor/block",
+      "x": 180,
+      "y": 270
+    },
+    "facing=west,roll=3,powered=false": {
+      "model": "create:block/servo_motor/block_rolled",
+      "x": 180,
+      "y": 270
+    },
+    "facing=west,roll=3,powered=true": {
+      "model": "create:block/servo_motor/block_rolled",
+      "x": 180,
+      "y": 270
+    }
+  }
+}

@@ -58,6 +58,10 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
 import com.simibubi.create.content.kinetics.rollingMill.RollingRecipe;
+import com.simibubi.create.content.electricity.recipe.ChargingRecipe;
+import com.simibubi.create.content.electricity.recipe.ChargingRecipeParams;
+import com.simibubi.create.content.electricity.recipe.LiquidBurningRecipe;
+import com.simibubi.create.content.electricity.recipe.LiquidBurningRecipeParams;
 
 public enum AllRecipeTypes implements IRecipeTypeInfo, StringRepresentable {
 
@@ -70,6 +74,8 @@ public enum AllRecipeTypes implements IRecipeTypeInfo, StringRepresentable {
 	COMPACTING(CompactingRecipe::new),
 	PRESSING(PressingRecipe::new),
 	ROLLING(RollingRecipe::new),
+	CHARGING(new ProcessingSerializer<>(ChargingRecipe::new, ChargingRecipeParams.CODEC, ChargingRecipeParams.STREAM_CODEC)),
+	LIQUID_BURNING(new ProcessingSerializer<>(LiquidBurningRecipe::new, LiquidBurningRecipeParams.CODEC, LiquidBurningRecipeParams.STREAM_CODEC)),
 	SANDPAPER_POLISHING(SandPaperPolishingRecipe::new),
 	SPLASHING(SplashingRecipe::new),
 	HAUNTING(HauntingRecipe::new),

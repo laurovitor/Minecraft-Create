@@ -65,6 +65,7 @@ public class AllSpriteShifts {
 
 	public static final CTSpriteShiftEntry ANDESITE_CASING = omni("andesite_casing"),
 		BRASS_CASING = omni("brass_casing"), COPPER_CASING = omni("copper_casing"),
+		COPPER_WIRE_CASING = omni("copper_wire_casing/block"),
 		SHADOW_STEEL_CASING = omni("shadow_steel_casing"), REFINED_RADIANCE_CASING = omni("refined_radiance_casing"),
 		RAILWAY_CASING = omni("railway_casing"), RAILWAY_CASING_SIDE = omni("railway_casing_side"),
 		CREATIVE_CASING = getCT(AllCTTypes.RECTANGLE, "creative_casing");

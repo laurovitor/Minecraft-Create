@@ -237,6 +237,13 @@ import com.simibubi.create.foundation.blockEntity.renderer.SmartBlockEntityRende
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.tterrag.registrate.util.entry.BlockEntityEntry;
 
+import com.simibubi.create.content.electricity.digital.DigitalAdapterBlockEntity;
+import com.simibubi.create.content.electricity.pump.ElectricPumpBlockEntity;
+import com.simibubi.create.content.electricity.tesla.TeslaCoilBlockEntity;
+import com.simibubi.create.content.electricity.servo.ServoMotorBlockEntity;
+import com.simibubi.create.content.electricity.relay.RedstoneRelayBlockEntity;
+import com.simibubi.create.content.electricity.portable.PortableEnergyInterfaceBlockEntity;
+import com.simibubi.create.content.electricity.burner.LiquidBlazeBurnerBlockEntity;
 import com.simibubi.create.content.electricity.accumulator.ModularAccumulatorBlockEntity;
 import com.simibubi.create.content.electricity.accumulator.ModularAccumulatorRenderer;
 import com.simibubi.create.content.electricity.alternator.AlternatorBlockEntity;
@@ -303,6 +310,37 @@ public class AllBlockEntityTypes {
 		.validBlocks(AllBlocks.ROLLING_MILL)
 		.renderer(() -> RollingMillRenderer::new)
 		.register();
+
+	public static final BlockEntityEntry<LiquidBlazeBurnerBlockEntity> LIQUID_BLAZE_BURNER = REGISTRATE
+		.blockEntity("liquid_blaze_burner", LiquidBlazeBurnerBlockEntity::new)
+		.visual(() -> BlazeBurnerVisual::new).validBlocks(AllBlocks.LIQUID_BLAZE_BURNER)
+		.renderer(() -> BlazeBurnerRenderer::new).register();
+
+	public static final BlockEntityEntry<PortableEnergyInterfaceBlockEntity> PORTABLE_ENERGY_INTERFACE = REGISTRATE
+		.blockEntity("portable_energy_interface", PortableEnergyInterfaceBlockEntity::new)
+		.visual(() -> PSIVisual::new).validBlocks(AllBlocks.PORTABLE_ENERGY_INTERFACE)
+		.renderer(() -> PortableStorageInterfaceRenderer::new).register();
+
+	public static final BlockEntityEntry<RedstoneRelayBlockEntity> REDSTONE_RELAY = REGISTRATE
+		.blockEntity("redstone_relay", RedstoneRelayBlockEntity::new)
+		.validBlocks(AllBlocks.REDSTONE_RELAY).register();
+
+	public static final BlockEntityEntry<ServoMotorBlockEntity> SERVO_MOTOR = REGISTRATE
+		.blockEntity("servo_motor", ServoMotorBlockEntity::new)
+		.visual(() -> BearingVisual::new).validBlocks(AllBlocks.SERVO_MOTOR)
+		.renderer(() -> BearingRenderer::new).register();
+
+	public static final BlockEntityEntry<TeslaCoilBlockEntity> TESLA_COIL = REGISTRATE
+		.blockEntity("tesla_coil", TeslaCoilBlockEntity::new)
+		.validBlocks(AllBlocks.TESLA_COIL).register();
+
+	public static final BlockEntityEntry<ElectricPumpBlockEntity> ELECTRIC_PUMP = REGISTRATE
+		.blockEntity("electric_pump", ElectricPumpBlockEntity::new)
+		.validBlocks(AllBlocks.ELECTRIC_PUMP).register();
+
+	public static final BlockEntityEntry<DigitalAdapterBlockEntity> DIGITAL_ADAPTER = REGISTRATE
+		.blockEntity("digital_adapter", DigitalAdapterBlockEntity::new)
+		.validBlocks(AllBlocks.DIGITAL_ADAPTER).register();
 
 	public static final BlockEntityEntry<CreativeEnergyBlockEntity> CREATIVE_ENERGY = REGISTRATE
 		.blockEntity("creative_energy", CreativeEnergyBlockEntity::new)

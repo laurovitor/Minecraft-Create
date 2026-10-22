@@ -1,0 +1,684 @@
+{
+  "variants": {
+    "facing=east,powered=false,vertical=false,rotation=none": {
+      "model": "create:block/redstone_relay/redstone_relay_off"
+    },
+    "facing=east,powered=false,vertical=false,rotation=y_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off"
+    },
+    "facing=east,powered=false,vertical=false,rotation=y_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_off"
+    },
+    "facing=east,powered=false,vertical=false,rotation=y_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off"
+    },
+    "facing=east,powered=false,vertical=false,rotation=x_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off"
+    },
+    "facing=east,powered=false,vertical=false,rotation=x_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_off"
+    },
+    "facing=east,powered=false,vertical=false,rotation=x_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off"
+    },
+    "facing=east,powered=false,vertical=false,rotation=z_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off"
+    },
+    "facing=east,powered=false,vertical=false,rotation=z_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_off"
+    },
+    "facing=east,powered=false,vertical=false,rotation=z_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off"
+    },
+    "facing=east,powered=false,vertical=true,rotation=none": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90,
+      "y": 270
+    },
+    "facing=east,powered=false,vertical=true,rotation=y_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90,
+      "y": 270
+    },
+    "facing=east,powered=false,vertical=true,rotation=y_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90,
+      "y": 270
+    },
+    "facing=east,powered=false,vertical=true,rotation=y_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90,
+      "y": 270
+    },
+    "facing=east,powered=false,vertical=true,rotation=x_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90,
+      "y": 270
+    },
+    "facing=east,powered=false,vertical=true,rotation=x_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90,
+      "y": 270
+    },
+    "facing=east,powered=false,vertical=true,rotation=x_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90,
+      "y": 270
+    },
+    "facing=east,powered=false,vertical=true,rotation=z_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90,
+      "y": 270
+    },
+    "facing=east,powered=false,vertical=true,rotation=z_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90,
+      "y": 270
+    },
+    "facing=east,powered=false,vertical=true,rotation=z_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90,
+      "y": 270
+    },
+    "facing=east,powered=true,vertical=false,rotation=none": {
+      "model": "create:block/redstone_relay/redstone_relay_on"
+    },
+    "facing=east,powered=true,vertical=false,rotation=y_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on"
+    },
+    "facing=east,powered=true,vertical=false,rotation=y_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_on"
+    },
+    "facing=east,powered=true,vertical=false,rotation=y_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on"
+    },
+    "facing=east,powered=true,vertical=false,rotation=x_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on"
+    },
+    "facing=east,powered=true,vertical=false,rotation=x_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_on"
+    },
+    "facing=east,powered=true,vertical=false,rotation=x_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on"
+    },
+    "facing=east,powered=true,vertical=false,rotation=z_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on"
+    },
+    "facing=east,powered=true,vertical=false,rotation=z_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_on"
+    },
+    "facing=east,powered=true,vertical=false,rotation=z_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on"
+    },
+    "facing=east,powered=true,vertical=true,rotation=none": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90,
+      "y": 270
+    },
+    "facing=east,powered=true,vertical=true,rotation=y_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90,
+      "y": 270
+    },
+    "facing=east,powered=true,vertical=true,rotation=y_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90,
+      "y": 270
+    },
+    "facing=east,powered=true,vertical=true,rotation=y_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90,
+      "y": 270
+    },
+    "facing=east,powered=true,vertical=true,rotation=x_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90,
+      "y": 270
+    },
+    "facing=east,powered=true,vertical=true,rotation=x_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90,
+      "y": 270
+    },
+    "facing=east,powered=true,vertical=true,rotation=x_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90,
+      "y": 270
+    },
+    "facing=east,powered=true,vertical=true,rotation=z_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90,
+      "y": 270
+    },
+    "facing=east,powered=true,vertical=true,rotation=z_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90,
+      "y": 270
+    },
+    "facing=east,powered=true,vertical=true,rotation=z_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90,
+      "y": 270
+    },
+    "facing=north,powered=false,vertical=false,rotation=none": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "y": 270
+    },
+    "facing=north,powered=false,vertical=false,rotation=y_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "y": 270
+    },
+    "facing=north,powered=false,vertical=false,rotation=y_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "y": 270
+    },
+    "facing=north,powered=false,vertical=false,rotation=y_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "y": 270
+    },
+    "facing=north,powered=false,vertical=false,rotation=x_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "y": 270
+    },
+    "facing=north,powered=false,vertical=false,rotation=x_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "y": 270
+    },
+    "facing=north,powered=false,vertical=false,rotation=x_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "y": 270
+    },
+    "facing=north,powered=false,vertical=false,rotation=z_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "y": 270
+    },
+    "facing=north,powered=false,vertical=false,rotation=z_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "y": 270
+    },
+    "facing=north,powered=false,vertical=false,rotation=z_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "y": 270
+    },
+    "facing=north,powered=false,vertical=true,rotation=none": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90,
+      "y": 180
+    },
+    "facing=north,powered=false,vertical=true,rotation=y_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90,
+      "y": 180
+    },
+    "facing=north,powered=false,vertical=true,rotation=y_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90,
+      "y": 180
+    },
+    "facing=north,powered=false,vertical=true,rotation=y_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90,
+      "y": 180
+    },
+    "facing=north,powered=false,vertical=true,rotation=x_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90,
+      "y": 180
+    },
+    "facing=north,powered=false,vertical=true,rotation=x_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90,
+      "y": 180
+    },
+    "facing=north,powered=false,vertical=true,rotation=x_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90,
+      "y": 180
+    },
+    "facing=north,powered=false,vertical=true,rotation=z_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90,
+      "y": 180
+    },
+    "facing=north,powered=false,vertical=true,rotation=z_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90,
+      "y": 180
+    },
+    "facing=north,powered=false,vertical=true,rotation=z_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90,
+      "y": 180
+    },
+    "facing=north,powered=true,vertical=false,rotation=none": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "y": 270
+    },
+    "facing=north,powered=true,vertical=false,rotation=y_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "y": 270
+    },
+    "facing=north,powered=true,vertical=false,rotation=y_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "y": 270
+    },
+    "facing=north,powered=true,vertical=false,rotation=y_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "y": 270
+    },
+    "facing=north,powered=true,vertical=false,rotation=x_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "y": 270
+    },
+    "facing=north,powered=true,vertical=false,rotation=x_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "y": 270
+    },
+    "facing=north,powered=true,vertical=false,rotation=x_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "y": 270
+    },
+    "facing=north,powered=true,vertical=false,rotation=z_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "y": 270
+    },
+    "facing=north,powered=true,vertical=false,rotation=z_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "y": 270
+    },
+    "facing=north,powered=true,vertical=false,rotation=z_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "y": 270
+    },
+    "facing=north,powered=true,vertical=true,rotation=none": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90,
+      "y": 180
+    },
+    "facing=north,powered=true,vertical=true,rotation=y_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90,
+      "y": 180
+    },
+    "facing=north,powered=true,vertical=true,rotation=y_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90,
+      "y": 180
+    },
+    "facing=north,powered=true,vertical=true,rotation=y_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90,
+      "y": 180
+    },
+    "facing=north,powered=true,vertical=true,rotation=x_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90,
+      "y": 180
+    },
+    "facing=north,powered=true,vertical=true,rotation=x_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90,
+      "y": 180
+    },
+    "facing=north,powered=true,vertical=true,rotation=x_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90,
+      "y": 180
+    },
+    "facing=north,powered=true,vertical=true,rotation=z_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90,
+      "y": 180
+    },
+    "facing=north,powered=true,vertical=true,rotation=z_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90,
+      "y": 180
+    },
+    "facing=north,powered=true,vertical=true,rotation=z_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,powered=false,vertical=false,rotation=none": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "y": 90
+    },
+    "facing=south,powered=false,vertical=false,rotation=y_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "y": 90
+    },
+    "facing=south,powered=false,vertical=false,rotation=y_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "y": 90
+    },
+    "facing=south,powered=false,vertical=false,rotation=y_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "y": 90
+    },
+    "facing=south,powered=false,vertical=false,rotation=x_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "y": 90
+    },
+    "facing=south,powered=false,vertical=false,rotation=x_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "y": 90
+    },
+    "facing=south,powered=false,vertical=false,rotation=x_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "y": 90
+    },
+    "facing=south,powered=false,vertical=false,rotation=z_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "y": 90
+    },
+    "facing=south,powered=false,vertical=false,rotation=z_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "y": 90
+    },
+    "facing=south,powered=false,vertical=false,rotation=z_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "y": 90
+    },
+    "facing=south,powered=false,vertical=true,rotation=none": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90
+    },
+    "facing=south,powered=false,vertical=true,rotation=y_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90
+    },
+    "facing=south,powered=false,vertical=true,rotation=y_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90
+    },
+    "facing=south,powered=false,vertical=true,rotation=y_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90
+    },
+    "facing=south,powered=false,vertical=true,rotation=x_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90
+    },
+    "facing=south,powered=false,vertical=true,rotation=x_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90
+    },
+    "facing=south,powered=false,vertical=true,rotation=x_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90
+    },
+    "facing=south,powered=false,vertical=true,rotation=z_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90
+    },
+    "facing=south,powered=false,vertical=true,rotation=z_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90
+    },
+    "facing=south,powered=false,vertical=true,rotation=z_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90
+    },
+    "facing=south,powered=true,vertical=false,rotation=none": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "y": 90
+    },
+    "facing=south,powered=true,vertical=false,rotation=y_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "y": 90
+    },
+    "facing=south,powered=true,vertical=false,rotation=y_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "y": 90
+    },
+    "facing=south,powered=true,vertical=false,rotation=y_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "y": 90
+    },
+    "facing=south,powered=true,vertical=false,rotation=x_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "y": 90
+    },
+    "facing=south,powered=true,vertical=false,rotation=x_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "y": 90
+    },
+    "facing=south,powered=true,vertical=false,rotation=x_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "y": 90
+    },
+    "facing=south,powered=true,vertical=false,rotation=z_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "y": 90
+    },
+    "facing=south,powered=true,vertical=false,rotation=z_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "y": 90
+    },
+    "facing=south,powered=true,vertical=false,rotation=z_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "y": 90
+    },
+    "facing=south,powered=true,vertical=true,rotation=none": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90
+    },
+    "facing=south,powered=true,vertical=true,rotation=y_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90
+    },
+    "facing=south,powered=true,vertical=true,rotation=y_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90
+    },
+    "facing=south,powered=true,vertical=true,rotation=y_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90
+    },
+    "facing=south,powered=true,vertical=true,rotation=x_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90
+    },
+    "facing=south,powered=true,vertical=true,rotation=x_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90
+    },
+    "facing=south,powered=true,vertical=true,rotation=x_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90
+    },
+    "facing=south,powered=true,vertical=true,rotation=z_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90
+    },
+    "facing=south,powered=true,vertical=true,rotation=z_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90
+    },
+    "facing=south,powered=true,vertical=true,rotation=z_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90
+    },
+    "facing=west,powered=false,vertical=false,rotation=none": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "y": 180
+    },
+    "facing=west,powered=false,vertical=false,rotation=y_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "y": 180
+    },
+    "facing=west,powered=false,vertical=false,rotation=y_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "y": 180
+    },
+    "facing=west,powered=false,vertical=false,rotation=y_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "y": 180
+    },
+    "facing=west,powered=false,vertical=false,rotation=x_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "y": 180
+    },
+    "facing=west,powered=false,vertical=false,rotation=x_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "y": 180
+    },
+    "facing=west,powered=false,vertical=false,rotation=x_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "y": 180
+    },
+    "facing=west,powered=false,vertical=false,rotation=z_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "y": 180
+    },
+    "facing=west,powered=false,vertical=false,rotation=z_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "y": 180
+    },
+    "facing=west,powered=false,vertical=false,rotation=z_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "y": 180
+    },
+    "facing=west,powered=false,vertical=true,rotation=none": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90,
+      "y": 90
+    },
+    "facing=west,powered=false,vertical=true,rotation=y_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90,
+      "y": 90
+    },
+    "facing=west,powered=false,vertical=true,rotation=y_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90,
+      "y": 90
+    },
+    "facing=west,powered=false,vertical=true,rotation=y_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90,
+      "y": 90
+    },
+    "facing=west,powered=false,vertical=true,rotation=x_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90,
+      "y": 90
+    },
+    "facing=west,powered=false,vertical=true,rotation=x_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90,
+      "y": 90
+    },
+    "facing=west,powered=false,vertical=true,rotation=x_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90,
+      "y": 90
+    },
+    "facing=west,powered=false,vertical=true,rotation=z_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90,
+      "y": 90
+    },
+    "facing=west,powered=false,vertical=true,rotation=z_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90,
+      "y": 90
+    },
+    "facing=west,powered=false,vertical=true,rotation=z_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_off",
+      "x": 90,
+      "y": 90
+    },
+    "facing=west,powered=true,vertical=false,rotation=none": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "y": 180
+    },
+    "facing=west,powered=true,vertical=false,rotation=y_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "y": 180
+    },
+    "facing=west,powered=true,vertical=false,rotation=y_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "y": 180
+    },
+    "facing=west,powered=true,vertical=false,rotation=y_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "y": 180
+    },
+    "facing=west,powered=true,vertical=false,rotation=x_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "y": 180
+    },
+    "facing=west,powered=true,vertical=false,rotation=x_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "y": 180
+    },
+    "facing=west,powered=true,vertical=false,rotation=x_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "y": 180
+    },
+    "facing=west,powered=true,vertical=false,rotation=z_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "y": 180
+    },
+    "facing=west,powered=true,vertical=false,rotation=z_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "y": 180
+    },
+    "facing=west,powered=true,vertical=false,rotation=z_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "y": 180
+    },
+    "facing=west,powered=true,vertical=true,rotation=none": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90,
+      "y": 90
+    },
+    "facing=west,powered=true,vertical=true,rotation=y_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90,
+      "y": 90
+    },
+    "facing=west,powered=true,vertical=true,rotation=y_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90,
+      "y": 90
+    },
+    "facing=west,powered=true,vertical=true,rotation=y_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90,
+      "y": 90
+    },
+    "facing=west,powered=true,vertical=true,rotation=x_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90,
+      "y": 90
+    },
+    "facing=west,powered=true,vertical=true,rotation=x_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90,
+      "y": 90
+    },
+    "facing=west,powered=true,vertical=true,rotation=x_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90,
+      "y": 90
+    },
+    "facing=west,powered=true,vertical=true,rotation=z_clockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90,
+      "y": 90
+    },
+    "facing=west,powered=true,vertical=true,rotation=z_clockwise_180": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90,
+      "y": 90
+    },
+    "facing=west,powered=true,vertical=true,rotation=z_counterclockwise_90": {
+      "model": "create:block/redstone_relay/redstone_relay_on",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    {
+      "item": "create:brass_casing"
+    },
+    {
+      "item": "create:chute"
+    },
+    {
+      "item": "create:copper_spool"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "create:portable_energy_interface"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "type": "create:rolling",
+  "ingredients": [
+    {
+      "item": "minecraft:paper"
+    }
+  ],
+  "results": [
+    {
+      "id": "create:straw"
+    }
+  ]
+}

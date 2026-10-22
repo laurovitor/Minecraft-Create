@@ -45,6 +45,7 @@ import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 
+import com.simibubi.create.content.electricity.digital.DigitalAdapterDisplaySource;
 import com.simibubi.create.content.electricity.accumulator.ModularAccumulatorDisplaySource;
 
 public class AllDisplaySources {
@@ -68,6 +69,8 @@ public class AllDisplaySources {
 	public static final RegistryEntry<DisplaySource, BoilerDisplaySource> BOILER = simple("boiler", BoilerDisplaySource::new);
 	public static final RegistryEntry<DisplaySource, ModularAccumulatorDisplaySource> MODULAR_ACCUMULATOR =
 		simple("modular_accumulator", ModularAccumulatorDisplaySource::new);
+	public static final RegistryEntry<DisplaySource, DigitalAdapterDisplaySource> DIGITAL_ADAPTER =
+		simple("digital_adapter", DigitalAdapterDisplaySource::new);
 	public static final RegistryEntry<DisplaySource, CurrentFloorDisplaySource> CURRENT_FLOOR = simple("current_floor", CurrentFloorDisplaySource::new);
 	public static final RegistryEntry<DisplaySource, FillLevelDisplaySource> FILL_LEVEL = simple("fill_level", FillLevelDisplaySource::new);
 	public static final RegistryEntry<DisplaySource, FactoryGaugeDisplaySource> GAUGE_STATUS = simple("gauge_status", FactoryGaugeDisplaySource::new);

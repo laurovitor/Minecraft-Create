@@ -1,0 +1,60 @@
+{
+  "variants": {
+    "facing=down,powered=false": {
+      "model": "create:block/tesla_coil/block",
+      "y": 90
+    },
+    "facing=down,powered=true": {
+      "model": "create:block/tesla_coil/powered",
+      "y": 90
+    },
+    "facing=east,powered=false": {
+      "model": "create:block/tesla_coil/block",
+      "x": 90,
+      "y": 270
+    },
+    "facing=east,powered=true": {
+      "model": "create:block/tesla_coil/powered",
+      "x": 90,
+      "y": 270
+    },
+    "facing=north,powered=false": {
+      "model": "create:block/tesla_coil/block",
+      "x": 90,
+      "y": 180
+    },
+    "facing=north,powered=true": {
+      "model": "create:block/tesla_coil/powered",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,powered=false": {
+      "model": "create:block/tesla_coil/block",
+      "x": 90
+    },
+    "facing=south,powered=true": {
+      "model": "create:block/tesla_coil/powered",
+      "x": 90
+    },
+    "facing=up,powered=false": {
+      "model": "create:block/tesla_coil/block",
+      "x": 180,
+      "y": 90
+    },
+    "facing=up,powered=true": {
+      "model": "create:block/tesla_coil/powered",
+      "x": 180,
+      "y": 90
+    },
+    "facing=west,powered=false": {
+      "model": "create:block/tesla_coil/block",
+      "x": 90,
+      "y": 90
+    },
+    "facing=west,powered=true": {
+      "model": "create:block/tesla_coil/powered",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

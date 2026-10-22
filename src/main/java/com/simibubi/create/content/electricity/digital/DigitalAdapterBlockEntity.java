@@ -1,0 +1,101 @@
+package com.simibubi.create.content.electricity.digital;
+
+import com.simibubi.create.content.contraptions.bearing.MechanicalBearingBlockEntity;
+import com.simibubi.create.content.contraptions.elevator.ElevatorPulleyBlockEntity;
+import com.simibubi.create.content.contraptions.piston.MechanicalPistonBlockEntity;
+import com.simibubi.create.content.contraptions.pulley.PulleyBlockEntity;
+import com.simibubi.create.content.fluids.hosePulley.HosePulleyBlockEntity;
+import com.simibubi.create.content.kinetics.gauge.SpeedGaugeBlockEntity;
+import com.simibubi.create.content.kinetics.gauge.StressGaugeBlockEntity;
+import com.simibubi.create.content.kinetics.speedController.SpeedControllerBlockEntity;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import java.util.ArrayList;
+import java.util.List;
+
+public class DigitalAdapterBlockEntity extends BlockEntity {
+    public static final int MAX_LINES = 16;
+    public final List<MutableComponent> textLines = new ArrayList<>();
+    public DigitalAdapterBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
+        super(type,pos,state);
+        for (int i=0; i<MAX_LINES; i++) textLines.add(Component.empty());
+    }
+    public void setTextLine(int line, MutableComponent text) {
+        if (line < 1 || line > MAX_LINES) return;
+        textLines.set(line - 1, text);
+        setChanged();
+    }
+    public void clearAll() { for (int i=1; i<=MAX_LINES; i++) setTextLine(i, Component.empty()); }
+    public SpeedControllerBlockEntity getSpeedController(Direction dir) {
+        BlockEntity be = this.level.getBlockEntity(getBlockPos().relative(dir));
+        if(be == null) return null;
+        if(be instanceof SpeedControllerBlockEntity scte) return scte;
+        return null;
+    }
+
+    public PulleyBlockEntity getRopePulley(Direction dir) {
+        BlockEntity be = this.level.getBlockEntity(getBlockPos().relative(dir));
+        if(be == null) return null;
+        if(be instanceof PulleyBlockEntity pte) return pte;
+        return null;
+    }
+
+    public HosePulleyBlockEntity getHosePulley(Direction dir) {
+        BlockEntity be = this.level.getBlockEntity(getBlockPos().relative(dir));
+        if(be == null) return null;
+        if(be instanceof HosePulleyBlockEntity pte) return pte;
+        return null;
+    }
+
+    public ElevatorPulleyBlockEntity getElevatorPulley(Direction dir) {
+        BlockEntity be = this.level.getBlockEntity(getBlockPos().relative(dir));
+        if(be == null) return null;
+        if(be instanceof ElevatorPulleyBlockEntity epbe) return epbe;
+        return null;
+    }
+
+    public MechanicalPistonBlockEntity getMechanicalPiston(Direction dir) {
+        BlockEntity be = this.level.getBlockEntity(getBlockPos().relative(dir));
+        if(be == null) return null;
+        if(be instanceof MechanicalPistonBlockEntity mpte) return mpte;
+        return null;
+    }
+
+    public MechanicalBearingBlockEntity getMechanicalBearing(Direction dir) {
+        BlockEntity be = this.level.getBlockEntity(getBlockPos().relative(dir));
+        if(be == null) return null;
+        if(be instanceof MechanicalBearingBlockEntity mpte) return mpte;
+        return null;
+    }
+
+    public StressGaugeBlockEntity getStressGauge(Direction dir) {
+        BlockEntity be = this.level.getBlockEntity(getBlockPos().relative(dir));
+        if(be == null) return null;
+        if(be instanceof StressGaugeBlockEntity sgte) return sgte;
+        return null;
+    }
+
+    public SpeedGaugeBlockEntity getSpeedGauge(Direction dir) {
+        BlockEntity be = this.level.getBlockEntity(getBlockPos().relative(dir));
+        if(be == null) return null;
+        if(be instanceof SpeedGaugeBlockEntity sgte) return sgte;
+        return null;
+    }
+
+    public void setTargetSpeed(Direction dir, int speed) {
+        SpeedControllerBlockEntity scte = getSpeedController(dir);
+        if(scte == null) return;
+        scte.targetSpeed.setValue(speed);
+    }
+
+    public int getTargetSpeed(Direction dir) {
+        SpeedControllerBlockEntity scte = getSpeedController(dir);
+        if(scte == null) return 0;
+        return scte.targetSpeed.getValue();
+    }
+}
