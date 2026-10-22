@@ -61,6 +61,21 @@ public class AndesiteGolemChestBlockEntity extends SmartBlockEntity implements C
 		behaviours.add(filtering = new FilteringBehaviour(this, new AndesiteGolemChestFilterSlot()));
 	}
 
+	/** Keeps the latch tint (GolemChestLinks.LINKED) in step with the network, every lazy tick (0.5 s). */
+	@Override
+	public void lazyTick() {
+		super.lazyTick();
+		if (level == null || level.isClientSide())
+			return;
+		var linked = com.simibubi.create.content.equipment.redstoneGolem.GolemChestLinks.LINKED;
+		BlockState state = getBlockState();
+		if (!state.hasProperty(linked))
+			return;
+		boolean connected = com.simibubi.create.content.equipment.redstoneGolem.GolemChestLinks.isConnected(level, this);
+		if (state.getValue(linked) != connected)
+			level.setBlock(worldPosition, state.setValue(linked, connected), net.minecraft.world.level.block.Block.UPDATE_CLIENTS);
+	}
+
 	public SimpleContainer getContainer() {
 		return container;
 	}

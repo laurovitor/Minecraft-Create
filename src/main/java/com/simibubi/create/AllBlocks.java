@@ -1863,7 +1863,8 @@ public class AllBlocks {
 			// Player mining creates either a live packed home or a dead recyclable chest.
 			.loot((lt, block) -> lt.add(block, BlockLootSubProvider.noDrop()))
 			.blockstate(() -> (c, p) -> BlockStateGen.horizontalBlock(c, p,
-				s -> AssetLookup.partialBaseVariant(c, p, s.getValue(AndesiteGolemChestBlock.ACTIVE) ? "active" : "inactive")))
+				s -> AssetLookup.partialBaseVariant(c, p, (s.getValue(AndesiteGolemChestBlock.ACTIVE) ? "active" : "inactive")
+					+ (s.getValue(com.simibubi.create.content.equipment.redstoneGolem.GolemChestLinks.LINKED) ? "_linked" : ""))))
 			.lang("Andesite Golem Chest")
 			.item()
 			.transform(customItemModel("_", "block_active"))
@@ -1880,7 +1881,8 @@ public class AllBlocks {
 			// Player mining creates either a live packed home or a dead recyclable chest.
 			.loot((lt, block) -> lt.add(block, BlockLootSubProvider.noDrop()))
 			.blockstate(() -> (c, p) -> BlockStateGen.horizontalBlock(c, p,
-				s -> AssetLookup.partialBaseVariant(c, p, s.getValue(NetheriteGolemChestBlock.ACTIVE) ? "active" : "inactive")))
+				s -> AssetLookup.partialBaseVariant(c, p, (s.getValue(NetheriteGolemChestBlock.ACTIVE) ? "active" : "inactive")
+					+ (s.getValue(com.simibubi.create.content.equipment.redstoneGolem.GolemChestLinks.LINKED) ? "_linked" : ""))))
 			.lang("Netherite Golem Chest")
 			.item()
 			.transform(customItemModel("_", "block_active"))
@@ -1897,7 +1899,8 @@ public class AllBlocks {
 			// Player mining creates either a live packed home or a dead recyclable chest.
 			.loot((lt, block) -> lt.add(block, BlockLootSubProvider.noDrop()))
 			.blockstate(() -> (c, p) -> BlockStateGen.horizontalBlock(c, p,
-				s -> AssetLookup.partialBaseVariant(c, p, s.getValue(RedstoneGolemChestBlock.ACTIVE) ? "active" : "inactive")))
+				s -> AssetLookup.partialBaseVariant(c, p, (s.getValue(RedstoneGolemChestBlock.ACTIVE) ? "active" : "inactive")
+					+ (s.getValue(com.simibubi.create.content.equipment.redstoneGolem.GolemChestLinks.LINKED) ? "_linked" : ""))))
 			.lang("Redstone Golem Chest")
 			.item()
 			.transform(customItemModel("_", "block_active"))

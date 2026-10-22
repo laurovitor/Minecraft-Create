@@ -48,12 +48,14 @@ public class AndesiteGolemChestBlock extends HorizontalDirectionalBlock
 
 	public AndesiteGolemChestBlock(Properties properties) {
 		super(properties);
-		registerDefaultState(defaultBlockState().setValue(ACTIVE, false));
+		registerDefaultState(defaultBlockState().setValue(ACTIVE, false)
+			.setValue(com.simibubi.create.content.equipment.redstoneGolem.GolemChestLinks.LINKED, false));
 	}
 
 	@Override
 	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-		super.createBlockStateDefinition(builder.add(FACING, ACTIVE));
+		super.createBlockStateDefinition(builder.add(FACING, ACTIVE,
+			com.simibubi.create.content.equipment.redstoneGolem.GolemChestLinks.LINKED));
 	}
 
 	@Override

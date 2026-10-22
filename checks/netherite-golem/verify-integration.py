@@ -108,7 +108,7 @@ rg_block = (rg/'RedstoneGolemChestBlock.java').read_text()
 for gone in ['SleepGoal', 'MeleeAttackGoal', 'GuardGoal', 'WorkGoal', 'StrollGoal', 'FilteringBehaviour', 'filtering']:
     for src in (rg_entity, rg_goal, rg_be, rg_block):
         assert gone not in src, gone
-assert 'public boolean isRepairItem(ItemStack stack) {\n\t\treturn false;' in rg_entity
+assert 'public boolean isRepairItem(ItemStack stack) {\n\t\treturn stack.is(Items.REDSTONE);' in rg_entity  # round 15
 assert 'new RedstoneGolemCollectGoal(this)' in rg_entity and 'RedstoneGolemRules.MAX_HEALTH' in rg_entity
 # network: Create logistics frequency, Stock Links only, attached block, own chest excluded, chests/golem chests
 assert 'new LogisticallyLinkedBehaviour(this, false)' in rg_be and 'return true;' in rg_be
@@ -194,4 +194,32 @@ for lang_file in ['src/generated/resources/assets/create/lang/en_us.json', 'src/
     for k, v in json.loads(Path(lang_file).read_text()).items():
         if 'revival_pumpkin' in k:
             assert ('Carved Pumpkin' in v or 'Abóbora Esculpida' in v or 'tooltip' not in k and 'jei' not in k), (k, v)
+
+# ---- Round 15 (structural; runtime unverified)
+ag = root/'content/equipment/andesiteGolem'
+work = (ag/'AndesiteGolemWorkGoal.java').read_text()
+sleep = (ag/'AndesiteGolemSleepGoal.java').read_text()
+abe = (ag/'AndesiteGolemChestBlockEntity.java').read_text()
+assert 'public static final int SIZE = 27;' in abe and 'for (int i = 0; i < container.getContainerSize(); i++)\n\t\t\tif (container.getItem(i).isEmpty())' in abe
+assert 'SKIP_TICKS = 600;' in work and 'searchCooldown' not in work and 'claimedByOthers(found, pos, now)' in work
+for where in ['public void stop() {', 'harvest(chest, target);']:
+    assert 'release();' in work.split(where, 1)[1][:200], where
+assert 'AndesiteGolemWorkReservations.SERVER.release(getUUID())' in andesite and 'golem_task.skipped' in andesite
+assert 'state.is(Blocks.CACTUS_FLOWER)' in work and 'Kind.FLOWER' in work
+assert 'GolemWorkGeometry.sleepHereInstead(bed != null' in sleep and 'checkCooldown' not in sleep
+assert 'RedstoneGolemRules.giveUpWalk(travelTicks++, standSpot != null, stallTicks)' in rg_goal and 'PackagerLinkBlock' in rg_goal
+assert 'public boolean skip()' in rg_goal and 'collectGoal.skip()' in rg_entity
+assert 'RaisedItemLayer' in (rg/'RedstoneGolemRenderer.java').read_text()
+links = (rg/'GolemChestLinks.java').read_text()
+assert 'RedstoneGolemNetwork.sources(level, home)' in links and 'GolemChestLinks.isConnected(level, this)' in abe
+for chest in ['andesite_golem_chest', 'netherite_golem_chest', 'redstone_golem_chest']:
+    bs = json.loads(Path(f'src/generated/resources/assets/create/blockstates/{chest}.json').read_text())['variants']
+    assert len(bs) == 16 and all(('linked=true' in k) == v['model'].endswith('_linked') for k, v in bs.items()), chest
+    for v in ['active', 'inactive']:
+        m = json.loads(Path(f'src/main/resources/assets/create/models/block/{chest}/block_{v}_linked.json').read_text())
+        lock = [e for e in m['elements'] if e.get('name') == 'lock'][0]
+        assert all(f['texture'] == '#1' for f in lock['faces'].values()) and m['textures']['1'].endswith(f'{v}_linked')
+        others = [e for e in m['elements'] if e.get('name') != 'lock']
+        assert all(f['texture'] == '#0' for e in others for f in e['faces'].values()), 'only the latch changes'
+        assert Path(f'src/main/resources/assets/create/textures/block/{chest}/{v}_linked.png').exists()
 print('Offline integration/serialization wiring checks passed (runtime unverified)')

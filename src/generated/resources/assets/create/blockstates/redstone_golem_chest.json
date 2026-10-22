@@ -1,33 +1,63 @@
 {
   "variants": {
-    "active=false,facing=east": {
+    "active=false,facing=east,linked=false": {
       "model": "create:block/redstone_golem_chest/block_inactive",
       "y": 90
     },
-    "active=true,facing=east": {
+    "active=false,facing=east,linked=true": {
+      "model": "create:block/redstone_golem_chest/block_inactive_linked",
+      "y": 90
+    },
+    "active=true,facing=east,linked=false": {
       "model": "create:block/redstone_golem_chest/block_active",
       "y": 90
     },
-    "active=false,facing=north": {
+    "active=true,facing=east,linked=true": {
+      "model": "create:block/redstone_golem_chest/block_active_linked",
+      "y": 90
+    },
+    "active=false,facing=north,linked=false": {
       "model": "create:block/redstone_golem_chest/block_inactive"
     },
-    "active=true,facing=north": {
+    "active=false,facing=north,linked=true": {
+      "model": "create:block/redstone_golem_chest/block_inactive_linked"
+    },
+    "active=true,facing=north,linked=false": {
       "model": "create:block/redstone_golem_chest/block_active"
     },
-    "active=false,facing=south": {
+    "active=true,facing=north,linked=true": {
+      "model": "create:block/redstone_golem_chest/block_active_linked"
+    },
+    "active=false,facing=south,linked=false": {
       "model": "create:block/redstone_golem_chest/block_inactive",
       "y": 180
     },
-    "active=true,facing=south": {
+    "active=false,facing=south,linked=true": {
+      "model": "create:block/redstone_golem_chest/block_inactive_linked",
+      "y": 180
+    },
+    "active=true,facing=south,linked=false": {
       "model": "create:block/redstone_golem_chest/block_active",
       "y": 180
     },
-    "active=false,facing=west": {
+    "active=true,facing=south,linked=true": {
+      "model": "create:block/redstone_golem_chest/block_active_linked",
+      "y": 180
+    },
+    "active=false,facing=west,linked=false": {
       "model": "create:block/redstone_golem_chest/block_inactive",
       "y": 270
     },
-    "active=true,facing=west": {
+    "active=false,facing=west,linked=true": {
+      "model": "create:block/redstone_golem_chest/block_inactive_linked",
+      "y": 270
+    },
+    "active=true,facing=west,linked=false": {
       "model": "create:block/redstone_golem_chest/block_active",
+      "y": 270
+    },
+    "active=true,facing=west,linked=true": {
+      "model": "create:block/redstone_golem_chest/block_active_linked",
       "y": 270
     }
   }
