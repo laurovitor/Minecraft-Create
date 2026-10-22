@@ -362,6 +362,40 @@
       }
     ]
   },
+  "little_zap": {
+    "sounds": [
+      {
+        "type": "file",
+        "name": "create:little_zap"
+      },
+      {
+        "type": "file",
+        "name": "create:little_zap_1"
+      },
+      {
+        "type": "file",
+        "name": "create:little_zap_2"
+      }
+    ],
+    "subtitle": "create.subtitle.little_zap"
+  },
+  "loud_zap": {
+    "sounds": [
+      {
+        "type": "file",
+        "name": "create:loud_zap"
+      },
+      {
+        "type": "file",
+        "name": "create:loud_zap_1"
+      },
+      {
+        "type": "file",
+        "name": "create:loud_zap_2"
+      }
+    ],
+    "subtitle": "create.subtitle.loud_zap"
+  },
   "mechanical_press_activation": {
     "sounds": [
       {
@@ -598,6 +632,15 @@
       }
     ],
     "subtitle": "create.subtitle.stock_ticker_trade"
+  },
+  "tesla_coil": {
+    "sounds": [
+      {
+        "type": "file",
+        "name": "create:tesla_coil"
+      }
+    ],
+    "subtitle": "create.subtitle.tesla_coil"
   },
   "train": {
     "sounds": [

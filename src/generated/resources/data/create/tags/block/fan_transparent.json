@@ -19,6 +19,7 @@
     "minecraft:waxed_oxidized_copper_grate",
     "#minecraft:campfires",
     "#minecraft:fences",
-    "#minecraft:leaves"
+    "#minecraft:leaves",
+    "create:liquid_blaze_burner"
   ]
 }

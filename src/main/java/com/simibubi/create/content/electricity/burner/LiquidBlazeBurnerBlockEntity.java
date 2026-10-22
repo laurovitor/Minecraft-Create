@@ -2,6 +2,7 @@ package com.simibubi.create.content.electricity.burner;
 
 import com.simibubi.create.AllBlockEntityTypes;
 import com.simibubi.create.AllRecipeTypes;
+import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
 import com.simibubi.create.content.electricity.recipe.FluidRecipeInput;
 import com.simibubi.create.content.electricity.recipe.LiquidBurningRecipe;
 import com.simibubi.create.content.processing.burner.BlazeBurnerBlockEntity;
@@ -18,10 +19,12 @@ import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.transfer.fluid.FluidResource;
 import net.neoforged.neoforge.transfer.transaction.Transaction;
+import java.util.List;
 import java.util.Optional;
+import net.minecraft.network.chat.Component;
 
 /** Reuses Create's burner heat/animation state and adds a transactional fuel tank. */
-public class LiquidBlazeBurnerBlockEntity extends BlazeBurnerBlockEntity {
+public class LiquidBlazeBurnerBlockEntity extends BlazeBurnerBlockEntity implements IHaveGoggleInformation {
     private final SmartFluidTank tank;
     private Optional<RecipeHolder<LiquidBurningRecipe>> fuelRecipe = Optional.empty();
     private boolean recipeDirty = true;
@@ -67,5 +70,8 @@ public class LiquidBlazeBurnerBlockEntity extends BlazeBurnerBlockEntity {
         super.read(tag,registries,clientPacket);
         tank.readFromNBT(registries,tag.getCompoundOrEmpty("LiquidFuel"));
         recipeDirty = true;
+    }
+    @Override public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
+        return containedFluidTooltip(tooltip, isPlayerSneaking, tank);
     }
 }

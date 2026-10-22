@@ -34,6 +34,7 @@ public class SoundScapes {
 		MILLING(SoundScapes::milling),
 		DYNAMO(SoundScapes::dynamo),
 		CHARGE(SoundScapes::charge),
+		TESLA(SoundScapes::tesla),
 
 		;
 
@@ -70,6 +71,10 @@ public class SoundScapes {
 
 	private static SoundScape dynamo(float pitch, AmbienceGroup group) {
 		return new SoundScape(pitch, group).continuous(AllSoundEvents.ELECTRIC_MOTOR_BUZZ.getMainEvent(), .75f, 1);
+	}
+
+	private static SoundScape tesla(float pitch, AmbienceGroup group) {
+		return new SoundScape(pitch, group).continuous(AllSoundEvents.TESLA_COIL.getMainEvent(), .5f, 1);
 	}
 
 	private static SoundScape charge(float pitch, AmbienceGroup group) {

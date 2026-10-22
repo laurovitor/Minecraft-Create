@@ -106,6 +106,7 @@ public class AllPartialModels {
 		PORTABLE_ENERGY_INTERFACE_MIDDLE = block("portable_energy_interface/block_middle"),
 		PORTABLE_ENERGY_INTERFACE_MIDDLE_POWERED = block("portable_energy_interface/block_middle_powered"),
 		PORTABLE_ENERGY_INTERFACE_TOP = block("portable_energy_interface/block_top"),
+		ELECTRIC_PUMP_PARTIAL = block("electric_pump/block_pump_partial"),
 
 		ARM_COG = block("mechanical_arm/cog"), ARM_BASE = block("mechanical_arm/base"),
 		ARM_LOWER_BODY = block("mechanical_arm/lower_body"), ARM_UPPER_BODY = block("mechanical_arm/upper_body"),

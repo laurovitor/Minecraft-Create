@@ -1,0 +1,12 @@
+{
+  "type": "create:item_application",
+  "ingredients": [
+    "create:copper_casing",
+    "#c:wires/copper"
+  ],
+  "results": [
+    {
+      "id": "create:copper_wire_casing"
+    }
+  ]
+}

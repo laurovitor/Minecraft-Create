@@ -1,4 +1,14 @@
 {
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "registry": "minecraft:fluid",
+        "tag": "c:diesel"
+      }
+    }
+  ],
   "type": "create:liquid_burning",
   "burn_time": 24000,
   "ingredients": [

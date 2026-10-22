@@ -521,6 +521,15 @@
     "create:large_connector",
     "create:modular_accumulator",
     "create:creative_energy",
-    "create:electrum_block"
+    "create:electrum_block",
+    "create:tesla_coil",
+    "create:servo_motor",
+    "create:electric_pump",
+    "create:redstone_relay",
+    "create:digital_adapter",
+    "create:portable_energy_interface",
+    "create:liquid_blaze_burner",
+    "create:barbed_wire",
+    "create:copper_wire_casing"
   ]
 }

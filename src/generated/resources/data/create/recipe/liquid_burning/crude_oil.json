@@ -1,4 +1,14 @@
 {
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:tag_empty",
+        "registry": "minecraft:fluid",
+        "tag": "c:crude_oil"
+      }
+    }
+  ],
   "type": "create:liquid_burning",
   "burn_time": 9600,
   "ingredients": [

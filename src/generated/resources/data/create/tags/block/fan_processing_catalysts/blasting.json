@@ -1,5 +1,6 @@
 {
   "values": [
-    "create:blaze_burner"
+    "create:blaze_burner",
+    "create:liquid_blaze_burner"
   ]
 }

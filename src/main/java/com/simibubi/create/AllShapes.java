@@ -370,6 +370,8 @@ public class AllShapes {
 		SMALL_CONNECTOR = shape(6, 0, 6, 10, 5, 10).forDirectional(),
 		SMALL_LIGHT_CONNECTOR = shape(6, 0, 6, 10, 5, 10).add(5, 4, 5, 11, 10, 11)
 			.forDirectional(),
+		TESLA_COIL = shape(0, 0, 0, 16, 10, 16).add(1, 0, 1, 15, 12, 15)
+			.forDirectional(),
 		LARGE_CONNECTOR = shape(5, 0, 5, 11, 7, 11).forDirectional()
 
 	;

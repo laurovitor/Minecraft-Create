@@ -359,6 +359,22 @@ public class AllSoundEvents {
 			.category(SoundSource.BLOCKS)
 			.build(),
 
+		TESLA_COIL = create("tesla_coil").subtitle("Tesla Coil buzzes")
+			.category(SoundSource.BLOCKS)
+			.build(),
+
+		LOUD_ZAP = create("loud_zap").subtitle("Tesla Coil zaps")
+			.addVariant("loud_zap_1")
+			.addVariant("loud_zap_2")
+			.category(SoundSource.BLOCKS)
+			.build(),
+
+		LITTLE_ZAP = create("little_zap").subtitle("Electricity sparks")
+			.addVariant("little_zap_1")
+			.addVariant("little_zap_2")
+			.category(SoundSource.BLOCKS)
+			.build(),
+
 		HAUNTED_BELL_CONVERT = create("haunted_bell_convert").subtitle("Haunted Bell awakens")
 			.category(SoundSource.BLOCKS)
 			.build(),

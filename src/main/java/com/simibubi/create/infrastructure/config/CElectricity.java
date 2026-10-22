@@ -69,6 +69,7 @@ public class CElectricity extends ConfigBase {
 	public final ConfigInt accumulatorMaxHeight = i(5, 1, 8, "accumulatorMaxHeight", Comments.accumulatorMaxHeight);
 	public final ConfigInt accumulatorMaxWidth = i(3, 1, 8, "accumulatorMaxWidth", Comments.accumulatorMaxWidth);
 
+	public final ConfigGroup barbedWire = group(1, "barbedWire", "Barbed Wire");
 	public final ConfigInt barbedWireDamage = i(2, 0, "barbedWireDamage", "Barbed Wire damage on contact.");
 
 	public final ConfigGroup items = group(1, "items", "Electric items");

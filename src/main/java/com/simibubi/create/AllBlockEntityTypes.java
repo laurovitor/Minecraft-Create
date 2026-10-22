@@ -239,6 +239,8 @@ import com.tterrag.registrate.util.entry.BlockEntityEntry;
 
 import com.simibubi.create.content.electricity.digital.DigitalAdapterBlockEntity;
 import com.simibubi.create.content.electricity.pump.ElectricPumpBlockEntity;
+import com.simibubi.create.content.electricity.pump.ElectricPumpRenderer;
+import com.simibubi.create.content.electricity.render.WireNodeRenderer;
 import com.simibubi.create.content.electricity.tesla.TeslaCoilBlockEntity;
 import com.simibubi.create.content.electricity.servo.ServoMotorBlockEntity;
 import com.simibubi.create.content.electricity.relay.RedstoneRelayBlockEntity;
@@ -323,7 +325,9 @@ public class AllBlockEntityTypes {
 
 	public static final BlockEntityEntry<RedstoneRelayBlockEntity> REDSTONE_RELAY = REGISTRATE
 		.blockEntity("redstone_relay", RedstoneRelayBlockEntity::new)
-		.validBlocks(AllBlocks.REDSTONE_RELAY).register();
+		.validBlocks(AllBlocks.REDSTONE_RELAY)
+		.renderer(() -> WireNodeRenderer::new)
+		.register();
 
 	public static final BlockEntityEntry<ServoMotorBlockEntity> SERVO_MOTOR = REGISTRATE
 		.blockEntity("servo_motor", ServoMotorBlockEntity::new)
@@ -336,7 +340,9 @@ public class AllBlockEntityTypes {
 
 	public static final BlockEntityEntry<ElectricPumpBlockEntity> ELECTRIC_PUMP = REGISTRATE
 		.blockEntity("electric_pump", ElectricPumpBlockEntity::new)
-		.validBlocks(AllBlocks.ELECTRIC_PUMP).register();
+		.validBlocks(AllBlocks.ELECTRIC_PUMP)
+		.renderer(() -> ElectricPumpRenderer::new)
+		.register();
 
 	public static final BlockEntityEntry<DigitalAdapterBlockEntity> DIGITAL_ADAPTER = REGISTRATE
 		.blockEntity("digital_adapter", DigitalAdapterBlockEntity::new)

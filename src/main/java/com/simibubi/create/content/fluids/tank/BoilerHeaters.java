@@ -15,6 +15,7 @@ import net.minecraft.world.level.block.state.BlockState;
 public class BoilerHeaters {
 	public static void registerDefaults() {
 		BoilerHeater.REGISTRY.register(AllBlocks.BLAZE_BURNER.get(), BoilerHeater.BLAZE_BURNER);
+		BoilerHeater.REGISTRY.register(AllBlocks.LIQUID_BLAZE_BURNER.get(), BoilerHeater.BLAZE_BURNER);
 		BoilerHeater.REGISTRY.registerProvider(SimpleRegistry.Provider.forBlockTag(AllBlockTags.PASSIVE_BOILER_HEATERS.tag, BoilerHeater.PASSIVE));
 	}
 
