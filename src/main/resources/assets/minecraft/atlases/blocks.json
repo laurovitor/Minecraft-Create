@@ -67,6 +67,30 @@
     {
       "type": "single",
       "resource": "create:fluid/tea_still"
+    },
+    {
+      "type": "single",
+      "resource": "create:entity/liquid_hat"
+    },
+    {
+      "type": "single",
+      "resource": "create:entity/soda_can"
+    },
+    {
+      "type": "single",
+      "resource": "create:fluid/bioethanol_flow"
+    },
+    {
+      "type": "single",
+      "resource": "create:fluid/bioethanol_still"
+    },
+    {
+      "type": "single",
+      "resource": "create:fluid/seed_oil_flow"
+    },
+    {
+      "type": "single",
+      "resource": "create:fluid/seed_oil_still"
     }
   ]
 }

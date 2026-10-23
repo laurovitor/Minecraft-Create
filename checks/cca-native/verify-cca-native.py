@@ -285,6 +285,65 @@ if len(sys.argv) > 1:
                 fail(f'jar: upstream namespace inside {n}')
         print(f'jar: {len(recipes)} imported recipes checked')
 
+        # Client assets of the whole JAR: a model whose texture is absent or not stitched into an atlas
+        # renders as the purple/black "missing" texture in game.
+        def jtex(ref):
+            ns, path = (ref if ':' in ref else 'minecraft:' + ref).split(':', 1)
+            return ns, path
+
+        atlas = set()
+        for a in ('blocks', 'items'):
+            n = f'assets/minecraft/atlases/{a}.json'
+            if n in names:
+                atlas |= {s.get('resource') for s in json.loads(jar.read(n))['sources']}
+        # The vanilla atlases stitch the block/ and item/ directories; anything else must be listed.
+        stitched_dirs = ('block/', 'item/')
+        # Pre-existing Create core gaps outside the CC&A scope (cardboard armor trim permutations and the
+        # train track overlay), reported separately, not part of this guard.
+        known_gaps = ('trims/items/', 'block/track')
+        jar_models = [n for n in names if n.startswith('assets/create/models/') and n.endswith('.json')]
+        textures_checked = 0
+        for n in jar_models:
+            model = json.loads(jar.read(n))
+            parent = model.get('parent')
+            if isinstance(parent, str) and not parent.startswith('#'):
+                pns, ppath = jtex(parent)
+                if pns == 'create' and f'assets/create/models/{ppath}.json' not in names:
+                    fail(f'jar: {n} has missing parent {parent}')
+            for tex in (model.get('textures') or {}).values():
+                if not isinstance(tex, str) or tex.startswith('#'):
+                    continue
+                tns, tpath = jtex(tex)
+                if tns != 'create' or tpath.startswith(known_gaps):
+                    continue
+                textures_checked += 1
+                if f'assets/create/textures/{tpath}.png' not in names:
+                    fail(f'jar: missing texture {tex} (used by {n})')
+                elif not tpath.startswith(stitched_dirs) and f'create:{tpath}' not in atlas:
+                    fail(f'jar: texture {tex} (used by {n}) is not in any atlas')
+        # Item definitions use the 26.x format ({"model": {"type": ...}}) and point at existing models.
+        for n in names:
+            if n.startswith('assets/create/items/') and n.endswith('.json'):
+                d = json.loads(jar.read(n))
+                if not isinstance(d.get('model'), dict) or 'type' not in d['model']:
+                    fail(f'jar: {n} is not a 26.x item definition')
+                    continue
+                for ref in model_refs(d['model']):
+                    mns, mpath = jtex(ref)
+                    if mns == 'create' and f'assets/create/models/{mpath}.json' not in names:
+                        fail(f'jar: {n} points at missing model {ref}')
+        # Fluid models are built from fluid/<name>_still and _flow (AllFluidsClient.tintedModel).
+        fluids = re.findall(r'tintedModel\("([a-z_]+)"', (root / 'AllFluids.java').read_text())
+        for fl in fluids:
+            for part in ('still', 'flow'):
+                tpath = f'fluid/{fl}_{part}'
+                textures_checked += 1
+                if f'assets/create/textures/{tpath}.png' not in names:
+                    fail(f'jar: missing fluid texture {tpath}')
+                elif f'create:{tpath}' not in atlas:
+                    fail(f'jar: fluid texture {tpath} is not in the blocks atlas')
+        print(f'jar: {len(jar_models)} models, {textures_checked} texture references, {len(fluids)} fluids checked')
+
 if failures:
     print('\n'.join(failures))
     sys.exit(f'{len(failures)} failure(s)')
