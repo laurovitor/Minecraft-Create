@@ -27,6 +27,7 @@ import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.item.crafting.BrewingRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 
 import net.neoforged.neoforge.fluids.FluidStack;
@@ -71,13 +72,11 @@ public class PotionMixingRecipes {
 
 		// Brewing is data-driven in 26.3. Include vanilla and modded brewing recipes alike.
 		// The client has only recipes explicitly requested through NeoForge's sync event.
-		// The recipe registry itself is not part of ClientLevel.registryAccess().
-		Iterable<RecipeHolder<BrewingRecipe>> brewingRecipes = level.isClientSide()
-			? ClientRecipes.all(net.minecraft.world.item.crafting.RecipeType.BREWING)
-			: level.registryAccess().lookupOrThrow(Registries.RECIPE).listElements()
-				.filter(holder -> holder.value() instanceof BrewingRecipe)
-				.map(holder -> new RecipeHolder<>(holder.key(), (BrewingRecipe) holder.value()))
-				.toList();
+		// The recipe registry is not guaranteed to be part of a level's registryAccess() (the game test
+		// server throws "Missing registry"), so the server reads its recipe manager instead.
+		Iterable<RecipeHolder<BrewingRecipe>> brewingRecipes = level instanceof ServerLevel serverLevel
+			? serverLevel.recipeAccess().recipeMap().byType(net.minecraft.world.item.crafting.RecipeType.BREWING)
+			: ClientRecipes.all(net.minecraft.world.item.crafting.RecipeType.BREWING);
 		for (RecipeHolder<BrewingRecipe> holder : brewingRecipes) {
 			BrewingRecipe recipe = holder.value();
 			ItemStack output = recipe.getOutput().create();
