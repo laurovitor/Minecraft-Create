@@ -240,6 +240,12 @@ public class FluidHelper {
 			if (!player.isCreative())
 				player.getInventory()
 					.placeItemBackInInventory(out, Prediction.SERVER_ONLY);
+			else if (!out.isEmpty() && !player.getInventory()
+				.contains(out))
+				// Like vanilla filling from a cauldron: creative keeps the empty container and gains the
+				// filled one once; before, the fluid was drained and nothing was handed over.
+				player.getInventory()
+					.add(out);
 			be.notifyUpdate();
 			return true;
 		}

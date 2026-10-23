@@ -3,6 +3,7 @@ package com.simibubi.create.infrastructure.gametest;
 import com.mojang.serialization.MapCodec;
 import com.simibubi.create.Create;
 import com.simibubi.create.infrastructure.gametest.tests.TestContraptions;
+import com.simibubi.create.infrastructure.gametest.tests.TestCraftsAdditions;
 import com.simibubi.create.infrastructure.gametest.tests.TestFluids;
 import com.simibubi.create.infrastructure.gametest.tests.TestItems;
 import com.simibubi.create.infrastructure.gametest.tests.TestMisc;
@@ -36,7 +37,7 @@ public class CreateGameTests {
 
 	private static final Class<?>[] testHolders =
 		{ TestContraptions.class, TestFluids.class, TestItems.class, TestMisc.class, TestProcessing.class,
-			TestRegressions.class, TestTransferFluids.class, TestTransferItems.class };
+			TestRegressions.class, TestTransferFluids.class, TestTransferItems.class, TestCraftsAdditions.class };
 
 	/**
 	 * Every test instance must name a kind of test it is, and the kinds live in a registry of their own.

@@ -103,6 +103,12 @@ public class FrogportBlockEntity extends PackagePortBlockEntity implements IHave
 	}
 
 	@Override
+	public String getFilterString() {
+		String filter = super.getFilterString();
+		return filter != null && filter.isBlank() ? "*" : filter;
+	}
+
+	@Override
 	public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
 		behaviours.add(advancements = new AdvancementBehaviour(this, AllAdvancements.FROGPORT));
 		behaviours.add(computerBehaviour = ComputerCraftProxy.behaviour(this));

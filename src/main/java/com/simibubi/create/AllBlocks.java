@@ -295,6 +295,7 @@ import com.simibubi.create.content.electricity.barbedwire.BarbedWireBlock;
 import com.simibubi.create.content.electricity.digital.DigitalAdapterBlock;
 import com.simibubi.create.content.electricity.pump.ElectricPumpBlock;
 import com.simibubi.create.content.electricity.tesla.TeslaCoilBlock;
+import com.simibubi.create.content.electricity.tesla.TeslaCoilBlockItem;
 import com.simibubi.create.content.electricity.servo.ServoMotorBlock;
 import com.simibubi.create.content.electricity.relay.RedstoneRelayBlock;
 import com.simibubi.create.content.electricity.portable.PortableEnergyInterfaceBlock;
@@ -2487,7 +2488,7 @@ public class AllBlocks {
 		.initialProperties(SharedProperties::softMetal)
 		.properties(p -> p.lightLevel(s -> s.getValue(TeslaCoilBlock.POWERED) ? 10 : 0))
 		.transform(pickaxeOnly()).blockstate(() -> (c, p) -> {})
-		.item().transform(customItemModel()).register();
+		.item(TeslaCoilBlockItem::new).transform(customItemModel()).register();
 
 	public static final BlockEntry<ServoMotorBlock> SERVO_MOTOR = REGISTRATE.block("servo_motor", ServoMotorBlock::new)
 		.initialProperties(SharedProperties::softMetal).properties(p -> p.noOcclusion())

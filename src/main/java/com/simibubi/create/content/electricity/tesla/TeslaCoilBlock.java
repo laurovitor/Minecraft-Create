@@ -1,5 +1,6 @@
 package com.simibubi.create.content.electricity.tesla;
 
+import com.simibubi.create.content.processing.AssemblyOperatorUseContext;
 import com.simibubi.create.AllBlockEntityTypes;
 import com.simibubi.create.AllShapes;
 import com.simibubi.create.content.equipment.wrench.IWrenchable;
@@ -42,6 +43,10 @@ public class TeslaCoilBlock extends Block implements IBE<TeslaCoilBlockEntity>, 
 
 	@Override
 	public BlockState getStateForPlacement(BlockPlaceContext context) {
+		// Placed over a belt or depot by TeslaCoilBlockItem: hang down towards it (FACING up), the
+		// orientation in which it charges what passes below.
+		if (context instanceof AssemblyOperatorUseContext)
+			return defaultBlockState().setValue(FACING, Direction.UP);
 		Direction face = context.getClickedFace();
 		return defaultBlockState().setValue(FACING, context.isSecondaryUseActive() ? face : face.getOpposite());
 	}

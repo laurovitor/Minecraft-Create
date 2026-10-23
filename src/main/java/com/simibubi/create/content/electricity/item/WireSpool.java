@@ -38,6 +38,11 @@ public class WireSpool extends Item {
 
 	@Override
 	public InteractionResult useOn(UseOnContext c) {
+		// The server owns item components and wire nodes. Client-side linking used to create
+		// temporary phantom connections before the authoritative inventory update arrived.
+		if (c.getLevel().isClientSide())
+			return c.getLevel().getBlockEntity(c.getClickedPos()) instanceof IWireNode
+				? InteractionResult.SUCCESS : InteractionResult.PASS;
 		var data1 = c.getItemInHand().getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
 		CompoundTag nbt = data1.copyTag();
 
