@@ -135,8 +135,10 @@ public class TeslaCoilBlockEntity extends AbstractElectricBlockEntity implements
 		if (localEnergy.getEnergyStored() < stack.getCount())
 			return false;
 		int amount = Math.min(config().teslaChargeRate.get(), localEnergy.getEnergyStored());
-		localEnergy.internalConsumeEnergy(EnergyTransfers.insert(itemEnergy, amount, false));
-		return true;
+		int transferred = EnergyTransfers.insert(itemEnergy, amount, false);
+		localEnergy.internalConsumeEnergy(transferred);
+		// A full battery should leave the belt instead of being held indefinitely.
+		return transferred > 0;
 	}
 
 	private boolean chargeRecipe(TransportedItemStack transported, TransportedItemStackHandlerBehaviour handler) {

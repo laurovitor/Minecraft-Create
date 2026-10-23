@@ -63,6 +63,7 @@ public enum ConnectorMode implements StringRepresentable {
 		if(EnergyTransfers.canExtract(energy)) return Pull;
 		if(EnergyTransfers.canReceive(energy)) return Push;
 
-		return None;
+		// Empty generators cannot simulate extraction yet. Start them in network-transmit mode.
+		return Pull;
 	}
 }

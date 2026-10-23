@@ -73,6 +73,7 @@ public class ScrollValueRenderer {
 			highlightFound = true;
 			List<MutableComponent> tip = new ArrayList<>();
 			tip.add(behaviour.label.copy());
+			tip.add(Component.literal(behaviour.formatValue() + (behaviour instanceof com.simibubi.create.content.kinetics.motor.KineticScrollValueBehaviour ? " RPM" : "")));
 			tip.add(CreateLang.translateDirect("gui.value_settings.hold_to_edit"));
 			CreateClient.VALUE_SETTINGS_HANDLER.showHoverTip(tip);
 		}

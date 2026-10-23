@@ -281,6 +281,7 @@ public class AllItems {
 	public static final ItemEntry<WireSpool>
 		SPOOL = REGISTRATE.item("spool", WireSpool::new).lang("Empty Spool").register(),
 		COPPER_SPOOL = REGISTRATE.item("copper_spool", WireSpool::new).register(),
+		IRON_SPOOL = REGISTRATE.item("iron_spool", WireSpool::new).register(),
 		GOLD_SPOOL = REGISTRATE.item("gold_spool", WireSpool::new).register(),
 		ELECTRUM_SPOOL = REGISTRATE.item("electrum_spool", WireSpool::new).register(),
 		FESTIVE_SPOOL = REGISTRATE.item("festive_spool", WireSpool::new).register();

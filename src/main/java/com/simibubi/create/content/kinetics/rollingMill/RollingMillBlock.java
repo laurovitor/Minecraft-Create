@@ -48,8 +48,25 @@ public class RollingMillBlock extends HorizontalKineticBlock implements EntityRe
 	@Override
 	protected InteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player,
 		InteractionHand hand, BlockHitResult hitResult) {
-		if (!stack.isEmpty())
-			return InteractionResult.TRY_WITH_EMPTY_HAND;
+		if (!stack.isEmpty()) {
+			if (level.isClientSide())
+				return InteractionResult.SUCCESS;
+			RollingMillBlockEntity mill = getBlockEntity(level, pos);
+			if (mill == null)
+				return InteractionResult.TRY_WITH_EMPTY_HAND;
+			int inserted;
+			try (Transaction transaction = Transaction.openRoot()) {
+				inserted = mill.capability.insert(0, ItemResource.of(stack), stack.getCount(), transaction);
+				transaction.commit();
+			}
+			if (inserted == 0)
+				return InteractionResult.TRY_WITH_EMPTY_HAND;
+			if (!player.isCreative())
+				stack.shrink(inserted);
+			mill.setChanged();
+			mill.sendData();
+			return InteractionResult.SUCCESS;
+		}
 		if (level.isClientSide())
 			return InteractionResult.SUCCESS;
 

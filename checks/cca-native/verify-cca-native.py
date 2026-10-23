@@ -32,7 +32,7 @@ BLOCKS = ['rolling_mill', 'electric_motor', 'alternator', 'connector', 'small_li
           'portable_energy_interface', 'liquid_blaze_burner', 'barbed_wire', 'copper_wire_casing']
 ITEMS = ['electrum_ingot', 'electrum_nugget', 'electrum_sheet', 'zinc_sheet', 'copper_rod', 'iron_rod',
          'gold_rod', 'electrum_rod', 'brass_rod', 'copper_wire', 'iron_wire', 'gold_wire', 'electrum_wire',
-         'diamond_grit', 'spool', 'copper_spool', 'gold_spool', 'electrum_spool', 'festive_spool',
+         'diamond_grit', 'spool', 'copper_spool', 'iron_spool', 'gold_spool', 'electrum_spool', 'festive_spool',
          'capacitor', 'diamond_grit_sandpaper',
          # phase 2
          'straw']

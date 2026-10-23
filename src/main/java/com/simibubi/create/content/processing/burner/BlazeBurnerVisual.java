@@ -139,12 +139,13 @@ public class BlazeBurnerVisual extends AbstractBlockEntityVisual<BlazeBurnerBloc
 			goggles = null;
 		}
 
-		boolean hatPresent = blockEntity.hat || blockEntity.stockKeeper;
+		boolean liquid = blockEntity instanceof com.simibubi.create.content.electricity.burner.LiquidBlazeBurnerBlockEntity;
+		boolean hatPresent = liquid || blockEntity.hat || blockEntity.stockKeeper;
 		if (hatPresent && hat == null) {
 			hat = instancerProvider()
 					.instancer(InstanceTypes.TRANSFORMED,
 						Models.partial(
-							blockEntity.stockKeeper ? AllPartialModels.LOGISTICS_HAT : AllPartialModels.TRAIN_HAT))
+							liquid ? AllPartialModels.LIQUID_HAT : blockEntity.stockKeeper ? AllPartialModels.LOGISTICS_HAT : AllPartialModels.TRAIN_HAT))
 					.createInstance();
 			hat.light(LightCoordsUtil.FULL_BRIGHT);
 		} else if (!hatPresent && hat != null) {

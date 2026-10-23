@@ -6,11 +6,11 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;;
 
 public enum WireType {
-	COPPER(0, 256, 78, 37, 30, AllItems.COPPER_WIRE.asStack(4), AllItems.COPPER_SPOOL.asStack()),
-	GOLD(1, 1024, 98, 83, 29, AllItems.GOLD_WIRE.asStack(4), AllItems.GOLD_SPOOL.asStack()),
-	ELECTRUM(2, 8196, 88, 66, 37, AllItems.ELECTRUM_WIRE.asStack(4), AllItems.ELECTRUM_SPOOL.asStack()),
-	FESTIVE(3, 256, 26, 94, 12, AllItems.COPPER_WIRE.asStack(4), AllItems.FESTIVE_SPOOL.asStack());
-	//IRON(4, 256, 87, 87, 87, AllItems.IRON_WIRE.asStack(4), AllItems.IRON_SPOOL.asStack());
+	COPPER(0, 256, 188, 101, 65, AllItems.COPPER_WIRE.asStack(4), AllItems.COPPER_SPOOL.asStack()),
+	GOLD(1, 1024, 235, 191, 65, AllItems.GOLD_WIRE.asStack(4), AllItems.GOLD_SPOOL.asStack()),
+	ELECTRUM(2, 8196, 218, 178, 115, AllItems.ELECTRUM_WIRE.asStack(4), AllItems.ELECTRUM_SPOOL.asStack()),
+	FESTIVE(3, 256, 36, 133, 46, AllItems.COPPER_WIRE.asStack(4), AllItems.FESTIVE_SPOOL.asStack()),
+	IRON(4, 256, 172, 183, 192, AllItems.IRON_WIRE.asStack(4), AllItems.IRON_SPOOL.asStack());
 
 	private final int ID, TRANSFER, CR, CG, CB;
 	private final ItemStack DROP;
@@ -32,7 +32,7 @@ public enum WireType {
 			case 1 -> GOLD;
 			case 2 -> ELECTRUM;
 			case 3 -> FESTIVE;
-			//case 4 -> IRON;
+			case 4 -> IRON;
 			default -> null;
 		};
 	}
@@ -76,8 +76,8 @@ public enum WireType {
 			return WireType.GOLD;
 		if(item == AllItems.FESTIVE_SPOOL.get())
 			return WireType.FESTIVE;
-		//if(item == AllItems.IRON_SPOOL.get())
-		//	return WireType.IRON;
+		if(item == AllItems.IRON_SPOOL.get())
+			return WireType.IRON;
 		if(item == AllItems.ELECTRUM_SPOOL.get())
 			return WireType.ELECTRUM;
 		return WireType.COPPER;

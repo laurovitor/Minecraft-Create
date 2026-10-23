@@ -71,7 +71,8 @@ public class BlazeBurnerRenderer
 		state.horizontalAngle = AngleHelper.rad(be.headAngle.getValue(partialTicks));
 		state.canDrawFlame = state.heatLevel.isAtLeast(HeatLevel.FADING);
 		state.drawGoggles = be.goggles;
-		state.drawHat = be.hat ? AllPartialModels.TRAIN_HAT
+		state.drawHat = be instanceof com.simibubi.create.content.electricity.burner.LiquidBlazeBurnerBlockEntity
+			? AllPartialModels.LIQUID_HAT : be.hat ? AllPartialModels.TRAIN_HAT
 			: be.stockKeeper ? AllPartialModels.LOGISTICS_HAT : null;
 		state.hashCode = be.hashCode();
 	}
